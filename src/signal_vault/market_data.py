@@ -117,7 +117,24 @@ def validate_bars(bars: Iterable[Bar], *, as_of: datetime, min_count: int = 1) -
             if bar.source != previous.source:
                 raise ValueError("mixed data sources cannot be treated as one stream")
             if bar.start != previous.close_time:
-                raise ValueError("out-of-order, duplicate or missing hourly bar")
+                # Precise, secret-free timestamps distinguish genuine source gaps
+                # from duplicates or pagination order problems. Never invent,
+                # drop or fill observations in a research dataset.
+                expected = previous.close_time
+                if bar.start > expected:
+                    raise ValueError(
+                        f"missing hourly bar: expected {expected.isoformat()}, "
+                        f"next returned {bar.start.isoformat()}"
+                    )
+                if bar.start == previous.start:
+                    raise ValueError(
+                        f"duplicate hourly bar: {bar.start.isoformat()} "
+                        f"(expected {expected.isoformat()})"
+                    )
+                raise ValueError(
+                    f"out-of-order hourly bar: expected {expected.isoformat()}, "
+                    f"next returned {bar.start.isoformat()}"
+                )
         previous = bar
     return items
 
