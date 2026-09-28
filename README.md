@@ -1,55 +1,71 @@
-# SIGNAL VAULT
+# Signal Vault
 
-**Phase 2-C — offline research plus guarded paper-only submission implementation (NOT activated)**
+Private, modular autonomous trading engineering project. The initial venue is
+**Alpaca BTC/USD PAPER only**. Stock and event-contract adapters remain future
+components of the same architecture, not secretly enabled alternatives.
 
-Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
+## Current release: Phase 2-D (offline-tested prototype)
 
-## Current state (2026-09-28)
+- Strict hourly BTC historical data handling, immutable deterministic signals,
+  research-only next-open backtesting with explicit hypothetical costs.
+- Guardian risk limits; SQLite drafts, cash reservations, order-ID uniqueness,
+  restart-safe UNKNOWN transport states and paper-host-bound source checks.
+- Pre-submission independent paper account snapshot, dynamic provider minimum
+  quantity/precision checks, post-terminal fee-aware order/cash/BTC reconciliation.
+- Separate virtual $100 budget, fixed $30 marked exposure and manual persistent
+  emergency HALT across process restarts.
+- LOCAL READ-ONLY dashboard. Never expose to the internet without an entirely
+  separate authentication and deployment security review.
 
-The current checkpoint includes the initial architecture and safety kernel plus a strict public historical BTC/USD bar adapter (not yet used against the real provider), a versioned deterministic strategy, a cost-aware OFFLINE backtest, a paper-host GET-only account/asset/order lookup adapter (mock-tested, not authenticated), and a persistent SQLite draft/audit foundation, a persisted conservative paper order state machine, chronological research folds, an end-to-end offline planning pipeline and a single-attempt paper-only order writer (mock-tested, NOT run with actual credentials). **It does not yet connect to an authenticated Alpaca account, submit genuine paper orders, host a dashboard, or execute live-money trades.** Never represent offline research fills as provider paper fills or P&L.
+**No Alpaca account has been connected; no authenticated paper orders or real
+money orders were placed; no profits are claimed.** All network-capable order
+code is in a separate paper-only adapter and the default CLI never invokes it.
 
-### Safe local smoke test
+### Run self-contained engineering tests (Python 3.11+)
 
-Python 3.11+ is sufficient; no API keys or paid services are needed.
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-PYTHONPATH=src python -m unittest discover -s tests -v
-PYTHONPATH=src python -m signal_vault
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+make smoke
 ```
 
-Expected demo status: `DRY_RUN_RECORDED_NOT_FILLED`. The example $15 buy is only an offline record, not a broker order. Optionally run `make test`, `make demo`, `make compile`. The *research-only* CLI is `PYTHONPATH=src python -m signal_vault.backtest PATH_TO_REAL_UTC_HOURLY_CSV --as-of 2026-09-28T00:00:00Z` (replace with a verified data file and a timestamp after its last fully closed bar). It will label all results hypothetical and contains no network orders. Add `--fold-hours 168` for fixed-parameter chronological research folds; this is not proof of independent live performance.
+`make fake-scenario` runs an explicitly FAKE venue through one accepted ->
+filled -> reconciled lifecycle. It uses mock credentials and in-memory data, no
+HTTP requests, and is not evidence of Alpaca paper execution.
 
-To verify the fail-closed lock:
+### Optional LOCAL operator view (creates no broker account or orders)
 
-```sh
-SIGNAL_VAULT_MODE=live PYTHONPATH=src python -m signal_vault
-# Must exit with ValueError: Phase 1 is PAPER ONLY.
+```bash
+make init-local       # creates NEW .data/offline-paper.sqlite3; will not overwrite
+make local-dashboard  # open http://127.0.0.1:8765 on this same computer
+PYTHONPATH=src python -m signal_vault.operator --db .data/offline-paper.sqlite3 status
+PYTHONPATH=src python -m signal_vault.operator --db .data/offline-paper.sqlite3 halt --reason "owner emergency stop"
+PYTHONPATH=src python -m signal_vault.operator --db .data/offline-paper.sqlite3 resume --reason "incident reviewed"
 ```
 
-## Reading order for resuming work
+The dashboard has NO account, funding, order or mutation endpoints. HALT blocks
+**new** submissions; it does not cancel an order already received by an external
+broker. Unknown orders must be reconciled before clearing HALT.
 
-1. `PROJECT_STATUS.md` — authoritative completed work / known blockers.
-2. `NEXT_STEPS.md` — exact next development sequence.
-3. `ARCHITECTURE.md` — boundaries, contract design, failure behavior.
-4. `docs/SECURITY.md` and `docs/ACCEPTANCE_TESTS.md`.
-5. `docs/DELIVERY_PLAN.md` — October schedule toward the November 1 **conditional** pilot target.
+### Other developer commands
 
-## No secrets, no account changes
+- `make test`: offline unittest suite.
+- `make demo`: guarded dry-run proposal, never a fill.
+- `make compile`: compile src/tests.
+- `make fake-scenario`: one complete deliberately simulated paper lifecycle.
+- `SIGNAL_VAULT_MODE=live make demo`: must be explicitly rejected.
 
-Do not commit `.env`, tokens, wallet keys or broker credentials. User approval is required before account access, paid services, deployment, or any transition from simulated/paper to real-money execution. There is deliberately NO LIVE broker connector. `paper_executor.py` contains a hardcoded **paper-host-only** POST that is NOT called by the CLI, only after an approved draft has been durably moved to `SUBMISSION_PENDING`; all external integration tests use fakes. Real paper POST requires explicit separate paper credentials and operator setup; no account has been connected or order sent in this checkpoint.
+Research-only backtests can be invoked via
+`PYTHONPATH=src python -m signal_vault.backtest PATH_TO_VERIFIED_UTC_HOURLY_CSV --as-of 2026-09-28T00:00:00Z`.
+Use a real, time-stamped dataset and an as-of value after the final closed bar.
+Never label backtest proceeds as broker-confirmed profits.
 
-## External API references and assumptions
+Read `PROJECT_STATUS.md` and `NEXT_STEPS.md` before editing, especially after a
+ChatGPT usage reset. `ARCHITECTURE.md`, `docs/SECURITY.md` and
+`docs/API_PROVIDER_ASSUMPTIONS.md` document the hard constraints.
 
-- [Alpaca paper trading](https://docs.alpaca.markets/us/docs/paper-trading)
-- [Alpaca crypto orders](https://docs.alpaca.markets/us/docs/crypto-orders): crypto supports `gtc`/`ioc`; do **not** reuse equity-only `day` assumptions.
-- [Alpaca trading order IDs](https://docs.alpaca.markets/us/docs/working-with-orders)
+### Secret and account rules
 
-The broker-adapter implementation must validate actual asset minimum order sizes, price/quantity increments, account eligibility, data entitlements and fees against the provider at runtime.
-
-See [`docs/API_PROVIDER_ASSUMPTIONS.md`](docs/API_PROVIDER_ASSUMPTIONS.md) for checked provider constraints and why the paper-development defaults were revised to a $15 maximum buy / $30 aggregate exposure; those values are not preapproved for live trading.
-
-## Source handoff contingency (private repo only)
-
-If the ChatGPT Library-to-GitHub source transfer is unavailable, download the **latest complete checkpoint ZIP** from `/Signal Vault/` in your Library and extract it on your Mac (including `.git`). Then run `bash signal-vault/scripts/publish_private_checkpoint.sh` from the extracted parent directory, or run the script by absolute path. It verifies the existing private remote history, ensures unexpected collaborator code changes are not overwritten, asks you to type `PUBLISH`, and uses an ordinary fast-forward Git push (never force). Requires your Mac to have Git, Python 3, and GitHub authentication. This publishes CODE ONLY: no Alpaca connection, purchases, orders or deposits.
+No live-trading endpoint or switch exists. Do not commit tokens or paste broker
+API secrets into chat; use a separate authorized secret process when testing a
+real Alpaca PAPER account. A future Nov 1, 2026 $100 live pilot is conditional
+on validated broker paper runs, reliable operation and new explicit owner approval.

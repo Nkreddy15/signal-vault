@@ -19,6 +19,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 from .risk import RiskEngine, RiskLimits
+from .paper_audit import PaperHoldings, parse_paper_holdings
 
 PAPER_ROOT = "https://paper-api.alpaca.markets"
 _MIN_NOTIONAL = Decimal("10")
@@ -91,14 +92,29 @@ class PaperAlpacaReadClient:
         return value
 
 
+    def get_positions(self) -> list[Mapping[str, object]]:
+        value = self._transport("/v2/positions", self._paper_key, self._paper_secret)
+        if not isinstance(value, list) or any(not isinstance(row, Mapping) for row in value):
+            raise ValueError("malformed paper positions")
+        return value
+
+    def get_open_orders(self) -> list[Mapping[str, object]]:
+        value = self._transport("/v2/orders?status=open", self._paper_key, self._paper_secret)
+        if not isinstance(value, list) or any(not isinstance(row, Mapping) for row in value):
+            raise ValueError("malformed paper open orders")
+        return value
+
+    def get_holdings(self, *, observed_at: datetime) -> PaperHoldings:
+        """PAPER-only account and positions GET; never infer filled orders."""
+        return parse_paper_holdings(self.get_account(), self.get_positions(),
+                                    observed_at=observed_at)
+
     def readiness(self) -> "PaperReadiness":
         """Read-only gate: never use default simulated broker balance as our $100 cap."""
         account = self.get_account()
         asset = self.get_btc_asset()
-        positions = self._transport("/v2/positions", self._paper_key, self._paper_secret)
-        open_orders = self._transport("/v2/orders?status=open", self._paper_key, self._paper_secret)
-        if not isinstance(positions, list) or not isinstance(open_orders, list):
-            raise ValueError("malformed positions/open-orders responses")
+        positions = self.get_positions()
+        open_orders = self.get_open_orders()
         problems: list[str] = []
         if str(account.get("status", "")).upper() != "ACTIVE":
             problems.append("paper account not active")
@@ -132,6 +148,7 @@ class PaperOrderDraft:
     client_order_id: str
     payload: Mapping[str, str]
     note: str = "DRAFT ONLY: no order submission implemented in this module"
+    reference_price_usd: Decimal | None = None
 
 
 def build_non_executable_draft(intent: TradeIntent, portfolio: PortfolioSnapshot, *,
@@ -178,4 +195,4 @@ def build_non_executable_draft(intent: TradeIntent, portfolio: PortfolioSnapshot
                    "qty": format(qty, "f"), "client_order_id": intent.client_order_id}
     else:
         raise ValueError("unsupported crypto side")
-    return PaperOrderDraft(intent.client_order_id, payload)
+    return PaperOrderDraft(intent.client_order_id, payload, reference_price_usd=reference_price)

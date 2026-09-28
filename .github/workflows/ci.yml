@@ -1,4 +1,4 @@
-name: Phase 1 safety checks
+name: Signal Vault offline safety and fake-paper integration checks
 on:
   push:
   pull_request:
@@ -21,6 +21,10 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
+      - name: Validate explicitly fake provider reconciliation scenario
+        env:
+          PYTHONPATH: src
+        run: python -m signal_vault.fake_paper_scenario
       - name: Verify live mode is refused
         env:
           PYTHONPATH: src

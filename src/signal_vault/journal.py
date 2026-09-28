@@ -29,7 +29,8 @@ CREATE TABLE IF NOT EXISTS drafts (
   side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
   reserved_usd TEXT NOT NULL,
   payload_json TEXT NOT NULL,
-  created_utc TEXT NOT NULL
+  created_utc TEXT NOT NULL,
+  reference_price_usd TEXT
 );
 CREATE TABLE IF NOT EXISTS events (
   seq INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +59,9 @@ class OfflineDraftJournal:
         # :memory: is useful for tests only; no production persistence claim.
         self.connection = sqlite3.connect(str(filename), isolation_level=None, timeout=10)
         self.connection.executescript(_SQL)
+        columns = {row[1] for row in self.connection.execute("PRAGMA table_info(drafts)")}
+        if "reference_price_usd" not in columns:
+            self.connection.execute("ALTER TABLE drafts ADD COLUMN reference_price_usd TEXT")
         self.risk = RiskEngine(RiskLimits(max_single_buy_usd=Decimal("15"),
                                           max_total_long_exposure_usd=Decimal("30")))
 
@@ -95,14 +99,15 @@ class OfflineDraftJournal:
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             existing = self.connection.execute(
-                "SELECT intent_hash, status, payload_json FROM drafts WHERE client_order_id=?",
+                "SELECT intent_hash, status, payload_json, reference_price_usd FROM drafts WHERE client_order_id=?",
                 (intent.client_order_id,)).fetchone()
             if existing:
                 if existing[0] != key_hash:
                     raise ValueError("client order ID collision across different intents")
                 if existing[1] == "VOID":
                     raise ValueError("void draft cannot be resubmitted with an old client ID")
-                result = PaperOrderDraft(intent.client_order_id, json.loads(existing[2]))
+                result = PaperOrderDraft(intent.client_order_id, json.loads(existing[2]),
+                                         reference_price_usd=Decimal(existing[3]) if existing[3] is not None else None)
                 self.connection.execute("COMMIT")
                 return result
             reserved = self._reservations()
@@ -115,9 +120,13 @@ class OfflineDraftJournal:
             reserve = intent.notional_usd if intent.side is Side.BUY else Decimal("0")
             at = checked_at.astimezone(timezone.utc).isoformat()
             self.connection.execute(
-                "INSERT INTO drafts VALUES (?,?,?,?,?,?,?,?)",
+                """INSERT INTO drafts
+                    (client_order_id,intent_hash,signal_id,status,side,reserved_usd,
+                     payload_json,created_utc,reference_price_usd)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
                 (intent.client_order_id, key_hash, intent.signal_id, "DRAFT_APPROVED",
-                 intent.side.value, str(reserve), json.dumps(draft.payload, sort_keys=True), at))
+                 intent.side.value, str(reserve), json.dumps(draft.payload, sort_keys=True), at,
+                 str(reference_price)))
             self.connection.execute("INSERT INTO events (client_order_id,event_type,event_json,created_utc) VALUES (?,?,?,?)",
                                     (intent.client_order_id, "DRAFT_APPROVED",
                                      json.dumps({"signal": intent.signal_id, "reserved_usd": str(reserve)}), at))
@@ -138,6 +147,19 @@ class OfflineDraftJournal:
                 raise KeyError("unknown draft")
             if old[0] != "DRAFT_APPROVED":
                 raise ValueError("draft already void")
+            # A durable paper submission makes the draft non-voidable forever.
+            # Otherwise a caller could release RESERVED capital while an order
+            # is pending or after an ambiguous transport timeout. Fail closed
+            # even if the paper order was already reconciled: its audit history
+            # must remain distinguishable from an intentionally unused draft.
+            has_paper_table = self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='paper_order_states'"
+            ).fetchone()
+            if has_paper_table and self.connection.execute(
+                "SELECT 1 FROM paper_order_states WHERE client_order_id=?",
+                (client_order_id,),
+            ).fetchone():
+                raise PermissionError("submitted paper draft cannot be voided; reconcile provider order")
             self.connection.execute("UPDATE drafts SET status='VOID', reserved_usd='0' WHERE client_order_id=?",
                                     (client_order_id,))
             self.connection.execute("INSERT INTO events (client_order_id,event_type,event_json,created_utc) VALUES (?,?,?,?)",

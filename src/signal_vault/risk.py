@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
-from typing import Tuple
+from typing import Tuple, Mapping
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 
@@ -29,6 +29,20 @@ class RiskLimits:
     allowed_market: str = "crypto"
     allowed_venue: str = "alpaca"
     allowed_symbol: str = "BTC/USD"
+
+    def __post_init__(self) -> None:
+        amounts = (self.max_single_buy_usd, self.max_total_long_exposure_usd,
+                   self.max_daily_equity_loss_usd, self.max_peak_to_current_drawdown_usd)
+        if any(not isinstance(v, Decimal) or not v.is_finite() or v <= 0 for v in amounts):
+            raise ValueError("risk limits must be finite and strictly positive Decimal values")
+        if self.max_single_buy_usd > self.max_total_long_exposure_usd:
+            raise ValueError("single position limit cannot exceed portfolio exposure limit")
+        if (not isinstance(self.max_quote_age_seconds, int) or
+            isinstance(self.max_quote_age_seconds, bool) or
+            not 1 <= self.max_quote_age_seconds <= 300):
+            raise ValueError("invalid maximum quote age")
+        if (self.allowed_market,self.allowed_venue,self.allowed_symbol) != ("crypto","alpaca","BTC/USD"):
+            raise ValueError("only explicitly reviewed BTC/USD risk mandate is enabled")
 
 
 @dataclass(frozen=True)
@@ -66,22 +80,25 @@ class RiskEngine:
             self.limits.allowed_symbol,
         ):
             reasons.append("market, venue or symbol not enabled")
-        if not intent.client_order_id.strip() or not intent.signal_id.strip():
+        if (not isinstance(intent.client_order_id, str) or not intent.client_order_id.strip() or
+            not isinstance(intent.signal_id, str) or not intent.signal_id.strip()):
             reasons.append("missing unique order ID or signal evidence")
         if not _money_valid(intent.notional_usd) or intent.notional_usd == 0:
             reasons.append("invalid non-positive or non-finite order notional")
         if portfolio.halted:
             reasons.append("operator emergency halt is active")
 
+        positions_valid = (isinstance(portfolio.long_positions_usd, Mapping) and
+            all(isinstance(k, str) and k == "BTC/USD" for k in portfolio.long_positions_usd))
         amounts = (
             portfolio.equity_usd,
             portfolio.cash_usd,
             portfolio.peak_equity_usd,
             portfolio.session_start_equity_usd,
             portfolio.open_buy_notional_usd,
-            *portfolio.long_positions_usd.values(),
+            *(portfolio.long_positions_usd.values() if positions_valid else ()),
         )
-        amounts_valid = all(_money_valid(x) for x in amounts)
+        amounts_valid = positions_valid and all(_money_valid(x) for x in amounts)
         if not amounts_valid:
             reasons.append("invalid portfolio accounting snapshot")
         else:
@@ -91,7 +108,7 @@ class RiskEngine:
                 reasons.append("cash exceeds equity; reconcile before ordering")
 
         stamp = intent.quote_timestamp
-        if stamp.tzinfo is None or stamp.utcoffset() is None:
+        if not isinstance(stamp, datetime) or stamp.tzinfo is None or stamp.utcoffset() is None:
             reasons.append("missing timezone-aware market quote")
         else:
             age = current - stamp

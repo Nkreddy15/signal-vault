@@ -20,6 +20,8 @@ from urllib.request import Request, build_opener
 from .alpaca_paper import PAPER_ROOT, PaperAlpacaReadClient, PaperOrderDraft, _NoRedirects
 from .paper_order_state import BrokerObservation, PaperOrderState, Stage
 from .paper_store import PersistentPaperOrderStore
+from .paper_audit import PaperHoldings
+from hmac import compare_digest
 
 _ORDER_PATH = "/v2/orders"
 _COMMON = {"symbol", "side", "type", "time_in_force", "client_order_id"}
@@ -115,11 +117,55 @@ class PaperOnceExecutor:
             raise ValueError("paper credentials required")
         self._key, self._secret, self._store, self._transport = paper_key, paper_secret, store, transport
 
-    def submit_once(self, draft: PaperOrderDraft, *, at: datetime) -> PaperSubmissionOutcome:
+    def submit_once(self, draft: PaperOrderDraft, *, at: datetime,
+                    reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:
+        """Preflight with independent PAPER GETs then persist baseline BEFORE POST.
+
+        A caller cannot swap a different paper account for baseline verification.
+        All preflight failures happen before the persistent submission transition
+        and therefore before any network POST.
+        """
         _check_draft_payload(draft.payload)
         if draft.client_order_id != draft.payload["client_order_id"]:
             raise ValueError("draft ID and payload ID do not match")
-        pending = self._store.begin_submission(draft, at=at)  # COMMIT BEFORE any network attempt
+        if not isinstance(reader, PaperAlpacaReadClient) or (
+            not compare_digest(reader._paper_key, self._key) or
+            not compare_digest(reader._paper_secret, self._secret)
+        ):
+            raise PermissionError("preflight reader must be the same PAPER account as executor")
+        asset = reader.get_btc_asset()  # fail if BTC isn't confirmed tradable
+        try:
+            minimum = Decimal(str(asset["min_order_size"]))
+            step = Decimal(str(asset["min_trade_increment"]))
+            px = draft.reference_price_usd
+        except (KeyError, ValueError, TypeError, ArithmeticError) as exc:
+            raise ValueError("provider asset minimum/increment metadata missing or invalid") from exc
+        if (not minimum.is_finite() or minimum <= 0 or
+            not step.is_finite() or step <= 0 or
+            not isinstance(px, Decimal) or not px.is_finite() or px <= 0):
+            raise ValueError("invalid provider asset constraints or draft reference price")
+        if draft.payload["side"] == "buy":
+            if Decimal(draft.payload["notional"]) / px < minimum:
+                raise PermissionError("approved notional below source minimum; NEVER auto-increase")
+        else:
+            quantity = Decimal(draft.payload["qty"])
+            if quantity < minimum or quantity % step != 0:
+                raise PermissionError("sell below venue minimum/step; manual dust policy required")
+        baseline = reader.get_holdings(observed_at=at)
+        if reader.get_open_orders():
+            raise PermissionError("existing external orders: isolated account required")
+        # This is a PAPER-only isolated portfolio. All other positions fail the
+        # holdings parser. For BUY, use strictly non-marginable cash availability.
+        account = reader.get_account()
+        available = Decimal(str(account.get("non_marginable_buying_power")))
+        if not available.is_finite() or available < 0:
+            raise ValueError("invalid nonmargin buying power")
+        if draft.payload["side"] == "buy" and (
+            baseline.cash_usd < Decimal(draft.payload["notional"]) or
+            available < Decimal(draft.payload["notional"])
+        ):
+            raise PermissionError("insufficient cash-only paper funds")
+        self._store.begin_submission(draft, at=at, baseline=baseline)  # COMMIT BEFORE network POST
         try:
             response = self._transport(draft.payload, self._key, self._secret)
             observation = parse_paper_observation(response, draft.client_order_id)
@@ -145,6 +191,37 @@ class PaperOnceExecutor:
         observation = parse_paper_observation(data, client_order_id)
         state = self._store.observe_provider(observation, at=at)
         return PaperSubmissionOutcome(state.stage, "Paper provider order recovered by client ID", state)
+
+    def reconcile_terminal_once(self, client_order_id: str, *, at: datetime,
+                                reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:
+        """Independent PAPER GETs corroborate terminal order, cash and BTC qty.
+
+        Three-way source evidence is checked inside a single durable DB
+        transaction. Any mismatch retains the reservation and blocks execution.
+        """
+        if (not isinstance(reader, PaperAlpacaReadClient) or
+            not compare_digest(reader._paper_key, self._key) or
+            not compare_digest(reader._paper_secret, self._secret)):
+            raise PermissionError("auditor reader must use the identical PAPER account")
+        state = self._store.get(client_order_id)
+        if state.stage is not Stage.BROKER_TERMINAL_UNRECONCILED:
+            raise ValueError("only terminal, unreconciled paper orders may be audited")
+        if reader.get_open_orders():
+            raise PermissionError("unexpected open broker order prevents isolated audit")
+        order = reader.lookup_order(client_order_id)
+        if order is None:
+            raise ValueError("terminal paper order absent from independent provider lookup")
+        latest_observation = parse_paper_observation(order, client_order_id)
+        if (latest_observation.broker_order_id != state.broker_order_id or
+            latest_observation.provider_status != state.provider_status or
+            latest_observation.cumulative_filled_qty != state.cumulative_filled_qty or
+            latest_observation.filled_avg_price != state.filled_avg_price):
+            raise ValueError("broker terminal order changed; keep reservation")
+        post = reader.get_holdings(observed_at=at)
+        new_state = self._store.finish_reconciliation(client_order_id, at=at,
+                                                       post=post, provider_order=order)
+        return PaperSubmissionOutcome(new_state.stage,
+                                      "Independent paper order/cash/quantity evidence reconciled", new_state)
 
     def poll_known_once(self, client_order_id: str, *, at: datetime,
                         reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:

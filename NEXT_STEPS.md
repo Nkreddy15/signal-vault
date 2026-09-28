@@ -1,13 +1,34 @@
-# Recovery and next engineering tasks (Phase 2)
+# Signal Vault recovery and next work (after Phase 2-D)
 
-**Source of truth:** private https://github.com/Nkreddy15/signal-vault branch `main`. Check the current remote head and files. The old local Phase 1 commit `52c785b...` is historical; the actual GitHub tree was imported and then advanced. Review `PROJECT_STATUS.md` and `ARCHITECTURE.md` first. Run `make test`, `make demo` and `make compile` before making changes. Never reset GitHub to the archived ZIP.
+1. Open the private `Nkreddy15/signal-vault` `main` branch and read
+   `PROJECT_STATUS.md`, `ARCHITECTURE.md` and this file. Confirm latest branch
+   commit and compare against the Library ZIP if there is any source handoff
+   issue. Never force-push or overwrite another session's changes.
+2. Run `make smoke`. It includes offline unit tests, a deliberately fake paper
+   broker lifecycle and Python source compilation. Verify live mode remains
+   permanently rejected. Do not mistake simulation for provider paper fills.
+3. Implement isolated virtual $100 cash/BTC derivation for all production paper
+   proposals, record mark-to-market peak/day baselines, reserve sellable BTC,
+   enforce fee/spread budgets and convert Guardian to a durable preflight
+   using provider-backed snapshots rather than caller-supplied PortfolioSnapshot.
+4. Implement actual read-only paper-account onboarding and a provider API
+   compatibility smoke test **only after separate authorization and secure
+   paper credentials outside this chat**. Verify trading eligibility, account
+   status, BTC/USD metadata, quote/asset mapping, fee calculations and cash
+   with real GETs before activating any provider paper POST.
+5. Paper-only autonomous scheduler: data staleness guard, exactly-once bar
+   processing, persisted operator HALT, interrupt-safe submission, UNKNOWN
+   lookup, terminal audit, full fill/fee ledger and restart recovery. Implement
+   fault injection, single-writer isolation and structured event alerts.
+6. Upgrade local-only dashboard to a private authenticated owner interface;
+   cloud hosting needs separately authorized infrastructure and no secrets in
+   GitHub or ChatGPT. Maintain immutable paper-only code path. Production
+   PostgreSQL and secure deployment are pending.
+7. Only after passing fault tests should an authenticated Alpaca PAPER account
+   enter a 7-day continuous run. A $100 live pilot on Nov 1 remains a
+   conditional target requiring the owner's *new explicit approval*, not an
+   automatic toggle or a promise of returns.
 
-1. **PAPER-SOURCE SYNC FIRST:** GitHub `main` still contains Phase 1 code plus a blocker notice, because the Library file-retrieval transfer returned HTTP 401. The latest complete Phase 2-C source is saved in the Library ZIP. Verify remote head, then transfer/merge the Phase 2-C source tree without force-pushing or discarding unrelated changes. Once restored, complete Alpaca **paper-only** provider adapter behind audited, durable idempotent execution states. A POST must be enabled only in an explicitly separate `paper` adapter, with credentials supplied securely and endpoint pinned to `https://paper-api.alpaca.markets`; there must be no live URL or live toggle. The current Alpaca client is deliberately GET-only, and its order draft is **not executable**.
-2. Integrate the SQLite `paper_store.py` and `paper_executor.py` through a broker reconciler: secure paper credential loading, GET-only account readiness, fresh source-verified quote/order metadata, position/base reservations, provider fills and fees, terminal order + cash + position reconciliation, and robust restart recovery. Move to PostgreSQL with atomic transactions and fault tests before enabling unattended provider paper execution. UNKNOWN_RESULT must NEVER auto-resubmit. `recover_inflight_pending_after_restart` and `poll_known_once` already exist and are mock-tested; wire them into a durable scheduler before any unattended paper order.
-3. With separate approval/credentials for authenticated paper access, verify BTC/USD tradability, precision and current dynamic minimum size from provider metadata. Documentation currently says USD crypto minimum equivalent to $10; paper development draft uses $15 to reduce immediate dust risk (not a guarantee sell stays executable). Verify free feed and clock synchronization.
-4. Add scheduled data reader: fetch last *fully closed* hourly bar, validate contiguous history and freshness; version and hash the data; use HOLD on missing/stale data. Historical research pipeline is implemented and mock-tested but no genuine dataset collected or run to date.
-5. Add private authenticated owner dashboard, operator stop, source-aware paper-vs-hypothetical performance, fees, daily report and cloud deployment manifests. Deployment/payments require separate user authorization.
-6. Run seven uninterrupted days of genuine **broker paper** operation with a logical $100 account (provider may default to a larger paper balance). Reconcile EVERY provider order, fill, reservation and balance. Simulated gains are not proof of live advantage; extend paper testing if insufficient sample or unresolved risk faults.
-7. November 1 live trial is conditional and requires a new explicit decision, separate reviewed live code/service and credentials. Do not add a live codepath during paper development.
-
-**Resume prompt:** `Continue Signal Vault from latest private GitHub main; read PROJECT_STATUS.md and NEXT_STEPS.md, run tests, and work on the paper-only order lifecycle. Do not enable live trading.`
+**Resumption prompt:** `Continue Signal Vault from the latest private GitHub
+checkpoint. Read PROJECT_STATUS.md and NEXT_STEPS.md, run make smoke, continue
+paper-only engineering. No external spending, account access or live orders.`

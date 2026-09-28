@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Mapping
@@ -18,6 +18,7 @@ from typing import Mapping
 from .alpaca_paper import PaperOrderDraft
 from .journal import OfflineDraftJournal
 from .paper_order_state import PaperOrderState, BrokerObservation, Stage
+from .paper_audit import PaperHoldings, validate_terminal_evidence, EPS_BTC, EPS_USD
 
 
 def _state_json(value: PaperOrderState) -> str:
@@ -55,6 +56,34 @@ class PersistentPaperOrderStore:
                 FOREIGN KEY(client_order_id) REFERENCES drafts(client_order_id)
             )
         """)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS paper_account_baselines (
+                client_order_id TEXT PRIMARY KEY,
+                baseline_json TEXT NOT NULL,
+                FOREIGN KEY(client_order_id) REFERENCES drafts(client_order_id)
+            )
+        """)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS paper_virtual_budget (
+                singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
+                account_id TEXT NOT NULL,
+                last_provider_cash TEXT NOT NULL,
+                last_provider_btc TEXT NOT NULL,
+                virtual_cash TEXT NOT NULL,
+                virtual_btc TEXT NOT NULL,
+                updated_utc TEXT NOT NULL
+            )
+        """)
+        self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS operator_controls (
+                singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
+                halted INTEGER NOT NULL CHECK (halted IN (0,1)),
+                reason TEXT NOT NULL,
+                updated_utc TEXT NOT NULL
+            )
+        """)
+        self.connection.execute("""INSERT OR IGNORE INTO operator_controls
+            VALUES(1,0,'initial paper-only operating state','1970-01-01T00:00:00+00:00')""")
 
     def close(self) -> None:
         self.journal.close()
@@ -78,6 +107,50 @@ class PersistentPaperOrderStore:
     def get(self, client_order_id: str) -> PaperOrderState:
         return self._state_in_transaction(client_order_id)
 
+    def budget_snapshot(self) -> Mapping[str, str] | None:
+        """Isolated virtual $100 paper subledger, NOT the broker default balance."""
+        row = self.connection.execute("""
+            SELECT account_id,last_provider_cash,last_provider_btc,
+                   virtual_cash,virtual_btc,updated_utc
+              FROM paper_virtual_budget WHERE singleton=1
+        """).fetchone()
+        if row is None:
+            return None
+        return dict(zip(("account_id","last_provider_cash","last_provider_btc",
+                         "virtual_cash","virtual_btc","updated_utc"), row))
+
+    def is_operator_halted(self) -> bool:
+        row = self.connection.execute("SELECT halted FROM operator_controls WHERE singleton=1").fetchone()
+        # Missing or corrupt safety controls must STOP, never silently resume.
+        return row is None or row[0] != 0
+
+    def set_operator_halt(self, halted: bool, *, reason: str, at: datetime) -> None:
+        """Durably block new broker submissions, including across restarts.
+
+        Halt does not pretend to cancel existing external orders: the auditor
+        must still poll/resolve a provider order and notify the operator.
+        """
+        if not isinstance(halted, bool) or not isinstance(reason, str) or not reason.strip():
+            raise ValueError("an explicit operator action and reason are required")
+        if at.tzinfo is None or at.utcoffset() is None:
+            raise ValueError("aware audit event time required")
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            if not halted and self.has_unresolved_provider_order():
+                raise PermissionError("cannot resume while a provider paper order is unresolved")
+            self.connection.execute("""UPDATE operator_controls SET halted=?,reason=?,updated_utc=?
+                                       WHERE singleton=1""",
+                                    (int(halted), reason, at.astimezone(timezone.utc).isoformat()))
+            self.connection.execute("""INSERT INTO events (client_order_id,event_type,event_json,created_utc)
+                                       VALUES (?,?,?,?)""",
+                                    ("_operator_", "HALT_ENABLED" if halted else "HALT_CLEARED",
+                                     json.dumps({"reason":reason}, sort_keys=True),
+                                     at.astimezone(timezone.utc).isoformat()))
+            self.connection.execute("COMMIT")
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+
     def has_unresolved_provider_order(self) -> bool:
         return any(_parse_state(x[0]).blocks_new_execution for x in self.connection.execute(
             "SELECT state_json FROM paper_order_states"))
@@ -90,28 +163,77 @@ class PersistentPaperOrderStore:
                                    VALUES (?,?,?,?)""",
                                 (state.client_order_id, event, json.dumps(details, sort_keys=True), stamp))
 
-    def begin_submission(self, draft: PaperOrderDraft, *, at: datetime) -> PaperOrderState:
-        """Atomically reserve the right to TRY ONE external paper POST later.
+    def begin_submission(self, draft: PaperOrderDraft, *, at: datetime,
+                         baseline: PaperHoldings) -> PaperOrderState:
+        """Persist verified before-order cash/BTC baseline BEFORE the one POST.
 
         No POST is implemented here. If a crash follows this commit, the next
         worker must perform provider lookup before making any other attempt.
         """
         if at.tzinfo is None or at.utcoffset() is None:
             raise ValueError("timezone required")
+        if not isinstance(baseline, PaperHoldings):
+            raise ValueError("paper provider baseline required before submission")
+        if baseline.observed_at > at or at - baseline.observed_at > timedelta(seconds=90):
+            raise ValueError("stale/future provider baseline: no submission")
         self.connection.execute("BEGIN IMMEDIATE")
         try:
-            row = self.connection.execute("SELECT status,payload_json FROM drafts WHERE client_order_id=?",
+            row = self.connection.execute("SELECT status,payload_json,reference_price_usd,created_utc FROM drafts WHERE client_order_id=?",
                                           (draft.client_order_id,)).fetchone()
-            if not row or row[0] != "DRAFT_APPROVED" or json.loads(row[1]) != dict(draft.payload):
+            if (not row or row[0] != "DRAFT_APPROVED" or
+                json.loads(row[1]) != dict(draft.payload) or
+                row[2] is None or draft.reference_price_usd is None or
+                Decimal(row[2]) != draft.reference_price_usd):
                 raise PermissionError("only a matching, durable, Guardian-approved draft may proceed")
+            created_at = datetime.fromisoformat(row[3])
+            if created_at > at or at - created_at > timedelta(seconds=90):
+                raise PermissionError("durable paper proposal is stale; do not submit")
             if self.connection.execute("SELECT 1 FROM paper_order_states WHERE client_order_id=?",
                                        (draft.client_order_id,)).fetchone():
                 raise ValueError("order ID already entered submission; NEVER post again")
+            if self.is_operator_halted():
+                raise PermissionError("persistent operator emergency HALT is engaged")
             if self.has_unresolved_provider_order():
                 raise PermissionError("an order is unresolved; reconcile before any other order")
+            # The provider's paper balance may default to $100,000. Anchor a
+            # separate immutable $100 test budget and track only OUR independently
+            # reconciled order deltas. Deposits/manual orders that change the
+            # actual provider cash/BTC between our trades block further POSTs.
+            budget = self.budget_snapshot()
+            if budget is None:
+                if baseline.btc_qty != 0 or baseline.cash_usd < Decimal("100"):
+                    raise PermissionError("initial isolated paper account needs zero BTC and >= $100 cash")
+                virtual_cash, virtual_btc = Decimal("100"), Decimal("0")
+                self.connection.execute("""INSERT INTO paper_virtual_budget VALUES(1,?,?,?,?,?,?)""",
+                    (baseline.account_id, str(baseline.cash_usd), str(baseline.btc_qty),
+                     str(virtual_cash), str(virtual_btc), at.astimezone(timezone.utc).isoformat()))
+            else:
+                if (budget["account_id"] != baseline.account_id or
+                    abs(Decimal(budget["last_provider_cash"]) - baseline.cash_usd) > EPS_USD or
+                    abs(Decimal(budget["last_provider_btc"]) - baseline.btc_qty) > EPS_BTC):
+                    raise PermissionError("external paper holdings changed without our reconciliation")
+                virtual_cash, virtual_btc = (Decimal(budget["virtual_cash"]),
+                                             Decimal(budget["virtual_btc"]))
+            if draft.payload["side"] == "buy":
+                # Independently mark *our* virtual $100 subaccount at the
+                # originally risk-checked quote; ignore default paper buying
+                # power. A stale/fabricated external PortfolioSnapshot cannot
+                # trick the executor into bypassing the base loss pause.
+                marked_equity = virtual_cash + virtual_btc * draft.reference_price_usd
+                if marked_equity <= Decimal("97"):
+                    raise PermissionError("isolated virtual account lost >= $3 from initial $100; halt new buys")
+                amount = Decimal(draft.payload["notional"])
+                if amount > virtual_cash:
+                    raise PermissionError("virtual $100 paper cash balance exhausted")
+                if (virtual_btc * draft.reference_price_usd + amount > Decimal("30")):
+                    raise PermissionError("independently tracked BTC exposure exceeds fixed $30 cap")
+            elif Decimal(draft.payload["qty"]) > virtual_btc + EPS_BTC:
+                raise PermissionError("sell quantity exceeds reconciled virtual BTC holdings")
             new = PaperOrderState(draft.client_order_id).start_submission()
             self.connection.execute("INSERT INTO paper_order_states VALUES (?,?,?)",
                                     (draft.client_order_id, _state_json(new), at.astimezone(timezone.utc).isoformat()))
+            self.connection.execute("INSERT INTO paper_account_baselines VALUES (?,?)",
+                                    (draft.client_order_id, json.dumps(baseline.canonical(), sort_keys=True)))
             self.connection.execute("""INSERT INTO events (client_order_id,event_type,event_json,created_utc)
                                        VALUES (?,?,?,?)""",
                                     (draft.client_order_id, "SUBMISSION_PENDING",
@@ -178,25 +300,56 @@ class PersistentPaperOrderStore:
             raise
 
     def finish_reconciliation(self, client_order_id: str, *, at: datetime,
-                              provider_cash_verified: bool, provider_position_verified: bool,
-                              provider_order_verified: bool) -> PaperOrderState:
-        """Release local reservation only AFTER independent provider checks.
+                              post: PaperHoldings,
+                              provider_order: Mapping[str, object]) -> PaperOrderState:
+        """Release reservation ONLY after independent source evidence reconciles.
 
-        Provider-verification booleans must come from a separate authenticated
-        auditor; this prototype deliberately doesn't pretend it performed one.
+        Caller-supplied success booleans are expressly NOT accepted. The before
+        snapshot is captured durably before POST. This check must be run using
+        fresh paper account, position and exact order GETs; inconsistent evidence
+        leaves the order UNRECONCILED, retaining the capital reservation.
         """
         if at.tzinfo is None or at.utcoffset() is None:
             raise ValueError("timezone required")
+        if not isinstance(post, PaperHoldings):
+            raise ValueError("source-derived post-trade holdings required")
         self.connection.execute("BEGIN IMMEDIATE")
         try:
-            new = self._state_in_transaction(client_order_id).confirm_reconciled(
-                provider_cash_verified=provider_cash_verified,
-                provider_position_verified=provider_position_verified,
-                provider_order_verified=provider_order_verified)
-            self._save(new, "PROVIDER_RECONCILED",
-                       {"provider_cash": True, "provider_position": True, "provider_order": True}, at)
+            state = self._state_in_transaction(client_order_id)
+            baseline_row = self.connection.execute(
+                "SELECT baseline_json FROM paper_account_baselines WHERE client_order_id=?",
+                (client_order_id,)).fetchone()
+            draft_row = self.connection.execute(
+                "SELECT payload_json FROM drafts WHERE client_order_id=?",
+                (client_order_id,)).fetchone()
+            if baseline_row is None or draft_row is None:
+                raise ValueError("missing durable baseline or original approved order")
+            baseline = PaperHoldings.from_canonical(json.loads(baseline_row[0]))
+            digest = validate_terminal_evidence(state, json.loads(draft_row[0]), baseline,
+                                                post, provider_order, at=at)
+            budget = self.budget_snapshot()
+            if (budget is None or budget["account_id"] != baseline.account_id or
+                abs(Decimal(budget["last_provider_cash"]) - baseline.cash_usd) > EPS_USD or
+                abs(Decimal(budget["last_provider_btc"]) - baseline.btc_qty) > EPS_BTC):
+                raise ValueError("paper virtual ledger not anchored to this provider baseline")
+            next_cash = Decimal(budget["virtual_cash"]) + post.cash_usd - baseline.cash_usd
+            next_btc = Decimal(budget["virtual_btc"]) + post.btc_qty - baseline.btc_qty
+            if next_cash < -EPS_USD or next_btc < -EPS_BTC:
+                raise ValueError("reconciled broker order exceeded isolated virtual capital")
+            if next_cash < 0: next_cash = Decimal("0")  # provider rounding only
+            if next_btc < 0: next_btc = Decimal("0")
+            new = state.confirm_reconciled(provider_cash_verified=True,
+                                           provider_position_verified=True,
+                                           provider_order_verified=True)
+            self._save(new, "PROVIDER_EVIDENCE_RECONCILED",
+                       {"evidence_sha256": digest, "source": "alpaca-paper"}, at)
             self.connection.execute("UPDATE drafts SET reserved_usd='0' WHERE client_order_id=?",
                                     (client_order_id,))
+            self.connection.execute("""UPDATE paper_virtual_budget
+                 SET last_provider_cash=?,last_provider_btc=?,virtual_cash=?,virtual_btc=?,updated_utc=?
+                 WHERE singleton=1""",
+                (str(post.cash_usd),str(post.btc_qty),str(next_cash),str(next_btc),
+                 at.astimezone(timezone.utc).isoformat()))
             self.connection.execute("COMMIT")
             return new
         except BaseException:
