@@ -15,6 +15,7 @@ Python 3.11+ is sufficient; no API keys or paid services are needed.
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install -e '.[research]'
 PYTHONPATH=src python -m unittest discover -s tests -v
 PYTHONPATH=src python -m signal_vault
 ```
