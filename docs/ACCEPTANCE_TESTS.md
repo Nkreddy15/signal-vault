@@ -55,3 +55,12 @@
   append-only audit and DB-level unique unresolved paper order; static source tests pass.
 - [ ] Actual PostgreSQL migration, Python transactional port, concurrent worker tests,
   crash/restart, fee/fill reconciliation and provider smoke remain not implemented.
+
+## Phase 2I integration and safety (offline only)
+
+- [x] Optional JSON-only public-feature AI veto cannot submit or override Guardian, defaults OFF and cannot veto risk-reducing SELL.
+- [x] Optional offline logistic ML confirmation/artifact fingerprint/promotion receipt gate under fake/synthetic tests; not provider data or proof of edge.
+- [x] Frozen chronological research protocols, source-labelled reporting, isolated data-capture interfaces and bounded READ-only retries under fakes.
+- [x] Owner API 127.0.0.1:8765 and separate HTML read-only monitor :8766; status/resume cannot create missing journal.
+- [x] 225/225 combined offline tests passing, compilation and offline dry-run PASS.
+- [ ] Authenticated real PAPER provider schema/readiness, genuine dataset, seven-day actual paper execution and transactional Postgres port remain outstanding.

@@ -15,6 +15,8 @@ _ALERT_STATES = {
     "BLOCKED_FEE_AUDIT",
     "BLOCKED_PROVIDER_DRIFT",
     "BLOCKED_RUNTIME_EXCEPTION",
+    "BLOCKED_BACKUP_FAILURE",
+    "BLOCKED_REPORTING_FAILURE",
     "HOLD_BAD_MARKET_DATA",
     "OPERATOR_HALTED",
 }
@@ -24,7 +26,7 @@ def alert_severity(state: str) -> str | None:
     if state not in _ALERT_STATES:
         return None
     if state in {"BLOCKED_PROVIDER_DRIFT", "BLOCKED_RECONCILIATION", "BLOCKED_FEE_AUDIT",
-                 "BLOCKED_RUNTIME_EXCEPTION"}:
+                 "BLOCKED_RUNTIME_EXCEPTION", "BLOCKED_BACKUP_FAILURE", "BLOCKED_REPORTING_FAILURE"}:
         return "critical"
     if state == "OPERATOR_HALTED":
         return "info"

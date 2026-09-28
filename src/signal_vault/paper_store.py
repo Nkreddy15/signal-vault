@@ -96,6 +96,12 @@ class PersistentPaperOrderStore:
                 halt_reason TEXT NOT NULL,
                 updated_utc TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS logical_marks (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                mark_price TEXT NOT NULL,
+                equity_usd TEXT NOT NULL,
+                marked_utc TEXT NOT NULL
+            );
         """)
         self.connection.execute(
             """INSERT OR IGNORE INTO logical_portfolio VALUES
@@ -318,6 +324,42 @@ class PersistentPaperOrderStore:
                 "fees_usd_equiv": values[4], "peak_equity_usd": values[5],
                 "session_start_equity_usd": values[6]}
 
+    def trade_statistics(self) -> Mapping[str, object]:
+        row = self.connection.execute(
+            "SELECT COUNT(*),"
+            "SUM(CASE WHEN side='buy' THEN 1 ELSE 0 END),"
+            "SUM(CASE WHEN side='sell' THEN 1 ELSE 0 END),"
+            "MIN(applied_utc),MAX(applied_utc) FROM applied_provider_orders"
+        ).fetchone()
+        if row is None:
+            raise ValueError("trade statistics unavailable")
+        return {
+            "provider_order_count": int(row[0] or 0),
+            "buy_count": int(row[1] or 0),
+            "sell_count": int(row[2] or 0),
+            "first_applied_utc": row[3],
+            "last_applied_utc": row[4],
+            "pending_fee_audits": len(self.pending_fee_order_ids()),
+            "unresolved_provider_orders": sum(1 for state in self.list_states() if state.blocks_new_execution),
+        }
+
+    def last_mark(self) -> Mapping[str, object] | None:
+        row = self.connection.execute(
+            "SELECT mark_price,equity_usd,marked_utc FROM logical_marks WHERE singleton=1"
+        ).fetchone()
+        if row is None:
+            return None
+        price, equity = Decimal(row[0]), Decimal(row[1])
+        try:
+            stamp = datetime.fromisoformat(row[2])
+        except ValueError as exc:
+            raise ValueError("logical mark timestamp corrupt") from exc
+        if (not price.is_finite() or price <= 0 or not equity.is_finite() or equity < 0 or
+                stamp.tzinfo is None or stamp.utcoffset() is None):
+            raise ValueError("logical mark corrupt")
+        return {"mark_price": price, "equity_usd": equity,
+                "marked_utc": stamp.astimezone(timezone.utc)}
+
     def mark_portfolio(self, *, mark_price: Decimal, at: datetime,
                        reset_session: bool = False, halted: bool = False) -> PortfolioSnapshot:
         """Build the Guardian snapshot from Signal Vault's own logical $100 ledger.
@@ -351,6 +393,10 @@ class PersistentPaperOrderStore:
             self.connection.execute(
                 "UPDATE logical_portfolio SET peak_equity_usd=?,session_start_equity_usd=?,updated_utc=? WHERE singleton=1",
                 (str(peak), str(session), utc_at.isoformat()))
+            self.connection.execute(
+                "INSERT INTO logical_marks(singleton,mark_price,equity_usd,marked_utc) VALUES (1,?,?,?) "
+                "ON CONFLICT(singleton) DO UPDATE SET mark_price=excluded.mark_price,equity_usd=excluded.equity_usd,marked_utc=excluded.marked_utc",
+                (str(mark_price), str(equity), utc_at.isoformat()))
             pending = self.journal.total_reserved_usd()
             self.connection.execute("COMMIT")
             positions = {"BTC/USD": position_value} if qty > 0 else {}

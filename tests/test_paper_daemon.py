@@ -43,6 +43,41 @@ class PaperDaemonTests(unittest.TestCase):
             self.assertFalse(runner.calls[0][1])
 
 
+
+
+    def test_reporting_failure_stops_after_preserving_cycle_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); now=datetime(2026,9,28,22,tzinfo=timezone.utc); stop=StopFlag()
+            class One:
+                def run_once(self, **kwargs):
+                    return PaperCycleResult("PAPER_SUBMISSION_RECORDED","x",client_order_id="sv-x",provider_stage="BROKER_ACCEPTED",paper_post_attempted=True)
+            with PersistentPaperOrderStore(root/"paper.db") as store:
+                results=run_loop(runner=One(),store=store,allow_submission=True,
+                                 health_path=root/"health",stop=stop,clock=lambda:now,
+                                 sleeper=lambda _:None,report_hook=lambda _: (_ for _ in ()).throw(OSError("SECRET")),
+                                 log_cycle=None)
+            self.assertEqual(results[-1].state,"BLOCKED_REPORTING_FAILURE")
+            self.assertEqual(results[-1].client_order_id,"sv-x")
+            self.assertTrue(results[-1].paper_post_attempted)
+            self.assertNotIn("SECRET",(root/"health").read_text())
+
+    def test_backup_failure_blocks_cycle_before_runner(self):
+        class MustNotRun:
+            def run_once(self, **kwargs):
+                self.fail = True
+                raise AssertionError("runner must not execute")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); now = datetime(2026, 9, 28, 22, tzinfo=timezone.utc)
+            stop=StopFlag(); runner=MustNotRun()
+            with PersistentPaperOrderStore(root / "paper.db") as store:
+                results=run_loop(runner=runner,store=store,allow_submission=False,
+                                 health_path=root/"h",stop=stop,clock=lambda:now,
+                                 sleeper=lambda _:None,backup_hook=lambda _: (_ for _ in ()).throw(OSError("SECRET disk")),
+                                 log_cycle=None)
+            self.assertEqual(results[-1].state,"BLOCKED_BACKUP_FAILURE")
+            self.assertTrue(stop.requested)
+            self.assertNotIn("SECRET",(root/"h").read_text())
+
     def test_unexpected_cycle_failure_is_secret_free_and_stops(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

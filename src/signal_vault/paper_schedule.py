@@ -29,6 +29,6 @@ def next_delay_seconds(result: PaperCycleResult, *, now: datetime) -> float:
         return next_closed_hour_delay(now)
     if state == "OPERATOR_HALTED":
         return 60.0
-    if state in {"HOLD", "ALREADY_PROCESSED", "REJECTED"}:
+    if state in {"HOLD", "HOLD_ADVISORY", "ALREADY_PROCESSED", "REJECTED"}:
         return next_closed_hour_delay(now)
     return 60.0

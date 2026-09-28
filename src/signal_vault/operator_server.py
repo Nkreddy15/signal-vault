@@ -121,7 +121,7 @@ def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHan
 
 
 def create_server(db_path: str | Path, *, token: str, host: str = "127.0.0.1",
-                  port: int = 8765) -> ThreadingHTTPServer:
+                  port: int = 8766) -> ThreadingHTTPServer:
     try:
         allowed = ip_address(host).is_loopback and host == "127.0.0.1"
     except ValueError:
@@ -138,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Private loopback-only paper ledger monitor")
     parser.add_argument("--db", default=os.environ.get("SIGNAL_VAULT_PAPER_DB", "./data/signal-vault-paper.sqlite3"))
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--port", type=int, default=8766)
     args = parser.parse_args(argv)
     token = os.environ.get("SIGNAL_VAULT_OPERATOR_TOKEN", "")
     with create_server(args.db, token=token, host=args.host, port=args.port) as server:

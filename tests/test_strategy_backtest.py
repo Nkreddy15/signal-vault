@@ -54,6 +54,8 @@ class StrategyBacktestTests(unittest.TestCase):
         self.assertGreaterEqual(len(result.fills), 1)
         self.assertTrue(all(f.estimated_fee_usd > 0 for f in result.fills))
         self.assertEqual(result.net_pnl_usd, result.final_equity_usd - Decimal("100"))
+        self.assertEqual(result.passive_same_allocation_net_pnl_usd,
+                         result.passive_same_allocation_final_equity_usd - Decimal("100"))
         self.assertEqual(result.to_dict()["kind"], "OFFLINE_HYPOTHETICAL_RESEARCH_NOT_PROVIDER_PAPER")
         signal = None
         for i in range(cfg.slow_hours + 2, len(seq)):

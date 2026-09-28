@@ -22,8 +22,10 @@ from decimal import Decimal, InvalidOperation
 from typing import Protocol, Sequence
 
 from .alpaca_paper import PaperAlpacaReadClient, PaperOrderDraft
+from .ai_advisory import BoundedAdvisoryGate
 from .domain import Side, TradeIntent
 from .market_data import Bar, CryptoQuote, validate_bars
+from .ml_confirmation import MlArtifact, apply_confirmation
 from .paper_executor import PaperOnceExecutor
 from .paper_order_state import Stage
 from .paper_reconciliation import audit_terminal_paper_order, release_verified_terminal
@@ -110,6 +112,8 @@ class PaperCycleRunner:
                  bars: BarProvider,
                  quotes: QuoteProvider,
                  strategy: StrategyConfig | None = None,
+                 confirmation_artifact: MlArtifact | None = None,
+                 advisor: BoundedAdvisoryGate | None = None,
                  history_hours: int = 72) -> None:
         if history_hours < 30 or history_hours > 500:
             raise ValueError("history_hours outside reviewed bounds")
@@ -119,7 +123,9 @@ class PaperCycleRunner:
         self.bars = bars
         self.quotes = quotes
         self.strategy = strategy or StrategyConfig()
+        self.confirmation_artifact = confirmation_artifact
         self.history_hours = history_hours
+        self.advisor = advisor  # Optional and NEVER loaded by default worker/daemon.
 
     def _recover_and_reconcile(self, *, now: datetime) -> PaperCycleResult | None:
         recovery = PaperRecoverySupervisor(store=self.store, executor=self.executor,
@@ -201,6 +207,15 @@ class PaperCycleRunner:
                                     "operator emergency halt active" +
                                     (f": {halt_reason}" if halt_reason else ""))
         signal = generate_signal(history, self.strategy)
+        if self.confirmation_artifact is not None:
+            try:
+                signal = apply_confirmation(signal, history, self.confirmation_artifact)
+            except Exception as exc:
+                return PaperCycleResult(
+                    "HOLD_ML_CONFIRMATION_FAILURE",
+                    f"ML confirmation failed closed: {type(exc).__name__}: {exc}",
+                    evidence_id=signal.evidence_id,
+                )
         if signal.action is Action.HOLD:
             return PaperCycleResult("HOLD", signal.explanation, evidence_id=signal.evidence_id)
 
@@ -211,6 +226,20 @@ class PaperCycleRunner:
         if signal.action is Action.SELL and logical_btc <= 0:
             return PaperCycleResult("HOLD", "no reconciled BTC inventory to sell",
                                     evidence_id=signal.evidence_id)
+
+        # Advisory is a bounded NEW-MONEY veto only; never give a model broker
+        # tools or allow it to prevent the deterministic risk-reducing SELL path.
+        # Any injected model/schema/transport failure is HOLD without a draft.
+        if self.advisor is not None and signal.action is Action.BUY:
+            try:
+                advisory = self.advisor.review(signal=signal, quote=quote)
+            except Exception:
+                return PaperCycleResult("HOLD_ADVISORY", "advisory unavailable; HOLD",
+                                        evidence_id=signal.evidence_id)
+            if not advisory.continue_to_guardian:
+                return PaperCycleResult("HOLD_ADVISORY",
+                                        f"advisory requested HOLD: {advisory.reason_code}",
+                                        evidence_id=signal.evidence_id)
 
         side = Side(signal.action.value)
         execution_price = quote.execution_reference(side.value)

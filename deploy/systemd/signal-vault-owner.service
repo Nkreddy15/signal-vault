@@ -1,0 +1,29 @@
+[Unit]
+Description=Signal Vault loopback-only owner control API
+After=signal-vault-paper.service
+
+[Service]
+Type=simple
+User=signalvault
+Group=signalvault
+WorkingDirectory=/opt/signal-vault
+Environment=PYTHONPATH=/opt/signal-vault/src
+# Separate secret file: owner API does NOT need broker API credentials.
+EnvironmentFile=/etc/signal-vault/owner.env
+ExecStart=/opt/signal-vault/.venv/bin/python -m signal_vault.owner_api
+Restart=on-failure
+RestartSec=15
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/signal-vault
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+Environment=SIGNAL_VAULT_PAPER_DB=/var/lib/signal-vault/paper.sqlite3
+Environment=SIGNAL_VAULT_HEALTH_FILE=/var/lib/signal-vault/health.json
+Environment=SIGNAL_VAULT_OWNER_HOST=127.0.0.1
+Environment=SIGNAL_VAULT_OWNER_PORT=8765
+
+[Install]
+WantedBy=multi-user.target

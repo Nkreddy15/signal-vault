@@ -18,10 +18,12 @@ from typing import Mapping
 
 from .alpaca_paper import PaperAlpacaReadClient
 from .market_data import AlpacaAuthenticatedCryptoBars, AlpacaAuthenticatedLatestQuote
+from .ml_policy import load_promoted_paper_artifact
 from .paper_credentials import PaperCredentials
 from .paper_executor import PaperOnceExecutor
 from .paper_runtime import PaperCycleRunner
 from .paper_store import PersistentPaperOrderStore
+from .preflight import check_sqlite_runtime
 from .runtime_lock import RuntimeFileLock
 
 PAPER_SUBMISSION_ACK = "I_ACKNOWLEDGE_ALPACA_PAPER_ORDERS_ONLY"
@@ -50,17 +52,33 @@ def _db_path(env: Mapping[str, str]) -> Path:
     return path
 
 
+
+def _ml_artifact_from_env(env: Mapping[str, str]):
+    artifact_path = env.get("SIGNAL_VAULT_ML_ARTIFACT", "").strip()
+    receipt_path = env.get("SIGNAL_VAULT_ML_PROMOTION_RECEIPT", "").strip()
+    if bool(artifact_path) != bool(receipt_path):
+        raise ValueError("ML artifact and paper-shadow promotion receipt must be configured together")
+    if not artifact_path:
+        return None
+    if "\x00" in artifact_path or "\x00" in receipt_path:
+        raise ValueError("invalid ML artifact path")
+    artifact, _receipt = load_promoted_paper_artifact(artifact_path, receipt_path)
+    return artifact
+
+
 def main() -> int:
     env = os.environ
     credentials = PaperCredentials.from_environment(env)
     allow_submission = paper_submission_authorized(env)
     db = _db_path(env)
+    ml_artifact = _ml_artifact_from_env(env)
 
     raw_lock = env.get("SIGNAL_VAULT_RUNTIME_LOCK", "").strip()
     if "\x00" in raw_lock:
         raise ValueError("invalid paper runtime lock path")
     lock_path = Path(raw_lock).expanduser() if raw_lock else db.with_name(db.name + ".lock")
     with RuntimeFileLock(lock_path), PersistentPaperOrderStore(db) as store:
+        check_sqlite_runtime(db)
         reader = PaperAlpacaReadClient(credentials.key_id, credentials.secret_key)
         executor = PaperOnceExecutor(paper_key=credentials.key_id,
                                      paper_secret=credentials.secret_key,
@@ -71,6 +89,7 @@ def main() -> int:
             executor=executor,
             bars=AlpacaAuthenticatedCryptoBars(credentials.key_id, credentials.secret_key),
             quotes=AlpacaAuthenticatedLatestQuote(credentials.key_id, credentials.secret_key),
+            confirmation_artifact=ml_artifact,
         )
         result = runner.run_once(now=datetime.now(timezone.utc),
                                  allow_paper_submission=allow_submission)

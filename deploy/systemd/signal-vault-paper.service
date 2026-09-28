@@ -1,0 +1,36 @@
+[Unit]
+Description=Signal Vault ALPACA PAPER-only daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Template assumes a dedicated unprivileged Linux account named signalvault.
+User=signalvault
+Group=signalvault
+WorkingDirectory=/opt/signal-vault
+Environment=PYTHONPATH=/opt/signal-vault/src
+# This secret file must be created outside Git with mode 0600. Keep
+# SIGNAL_VAULT_PAPER_ORDER_SUBMISSION unset during read-only integration.
+EnvironmentFile=/etc/signal-vault/paper.env
+ExecStart=/opt/signal-vault/.venv/bin/python -m signal_vault.paper_daemon
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/signal-vault
+StateDirectory=signal-vault
+StateDirectoryMode=0700
+Environment=SIGNAL_VAULT_PAPER_DB=/var/lib/signal-vault/paper.sqlite3
+Environment=SIGNAL_VAULT_RUNTIME_LOCK=/var/lib/signal-vault/paper.lock
+Environment=SIGNAL_VAULT_HEALTH_FILE=/var/lib/signal-vault/health.json
+Environment=SIGNAL_VAULT_ALERT_FILE=/var/lib/signal-vault/alerts.jsonl
+Environment=SIGNAL_VAULT_BACKUP_DIR=/var/lib/signal-vault/backups
+Environment=SIGNAL_VAULT_REPORT_FILE=/var/lib/signal-vault/report.json
+
+[Install]
+WantedBy=multi-user.target

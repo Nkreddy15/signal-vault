@@ -19,6 +19,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 from .risk import RiskEngine, RiskLimits
+from .read_retry import retry_read
 from .venue_rules import CryptoVenueRules
 
 PAPER_ROOT = "https://paper-api.alpaca.markets"
@@ -42,9 +43,11 @@ def _get_paper_json(path: str, key: str, secret: str) -> object:
     req = Request(PAPER_ROOT + path, method="GET", headers={
         "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
         "Accept": "application/json", "User-Agent": "SignalVault/0.2"})
-    try:
+    def read_once() -> bytes:
         with build_opener(_NoRedirects).open(req, timeout=12) as response:
-            raw = response.read(1_000_001)
+            return response.read(1_000_001)
+    try:
+        raw = retry_read(read_once)
     except HTTPError as exc:
         if exc.code == 404 and path.startswith("/v2/orders:by_client_order_id"):
             return {"found": False}

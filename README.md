@@ -1,6 +1,6 @@
 # SIGNAL VAULT
 
-**Phase 2-F — unattended paper-runtime hardening (provider credentials/order submission NOT activated)**
+**Phase 2-I — paper-only research, risk, operator tools (provider credentials/order submission NOT activated)**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
@@ -42,6 +42,16 @@ SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m
 ```
 
 Do not run `paper-daemon` until the authenticated read-only smoke gate is completed.
+
+## Phase 2I: combined offline research and operator groundwork
+
+The project includes a strict research/ML confirmation path, bounded optional
+LLM advisory with no default API client, source-labelled reporting, validated
+local backups and two distinct loopback control surfaces: a **read-only** HTML
+monitor on 127.0.0.1:8766 and a separately authenticated **paper HALT/resume
+only** JSON control API on 127.0.0.1:8765. No live orders, real paper orders or
+provider API credentials have been used. All 225 local offline tests passed at
+the Phase 2I checkpoint. See `PROJECT_STATUS.md` for current actual gates.
 
 ## Phase 2H: isolated PostgreSQL PAPER critical-ledger design
 

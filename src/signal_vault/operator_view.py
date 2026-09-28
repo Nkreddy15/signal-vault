@@ -74,7 +74,7 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
                  realized_pnl_usd, fees_usd_equiv, peak_equity_usd,
                  session_start_equity_usd, updated_utc
                  FROM logical_portfolio WHERE singleton=1""").fetchone()
-        control = con.execute("""SELECT operator_halted, updated_utc
+        control = con.execute("""SELECT operator_halted, halt_reason, updated_utc
                   FROM runtime_controls WHERE singleton=1""").fetchone()
         session = con.execute("""SELECT session_date_utc FROM risk_session_meta
                   WHERE singleton=1""").fetchone()
@@ -82,6 +82,10 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
             raise OperatorSnapshotError("required singleton ledger records missing")
         if control["operator_halted"] not in (0, 1):
             raise OperatorSnapshotError("invalid operator halt state")
+        halt_reason = control["halt_reason"]
+        if (not isinstance(halt_reason, str) or len(halt_reason) > 500
+                or any(ch in halt_reason for ch in "\r\n\x00")):
+            raise OperatorSnapshotError("invalid operator halt reason")
         amount_keys = ("cash_usd", "btc_qty", "btc_cost_basis_usd", "realized_pnl_usd",
                        "fees_usd_equiv", "peak_equity_usd", "session_start_equity_usd")
         amounts = {name: _number(account[name], nonnegative=name != "realized_pnl_usd")
@@ -119,6 +123,17 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
                          ORDER BY seq DESC LIMIT ?""", (max_items,)).fetchall()
         applied_count = con.execute("SELECT count(*) FROM applied_provider_orders").fetchone()[0]
         pending_fees = con.execute("SELECT count(*) FROM pending_fee_audits").fetchone()[0]
+        # Optional on older Phase 2G journals. Never CREATE/migrate on read.
+        has_marks = con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='logical_marks'").fetchone()
+        mark = con.execute("SELECT mark_price,equity_usd,marked_utc FROM logical_marks WHERE singleton=1").fetchone() if has_marks else None
+        last_mark = None
+        if mark is not None:
+            mark_price = _number(mark["mark_price"])
+            if Decimal(mark_price) <= 0:
+                raise OperatorSnapshotError("invalid recorded quote mark")
+            last_mark = {"btc_usd": mark_price, "equity_usd": _number(mark["equity_usd"]),
+                         "marked_utc": _timestamp(mark["marked_utc"]),
+                         "source": "LAST_PERSISTED_PAPER_MARK_NOT_LIVE"}
         con.execute("COMMIT")
         return {
             "schema_version": 1,
@@ -126,7 +141,9 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
             "mode": "ALPACA_PAPER_ONLY",
             "ledger_updated_utc": _timestamp(account["updated_utc"]),
             "operator_halted": bool(control["operator_halted"]),
+            "halt_reason": halt_reason,
             "operator_control_updated_utc": _timestamp(control["updated_utc"]),
+            "last_mark": last_mark,
             "session_date_utc": session["session_date_utc"],
             "logical": {**amounts, "reserved_usd": str(reserved_total),
                         "unreserved_cash_usd": str(Decimal(amounts["cash_usd"]) - reserved_total)},

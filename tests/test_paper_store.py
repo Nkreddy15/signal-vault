@@ -160,3 +160,19 @@ class RuntimeControlsAndRiskSessionTests(unittest.TestCase):
             self.assertEqual(same.session_start_equity_usd, Decimal("100"))
             next_day = store.mark_portfolio(mark_price=Decimal("65000"), at=d2)
             self.assertEqual(next_day.session_start_equity_usd, Decimal("99"))
+
+
+class LogicalMarkPersistenceTests(unittest.TestCase):
+    def test_mark_is_persisted_for_reporting(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "paper.db"
+            at = datetime(2026, 9, 28, 22, tzinfo=timezone.utc)
+            with PersistentPaperOrderStore(path) as store:
+                self.assertIsNone(store.last_mark())
+                store.mark_portfolio(mark_price=Decimal("65000"), at=at)
+                mark = store.last_mark()
+                self.assertEqual(mark["mark_price"], Decimal("65000"))
+                self.assertEqual(mark["equity_usd"], Decimal("100"))
+                self.assertEqual(mark["marked_utc"], at)
+            with PersistentPaperOrderStore(path) as reopened:
+                self.assertEqual(reopened.last_mark()["mark_price"], Decimal("65000"))

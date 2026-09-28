@@ -1,31 +1,33 @@
-# SIGNAL VAULT — durable checkpoint
+# SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2-2026-09-28-H (Phase 2G fully verified on private GitHub; added unapplied PostgreSQL paper-critical migration design and CI safety tightening).
-**Repository:** private https://github.com/Nkreddy15/signal-vault, `main`. Phase 2G source tree `d06e6ee76ffdfe0b95c99a1e4b7ba232a6331361` was verified exactly at remote commit `c1c13f2a360b5ef5fdf33fc55ec3b597b3cd5949`; Phase 2H is the current further offline work to be separately exact-tree synced. No force push.
-**Authorization:** Development and offline/PAPER-only architecture. No deposits, paid services, broker credentials, authenticated provider API calls, real paper orders, real-money trades or deployment. Live trading endpoint is absent.
-**Target:** November 1, 2026 conditional $100 live pilot only after actual provider paper validation, risk gate and new explicit live authorization. Deadline does not override release criteria or imply profitability.
+**Checkpoint:** PHASE2-2026-09-28-I (combined PAPER-only research/operations work; private owner-read and control surfaces audited; 225 offline tests passed).
+**Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
+**Authorization:** Development and local/offline/PAPER-only implementation. No broker credentials have been supplied or used; no authenticated Alpaca request, actual broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
+**Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
 
-## Verified completed
+## Verified completed engineering work
 
-- All prior Phase 1/Phase 2F code retained: versioned research pipeline, BTC/USD EMA baseline, deterministic Guardian, logical $100 ledger, authenticated-read client boundaries (not activated), paper order state, exactly-once draft submission attempts, no-blind-retry UNKNOWN_RESULT recovery, fee/order/position audit (fake-transport tests), single-runtime file lock, operator halt, local health and alert sinks and unattended paper-only daemon shell.
-- Phase 2G `operator_view.py` and `operator_server.py`: read-only snapshot from existing SQLite, HTTP Basic-token authentication (32+ random chars), **127.0.0.1 only**, JSON `/api/status` and small auto-refreshing private HTML owner view. No broker calls, orders, raw event/provider payloads, secrets, or dashboard control POST; report labels explicit that balances are local paper journal, not live market value.
-- `preflight.py` validates an existing PAPER DB owner/mode, disk headroom, SQLite quick_check, reconciled logical snapshot; unresolved orders flag same-order-id lookup rather than granting submission. Never opens provider API.
-- `init_paper.py` allows explicit offline $100 local journal bootstrap without keys; SQLite file is created/tightened to owner-only mode 0600 before open, and sidecar WAL/SHM tested owner-only.
-- `local_backup.py` creates online consistent SQLite snapshots in private directory with exclusive atomic publication, integrity check and SHA-256; never overwrites an old backup or authorizes resumed trading from restored state. Includes Symlink/disk-pressure tests.
-- `ops/systemd` contains **uninstalled** example single-host paper service and localhost monitor; documented deployment safeguards, security and explicit host authorization gate.
-- Guardian `RiskLimits` now rejects non-finite, zero, negative, inconsistent, malformed policy values; risk engine rejects malformed IDs, timestamps, position maps, unexpected symbols, invalid halt state and inconsistent marked equity. A previous synthetic reconciliation test fixture now correctly derives its portfolio from the logical ledger.
-- Added `db/migrations/0002_critical_paper.sql` as an **UNAPPLIED design migration** for an isolated PostgreSQL PAPER schema: NUMERIC amounts, initial HALT and logical $100 account, append-only audit, provider fill/order unique IDs and a partial unique index allowing at most one unresolved order. `docs/POSTGRES_PAPER_LEDGER.md` documents the lock/reconciliation contract and separate minimal database roles. **There is NO Python Postgres transactional port yet, and NO live PG integration was tested.** Four tests check static schema invariants only.
-- CI requires explicit live-mode refusal (not just any nonzero crash) and rejects a literal live Alpaca trading hostname in `src/`.
-- Offline test evidence: `make test` **166/166 PASS**, `make compile` PASS; offline demo remains `DRY_RUN_RECORDED_NOT_FILLED`. All provider interactions in tests use fake transports.
+- Modular single platform with market-adapter contracts; enabled candidate market is BTC/USD PAPER, not stocks/Kalshi. Deterministic closed-hour EMA crossover baseline, versioned evidence/HOLD; chronological research fold/backtester with hypothetical cost assumptions, research protocol and guarded promotion criteria. No verified alpha claimed.
+- Market data strict validation, injectable READ-only provider adapters, authenticated read-only dataset-capture code with fingerprints (not called with real account), bounded read retry; stale/missing data fail closed.
+- Deterministic Guardian for a logical $100 portfolio, example $15 single order/$30 combined exposure, $3 daily pause/$10 drawdown, no leverage; strong NaN/inconsistent-equity/invalid-policy checks. These are demo defaults, not an owner-approved live mandate.
+- Durable local SQLite draft/idempotency/UNKNOWN_RESULT state, one unresolved order at a time, fill/fee/order/position audit, logical portfolio marks and cash, restart recovery and operator HALT. Fake-provider integration tests only; accepted provider order never mislabelled filled.
+- Optional bounded LLM advisory code (`ai_advisory.py`) accepts an allowlisted public feature frame only; default paper worker/daemon does NOT load an AI transport. It may veto a new-money BUY but cannot place any order, override Guardian, alter limits, or veto the risk-reducing SELL path. Bad schema/transport fail closed.
+- Separate optional logistic ML confirmation feature research, offline trainer, immutable JSON artifact and provenance/paper-shadow receipt gate. Model has not been trained on genuine broker data or promoted to live trading. Research modules and tests do not prove predictive ability.
+- Paper-only one-cycle worker and unattended scheduling shell, owner-only single-process lock, bounded read retries, durable stop, classified safe local alerts, health report, source-labelled performance report and backup scheduling hooks. Never deployed.
+- Local read-only HTML/JSON monitor `operator_server.py` defaults to 127.0.0.1:8766 with Basic token and cannot control orders. Separate Bearer-auth owner JSON control API defaults to 127.0.0.1:8765 with status/health/operator halt/resume ONLY. Status and resume now refuse a missing journal rather than silently creating a clean $100 account. These ports must never be exposed publicly.
+- Local ledger preflight, private journal mode 0600, explicit init, consistent exclusive SQLite snapshot and integrity checks, optional daily local backups; restore never authorizes trading without provider reconciliation.
+- systemd single-host paper/owner service **templates only** (including distinct monitor example). PostgreSQL isolated PAPER-only migration and transactional requirements are an **UNAPPLIED design**: no Python PG port, DB deployment or real PG tests yet.
+- All tests executed locally: `make test` **225/225 PASS**, `make compile` PASS, `make demo` prints `DRY_RUN_RECORDED_NOT_FILLED`; test broker transports are fake. Live mode still hard fails. No genuine paper fills or claimed profit.
 
-## Limitations — never report these as completed
+## Still NOT completed / mandatory blockers
 
-- No authenticated Alpaca paper credentials/smoke, genuine historical BTC/USD provider dataset, genuine paper POST, provider-confirmed fill or seven-day monitored account run.
-- The PostgreSQL critical schema is **design only and has not been applied**. The transactional Python adapter, real PostgreSQL migrations/integration/concurrency tests and deployment gate remain outstanding. SQLite remains a **single-host prototype**, not distributed HA.
-- Dashboard is a local ledger monitor, not public SaaS hosting and not a current NAV/quote/performance service. `systemd` files are examples and are not installed/deployed.
-- No external Telegram delivery, no stocks, Kalshi, real-money adapter or user-approved cloud spend. The versioned EMA strategy is not evidence of positive after-cost alpha.
-- A restore of an old backup requires an independent provider reconciliation before any new paper order. No automatic restore/run command exists.
+1. Alpaca PAPER account with separate paper keys, configured privately outside chat/GitHub, plus explicit authorization for READ-only smoke. Confirm account active/clean, BTC/USD size/price precision, actual API response shapes, quote/feed entitlements and current provider behavior before any paper POST acknowledgement.
+2. Genuine closed-hour BTC/USD dataset capture/fingerprint and after-cost out-of-sample evaluation. ML artifact training and paper-shadow promotion only after research gating.
+3. Complete transaction-integrity and restoration drills, an actual PostgreSQL Python port + PG concurrency tests or a separately reviewed single-host SQLite pilot acceptance. No multi-host execution against SQLite.
+4. Separately authorized hosting, hardened service configuration and notifications. No services have been installed.
+5. Actual broker PAPER execution with provider-confirmed order/fill/fee/cash/position reconciliation, at least seven days uninterrupted operation and incident review. Simulation result is not evidence of sustainable gains.
+6. Live connector requires NEW owner decision, separate reviewed service/credentials, no withdrawal permissions and no automatic additional funding. No live code path exists.
 
-## Resume protocol
+## Resume procedure
 
-Read latest GitHub `main` files `PROJECT_STATUS.md`, `NEXT_STEPS.md`, `ARCHITECTURE.md`, `docs/OPERATOR_MONITOR.md`, `docs/DEPLOYMENT_PREPARATION.md` and `docs/POSTGRES_PAPER_LEDGER.md`. Verify remote head and tree, run `make test`, `make compile` and `make demo`, then continue PAPER-only work. Never overwrite newer remote changes with stale local archives, and never enable live execution. Commit exact-tree verified checkpoints at session end; no autonomous development continues between user turns.
+Read GitHub `PROJECT_STATUS.md`, `NEXT_STEPS.md`, `ARCHITECTURE.md`, `docs/POSTGRES_PAPER_LEDGER.md`, `docs/OPERATOR_MONITOR.md`. Verify current remote head/tree, run `make test`, `make compile`, `make demo`; continue only PAPER development. All transactions and results must remain classified by real provider-paper vs offline synthetic vs genuine live (none). Create and verify a GitHub/Library exact-tree checkpoint before a session ends. Nothing runs in the background merely because the ChatGPT conversation is idle.

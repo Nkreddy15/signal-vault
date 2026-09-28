@@ -16,6 +16,7 @@ from typing import Sequence
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 from .market_data import Bar, load_csv, validate_bars
+from .ml_confirmation import MlArtifact, apply_confirmation
 from .risk import RiskEngine, RiskLimits
 from .strategy import Action, StrategyConfig, generate_signal
 
@@ -55,6 +56,8 @@ class BacktestResult:
     initial_equity_usd: Decimal
     final_equity_usd: Decimal
     net_pnl_usd: Decimal
+    passive_same_allocation_final_equity_usd: Decimal
+    passive_same_allocation_net_pnl_usd: Decimal
     max_drawdown_usd: Decimal
     total_estimated_fees_usd: Decimal
     fills: tuple[SimulatedFill, ...]
@@ -70,6 +73,8 @@ class BacktestResult:
             "initial_equity_usd": str(self.initial_equity_usd),
             "final_equity_usd": str(self.final_equity_usd),
             "net_pnl_usd": str(self.net_pnl_usd),
+            "passive_same_allocation_final_equity_usd": str(self.passive_same_allocation_final_equity_usd),
+            "passive_same_allocation_net_pnl_usd": str(self.passive_same_allocation_net_pnl_usd),
             "max_drawdown_usd": str(self.max_drawdown_usd),
             "total_estimated_fees_usd": str(self.total_estimated_fees_usd),
             "open_base_qty": str(self.marked_open_base_qty),
@@ -86,7 +91,8 @@ class BacktestResult:
 def simulate(bars: Sequence[Bar], *, as_of: datetime,
              strategy: StrategyConfig | None = None,
              costs: CostAssumptions | None = None,
-             limits: RiskLimits | None = None) -> BacktestResult:
+             limits: RiskLimits | None = None,
+             confirmation_artifact: MlArtifact | None = None) -> BacktestResult:
     cfg, prices = strategy or StrategyConfig(), costs or CostAssumptions()
     policy = limits or RiskLimits(max_single_buy_usd=Decimal("15"),
                                   max_total_long_exposure_usd=Decimal("30"))
@@ -115,6 +121,8 @@ def simulate(bars: Sequence[Bar], *, as_of: datetime,
         peak = max(peak, mark_open)
         max_drawdown = max(max_drawdown, peak - mark_open)
         decision = generate_signal(candles[:i], cfg)
+        if confirmation_artifact is not None:
+            decision = apply_confirmation(decision, candles[:i], confirmation_artifact)
         if decision.action == Action.HOLD:
             mark_close = cash + holding * candle.close
             peak = max(peak, mark_close)
@@ -165,9 +173,20 @@ def simulate(bars: Sequence[Bar], *, as_of: datetime,
     final_equity = cash + holding * candles[-1].close  # mark only; not a realized sale
     peak = max(peak, final_equity)
     max_drawdown = max(max_drawdown, peak - final_equity)
-    return BacktestResult(starting, final_equity, final_equity - starting, max_drawdown,
+
+    # Passive comparator uses the exact same maximum $15 allocation and estimated
+    # entry costs, with the remaining $85 kept as cash. It is a marked research
+    # comparator, not a recommendation or provider fill.
+    benchmark_entry = candles[cfg.slow_hours + 2].open * (Decimal(1) + prices.slippage_rate)
+    benchmark_fee = prices.buy_budget_usd * prices.taker_fee_rate
+    benchmark_qty = (prices.buy_budget_usd - benchmark_fee) / benchmark_entry
+    benchmark_final = (starting - prices.buy_budget_usd) + benchmark_qty * candles[-1].close
+    return BacktestResult(starting, final_equity, final_equity - starting,
+                          benchmark_final, benchmark_final - starting, max_drawdown,
                           fees, tuple(fills), tuple(rejected), holding, prices,
-                          cfg.strategy_version, candles[-1].close)
+                          (cfg.strategy_version if confirmation_artifact is None else
+                           f"{cfg.strategy_version}+ml:{confirmation_artifact.fingerprint()[:12]}"),
+                          candles[-1].close)
 
 
 

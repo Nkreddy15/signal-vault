@@ -15,6 +15,8 @@ from typing import Callable, Iterable, Mapping
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from .read_retry import retry_read
+
 
 CRYPTO_BARS_ENDPOINT = "https://data.alpaca.markets/v1beta3/crypto/us/bars"
 SYMBOL = "BTC/USD"
@@ -272,8 +274,10 @@ class AlpacaAuthenticatedLatestQuote:
             "User-Agent": "SignalVault/0.3",
         })
         # Deliberately avoid a generic URL argument anywhere else in the runtime.
-        with urlopen(request, timeout=12) as response:
-            raw = response.read(1_000_001)
+        def read_once() -> bytes:
+            with urlopen(request, timeout=12) as response:
+                return response.read(1_000_001)
+        raw = retry_read(read_once)
         if len(raw) > 1_000_000:
             raise ValueError("latest quote response too large")
         value = json.loads(raw)
@@ -311,8 +315,10 @@ class AlpacaAuthenticatedCryptoBars(AlpacaPublicCryptoBars):
         request = Request(url, headers={
             "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
             "Accept": "application/json", "User-Agent": "SignalVault/0.3"}, method="GET")
-        with urlopen(request, timeout=12) as response:
-            raw = response.read(4_000_001)
+        def read_once() -> bytes:
+            with urlopen(request, timeout=12) as response:
+                return response.read(4_000_001)
+        raw = retry_read(read_once)
         if len(raw) > 4_000_000:
             raise ValueError("market-data response exceeds size limit")
         value = json.loads(raw)

@@ -22,7 +22,9 @@ from .domain import PortfolioSnapshot, TradeIntent, Side
 from .risk import RiskEngine, RiskLimits
 
 _SQL = """
+PRAGMA foreign_keys=ON;
 PRAGMA journal_mode=WAL;
+PRAGMA synchronous=FULL;
 CREATE TABLE IF NOT EXISTS drafts (
   client_order_id TEXT PRIMARY KEY,
   intent_hash TEXT NOT NULL,
@@ -85,9 +87,19 @@ def _protect_local_db(filename: str | Path) -> None:
 class OfflineDraftJournal:
     def __init__(self, filename: str | Path) -> None:
         # :memory: is useful for tests only; no production persistence claim.
-        _protect_local_db(filename)
-        self.connection = sqlite3.connect(str(filename), isolation_level=None, timeout=10)
+        raw = str(filename)
+        if raw != ":memory:":
+            path = Path(filename).expanduser()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            _protect_local_db(path)
+            raw = str(path)
+        self.connection = sqlite3.connect(raw, isolation_level=None, timeout=10)
         self.connection.executescript(_SQL)
+        if raw != ":memory:":
+            os.chmod(raw, 0o600)
+        if self.connection.execute("PRAGMA foreign_keys").fetchone()[0] != 1:
+            self.connection.close()
+            raise RuntimeError("SQLite foreign-key enforcement is required")
         self.risk = RiskEngine(RiskLimits(max_single_buy_usd=Decimal("15"),
                                           max_total_long_exposure_usd=Decimal("30")))
 

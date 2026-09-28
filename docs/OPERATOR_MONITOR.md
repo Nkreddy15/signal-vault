@@ -18,14 +18,14 @@ python3 -c 'import secrets; print(secrets.token_urlsafe(48))'
 PYTHONPATH=src python3 -m signal_vault.operator_server --db ./data/signal-vault-paper.sqlite3
 ```
 
-Open `http://127.0.0.1:8765` on that machine and authenticate as username
+Open `http://127.0.0.1:8766` on that machine and authenticate as username
 `operator` with your generated token as password. JSON snapshot is available at
 `/api/status` behind the exact same HTTP Basic authentication. Do not place
 credentials in URL query parameters, source code, screenshots, tracked .env or
 shell histories. Token-based Basic authentication is only acceptable here because
 requests cannot bind beyond IPv4 loopback: it is **not an HTTPS public service**.
 For remote viewing, use trusted SSH port forwarding and host security instead
-of directly exposing port 8765 (e.g. `ssh -L 8765:127.0.0.1:8765 user@trusted-host`).
+of directly exposing port 8766 (e.g. `ssh -L 8766:127.0.0.1:8766 user@trusted-host`).
 The deployment has not been performed or authorized.
 
 The page displays only: local logical cash, reserved/unreserved cash, BTC units,
@@ -53,3 +53,10 @@ integrity, use owner-only mode 0600, and cannot overwrite an existing filename.
 **Never automatically resume trading by restoring an old snapshot:** an order
 may have been sent after that backup. Emergency recovery must keep execution
 halted until broker orders, fills, cash and position are reconciled independently.
+
+The private read-only HTML monitor deliberately uses local port **8766**. A
+separate optional owner-control JSON API uses local port **8765**; it can
+persistently halt/resume PAPER operation with a different Bearer token. Neither
+should be placed directly on a public Internet listener. The owner-control
+GET endpoints use the read-only snapshot path and cannot silently create a new
+ledger if the real journal is missing.

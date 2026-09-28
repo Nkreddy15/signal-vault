@@ -19,10 +19,11 @@ def _decimal_text(value: object) -> str:
 
 
 def build_health_snapshot(*, result: PaperCycleResult, logical: Mapping[str, Decimal],
-                          operator_halted: bool, at: datetime) -> dict[str, Any]:
+                          operator_halted: bool, at: datetime,
+                          last_mark: Mapping[str, object] | None = None) -> dict[str, Any]:
     if at.tzinfo is None or at.utcoffset() is None:
         raise ValueError("timezone-aware health timestamp required")
-    return {
+    payload: dict[str, Any] = {
         "schema_version": 1,
         "mode": "ALPACA_PAPER_ONLY",
         "updated_utc": at.astimezone(timezone.utc).isoformat(),
@@ -38,6 +39,16 @@ def build_health_snapshot(*, result: PaperCycleResult, logical: Mapping[str, Dec
             "fee_usd_equiv": _decimal_text(logical["fees_usd_equiv"]),
         },
     }
+    if last_mark is not None:
+        marked = last_mark.get("marked_utc")
+        if not isinstance(marked, datetime) or marked.tzinfo is None or marked.utcoffset() is None:
+            raise ValueError("invalid health mark timestamp")
+        payload["last_mark"] = {
+            "btc_usd": _decimal_text(last_mark.get("mark_price")),
+            "equity_usd": _decimal_text(last_mark.get("equity_usd")),
+            "marked_utc": marked.astimezone(timezone.utc).isoformat(),
+        }
+    return payload
 
 
 def write_health_snapshot(path: str | Path, payload: Mapping[str, object]) -> None:

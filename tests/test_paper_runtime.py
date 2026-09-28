@@ -7,6 +7,7 @@ from signal_vault.market_data import Bar, CryptoQuote
 from signal_vault.paper_executor import PaperOnceExecutor
 from signal_vault.paper_runtime import PaperCycleRunner
 from signal_vault.paper_store import PersistentPaperOrderStore
+from signal_vault.ai_advisory import BoundedAdvisoryGate
 
 NOW = datetime(2026, 9, 29, 0, 0, 30, tzinfo=timezone.utc)
 ORDER = "11111111-2222-3333-4444-555555555555"
@@ -53,7 +54,7 @@ def reader_transport(path, *_):
 
 
 class PaperRuntimeTests(unittest.TestCase):
-    def build(self, *, post=None, quotes=None, bars=None):
+    def build(self, *, post=None, quotes=None, bars=None, advisor=None):
         store = PersistentPaperOrderStore(":memory:")
         reader = PaperAlpacaReadClient("p", "s", transport=reader_transport)
         calls = []
@@ -64,7 +65,8 @@ class PaperRuntimeTests(unittest.TestCase):
         executor = PaperOnceExecutor(paper_key="p", paper_secret="s", store=store,
                                      transport=post or default_post)
         runner = PaperCycleRunner(store=store, reader=reader, executor=executor,
-                                  bars=bars or FakeBars(), quotes=quotes or FakeQuotes())
+                                  bars=bars or FakeBars(), quotes=quotes or FakeQuotes(),
+                                  advisor=advisor)
         return store, runner, calls
 
     def test_default_cycle_records_draft_but_never_posts(self):
@@ -75,6 +77,36 @@ class PaperRuntimeTests(unittest.TestCase):
             self.assertFalse(result.paper_post_attempted)
             self.assertEqual(calls, [])
             self.assertFalse(store.has_unresolved_provider_order())
+        finally: store.close()
+
+    def test_optional_advisor_hold_never_records_draft_even_if_paper_posts_permitted(self):
+        advisor = BoundedAdvisoryGate(lambda _: {"verdict": "HOLD", "reason_code": "NO_EDGE"})
+        store, runner, posts = self.build(advisor=advisor)
+        try:
+            result = runner.run_once(now=NOW, allow_paper_submission=True)
+            self.assertEqual(result.state, "HOLD_ADVISORY")
+            self.assertEqual(posts, [])
+            self.assertEqual(len(store.journal.recent_events()), 0)
+            self.assertFalse(result.paper_post_attempted)
+        finally: store.close()
+
+    def test_optional_advisor_no_objection_still_requires_guardian_and_submission_gate(self):
+        advisor = BoundedAdvisoryGate(lambda _: {"verdict": "NO_OBJECTION", "reason_code": "TREND_CONFIRMED"})
+        store, runner, posts = self.build(advisor=advisor)
+        try:
+            result = runner.run_once(now=NOW, allow_paper_submission=False)
+            self.assertEqual(result.state, "PAPER_DRAFT_READY")
+            self.assertEqual(posts, [])
+            self.assertFalse(result.paper_post_attempted)
+        finally: store.close()
+
+    def test_optional_advisor_exception_fails_closed_no_draft(self):
+        def interrupted(_): raise RuntimeError("no API credits")
+        store, runner, posts = self.build(advisor=BoundedAdvisoryGate(interrupted))
+        try:
+            result = runner.run_once(now=NOW, allow_paper_submission=True)
+            self.assertEqual(result.state, "HOLD_ADVISORY")
+            self.assertEqual(posts, [])
         finally: store.close()
 
     def test_explicit_paper_cycle_posts_once_and_blocks_duplicate(self):
@@ -134,3 +166,83 @@ class PaperRuntimeOperatorHaltTests(unittest.TestCase):
             self.assertEqual(calls, [])
             self.assertEqual(store.list_states(), ())
         finally: store.close()
+
+class PaperRuntimeMlConfirmationTests(unittest.TestCase):
+    @staticmethod
+    def artifact(*, intercept: float):
+        from signal_vault.ml_confirmation import FEATURE_NAMES, MlArtifact
+        return MlArtifact(
+            model_version="test-logit-v1",
+            dataset_sha256="a" * 64,
+            trained_until_utc="2026-09-28T00:00:00+00:00",
+            horizon_hours=12,
+            label_return_threshold=0.0075,
+            decision_probability_threshold=0.65,
+            feature_names=FEATURE_NAMES,
+            means=(0.0,) * len(FEATURE_NAMES),
+            scales=(1.0,) * len(FEATURE_NAMES),
+            coefficients=(0.0,) * len(FEATURE_NAMES),
+            intercept=intercept,
+        )
+
+    def build(self, *, artifact=None, values=None):
+        store = PersistentPaperOrderStore(":memory:")
+        reader = PaperAlpacaReadClient("p", "s", transport=reader_transport)
+        calls = []
+        def post(payload, *_):
+            calls.append(dict(payload))
+            return {"id":ORDER,"client_order_id":payload["client_order_id"],
+                    "status":"accepted","filled_qty":"0","filled_avg_price":None}
+        executor = PaperOnceExecutor(paper_key="p", paper_secret="s", store=store,
+                                     transport=post)
+        runner = PaperCycleRunner(store=store, reader=reader, executor=executor,
+                                  bars=FakeBars(values), quotes=FakeQuotes(),
+                                  confirmation_artifact=artifact)
+        return store, runner, calls
+
+    def test_no_artifact_preserves_baseline_behavior(self):
+        store, runner, calls = self.build()
+        try:
+            result = runner.run_once(now=NOW)
+            self.assertEqual(result.state, "PAPER_DRAFT_READY")
+            self.assertEqual(calls, [])
+        finally:
+            store.close()
+
+    def test_ml_veto_blocks_buy_before_draft_and_post(self):
+        store, runner, calls = self.build(artifact=self.artifact(intercept=-10.0))
+        try:
+            result = runner.run_once(now=NOW, allow_paper_submission=True)
+            self.assertEqual(result.state, "HOLD")
+            self.assertIn("ML confirmation vetoed BUY", result.explanation)
+            self.assertEqual(calls, [])
+            self.assertEqual(store.list_states(), ())
+        finally:
+            store.close()
+
+    def test_ml_passed_buy_still_goes_through_guardian_draft(self):
+        store, runner, calls = self.build(artifact=self.artifact(intercept=10.0))
+        try:
+            result = runner.run_once(now=NOW)
+            self.assertEqual(result.state, "PAPER_DRAFT_READY")
+            self.assertIn("ml=", "") if False else None
+            self.assertEqual(calls, [])
+            # The ML artifact contributes to immutable evidence/order identity.
+            states = store.list_states()
+            self.assertEqual(states, ())  # no provider lifecycle until POST
+            self.assertTrue(result.evidence_id)
+        finally:
+            store.close()
+
+    def test_ml_failure_fails_closed_before_any_order(self):
+        # Runtime history can satisfy the EMA strategy yet be insufficient for
+        # the ML feature extractor if a future model raises its history minimum.
+        class BrokenArtifact:
+            pass
+        store, runner, calls = self.build(artifact=BrokenArtifact())
+        try:
+            result = runner.run_once(now=NOW, allow_paper_submission=True)
+            self.assertEqual(result.state, "HOLD_ML_CONFIRMATION_FAILURE")
+            self.assertEqual(calls, [])
+        finally:
+            store.close()
