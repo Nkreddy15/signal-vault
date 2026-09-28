@@ -79,7 +79,8 @@ class OfflineDraftJournal:
 
     def record(self, intent: TradeIntent, portfolio: PortfolioSnapshot, *,
                checked_at: datetime, reference_price: Decimal,
-               full_sell_quantity: Decimal | None = None) -> PaperOrderDraft:
+               full_sell_quantity: Decimal | None = None,
+               logical_ledger_verified: bool = False) -> PaperOrderDraft:
         """Atomic local draft decision including all previous unvoided buy reserves.
 
         Must only be fed a current reconciled external snapshot that excludes
@@ -87,10 +88,15 @@ class OfflineDraftJournal:
         """
         if checked_at.tzinfo is None or checked_at.utcoffset() is None:
             raise ValueError("evaluation time must have timezone")
-        # Even the journal enforces the dedicated $100 logical test account cap.
-        if (not portfolio.cash_usd.is_finite() or not portfolio.equity_usd.is_finite() or
-            portfolio.cash_usd > Decimal("100") or portfolio.equity_usd > Decimal("100")):
-            raise ValueError("offline paper snapshot exceeds logical $100 cap")
+        # Untrusted offline callers cannot accidentally feed Alpaca's large default
+        # paper balance into the logical $100 experiment. The persistent runtime
+        # may pass a separately verified Signal Vault ledger snapshot whose equity
+        # can legitimately rise above $100 through trading gains.
+        if not portfolio.cash_usd.is_finite() or not portfolio.equity_usd.is_finite():
+            raise ValueError("invalid offline paper snapshot")
+        if (not logical_ledger_verified and
+                (portfolio.cash_usd > Decimal("100") or portfolio.equity_usd > Decimal("100"))):
+            raise ValueError("unverified offline paper snapshot exceeds logical $100 initial capital")
         key_hash = _fingerprint(intent)
         self.connection.execute("BEGIN IMMEDIATE")
         try:

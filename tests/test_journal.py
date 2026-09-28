@@ -66,9 +66,23 @@ class JournalTests(unittest.TestCase):
         with OfflineDraftJournal(":memory:") as book:
             too_big = replace(portfolio(), cash_usd=Decimal("100000"), equity_usd=Decimal("100000"),
                               peak_equity_usd=Decimal("100000"), session_start_equity_usd=Decimal("100000"))
-            with self.assertRaisesRegex(ValueError, "logical \$100 cap"):
+            with self.assertRaisesRegex(ValueError, r"logical \$100"):
                 book.record(intent(1), too_big, checked_at=NOW, reference_price=Decimal("65000"))
 
 
 if __name__ == "__main__":
     unittest.main()
+
+class LogicalGainSnapshotTests(unittest.TestCase):
+    def test_unverified_snapshot_above_initial_100_still_rejected(self):
+        from signal_vault.journal import OfflineDraftJournal
+        from signal_vault.domain import PortfolioSnapshot, Side, TradeIntent
+        from datetime import datetime, timezone
+        from decimal import Decimal
+        now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+        intent = TradeIntent("crypto", "alpaca", "BTC/USD", Side.BUY, Decimal("15"),
+                             "gain-untrusted", "sig-gain", now)
+        p = PortfolioSnapshot(Decimal("101"), Decimal("101"), Decimal("101"), Decimal("101"))
+        with OfflineDraftJournal(":memory:") as journal:
+            with self.assertRaisesRegex(ValueError, "initial capital"):
+                journal.record(intent, p, checked_at=now, reference_price=Decimal("65000"))

@@ -131,24 +131,18 @@ def load_csv(path: str | Path, *, as_of: datetime, min_count: int = 1) -> tuple[
 
 
 def _read_public_json(url: str) -> Mapping[str, object]:
-    if not url.startswith(CRYPTO_BARS_ENDPOINT + "?"):
-        raise ValueError("market-data URL is not on the approved read-only endpoint")
-    request = Request(url, headers={"Accept": "application/json", "User-Agent": "SignalVault/0.2"}, method="GET")
-    with urlopen(request, timeout=12) as response:  # no secrets; never a trading endpoint
-        raw = response.read(4_000_001)
-    if len(raw) > 4_000_000:
-        raise ValueError("market-data response exceeds size limit")
-    value = json.loads(raw)
-    if not isinstance(value, dict):
-        raise ValueError("unexpected market-data response")
-    return value
+    # Current Alpaca crypto historical-data docs require API authentication.
+    # This function remains only as the default for injected/offline research
+    # tests and must not silently attempt an unauthenticated production read.
+    raise ValueError("authenticated Alpaca crypto historical data client required")
 
 
 class AlpacaPublicCryptoBars:
-    """Read-only provider; injected fetch makes all tests fully offline.
+    """Offline/injected research adapter retained for deterministic tests.
 
-    Alpaca endpoint: /v1beta3/crypto/us/bars. Collects ALL pages and refuses
-    duplicate/missing hours. Caller must request a closed UTC-hour end boundary.
+    Current provider documentation requires authentication, so the default
+    transport deliberately fails. Production paper runtime must use
+    `AlpacaAuthenticatedCryptoBars` below.
     """
 
     def __init__(self, fetch_json: Callable[[str], Mapping[str, object]] = _read_public_json,
@@ -194,3 +188,137 @@ class AlpacaPublicCryptoBars:
             seen_tokens.add(token)
             params["page_token"] = token
         raise ValueError("market-data pagination exhausted before completion")
+
+CRYPTO_LATEST_QUOTES_ENDPOINT = "https://data.alpaca.markets/v1beta3/crypto/us/latest/quotes"
+
+
+@dataclass(frozen=True)
+class CryptoQuote:
+    symbol: str
+    bid: Decimal
+    ask: Decimal
+    timestamp: datetime
+    source: str = "alpaca_crypto_us_latest_quote"
+
+    @property
+    def mid(self) -> Decimal:
+        return (self.bid + self.ask) / Decimal("2")
+
+    @property
+    def spread_bps(self) -> Decimal:
+        return ((self.ask - self.bid) / self.mid) * Decimal("10000")
+
+    def execution_reference(self, side: str) -> Decimal:
+        if side == "buy":
+            return self.ask
+        if side == "sell":
+            return self.bid
+        raise ValueError("unsupported quote side")
+
+
+def parse_latest_crypto_quote(payload: Mapping[str, object], *, as_of: datetime,
+                              max_age_seconds: int = 90,
+                              max_spread_bps: Decimal = Decimal("50")) -> CryptoQuote:
+    """Parse one authenticated latest BTC/USD quote and fail closed on stale/crossed data."""
+    if as_of.tzinfo is None or as_of.utcoffset() is None:
+        raise ValueError("as_of must be timezone-aware")
+    if max_age_seconds < 1 or max_age_seconds > 600:
+        raise ValueError("invalid quote freshness bound")
+    if not isinstance(max_spread_bps, Decimal) or not max_spread_bps.is_finite() or max_spread_bps <= 0:
+        raise ValueError("invalid spread bound")
+    quotes = payload.get("quotes")
+    if not isinstance(quotes, Mapping) or set(quotes.keys()) != {SYMBOL}:
+        raise ValueError("latest quote response must contain exactly BTC/USD")
+    raw = quotes[SYMBOL]
+    if not isinstance(raw, Mapping):
+        raise ValueError("malformed latest BTC/USD quote")
+    bid = _number(raw.get("bp"), "bid")
+    ask = _number(raw.get("ap"), "ask")
+    if ask < bid:
+        raise ValueError("crossed crypto quote")
+    stamp = utc_timestamp(raw.get("t"))
+    now = as_of.astimezone(timezone.utc)
+    age = now - stamp
+    if age < timedelta(seconds=-2) or age > timedelta(seconds=max_age_seconds):
+        raise ValueError("latest crypto quote is stale or future-dated")
+    quote = CryptoQuote(SYMBOL, bid, ask, stamp)
+    if quote.spread_bps > max_spread_bps:
+        raise ValueError("crypto quote spread exceeds safety bound")
+    return quote
+
+
+class AlpacaAuthenticatedLatestQuote:
+    """Read-only latest crypto quote client using Alpaca API credentials.
+
+    It has one hard-coded data endpoint and cannot reach trading/order routes.
+    Tests inject the transport and perform no network activity.
+    """
+    def __init__(self, key_id: str, secret_key: str,
+                 transport: Callable[[str, str, str], Mapping[str, object]] | None = None) -> None:
+        if not key_id.strip() or not secret_key.strip():
+            raise ValueError("paper/data credentials required")
+        self._key, self._secret = key_id, secret_key
+        self._transport = transport or self._read
+
+    @staticmethod
+    def _read(url: str, key: str, secret: str) -> Mapping[str, object]:
+        expected = CRYPTO_LATEST_QUOTES_ENDPOINT + "?" + urlencode({"symbols": SYMBOL})
+        if url != expected:
+            raise ValueError("non-allowlisted market-data endpoint")
+        request = Request(url, method="GET", headers={
+            "APCA-API-KEY-ID": key,
+            "APCA-API-SECRET-KEY": secret,
+            "Accept": "application/json",
+            "User-Agent": "SignalVault/0.3",
+        })
+        # Deliberately avoid a generic URL argument anywhere else in the runtime.
+        with urlopen(request, timeout=12) as response:
+            raw = response.read(1_000_001)
+        if len(raw) > 1_000_000:
+            raise ValueError("latest quote response too large")
+        value = json.loads(raw)
+        if not isinstance(value, Mapping):
+            raise ValueError("malformed latest quote response")
+        return value
+
+    def latest_btc_usd(self, *, as_of: datetime,
+                       max_age_seconds: int = 90,
+                       max_spread_bps: Decimal = Decimal("50")) -> CryptoQuote:
+        url = CRYPTO_LATEST_QUOTES_ENDPOINT + "?" + urlencode({"symbols": SYMBOL})
+        payload = self._transport(url, self._key, self._secret)
+        if not isinstance(payload, Mapping):
+            raise ValueError("malformed latest quote response")
+        return parse_latest_crypto_quote(payload, as_of=as_of,
+                                         max_age_seconds=max_age_seconds,
+                                         max_spread_bps=max_spread_bps)
+
+
+class AlpacaAuthenticatedCryptoBars(AlpacaPublicCryptoBars):
+    """Authenticated read-only historical BTC/USD bars from the fixed data host."""
+    def __init__(self, key_id: str, secret_key: str,
+                 transport: Callable[[str, str, str], Mapping[str, object]] | None = None,
+                 *, max_pages: int = 30) -> None:
+        if not key_id.strip() or not secret_key.strip():
+            raise ValueError("paper/data credentials required")
+        self._key, self._secret = key_id, secret_key
+        self._transport = transport or self._read
+        super().__init__(fetch_json=self._fetch_authenticated, max_pages=max_pages)
+
+    @staticmethod
+    def _read(url: str, key: str, secret: str) -> Mapping[str, object]:
+        if not url.startswith(CRYPTO_BARS_ENDPOINT + "?"):
+            raise ValueError("historical market-data URL outside allowlist")
+        request = Request(url, headers={
+            "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
+            "Accept": "application/json", "User-Agent": "SignalVault/0.3"}, method="GET")
+        with urlopen(request, timeout=12) as response:
+            raw = response.read(4_000_001)
+        if len(raw) > 4_000_000:
+            raise ValueError("market-data response exceeds size limit")
+        value = json.loads(raw)
+        if not isinstance(value, Mapping):
+            raise ValueError("unexpected market-data response")
+        return value
+
+    def _fetch_authenticated(self, url: str) -> Mapping[str, object]:
+        return self._transport(url, self._key, self._secret)

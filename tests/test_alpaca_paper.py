@@ -98,6 +98,16 @@ class PaperReadBoundaryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             client.get_fill_activities("../../secrets")
 
+    def test_fee_activity_reader_uses_only_specific_paper_get_paths(self):
+        broker_id = "12345678-1234-1234-1234-123456789abc"
+        seen = []
+        client = PaperAlpacaReadClient("p", "s", transport=lambda path, *_: (seen.append(path) or []))
+        self.assertEqual(client.get_fee_activities(broker_id), ())
+        self.assertEqual(seen, [
+            "/v2/account/activities/CFEE?order_id=" + broker_id,
+            "/v2/account/activities/FEE?order_id=" + broker_id,
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

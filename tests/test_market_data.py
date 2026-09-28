@@ -83,3 +83,63 @@ class MarketDataTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class LatestCryptoQuoteTests(unittest.TestCase):
+    def test_fresh_quote_parses_and_uses_conservative_side_price(self):
+        from signal_vault.market_data import parse_latest_crypto_quote
+        now = datetime(2026, 9, 29, 0, 0, 30, tzinfo=timezone.utc)
+        q = parse_latest_crypto_quote({"quotes":{"BTC/USD":{
+            "bp":"64990", "ap":"65010", "t":"2026-09-29T00:00:00Z"}}}, as_of=now)
+        self.assertEqual(q.execution_reference("buy"), Decimal("65010"))
+        self.assertEqual(q.execution_reference("sell"), Decimal("64990"))
+        self.assertEqual(q.mid, Decimal("65000"))
+
+    def test_stale_crossed_or_wide_quote_fails_closed(self):
+        from signal_vault.market_data import parse_latest_crypto_quote
+        now = datetime(2026, 9, 29, 0, 2, tzinfo=timezone.utc)
+        with self.assertRaisesRegex(ValueError, "stale"):
+            parse_latest_crypto_quote({"quotes":{"BTC/USD":{
+                "bp":"64990", "ap":"65010", "t":"2026-09-28T23:59:00Z"}}}, as_of=now)
+        with self.assertRaisesRegex(ValueError, "crossed"):
+            parse_latest_crypto_quote({"quotes":{"BTC/USD":{
+                "bp":"65010", "ap":"64990", "t":"2026-09-29T00:01:59Z"}}}, as_of=now)
+        with self.assertRaisesRegex(ValueError, "spread"):
+            parse_latest_crypto_quote({"quotes":{"BTC/USD":{
+                "bp":"60000", "ap":"70000", "t":"2026-09-29T00:01:59Z"}}}, as_of=now)
+
+    def test_authenticated_quote_client_has_one_fixed_data_url(self):
+        from signal_vault.market_data import AlpacaAuthenticatedLatestQuote, CRYPTO_LATEST_QUOTES_ENDPOINT
+        now = datetime(2026, 9, 29, 0, 0, 30, tzinfo=timezone.utc)
+        seen = []
+        def transport(url, key, secret):
+            seen.append((url, key, secret))
+            return {"quotes":{"BTC/USD":{"bp":"64990","ap":"65010","t":"2026-09-29T00:00:00Z"}}}
+        client = AlpacaAuthenticatedLatestQuote("paper-key", "paper-secret", transport=transport)
+        client.latest_btc_usd(as_of=now)
+        self.assertEqual(len(seen), 1)
+        self.assertTrue(seen[0][0].startswith(CRYPTO_LATEST_QUOTES_ENDPOINT + "?"))
+        self.assertNotIn("orders", seen[0][0])
+
+class AuthenticatedHistoricalBarsTests(unittest.TestCase):
+    def test_current_historical_adapter_carries_credentials_only_to_fixed_data_endpoint(self):
+        from signal_vault.market_data import AlpacaAuthenticatedCryptoBars, CRYPTO_BARS_ENDPOINT
+        now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+        start = now - timedelta(hours=2)
+        seen = []
+        def transport(url, key, secret):
+            seen.append((url, key, secret))
+            return {"bars":{"BTC/USD":[
+                {"t":"2026-09-28T22:00:00Z","o":"1","h":"1","l":"1","c":"1","v":"1"},
+                {"t":"2026-09-28T23:00:00Z","o":"1","h":"1","l":"1","c":"1","v":"1"},
+            ]},"next_page_token":None}
+        bars = AlpacaAuthenticatedCryptoBars("paper-key","paper-secret",transport=transport).fetch(
+            start=start,end=now,as_of=now)
+        self.assertEqual(len(bars), 2)
+        self.assertTrue(seen[0][0].startswith(CRYPTO_BARS_ENDPOINT + "?"))
+        self.assertEqual(seen[0][1:], ("paper-key","paper-secret"))
+
+    def test_legacy_unauthenticated_default_now_fails_closed(self):
+        from signal_vault.market_data import AlpacaPublicCryptoBars
+        now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+        with self.assertRaisesRegex(ValueError, "authenticated"):
+            AlpacaPublicCryptoBars().fetch(start=now-timedelta(hours=1),end=now,as_of=now)

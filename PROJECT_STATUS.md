@@ -1,46 +1,41 @@
 # SIGNAL VAULT — durable checkpoint
 
-**Checkpoint:** PHASE2-2026-09-28-D (paper credential isolation, dynamic venue rules, recovery supervisor and fill-audit foundations; offline/fake transport only).
-**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2C is verified on GitHub; Phase 2D will be synced as the next checkpoint after tests and source-tree verification.
-**Authorization:** Development and offline/paper-mode only. No deposits, paid services, credential retrieval, authenticated broker calls, paper order submission, real-money orders, real-money account connections or deployment has occurred. Live order execution is NOT IMPLEMENTED.
-**Target:** November 1, 2026 *conditional* $100 live pilot; no promise of profitability or launch.
+**Checkpoint:** PHASE2-2026-09-28-E (paper runtime/reconciliation/accounting foundation; all provider interaction still unverified with real credentials).
+**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2D is already verified on GitHub at tree `00f1bc3792006298fb3174d013601d15093a1732`; Phase 2E is the next exact-tree checkpoint to sync.
+**Authorization:** Development plus paper-mode architecture only. No deposits, paid services, broker credentials, authenticated broker requests, genuine paper orders, real-money orders, real-money account connections or deployment have occurred in this work session. There is no live-trading endpoint in the codebase.
+**Target:** November 1, 2026 *conditional* $100 live pilot after a genuine paper run and a new explicit live authorization; profitability and launch are not promised.
 
 ## Verified completed
 
-- Phase 1 modular architecture, deterministic Guardian, venue-aware intent and offline non-filling broker preserved.
-- Private GitHub repository initialized, initial 24-file tree SHA `78f21d5eafbea9a70fc60fadcbbeae85a10cb099` exactly matched the original local tree. Phase 1 full-source GitHub commit `efb4b0c786701a909c7b9c9e67f54c9392e08613`.
-- Phase 2 adds strict `market_data.py`: UTC hourly OHLCV validation; rejects incomplete, duplicate, gapped, impossible and future bars; public Alpaca crypto historical bars adapter with bounded pagination, read-only endpoint and injectable fake transport.
-- Adds versioned `strategy.py`: deterministic 12/26 EMA-cross candidate signals; HOLD when no new crossover; evidence hash.
-- Adds `backtest.py`: research-only $100 simulation; checks next-bar-open execution to avoid look-ahead, estimated costs, exposure and risk engine, unexecutable <$10 orders, unrealized open position marks and an explicit hypothetical-only report label. No observed trading advantage claimed.
-- Adds `alpaca_paper.py`: allowlisted **GET-only** paper account/asset/order lookup boundary using immutable `https://paper-api.alpaca.markets`; no order submission, transfer, withdrawal or endpoint override; offline test mocks only. Non-executable BUY/SELL drafts enforce Guardian, GTC and estimated venue minimum. NO CREDENTIALS configured or used.
-- Adds `journal.py`: durable SQLite local draft/idempotency/reservation/append-only audit foundation with an explicit $100 offline snapshot cap. This is NOT the genuine broker order/fill/reconciliation ledger; no broker orders are sent by this module.
-- Revised *paper development* buy example to $15, open-plus-pending long exposure $30 because the documented Alpaca BTC/USD order minimum is ~ $10 and a $5 proposal would be unexecutable. Daily $3 and drawdown $10 illustrative safety pauses stay. These are **not** approved live authority limits.
-- Added `paper_order_state.py`: conservative pure state machine with no HTTP; rejects duplicate submission, mismatch/regressing provider records, incomplete fills and unresolved broker terminal states. Unknown transport results require authoritative lookup, never blind retry.
-- Added `offline_pipeline.py`: strict closed/fresh bar -> immutable signal -> HOLD or internally Guardian-checked *non-submitted* venue-sized draft -> atomic offline journal. Verified idempotency and stale-data rejection.
-- Added fixed-parameter chronological research folds with non-overlapping evaluation windows and prior-only indicator warmup. These do NOT establish trading profitability.
-- `paper_store.py` now makes the conservative paper order lifecycle persistent in SQLite, links an immutable Guardian-approved draft to the original client order ID, and reserves until explicit three-way provider reconciliation. One unresolved order blocks the next; a crash before a broker response cannot authorize a blind second POST.
-- `paper_executor.py` contains a one-shot literal-paper-host-only POST adapter with no environment/live URL switch. It is NEVER invoked by the CLI; all integration tests use fake transports/credentials. Tests cover accepted vs filled, unknown timeout, malformed response, lookup recovery, paper status polling and no repeated POST after uncertainty.
-- Restart recovery turns a pre-crash `SUBMISSION_PENDING` into `UNKNOWN_RESULT` and requires provider lookup; existing accepted/partial orders can be polled without another POST.
-- Added `paper_credentials.py`: accepts only explicitly named Alpaca PAPER environment variables, rejects common generic/live key variables and redacts credentials from repr/str. No credentials were provided or used.
-- Added provider-derived `venue_rules.py`: parses current asset metadata (`min_order_size`, `min_trade_increment`, `price_increment`) and rejects minimum/increment violations rather than silently upsizing orders. Authenticated paper readiness now fails closed if these dynamic fields are absent.
-- Added `paper_supervisor.py`: restart recovery converts pre-crash pending submissions to UNKNOWN, looks them up by client ID, polls only known orders, never re-POSTs, and leaves terminal orders blocked until independent reconciliation.
-- Added `paper_audit.py`: validates provider FILL activity identities, order IDs, BTC/USD symbol/side consistency, cumulative quantity and weighted fill price against terminal order state. It deliberately does not release reservations or claim cash/position/fee reconciliation.
-- Extended the paper read boundary with a strictly allowlisted FILL-activity-by-order-ID GET path and typed read methods; still no transfer/withdraw/live host capability.
-- Local checks: `make test` **91/91 PASS**, `make compile` PASS, `make demo` prints `DRY_RUN_RECORDED_NOT_FILLED`; live-mode flag remains rejected. No connected broker paper fills.
+- Phase 1 modular architecture, deterministic Guardian, venue-aware intents and offline non-filling broker preserved.
+- Phase 2 research path: strict UTC hourly BTC/USD OHLCV validation, deterministic 12/26 EMA-cross candidate strategy with HOLD, evidence hashes, next-bar-open cost-aware hypothetical backtest and chronological non-overlapping evaluation folds. No backtest result is represented as broker performance.
+- Paper-only account boundary in `alpaca_paper.py` is hard-bound to `https://paper-api.alpaca.markets`; GET allowlists cover account, BTC/USD asset metadata, positions, open orders, order lookup and order-filtered FILL/CFEE/FEE activities. No withdrawal, transfer or live-host route exists.
+- `paper_credentials.py` accepts only explicit PAPER credential names and rejects generic/live key variables; secrets are redacted from repr/str.
+- `venue_rules.py` parses provider-reported `min_order_size`, `min_trade_increment`, and `price_increment`; orders are rejected rather than silently upsized.
+- `paper_order_state.py`, `paper_store.py`, `paper_executor.py`, and `paper_supervisor.py` implement persistent one-attempt paper-order lifecycle safety: durable pre-POST state, unique client IDs, UNKNOWN_RESULT after ambiguous failures, lookup-before-any-retry, no duplicate POST on restart, terminal state remains unreconciled until independent audit.
+- `paper_audit.py` validates provider FILL identities, quantities and weighted fill price, and separately validates CFEE/FEE activities.
+- `paper_reconciliation.py` independently verifies terminal order, FILL activities, active/unblocked paper account and BTC position. Logical accounting starts at exactly $100 and never adopts Alpaca's much larger default paper balance.
+- Logical provider-fill accounting is atomic: buy/sell fills, cost basis, realized P&L, fee-equivalent reporting and reservation release are committed together. Unique provider order IDs cannot be applied twice.
+- Crypto BUY fee timing is handled without trapping a position until end-of-day: if CFEE has not posted yet, net provider BTC inventory plus audited gross FILL quantity infers the exact BTC fee quantity, permits reconciliation/release, and queues a deferred fee audit. Later CFEE must match the inferred BTC quantity before its USD-equivalent valuation replaces the provisional amount. SELL USD fee remains a blocking reconciliation fact until provider FEE is available.
+- `market_data.py` now has authenticated fixed-host historical BTC/USD bars and authenticated latest-quote readers. Latest quotes are rejected if stale/future, crossed or above the configured spread bound; BUY uses ask and SELL uses bid as the execution reference. The legacy unauthenticated historical default now fails closed because current provider docs require authentication.
+- `paper_runtime.py` implements a one-cycle autonomous PAPER workflow: restart recovery -> terminal reconciliation -> deferred fee audit -> provider drift check -> closed-bar history -> fresh quote -> logical mark-to-market -> strategy -> Guardian/dynamic venue checks -> durable draft -> optional exactly-one paper POST. Default `allow_paper_submission=False` cannot POST.
+- Provider drift guard rejects unexplained open orders, non-BTC positions, BTC quantity mismatch, inactive/blocked account or malformed buying power before new execution.
+- Same signal/order ID cannot be posted twice; unresolved provider orders block new execution.
+- Logical gains above the initial $100 no longer trip the old offline snapshot guard when—and only when—the snapshot is verified against Signal Vault's own persistent ledger. Untrusted >$100 offline snapshots remain rejected.
+- `paper_worker.py` is an explicit one-cycle operator entry point. Paper POST is off by default and requires the exact `I_ACKNOWLEDGE_ALPACA_PAPER_ORDERS_ONLY` environment acknowledgement. Live-ish flags are rejected. The worker prints only sanitized logical metrics, not provider account IDs or secrets.
+- `paper_smoke.py` remains a separate authenticated GET-only paper readiness command; it imports no executor.
+- Current local checks: `make test` **116/116 PASS**, `make compile` PASS, `make demo` prints `DRY_RUN_RECORDED_NOT_FILLED`. No genuine provider call or paper fill has been performed.
 
 ## Limitations — never claim these are finished
 
-- No verified/authenticated Alpaca paper account connection, no real historical market dataset collected, and no real-time quote feed.
-- No authenticated paper order has actually been sent. Paper submission code is implemented but *inactive*; no broker-confirmed fill, genuine provider cash/position/fee reconciliation, production PostgreSQL instance, pending-sell base reservations or deployed worker. Fill-audit code is mock-tested only.
-- The research simulator is **hypothetical**, does not reproduce live/paper Alpaca matching or quote spreads, and is not evidence of profits.
-- SQLite journal is an *offline draft journal*, not the production PostgreSQL ledger.
-- No private dashboard, hosted deployment, notifications, 7-day provider paper run, stocks, Kalshi or real-money access.
-- API sizes, support, rates and account eligibility must be checked against up-to-date provider metadata before actual paper orders.
+- No real Alpaca paper credentials have been supplied; therefore account eligibility, actual response schemas, data entitlements/rate limits, BTC asset metadata, latest quote freshness and provider activity timing remain unverified in this account.
+- No genuine authenticated historical dataset has been collected by Signal Vault and no real broker paper order has been submitted. All network-bound lifecycle tests use fake transports.
+- SQLite is still the local prototype ledger. Before unattended cloud paper operation, migrate transactional order/accounting state to PostgreSQL (or justify and harden a single-writer SQLite deployment), add process locking and fault tests.
+- No long-running scheduler/service manager, private dashboard, notifications, hosted deployment or seven-day genuine broker-paper run yet.
+- Current strategy is a deterministic baseline candidate, not a demonstrated trading edge. Passing software tests says nothing about profitability.
+- No stocks, Kalshi/event-contract execution or real-money connector yet.
+- API behavior and fees must be rechecked against provider metadata/docs immediately before authenticated paper use.
 
 ## Resume protocol
 
-Read `PROJECT_STATUS.md`, `NEXT_STEPS.md` and `ARCHITECTURE.md` from the latest GitHub `main` branch; compare SHA before writes, run `make test` and preserve paper-only restrictions. Do not overwrite newer remote changes with the older local ZIP. Update this file at every successful checkpoint. No autonomous work continues between ChatGPT sessions.
-
-## Source-transfer contingency
-
-Local Git commit history and a full project ZIP (including `.git`) reside in the Library snapshot `signal-vault-phase2C-2026-09-28.zip`. The GitHub main branch carries a visible note about the failed handoff and requires updating to the latest Phase 2-C state. The connector did not receive the Phase 2 source: the Files retrieval backend returned HTTP 401 on both `read` and `materialize`. Do NOT claim Phase 2 is on GitHub yet. Restore the full ZIP/manifest when authorized retrieval is available, or use a verified fast-forward/merge from a user local checkout.
+Read `PROJECT_STATUS.md`, `NEXT_STEPS.md`, `ARCHITECTURE.md` and `docs/API_PROVIDER_ASSUMPTIONS.md` from latest private GitHub `main`, verify remote head/tree, run `make test`, `make compile`, and `make demo`, then continue paper-only development. Do not enable or add live execution. Create and verify an exact-tree GitHub checkpoint before stopping a session.

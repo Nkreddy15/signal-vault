@@ -42,3 +42,29 @@ class FillAuditTests(unittest.TestCase):
     def test_order_average_must_match_activity_weighted_price(self):
         with self.assertRaises(ValueError):
             audit_fill_activities(terminal(price="65010"), [fill("a::1", "0.00020", "65000")])
+
+from signal_vault.paper_audit import audit_crypto_fee_activities
+
+class CryptoFeeAuditTests(unittest.TestCase):
+    def test_empty_fee_result_is_not_final(self):
+        result = audit_crypto_fee_activities(ORDER, [])
+        self.assertFalse(result.final)
+        self.assertEqual(result.fee_usd_equivalent, Decimal("0"))
+
+    def test_cfee_and_fee_are_converted_to_usd_equivalent(self):
+        result = audit_crypto_fee_activities(ORDER, [
+            {"id":"fee::1", "activity_type":"CFEE", "order_id":ORDER,
+             "symbol":"BTCUSD", "qty":"-0.000001", "price":"65000"},
+            {"id":"fee::2", "activity_type":"FEE", "order_id":ORDER,
+             "symbol":"BTCUSD", "net_amount":"-0.02"},
+        ])
+        self.assertTrue(result.final)
+        self.assertEqual(result.fee_usd_equivalent, Decimal("0.085000"))
+
+    def test_positive_or_wrong_order_fee_fails(self):
+        with self.assertRaises(ValueError):
+            audit_crypto_fee_activities(ORDER, [{"id":"x","activity_type":"CFEE",
+                "order_id":ORDER,"symbol":"BTCUSD","qty":"0.1","price":"65000"}])
+        with self.assertRaises(ValueError):
+            audit_crypto_fee_activities(ORDER, [{"id":"x","activity_type":"FEE",
+                "order_id":"other","net_amount":"-0.01"}])

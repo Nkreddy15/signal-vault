@@ -113,3 +113,22 @@ class RestartSafetyTests(unittest.TestCase):
                 self.assertEqual(book.journal.total_reserved_usd(), Decimal("15"))
                 with self.assertRaises(ValueError):
                     book.begin_submission(d, at=NOW)
+
+class LogicalDraftBridgeTests(unittest.TestCase):
+    def test_verified_logical_gain_can_record_without_using_provider_balance(self):
+        from datetime import datetime, timezone
+        from decimal import Decimal
+        from signal_vault.domain import Side, TradeIntent
+        now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
+        with PersistentPaperOrderStore(":memory:") as store:
+            # Create a legitimate logical mark > $100 by directly representing a
+            # previously reconciled inventory in the internal ledger for this unit test.
+            store.connection.execute("UPDATE logical_portfolio SET cash_usd='90',btc_qty='0.0002',btc_cost_basis_usd='10' WHERE singleton=1")
+            p = store.mark_portfolio(mark_price=Decimal("60000"), at=now)
+            self.assertEqual(p.equity_usd, Decimal("102.0000"))
+            intent = TradeIntent("crypto", "alpaca", "BTC/USD", Side.SELL, Decimal("12"),
+                                 "gain-verified", "sig-gain-sell", now)
+            draft = store.record_logical_draft(intent, p, checked_at=now,
+                                                reference_price=Decimal("60000"),
+                                                full_sell_quantity=Decimal("0.0002"))
+            self.assertEqual(draft.payload["side"], "sell")

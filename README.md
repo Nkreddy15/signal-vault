@@ -1,12 +1,12 @@
 # SIGNAL VAULT
 
-**Phase 2-C — offline research plus guarded paper-only submission implementation (NOT activated)**
+**Phase 2-E — autonomous paper-runtime foundation (provider credentials/order submission NOT activated)**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
 ## Current state (2026-09-28)
 
-The current checkpoint includes the initial architecture and safety kernel plus a strict public historical BTC/USD bar adapter (not yet used against the real provider), a versioned deterministic strategy, a cost-aware OFFLINE backtest, a paper-host GET-only account/asset/order lookup adapter (mock-tested, not authenticated), and a persistent SQLite draft/audit foundation, a persisted conservative paper order state machine, chronological research folds, an end-to-end offline planning pipeline and a single-attempt paper-only order writer (mock-tested, NOT run with actual credentials). **It does not yet connect to an authenticated Alpaca account, submit genuine paper orders, host a dashboard, or execute live-money trades.** Never represent offline research fills as provider paper fills or P&L.
+The repository now contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks and a one-cycle autonomous paper runtime. The runtime is extensively fake-transport tested but **has not been authenticated against the user's Alpaca paper account and has not sent a genuine paper order**. The default CLI remains offline and non-filling. Real-money execution does not exist.
 
 ### Safe local smoke test
 
@@ -38,7 +38,7 @@ SIGNAL_VAULT_MODE=live PYTHONPATH=src python -m signal_vault
 
 ## No secrets, no account changes
 
-Do not commit `.env`, tokens, wallet keys or broker credentials. User approval is required before account access, paid services, deployment, or any transition from simulated/paper to real-money execution. There is deliberately NO LIVE broker connector. `paper_executor.py` contains a hardcoded **paper-host-only** POST that is NOT called by the CLI, only after an approved draft has been durably moved to `SUBMISSION_PENDING`; all external integration tests use fakes. Real paper POST requires explicit separate paper credentials and operator setup; no account has been connected or order sent in this checkpoint.
+Do not commit `.env`, tokens, wallet keys or broker credentials. User approval is required before account access, paid services, deployment, or any transition from simulated/paper to real-money execution. There is deliberately NO LIVE broker connector. `paper_executor.py` contains a hardcoded **paper-host-only** POST that is NOT called by the CLI, only after an approved draft has been durably moved to `SUBMISSION_PENDING`; all external integration tests use fakes. Real paper POST requires explicit separate paper credentials and operator setup; no account has been connected or order sent in this checkpoint. `paper_worker.py` can only POST to Alpaca PAPER after a separate exact acknowledgement variable is configured; it contains no live host.
 
 ## External API references and assumptions
 

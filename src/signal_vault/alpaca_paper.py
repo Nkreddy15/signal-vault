@@ -36,7 +36,8 @@ def _get_paper_json(path: str, key: str, secret: str) -> object:
     fixed = path in ("/v2/account", "/v2/assets/BTC%2FUSD", "/v2/positions", "/v2/orders?status=open")
     lookup = re.fullmatch(r"/v2/orders:by_client_order_id\?client_order_id=[a-zA-Z0-9_-]{1,48}", path)
     fills = re.fullmatch(r"/v2/account/activities/FILL\?order_id=[0-9a-fA-F-]{36}", path)
-    if not (fixed or lookup or fills):
+    fees = re.fullmatch(r"/v2/account/activities/(?:CFEE|FEE)\?order_id=[0-9a-fA-F-]{36}", path)
+    if not (fixed or lookup or fills or fees):
         raise ValueError("non-allowlisted paper account read")
     req = Request(PAPER_ROOT + path, method="GET", headers={
         "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
@@ -122,6 +123,23 @@ class PaperAlpacaReadClient:
         if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
             raise ValueError("malformed paper fill activities response")
         return tuple(value)
+
+    def get_fee_activities(self, broker_order_id: str) -> tuple[Mapping[str, object], ...]:
+        """Read only CFEE/FEE activities filtered by the provider order UUID.
+
+        Alpaca documents crypto fees as potentially posted end-of-day, so an
+        empty result is never interpreted as a confirmed zero fee.
+        """
+        if not _BROKER_ORDER_ID.fullmatch(broker_order_id):
+            raise ValueError("unsafe provider order ID")
+        items: list[Mapping[str, object]] = []
+        for activity_type in ("CFEE", "FEE"):
+            path = f"/v2/account/activities/{activity_type}?order_id={broker_order_id}"
+            value = self._transport(path, self._paper_key, self._paper_secret)
+            if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
+                raise ValueError("malformed paper fee activities response")
+            items.extend(value)
+        return tuple(items)
 
     def readiness(self) -> "PaperReadiness":
         """Read-only gate: never use default simulated broker balance as our $100 cap."""
