@@ -35,7 +35,9 @@ class PaperReadBoundaryTests(unittest.TestCase):
                 return {"equity": "100000"}
             if path == "/v2/assets/BTC%2FUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
-                        "tradable": True, "fractionable": True}
+                        "tradable": True, "fractionable": True,
+                        "min_order_size": "0.00015", "min_trade_increment": "0.00001",
+                        "price_increment": "1"}
             return {"client_order_id": "known_1", "status": "accepted"}
         client = PaperAlpacaReadClient("PAPER_KEY", "PAPER_SECRET", transport=transport)
         self.assertEqual(client.get_account()["equity"], "100000")
@@ -77,6 +79,25 @@ class PaperReadBoundaryTests(unittest.TestCase):
                                      reference_price=Decimal("60000"),
                                      full_sell_quantity=Decimal("0.00000001"))
 
+    def test_authenticated_rule_reader_requires_dynamic_fields(self):
+        good = {"symbol": "BTC/USD", "class": "crypto", "status": "active",
+                "tradable": True, "fractionable": True, "min_order_size": "0.00015",
+                "min_trade_increment": "0.00001", "price_increment": "1"}
+        client = PaperAlpacaReadClient("p", "s", transport=lambda *_: good)
+        self.assertEqual(client.get_btc_rules().min_order_size, Decimal("0.00015"))
+        broken = dict(good); broken.pop("min_order_size")
+        with self.assertRaises(ValueError):
+            PaperAlpacaReadClient("p", "s", transport=lambda *_: broken).get_btc_rules()
+
+    def test_fill_activity_reader_is_order_id_allowlisted(self):
+        broker_id = "12345678-1234-1234-1234-123456789abc"
+        seen = []
+        client = PaperAlpacaReadClient("p", "s", transport=lambda path, *_: (seen.append(path) or []))
+        self.assertEqual(client.get_fill_activities(broker_id), ())
+        self.assertIn("/v2/account/activities/FILL?order_id=" + broker_id, seen)
+        with self.assertRaises(ValueError):
+            client.get_fill_activities("../../secrets")
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -89,7 +110,9 @@ class PaperReadinessTests(unittest.TestCase):
                         "non_marginable_buying_power": "100000"}
             if path == "/v2/assets/BTC%2FUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
-                        "tradable": True, "fractionable": True}
+                        "tradable": True, "fractionable": True,
+                        "min_order_size": "0.00015", "min_trade_increment": "0.00001",
+                        "price_increment": "1"}
             return []
         client = PaperAlpacaReadClient("mock-paper", "mock-secret", transport=mock)
         result = client.readiness()
@@ -103,7 +126,9 @@ class PaperReadinessTests(unittest.TestCase):
                         "non_marginable_buying_power": "100000"}
             if path == "/v2/assets/BTC%2FUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
-                        "tradable": True, "fractionable": True}
+                        "tradable": True, "fractionable": True,
+                        "min_order_size": "0.00015", "min_trade_increment": "0.00001",
+                        "price_increment": "1"}
             if path == "/v2/positions":
                 return [{"symbol": "BTCUSD"}]
             return []

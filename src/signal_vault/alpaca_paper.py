@@ -19,11 +19,12 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 from .risk import RiskEngine, RiskLimits
-from .paper_audit import PaperHoldings, parse_paper_holdings
+from .venue_rules import CryptoVenueRules
 
 PAPER_ROOT = "https://paper-api.alpaca.markets"
 _MIN_NOTIONAL = Decimal("10")
 _CLIENT_ID = re.compile(r"^[a-zA-Z0-9_-]{1,48}$")
+_BROKER_ORDER_ID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 
 class _NoRedirects(HTTPRedirectHandler):
@@ -32,9 +33,10 @@ class _NoRedirects(HTTPRedirectHandler):
 
 
 def _get_paper_json(path: str, key: str, secret: str) -> object:
-    if path not in ("/v2/account", "/v2/assets/BTC%2FUSD", "/v2/positions", "/v2/orders?status=open") and not re.fullmatch(
-        r"/v2/orders:by_client_order_id\?client_order_id=[a-zA-Z0-9_-]{1,48}", path
-    ):
+    fixed = path in ("/v2/account", "/v2/assets/BTC%2FUSD", "/v2/positions", "/v2/orders?status=open")
+    lookup = re.fullmatch(r"/v2/orders:by_client_order_id\?client_order_id=[a-zA-Z0-9_-]{1,48}", path)
+    fills = re.fullmatch(r"/v2/account/activities/FILL\?order_id=[0-9a-fA-F-]{36}", path)
+    if not (fixed or lookup or fills):
         raise ValueError("non-allowlisted paper account read")
     req = Request(PAPER_ROOT + path, method="GET", headers={
         "APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret,
@@ -77,6 +79,14 @@ class PaperAlpacaReadClient:
             raise ValueError("BTC/USD paper asset not confirmed tradable")
         return value
 
+    def get_btc_rules(self) -> CryptoVenueRules:
+        """Return provider-reported dynamic BTC/USD order constraints.
+
+        Missing fields fail closed; no hardcoded fallback is permitted at the
+        authenticated paper-order boundary.
+        """
+        return CryptoVenueRules.from_asset(self.get_btc_asset())
+
     def lookup_order(self, client_order_id: str) -> Mapping[str, object] | None:
         if not _CLIENT_ID.fullmatch(client_order_id):
             raise ValueError("unsafe client-order ID")
@@ -92,27 +102,35 @@ class PaperAlpacaReadClient:
         return value
 
 
-    def get_positions(self) -> list[Mapping[str, object]]:
+    def get_positions(self) -> tuple[Mapping[str, object], ...]:
         value = self._transport("/v2/positions", self._paper_key, self._paper_secret)
-        if not isinstance(value, list) or any(not isinstance(row, Mapping) for row in value):
-            raise ValueError("malformed paper positions")
-        return value
+        if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
+            raise ValueError("malformed paper positions response")
+        return tuple(value)
 
-    def get_open_orders(self) -> list[Mapping[str, object]]:
+    def get_open_orders(self) -> tuple[Mapping[str, object], ...]:
         value = self._transport("/v2/orders?status=open", self._paper_key, self._paper_secret)
-        if not isinstance(value, list) or any(not isinstance(row, Mapping) for row in value):
-            raise ValueError("malformed paper open orders")
-        return value
+        if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
+            raise ValueError("malformed paper open-orders response")
+        return tuple(value)
 
-    def get_holdings(self, *, observed_at: datetime) -> PaperHoldings:
-        """PAPER-only account and positions GET; never infer filled orders."""
-        return parse_paper_holdings(self.get_account(), self.get_positions(),
-                                    observed_at=observed_at)
+    def get_fill_activities(self, broker_order_id: str) -> tuple[Mapping[str, object], ...]:
+        if not _BROKER_ORDER_ID.fullmatch(broker_order_id):
+            raise ValueError("unsafe provider order ID")
+        path = "/v2/account/activities/FILL?order_id=" + broker_order_id
+        value = self._transport(path, self._paper_key, self._paper_secret)
+        if not isinstance(value, list) or any(not isinstance(item, Mapping) for item in value):
+            raise ValueError("malformed paper fill activities response")
+        return tuple(value)
 
     def readiness(self) -> "PaperReadiness":
         """Read-only gate: never use default simulated broker balance as our $100 cap."""
         account = self.get_account()
         asset = self.get_btc_asset()
+        try:
+            CryptoVenueRules.from_asset(asset)
+        except ValueError as exc:
+            raise ValueError("provider BTC/USD trading constraints unavailable") from exc
         positions = self.get_positions()
         open_orders = self.get_open_orders()
         problems: list[str] = []
@@ -148,7 +166,6 @@ class PaperOrderDraft:
     client_order_id: str
     payload: Mapping[str, str]
     note: str = "DRAFT ONLY: no order submission implemented in this module"
-    reference_price_usd: Decimal | None = None
 
 
 def build_non_executable_draft(intent: TradeIntent, portfolio: PortfolioSnapshot, *,
@@ -195,4 +212,4 @@ def build_non_executable_draft(intent: TradeIntent, portfolio: PortfolioSnapshot
                    "qty": format(qty, "f"), "client_order_id": intent.client_order_id}
     else:
         raise ValueError("unsupported crypto side")
-    return PaperOrderDraft(intent.client_order_id, payload, reference_price_usd=reference_price)
+    return PaperOrderDraft(intent.client_order_id, payload)

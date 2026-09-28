@@ -110,46 +110,6 @@ See `docs/API_PROVIDER_ASSUMPTIONS.md` for official provider links. Market-data 
 
 `paper_store.py` persists the pure lifecycle state machine to SQLite and atomically binds approved draft payloads to one unique client order ID before possible submission. It allows just one unresolved order at a time. A crash before/during POST leaves `SUBMISSION_PENDING`; errors/timeouts leave `UNKNOWN_RESULT`. Both block further submissions until provider lookup, and terminal states remain reserved until the separate auditor confirms provider cash, position and order reconciliation. `paper_executor.py` contains a *single-attempt* hardcoded paper-host POST transport; the default CLI never invokes it and tests inject fakes. Actual credentialed paper integration, provider fill/fee reconciliation, migration to production PostgreSQL and scheduler remain the next engineering gates. No live broker endpoint exists.
 
-## Phase 2-D: provider evidence, virtual account and local operations (2026-09-28)
+## Phase 2D safety additions
 
-The single-attempt Alpaca PAPER executor now performs read-only preflight from an
-identical-credential reader, checks current asset metadata (min_order_size,
-min_trade_increment), cash-only buying power, single-symbol isolation and no
-external open orders. A built durable draft must include an original
-source-checked reference price and be no older than 90 seconds. The exact paper
-POST is still opt-in code and NEVER called by the default CLI, dashboard,
-operator tool, fake integration scenario or tests against a real provider.
-
-Before the paper-only POST, `paper_store.py` atomically stores source cash/BTC
-account baseline. A post-submission timeout becomes UNKNOWN_RESULT; repeated
-POST is forbidden. Terminal status alone does not release reserved funds.
-`paper_audit.py` validates a fresh, matching independent order lookup plus
-source account and BTC position against the BEFORE snapshot. Audit tolerates
-conservatively bounded maker/taker receive-currency fee effects; it halts on
-unexpected accounts, identity mismatch, order mismatch, account transfers,
-missing fill price, negative balances or unexplained external changes. Only
-an audit with concrete source evidence may free the reservation. Caller-provided
-`True` booleans no longer authorize reconciliation.
-
-The paper broker might show a default $100,000. A separate virtual subledger,
-initialized with exactly **$100**, tracks only reconciled changes in paper USD
-cash and net received BTC. It checks account identity and frozen paper balances
-before a subsequent order, independently of the caller's PortfolioSnapshot;
-a buy with marked exposure plus order > $30 or marked equity <= $97 is
-rejected. These are conservative prototype gates; daily reset and exact
-peak-equity high-water tracking remain required before unrestricted worker use.
-Submitted drafts cannot be voided to release pending reserves.
-
-`operator_controls` is a persisted, auditable HALT flag. New submissions are
-blocked while HALT is active; unknown orders prevent clearing HALT. Existing
-provider orders are **not** canceled merely by setting local HALT and must
-still be audited. `signal_vault.operator` is a local CLI; the local-only
-`signal_vault.dashboard` only reads state, refuses public bind addresses and
-provides no mutation endpoints. Cloud hosting still requires authenticated
-owner sessions, HTTPS, authorization, health alerts and a separate deployment
-review.
-
-`signal_vault.fake_paper_scenario` exercises a deterministic fake paper
-order -> accepted -> fake filled -> verified fake source snapshots ->
-reconciled lifecycle without ANY network or real keys. It is not a broker
-paper fill or proof of trading performance. Run `make smoke`.
+Paper credentials are now a distinct type loaded only from `ALPACA_PAPER_KEY_ID` / `ALPACA_PAPER_SECRET_KEY`; common generic/live-key environment names cause startup failure. Provider asset metadata is treated as authoritative for dynamic BTC/USD minimum quantity and trade increments; missing fields stop paper readiness rather than falling back to guessed limits. A recovery-only supervisor can resolve UNKNOWN submissions by client-order lookup and poll already-known orders, but it has no submission method of its own. Terminal orders remain blocked until a separate auditor verifies provider facts. FILL activity auditing now checks immutable activity IDs, exact order identity, symbol/side consistency, cumulative quantity and weighted average price. Cash, position and fee reconciliation are intentionally still unfinished, so Phase 2D is not yet suitable for unattended provider paper trading.

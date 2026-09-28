@@ -24,22 +24,6 @@ def accepted(d):
             "status": "accepted", "filled_qty": "0", "filled_avg_price": None}
 
 
-def paper_preflight_reader():
-    def mock(path, key, secret):
-        if path == "/v2/assets/BTC%2FUSD":
-            return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
-                    "tradable": True, "fractionable": True, "min_order_size": "0.0001",
-                    "min_trade_increment": "0.000000001"}
-        if path == "/v2/account":
-            return {"id": "paper-test", "cash": "10000", "equity": "10000",
-                    "non_marginable_buying_power": "10000", "status": "ACTIVE",
-                    "crypto_status": "ACTIVE", "trading_blocked": False}
-        if path in ("/v2/positions", "/v2/orders?status=open"):
-            return []
-        raise ValueError("unexpected preflight path")
-    return PaperAlpacaReadClient("mock-paper", "mock-secret", transport=mock)
-
-
 class PaperOrderIntegrationTests(unittest.TestCase):
     def test_valid_paper_response_records_broker_accepted_not_fill(self):
         calls = []
@@ -50,12 +34,12 @@ class PaperOrderIntegrationTests(unittest.TestCase):
                 return accepted(d)
             executor = PaperOnceExecutor(paper_key="mock-paper", paper_secret="mock-secret",
                                          store=book, transport=fake)
-            result = executor.submit_once(d, at=NOW, reader=paper_preflight_reader())
+            result = executor.submit_once(d, at=NOW)
             self.assertEqual(result.stage, Stage.BROKER_ACCEPTED)
             self.assertTrue(result.state.blocks_new_execution)
             self.assertEqual(len(calls), 1)
             with self.assertRaises(ValueError):
-                executor.submit_once(d, at=NOW, reader=paper_preflight_reader())
+                executor.submit_once(d, at=NOW)
             self.assertEqual(len(calls), 1)  # impossible to POST twice using same id
 
     def test_timeout_is_ambiguous_no_retry_or_release(self):
@@ -67,14 +51,14 @@ class PaperOrderIntegrationTests(unittest.TestCase):
                 raise TimeoutError("mock paper transport failure")
             executor = PaperOnceExecutor(paper_key="mock-paper", paper_secret="mock-secret",
                                          store=book, transport=timeout)
-            result = executor.submit_once(d, at=NOW, reader=paper_preflight_reader())
+            result = executor.submit_once(d, at=NOW)
             self.assertEqual(result.stage, Stage.UNKNOWN_RESULT)
             self.assertEqual(book.journal.total_reserved_usd(), Decimal("15"))
             no_order = PaperAlpacaReadClient("mock-paper", "mock-secret", transport=lambda *_: {"found": False})
             self.assertEqual(executor.lookup_unknown_once(d.client_order_id, at=NOW, reader=no_order).stage,
                              Stage.UNKNOWN_RESULT)
             with self.assertRaises(ValueError):
-                executor.submit_once(d, at=NOW, reader=paper_preflight_reader())
+                executor.submit_once(d, at=NOW)
             self.assertEqual(len(calls), 1)
             lookup = PaperAlpacaReadClient("mock-paper", "mock-secret",
                                           transport=lambda *_: accepted(d))
@@ -87,7 +71,7 @@ class PaperOrderIntegrationTests(unittest.TestCase):
             d = draft(book)
             bad = PaperOnceExecutor(paper_key="mock-paper", paper_secret="mock-secret", store=book,
                                     transport=lambda *_: {"id": "provider-1", "status": "filled"})
-            self.assertEqual(bad.submit_once(d, at=NOW, reader=paper_preflight_reader()).stage, Stage.UNKNOWN_RESULT)
+            self.assertEqual(bad.submit_once(d, at=NOW).stage, Stage.UNKNOWN_RESULT)
             self.assertTrue(book.has_unresolved_provider_order())
 
     def test_invalid_order_cannot_get_to_transport(self):
@@ -99,7 +83,7 @@ class PaperOrderIntegrationTests(unittest.TestCase):
             from signal_vault.alpaca_paper import PaperOrderDraft
             altered = PaperOrderDraft(d.client_order_id, {**d.payload, "notional": "100"})
             with self.assertRaises(ValueError):
-                executor.submit_once(altered, at=NOW, reader=paper_preflight_reader())
+                executor.submit_once(altered, at=NOW)
             self.assertFalse(count)
 
     def test_paper_root_constant_and_payload_allowlist(self):
@@ -123,7 +107,7 @@ class PaperStatusPollingTests(unittest.TestCase):
             calls = []
             executor = PaperOnceExecutor(paper_key="mock-paper", paper_secret="mock-secret", store=book,
                                          transport=lambda *_: (calls.append(1) or accepted(d)))
-            executor.submit_once(d, at=NOW, reader=paper_preflight_reader())
+            executor.submit_once(d, at=NOW)
             observed = PaperAlpacaReadClient("mock-paper", "mock-secret", transport=lambda *_:
                 {"id":"provider-1","client_order_id":d.client_order_id,
                  "status":"filled","filled_qty":"0.00023","filled_avg_price":"65100"})

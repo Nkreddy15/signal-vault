@@ -1,34 +1,13 @@
-# Signal Vault recovery and next work (after Phase 2-D)
+# Recovery and next engineering tasks (Phase 2)
 
-1. Open the private `Nkreddy15/signal-vault` `main` branch and read
-   `PROJECT_STATUS.md`, `ARCHITECTURE.md` and this file. Confirm latest branch
-   commit and compare against the Library ZIP if there is any source handoff
-   issue. Never force-push or overwrite another session's changes.
-2. Run `make smoke`. It includes offline unit tests, a deliberately fake paper
-   broker lifecycle and Python source compilation. Verify live mode remains
-   permanently rejected. Do not mistake simulation for provider paper fills.
-3. Implement isolated virtual $100 cash/BTC derivation for all production paper
-   proposals, record mark-to-market peak/day baselines, reserve sellable BTC,
-   enforce fee/spread budgets and convert Guardian to a durable preflight
-   using provider-backed snapshots rather than caller-supplied PortfolioSnapshot.
-4. Implement actual read-only paper-account onboarding and a provider API
-   compatibility smoke test **only after separate authorization and secure
-   paper credentials outside this chat**. Verify trading eligibility, account
-   status, BTC/USD metadata, quote/asset mapping, fee calculations and cash
-   with real GETs before activating any provider paper POST.
-5. Paper-only autonomous scheduler: data staleness guard, exactly-once bar
-   processing, persisted operator HALT, interrupt-safe submission, UNKNOWN
-   lookup, terminal audit, full fill/fee ledger and restart recovery. Implement
-   fault injection, single-writer isolation and structured event alerts.
-6. Upgrade local-only dashboard to a private authenticated owner interface;
-   cloud hosting needs separately authorized infrastructure and no secrets in
-   GitHub or ChatGPT. Maintain immutable paper-only code path. Production
-   PostgreSQL and secure deployment are pending.
-7. Only after passing fault tests should an authenticated Alpaca PAPER account
-   enter a 7-day continuous run. A $100 live pilot on Nov 1 remains a
-   conditional target requiring the owner's *new explicit approval*, not an
-   automatic toggle or a promise of returns.
+**Source of truth:** private https://github.com/Nkreddy15/signal-vault branch `main`. Check the current remote head and files. The old local Phase 1 commit `52c785b...` is historical; the actual GitHub tree was imported and then advanced. Review `PROJECT_STATUS.md` and `ARCHITECTURE.md` first. Run `make test`, `make demo` and `make compile` before making changes. Never reset GitHub to the archived ZIP.
 
-**Resumption prompt:** `Continue Signal Vault from the latest private GitHub
-checkpoint. Read PROJECT_STATUS.md and NEXT_STEPS.md, run make smoke, continue
-paper-only engineering. No external spending, account access or live orders.`
+1. **PHASE 2D SYNC / VERIFY:** GitHub already contains the verified Phase 2C source. Sync the tested Phase 2D tree, verify the remote tree/commit, then treat GitHub `main` as authoritative. Phase 2D adds paper-only credential isolation, dynamic venue-rule validation, recovery supervision, and mock fill-activity auditing. No actual credentials or broker calls have occurred.
+2. Build the **independent reconciliation gate**: use order lookup + FILL activities + provider positions/account data; persist pre/post provider facts; reconcile crypto fee activities when posted; update the logical $100 ledger atomically with terminal order reconciliation. Never release a reservation from an order status alone. UNKNOWN_RESULT must NEVER auto-resubmit. Recovery supervisor is now mock-tested.
+3. With separate paper credentials supplied securely, run a **read-only authenticated smoke test first**: account status, BTC/USD tradability, dynamic `min_order_size`/`min_trade_increment`/`price_increment`, empty-account assumptions, provider clock/fresh data and logical $100 cap. Do not POST an order until these checks pass and the reconciliation gate is complete.
+4. Add scheduled data reader: fetch last *fully closed* hourly bar, validate contiguous history and freshness; version and hash the data; use HOLD on missing/stale data. Historical research pipeline is implemented and mock-tested but no genuine dataset collected or run to date.
+5. Add private authenticated owner dashboard, operator stop, source-aware paper-vs-hypothetical performance, fees, daily report and cloud deployment manifests. Deployment/payments require separate user authorization.
+6. Run seven uninterrupted days of genuine **broker paper** operation with a logical $100 account (provider may default to a larger paper balance). Reconcile EVERY provider order, fill, reservation and balance. Simulated gains are not proof of live advantage; extend paper testing if insufficient sample or unresolved risk faults.
+7. November 1 live trial is conditional and requires a new explicit decision, separate reviewed live code/service and credentials. Do not add a live codepath during paper development.
+
+**Resume prompt:** `Continue Signal Vault from latest private GitHub main; read PROJECT_STATUS.md and NEXT_STEPS.md, run tests, and work on the paper-only order lifecycle. Do not enable live trading.`
