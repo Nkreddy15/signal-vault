@@ -1,0 +1,34 @@
+name: Phase 1 safety checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile sources
+        run: python -m compileall -q src tests
+      - name: Run offline safety tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+      - name: Verify live mode is refused
+        env:
+          PYTHONPATH: src
+          SIGNAL_VAULT_MODE: live
+        run: |
+          if python -m signal_vault; then
+            echo 'SECURITY REGRESSION: live mode unexpectedly permitted' >&2
+            exit 1
+          else
+            echo 'PASS: live mode refused'
+          fi
