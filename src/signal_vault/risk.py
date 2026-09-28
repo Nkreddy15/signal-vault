@@ -21,8 +21,8 @@ def _money_valid(value: Decimal) -> bool:
 
 @dataclass(frozen=True)
 class RiskLimits:
-    max_single_buy_usd: Decimal = Decimal("10")
-    max_total_long_exposure_usd: Decimal = Decimal("20")
+    max_single_buy_usd: Decimal = Decimal("15")
+    max_total_long_exposure_usd: Decimal = Decimal("30")
     max_daily_equity_loss_usd: Decimal = Decimal("3")
     max_peak_to_current_drawdown_usd: Decimal = Decimal("10")
     max_quote_age_seconds: int = 90

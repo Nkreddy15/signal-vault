@@ -1,6 +1,6 @@
 # Threat model and security requirements
 
-**Current deployment state:** offline dry run only; no broker network client, credentials, hosting or funded account.
+**Current deployment state:** offline dry run only. A reviewed-in-progress paper-host-only POST module now exists but has NEVER run with real credentials; no authenticated broker calls, hosting or funded account.
 
 | Failure / attacker scenario | Mandatory control / test |
 |---|---|
@@ -24,6 +24,6 @@
 - Alerts for account reconciliation drift, API authorization failure, missing data, and a breached limit.
 - Every proposed order linked to market-data timestamp, strategy version, risk policy version and source signal.
 
-## Security gate before any paper broker integration
+## Security gate before activating the paper broker writer
 
 Test invalid `mode`, unexpected API hostname, missing credentials, stale quote, concurrent duplicate IDs, unknown submission status, partial fills, disconnect during submit and a recovery loop. No live API URL or trading credential should appear in Phase 1 code or tracked examples.

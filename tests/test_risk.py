@@ -13,7 +13,7 @@ NOW = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
 def proposal(**changes):
     obj = TradeIntent(
         market="crypto", venue="alpaca", symbol="BTC/USD", side=Side.BUY,
-        notional_usd=Decimal("5"), client_order_id="test-order-1",
+        notional_usd=Decimal("15"), client_order_id="test-order-1",
         signal_id="test-signal-1", quote_timestamp=NOW,
     )
     return replace(obj, **changes)
@@ -40,11 +40,11 @@ class RiskEngineTests(unittest.TestCase):
 
     def test_single_order_limit(self):
         self.assertIn("single-buy allocation exceeded",
-                      self.decision(proposal(notional_usd=Decimal("11"))).reasons)
+                      self.decision(proposal(notional_usd=Decimal("16"))).reasons)
 
     def test_portfolio_exposure_includes_pending_orders(self):
         p = snapshot(equity_usd=Decimal("100"), cash_usd=Decimal("80"),
-                     long_positions_usd={"BTC/USD": Decimal("15")},
+                     long_positions_usd={"BTC/USD": Decimal("25")},
                      open_buy_notional_usd=Decimal("2"))
         self.assertFalse(self.decision(portfolio=p).approved)
 
@@ -71,8 +71,8 @@ class RiskEngineTests(unittest.TestCase):
             proposal(side=Side.SELL, notional_usd=Decimal("10"))).reasons[0])
 
     def test_risk_reducing_sell_during_daily_loss_pause(self):
-        p = snapshot(equity_usd=Decimal("97"), cash_usd=Decimal("87"),
-                     long_positions_usd={"BTC/USD": Decimal("10")})
+        p = snapshot(equity_usd=Decimal("97"), cash_usd=Decimal("82"),
+                     long_positions_usd={"BTC/USD": Decimal("15")})
         self.assertTrue(self.decision(proposal(side=Side.SELL), p).approved)
 
     def test_operator_emergency_halt_stops_all(self):

@@ -20,13 +20,13 @@ def main() -> None:
     )
     proposal = TradeIntent(
         market="crypto", venue="alpaca", symbol=config.symbol,
-        side=Side.BUY, notional_usd=Decimal("5"),
+        side=Side.BUY, notional_usd=Decimal("15"),
         client_order_id="phase1-offline-demo-001",
         signal_id="phase1-demonstration-not-real-market-signal",
         quote_timestamp=now,
     )
     result = RiskEngine().evaluate(proposal, portfolio, now=now)
-    print("SIGNAL VAULT PHASE 1 | NO EXTERNAL ORDER EXECUTION")
+    print("SIGNAL VAULT OFFLINE SAFETY DEMO | NO EXTERNAL ORDER EXECUTION")
     print(f"Mode: {config.mode} | Broker: {config.broker}")
     print(f"Proposed dry-run buy: ${proposal.notional_usd} {proposal.symbol}")
     print(f"Risk decision: {'APPROVED' if result.approved else 'REJECTED'} {result.reasons}")

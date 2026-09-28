@@ -7,13 +7,23 @@
 - [x] Deterministic risk engine with explicit position, daily loss, drawdown and quote-age limits.
 - [x] Dry-run broker records an approved proposal but never falsely reports fills.
 - [x] Unit tests and GitHub Actions safety-check workflow authored.
-- [ ] New private GitHub remote exists and initial commit is pushed. Requires a blank private repository created by the user (current connector cannot create repos).
+- [x] Private GitHub remote exists; initial full source-tree SHA matched and remote is source of truth.
 
-## Phase 2 — genuine broker paper mode (not started)
+## Phase 2 — offline integration groundwork (current)
+
+- [x] Strict source-attributed, contiguous, fully-closed historical bar ingestion with pagination and failure tests (mock transport).
+- [x] Baseline EMA crossover, strict HOLD, next-open research backtester with transaction cost assumptions and explicit hypothetical reporting.
+- [x] Read-only Alpaca paper host allowlist and tradability checks (mock transport only); non-executable order drafts reject $5 and unsupported precision/time-in-force.
+- [x] Local durable offline draft-idempotency and additive reservation journal with immutable audit events; NOT a broker fill ledger.
+- [x] Paper lifecycle pure state machine + persisted SQLite state (mock tests): unknown timeout never blind-retries, cumulative fills cannot regress, and terminal orders hold reserves until reconciliation. Genuine provider audit still pending.
+- [x] Fully offline Scout/Strategist-to-Guardian-to-draft pipeline; no broker API write methods.
+- [x] Chronological disjoint fixed-parameter research folds, synthetic-data tests, no future-candle leakage in backtest.
+
+## Phase 2 — genuine broker paper mode (still pending)
 
 - [ ] Verified Alpaca paper credentials configured through secrets, never checked in.
 - [ ] BTC/USD asset metadata, min lot, market-data timestamp and price/quantity precision checked.
-- [ ] Network order host hard-pinned to paper endpoint; test refuses anything else.
+- [x] Paper-order POST code hard-pinned to one literal paper-host endpoint and tested exclusively with fake transports. **No authenticated actual paper POST yet.**
 - [ ] Idempotent place/lookup/cancel/partial-fill lifecycle and durable cash reservations.
 - [ ] Postgres state, fill reconciliation after restarts and audit trail.
 - [ ] Historical baseline strategy with look-ahead-free backtest and after-cost accounting.
