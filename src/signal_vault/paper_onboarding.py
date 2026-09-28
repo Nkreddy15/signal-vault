@@ -16,6 +16,7 @@ from typing import Mapping, Callable
 from .alpaca_paper import PAPER_ROOT, PaperAlpacaReadClient
 from .config import RuntimeConfig
 from .venue_rules import BtcVenueRules
+from .paper_credentials import PaperCredentials
 
 
 @dataclass(frozen=True)
@@ -67,11 +68,8 @@ def main(argv: list[str]|None=None, *, env: Mapping[str,str]|None=None,
         parser.error('an explicit --confirm-paper-read-only flag is mandatory')
     settings=os.environ if env is None else env
     RuntimeConfig.from_environment(settings)  # mode must be paper; no live toggles
-    key=settings.get('SV_ALPACA_PAPER_KEY','')
-    secret=settings.get('SV_ALPACA_PAPER_SECRET','')
-    if not isinstance(key,str) or not isinstance(secret,str) or not key.strip() or not secret.strip():
-        raise ValueError('paper credentials absent; configure only on your own private computer/server')
-    client=client_factory(key,secret)
+    paper=PaperCredentials.from_environment(settings)
+    client=client_factory(paper.key_id,paper.secret_key)
     outcome=evaluate_paper_read_only(client)
     # Only redacted facts are printed. No raw provider JSON, IDs, tokens or secrets.
     print(json.dumps({'kind':'ALPACA_PAPER_READ_ONLY_ONBOARDING',

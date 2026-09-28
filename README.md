@@ -4,7 +4,7 @@ Private, modular autonomous trading engineering project. The initial venue is
 **Alpaca BTC/USD PAPER only**. Stock and event-contract adapters remain future
 components of the same architecture, not secretly enabled alternatives.
 
-## Current release: Phase 2-E (offline-tested prototype)
+## Current release: Phase 2-F (offline-tested prototype)
 
 - Strict hourly BTC historical data handling, immutable deterministic signals,
   research-only next-open backtesting with explicit hypothetical costs.
@@ -19,6 +19,8 @@ components of the same architecture, not secretly enabled alternatives.
 - Venue-specific BTC minimum/step checks and honest dust-aware SELL preview.
 - A strictly parsed optional AI selection gate that may choose HOLD or an
   existing evidence-bound signal, never allocate capital or override Guardian.
+- Redacted PAPER-only credential loader and independent GET-only paper-order
+  restart/recovery supervisor with same-account enforcement.
 - LOCAL READ-ONLY dashboard. Never expose to the internet without an entirely
   separate authentication and deployment security review.
 
@@ -66,6 +68,11 @@ Research-only backtests can be invoked via
 `PYTHONPATH=src python -m signal_vault.backtest PATH_TO_VERIFIED_UTC_HOURLY_CSV --as-of 2026-09-28T00:00:00Z`.
 Use a real, time-stamped dataset and an as-of value after the final closed bar.
 Never label backtest proceeds as broker-confirmed profits.
+
+**Concurrent repository changes:** this development track is preserved on the
+private `dev/phase2e-source-preservation-20260928` branch. GitHub `main` was
+independently changed; do not force overwrite either branch. A reviewed
+integration is required before the default branch represents this prototype.
 
 Read `PROJECT_STATUS.md` and `NEXT_STEPS.md` before editing, especially after a
 ChatGPT usage reset. `ARCHITECTURE.md`, `docs/SECURITY.md` and

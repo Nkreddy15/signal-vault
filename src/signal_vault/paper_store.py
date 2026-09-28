@@ -119,6 +119,11 @@ class PersistentPaperOrderStore:
     def get(self, client_order_id: str) -> PaperOrderState:
         return self._state_in_transaction(client_order_id)
 
+    def list_states(self) -> tuple[PaperOrderState, ...]:
+        """Stable paper state read for restart recovery, without broker access."""
+        return tuple(_parse_state(row[0]) for row in self.connection.execute(
+            "SELECT state_json FROM paper_order_states ORDER BY client_order_id"))
+
     def budget_snapshot(self) -> Mapping[str, str] | None:
         """Isolated virtual $100 paper subledger, NOT the broker default balance."""
         row = self.connection.execute("""

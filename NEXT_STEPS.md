@@ -1,10 +1,14 @@
-# Signal Vault recovery and next work (after Phase 2-E)
+# Signal Vault recovery and next work (after Phase 2-F)
 
-1. Open the private `Nkreddy15/signal-vault` `main` branch and read
-   `PROJECT_STATUS.md`, `ARCHITECTURE.md` and this file. Confirm latest branch
-   commit and compare against the Library ZIP if there is any source handoff
-   issue. Never force-push or overwrite another session's changes.
-2. Run `make smoke`. It includes offline unit tests, a deliberately fake paper
+1. IMPORTANT: `main` advanced independently to commit `d960ab81` and
+   contains overlapping implementation decisions. This development track is
+   preserved on `dev/phase2e-source-preservation-20260928` as an exact tree;
+   Phase 2-F must be fast-forwarded ONLY on that branch, never on main. Read
+   this branch's `PROJECT_STATUS.md`, `ARCHITECTURE.md`, `NEXT_STEPS.md`; use
+   the Library Phase2F ZIP as fallback. Do not force push or overwrite main.
+   Inspect/compare the two branches and merge specific improvements through a
+   reviewed integration workflow, avoiding deletion of safety features.
+2. Run `make smoke` (130/130 tests at this point). It includes offline unit tests, a deliberately fake paper
    broker lifecycle and Python source compilation. Verify live mode remains
    permanently rejected. Do not mistake simulation for provider paper fills.
 3. Wire `paper_store` into a single source-backed proposal method that uses
@@ -18,8 +22,10 @@
    authorization and secure paper credentials outside this chat**. Verify trading eligibility, account
    status, BTC/USD metadata, quote/asset mapping, fee calculations and cash
    with real GETs before activating any provider paper POST.
-5. Promote the currently UNARMED read-only research scheduler to an
-   independently authorized PAPER-only broker orchestration after onboarding:
+5. The independently tested read-only `PaperRecoverySupervisor` now safely
+   checks status and terminal evidence on restarts using matching paper
+   credentials. Promote the currently UNARMED read-only research scheduler to
+   an independently authorized PAPER-only broker orchestration after onboarding:
    retain staleness guard, exactly-once bar processing, persisted operator
    HALT, interrupt-safe submission, UNKNOWN
    lookup, terminal audit, full fill/fee ledger and restart recovery. Implement

@@ -118,6 +118,14 @@ class PaperOnceExecutor:
             raise ValueError("paper credentials required")
         self._key, self._secret, self._store, self._transport = paper_key, paper_secret, store, transport
 
+    def _require_same_paper_reader(self, reader: PaperAlpacaReadClient) -> None:
+        # UNKNOWN and subsequent status reads are as financially meaningful as
+        # the original POST: never mix results from a different paper account.
+        if (not isinstance(reader, PaperAlpacaReadClient) or
+            not compare_digest(reader._paper_key, self._key) or
+            not compare_digest(reader._paper_secret, self._secret)):
+            raise PermissionError("paper reader must match original executor credentials")
+
     def submit_once(self, draft: PaperOrderDraft, *, at: datetime,
                     reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:
         """Preflight with independent PAPER GETs then persist baseline BEFORE POST.
@@ -129,11 +137,7 @@ class PaperOnceExecutor:
         _check_draft_payload(draft.payload)
         if draft.client_order_id != draft.payload["client_order_id"]:
             raise ValueError("draft ID and payload ID do not match")
-        if not isinstance(reader, PaperAlpacaReadClient) or (
-            not compare_digest(reader._paper_key, self._key) or
-            not compare_digest(reader._paper_secret, self._secret)
-        ):
-            raise PermissionError("preflight reader must be the same PAPER account as executor")
+        self._require_same_paper_reader(reader)
         constraints = BtcVenueRules.from_asset(reader.get_btc_asset())
         px = draft.reference_price_usd
         if not isinstance(px, Decimal) or not px.is_finite() or px <= 0:
@@ -176,6 +180,7 @@ class PaperOnceExecutor:
 
     def lookup_unknown_once(self, client_order_id: str, *, at: datetime,
                             reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:
+        self._require_same_paper_reader(reader)
         state = self._store.get(client_order_id)
         if state.stage is not Stage.UNKNOWN_RESULT:
             raise ValueError("lookup recovery requires unknown submission state")
@@ -221,6 +226,7 @@ class PaperOnceExecutor:
     def poll_known_once(self, client_order_id: str, *, at: datetime,
                         reader: PaperAlpacaReadClient) -> PaperSubmissionOutcome:
         """Reconcile an already-seen accepted/partial order; no order POST here."""
+        self._require_same_paper_reader(reader)
         state = self._store.get(client_order_id)
         if state.stage not in (Stage.BROKER_ACCEPTED, Stage.PARTIALLY_FILLED):
             raise ValueError("only known nonterminal broker orders may be polled")

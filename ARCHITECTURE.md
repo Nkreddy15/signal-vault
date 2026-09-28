@@ -206,3 +206,29 @@ by the local draft journal when it exactly matches independently reconciled,
 durably marked budget values; a fabricated $100,000 paper account balance
 cannot be treated as profit. `dashboard.py` labels this **virtual paper** data,
 never actual or guaranteed P&L.
+
+
+## Phase 2-F: independent recovery and sandbox secrets boundary
+
+`paper_credentials.PaperCredentials` only reads `SV_ALPACA_PAPER_KEY` and
+`SV_ALPACA_PAPER_SECRET` from the local environment and redacts string/repr.
+It refuses common generic/live Alpaca environment variable names and control
+characters. `paper_onboarding` uses the same sealed paper-only loader. A
+`PaperOnceExecutor` now checks read-client identity with `hmac.compare_digest`
+not only during POST preflight and terminal audits, but on UNKNOWN lookups and
+known-order polling too, preventing accidental cross-account observations.
+
+`paper_recovery.PaperRecoverySupervisor` imports no market scanner and has no
+POST path. At startup it converts any pre-crash SUBMISSION_PENDING record to
+UNKNOWN_RESULT, looks up UNKNOWN using the same paper credentials, polls
+accepted/partial orders, and independently verifies terminal provider order +
+account cash + BTC positions using the durable BEFORE baseline and fresh GETs.
+Any mismatch leaves the reservation intact; an operator HALT also keeps new
+submissions blocked. There is still no authenticated provider account in use.
+
+**Repository concurrency note:** Another update advanced `main` from our
+previous Phase2D source; this development track lives on the isolated
+`dev/phase2e-source-preservation-20260928` branch. The other tree was inspected
+and credential/recovery concepts ported selectively without overwriting main.
+A reviewable integration is mandatory before declaring the default branch
+current; do not force-push.

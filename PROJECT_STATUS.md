@@ -1,16 +1,20 @@
 # SIGNAL VAULT — durable project checkpoint
 
-**Checkpoint:** PHASE2-2026-09-28-E — unarmed research scheduler and explicit paper onboarding added to fake PAPER lifecycle and local
+**Checkpoint:** PHASE2-2026-09-28-F (integrated recovery and credential hardening) — unarmed research scheduler and explicit paper onboarding added to fake PAPER lifecycle and local
 operator controls; all real-money execution disabled.
-**Repository:** private https://github.com/Nkreddy15/signal-vault, `main`.
-Phase 2-C remote exact source tree SHA `b9feceab2cbefdb998d642cdb22d81685cf51ed3`
-was imported as GitHub commit `763e47ec87daf9b7b66546f2f2a2aaf32b1af297`.
-Phase 2-D code was verified and imported at remote commit
-`dd459e103158f4ed3e44550cc1951ee0b6022be5`, source tree
-`1735b2d186218042acd4729a79a9539ecf38ae43`. A subsequent remote
-status-only commit was `a04dfdf5bb5aebf084eeba33a80d7fbfdf47756a`.
-Phase 2-E code must be imported and verified as another normal fast-forward;
-never assume Library source is already synchronized without the exact tree check.
+**Repository:** private https://github.com/Nkreddy15/signal-vault.
+**IMPORTANT CONCURRENT MAIN UPDATE:** During this session `main` changed to
+`d960ab81c24c774b88065a31a24b7b52e3becc8e` from a separate source
+path, replacing/removing many Phase 2-D components while introducing a
+credential boundary and recovery-only supervisor. This session's independent
+Phase 2-E source has been preserved on the separate GitHub branch
+`dev/phase2e-source-preservation-20260928`, complete-source commit
+`174daabb31bb65b63d0e8167cae15c9f692313b9`, exact original source
+tree `b0a49b5800b490a6750d05a86ebb38724ad7b490`. Never force push or
+overwrite `main`. Phase 2-F ports the independent credential/recovery ideas
+into the preservation branch and requires exact new-tree verification before
+an additional branch update. Keep this preservation branch as the source of
+truth for THIS development track until an explicit integration review.
 **Authorization:** engineering and offline paper-only tests. No deposits,
 paid services, broker credentials, authenticated requests, genuine paper broker
 orders, live orders or hosting deployed. November 1 is a conditional milestone.
@@ -51,7 +55,13 @@ orders, live orders or hosting deployed. November 1 is a conditional milestone.
   source-validated hourly marks now feed Guardian and independently guard paper
   submissions. Legitimately proven paper gains above $100 cannot be confused
   with caller-fabricated balances.
-- `make test`: **124/124 offline tests PASS** at this checkpoint, `make demo`
+- Phase 2-F: a redacted, sandbox-variable-only paper credential object;
+  generic/live credential names are rejected. A GET-only paper recovery
+  supervisor shares the source reader's exact credentials with the executor,
+  resolves UNKNOWN by client ID, polls known orders and may independently audit
+  terminal cash/position/order evidence without sending new orders. Other
+  source edits found on concurrent `main` have NOT been blindly merged.
+- `make test`: **130/130 offline tests PASS** at this checkpoint, `make demo`
   remains local, and no actual trading advantage has been established.
 
 ## Honest blockers
