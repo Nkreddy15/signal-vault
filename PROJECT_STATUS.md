@@ -1,5 +1,6 @@
 # SIGNAL VAULT — durable checkpoint
 
+> **2026-09-28 Phase 2 source-transfer notice:** The locally tested Phase 2-A revision (46/46 unit tests passing) is saved as `/Signal Vault/signal-vault-phase2-2026-09-28.zip` in the ChatGPT Library. It includes strict historical BTC/USD bar ingestion, deterministic EMA signals, a hypothetical after-cost backtester, GET-only Alpaca paper client/draft validation and an offline durable draft journal. This GitHub branch does **not** yet contain those Phase 2 code changes: the Library file-retrieval handoff returned 401 during the attempted GitHub source-tree transfer. The latest local commit in the Phase 2 ZIP is `456e5b1ab3c1ec89a174d0e6fbfa5f1c45abbd26`; expected full-source tree SHA `11c00b01b4ab296b7e68f0d28bd3c757259c46eb`. Re-import only after verifying the remote branch and never force-push. No broker authenticated requests or orders made.\n\n
 **Checkpoint:** PHASE1-2026-09-28-B (verified private GitHub main branch, full 24-file source-tree import).  
 **Authorization:** Phase 1 architecture, repository scaffold and paper-only development ONLY. No deposits, paid services, broker account connections, market orders, real-money trades or deployments authorized.  
 **Target:** November 1, 2026 *conditional* $100 live pilot; no promise of profitability or go-live.
