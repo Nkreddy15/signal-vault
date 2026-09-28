@@ -161,8 +161,13 @@ class AlpacaPublicCryptoBars:
         start, end, as_of = (x.astimezone(timezone.utc) for x in (start, end, as_of))
         if not start < end <= as_of or (start.minute, start.second, start.microsecond) != (0, 0, 0) or (end.minute, end.second, end.microsecond) != (0, 0, 0):
             raise ValueError("request must end on a fully closed UTC-hour boundary")
+        # Alpaca documents `end` as inclusive, while our validated dataset uses
+        # the half-open interval [start, end). Request one second before the
+        # exclusive boundary to avoid admitting the bar starting exactly at `end`.
+        # Keep strict row/boundary validation below; never silently discard bars.
         params = {"symbols": SYMBOL, "timeframe": "1Hour", "start": start.isoformat(),
-                  "end": end.isoformat(), "limit": "1000", "sort": "asc"}
+                  "end": (end - timedelta(seconds=1)).isoformat(),
+                  "limit": "1000", "sort": "asc"}
         all_bars: list[Bar] = []
         seen_tokens: set[str] = set()
         for _ in range(self.max_pages):
