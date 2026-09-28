@@ -1,7 +1,7 @@
 # SIGNAL VAULT — durable checkpoint
 
 **Checkpoint:** PHASE2-2026-09-28-F (unattended paper-runtime hardening; provider credentials/order submission NOT activated).
-**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2E is verified remotely at commit `fcfe1bfc14ba822553fd17a435fae7432b659d95`, tree `c65a568b2c764c6fd82c5f2f93890f0a6ff2bc26`. Phase 2F must be exact-tree synced before session stop.
+**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2F code tree was exact-tree synced to private GitHub as commit `e56a741705d1d182bd22ab4c03628dd92ed9c2f3`, tree `b221891c52f27fd3381261787a0957bf549ba130`; this documentation-only follow-up records that successful handoff.
 **Authorization:** Development and paper-mode architecture only. No deposits, paid services, broker credentials, authenticated broker requests, genuine paper orders, real-money orders, real-money account connections or deployment have occurred. There is no live-trading endpoint in the codebase.
 **Target:** November 1, 2026 *conditional* $100 live pilot only after genuine provider paper validation and a separate explicit live authorization; profitability and launch are not promised.
 
