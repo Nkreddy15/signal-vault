@@ -33,6 +33,24 @@ class MarketDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             validate_bars([bar(0), bar(0)], as_of=AS_OF)
 
+    def test_gap_diagnostic_reports_exact_source_timestamps(self):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"missing hourly bar: expected 2026-08-01T01:00:00\\+00:00, "
+            r"next returned 2026-08-01T03:00:00\\+00:00"
+        ):
+            validate_bars([bar(0), bar(3)], as_of=AS_OF)
+
+        with self.assertRaisesRegex(
+            ValueError, r"duplicate hourly bar: 2026-08-01T01:00:00\\+00:00"
+        ):
+            validate_bars([bar(0), bar(1), bar(1)], as_of=AS_OF)
+
+        with self.assertRaisesRegex(
+            ValueError, r"out-of-order hourly bar: expected 2026-08-01T02:00:00"
+        ):
+            validate_bars([bar(0), bar(1), bar(0)], as_of=AS_OF)
+
     def test_open_bar_cannot_enter_signal(self):
         with self.assertRaisesRegex(ValueError, "open / future"):
             validate_bars([bar(0)], as_of=START + timedelta(minutes=30))
