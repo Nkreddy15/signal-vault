@@ -1,4 +1,4 @@
-name: Phase 1 safety checks
+name: Signal Vault paper-only safety checks
 on:
   push:
   pull_request:
@@ -21,14 +21,23 @@ jobs:
         env:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -v
-      - name: Verify live mode is refused
+      - name: Verify live mode is explicitly refused
         env:
           PYTHONPATH: src
           SIGNAL_VAULT_MODE: live
         run: |
-          if python -m signal_vault; then
-            echo 'SECURITY REGRESSION: live mode unexpectedly permitted' >&2
+          set +e
+          python -m signal_vault > /tmp/sv-live-refusal.txt 2>&1
+          result=$?
+          set -e
+          if [ "$result" -eq 0 ] || ! grep -Fq 'PAPER ONLY' /tmp/sv-live-refusal.txt; then
+            echo 'SECURITY REGRESSION: an explicit PAPER ONLY refusal is required' >&2
             exit 1
-          else
-            echo 'PASS: live mode refused'
+          fi
+          echo 'PASS: explicitly rejected live mode'
+      - name: Disallow live Alpaca trading host in source
+        run: |
+          if grep -R -F 'https://api.alpaca.markets' src/; then
+            echo 'SECURITY REGRESSION: unreviewed live Alpaca URL in source' >&2
+            exit 1
           fi

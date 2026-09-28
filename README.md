@@ -43,6 +43,15 @@ SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m
 
 Do not run `paper-daemon` until the authenticated read-only smoke gate is completed.
 
+## Phase 2H: isolated PostgreSQL PAPER critical-ledger design
+
+`db/migrations/0002_critical_paper.sql` and `docs/POSTGRES_PAPER_LEDGER.md`
+provide an **unapplied schema/transaction contract**, not a working Postgres
+adapter. It fails closed with an initial operator HALT, exact money types,
+append-only audit constraints and at most one unreconciled order. No production
+Postgres or live trading integration is connected. The current runnable storage
+remains the single-host SQLite PAPER prototype until a real tested port exists.
+
 ## Phase 2G: private PAPER operator monitoring and local reliability
 
 The code now includes `operator_server.py` and `operator_view.py` (loopback-only,

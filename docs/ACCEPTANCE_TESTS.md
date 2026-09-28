@@ -48,3 +48,10 @@
 - [x] SQLite consistent backup into an owner-only exclusive filename with integrity/hash checks; never auto-resume trading after restoration.
 - [x] Guardian risk policy rejects invalid limits (NaN/Infinity/negative/string), invalid timing/identities/maps and cash+marked-position equity inconsistencies.
 - [ ] Authenticated real Alpaca PAPER smoke, provider/fill evidence, seven-day runtime, PostgreSQL critical ledger and production deployment remain outstanding.
+
+## Phase 2H PostgreSQL migration contract (unapplied)
+
+- [x] Drafted isolated PAPER-only SQL schema with initial operator halt, NUMERIC ledger,
+  append-only audit and DB-level unique unresolved paper order; static source tests pass.
+- [ ] Actual PostgreSQL migration, Python transactional port, concurrent worker tests,
+  crash/restart, fee/fill reconciliation and provider smoke remain not implemented.
