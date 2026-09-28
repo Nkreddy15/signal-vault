@@ -14,7 +14,8 @@ START = datetime(2026, 1, 1, tzinfo=timezone.utc)
 
 
 def synthetic():
-    prices = [100] * 8 + [90] * 8 + [120] * 8 + [80] * 12
+    # The 26-hour baseline warmup must finish before the intentional crossover.
+    prices = [100] * 20 + [90] * 12 + [120] * 12 + [80] * 12
     return [
         Bar(START + timedelta(hours=i), Decimal(px), Decimal(px + 1),
             Decimal(px - 1), Decimal(px), Decimal(10), "v02-synthetic")
