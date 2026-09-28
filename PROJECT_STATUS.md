@@ -5,8 +5,11 @@ operator controls; all real-money execution disabled.
 **Repository:** private https://github.com/Nkreddy15/signal-vault, `main`.
 Phase 2-C remote exact source tree SHA `b9feceab2cbefdb998d642cdb22d81685cf51ed3`
 was imported as GitHub commit `763e47ec87daf9b7b66546f2f2a2aaf32b1af297`.
-Phase 2-D source is tracked in the local working tree and must be synchronized
-as a separate fast-forward checkpoint (verify actual remote commit after upload).
+Phase 2-D full 57-file source tree was verified and imported into GitHub at
+commit `dd459e103158f4ed3e44550cc1951ee0b6022be5` (exact original local
+tree SHA `1735b2d186218042acd4729a79a9539ecf38ae43`). The archived local
+commit `faf13ed194cd4673216743240153f51a99cd8f1e` has the same source tree
+but separate history; treat the GitHub `main` branch as authoritative.
 **Authorization:** engineering and offline paper-only tests. No deposits,
 paid services, broker credentials, authenticated requests, genuine paper broker
 orders, live orders or hosting deployed. November 1 is a conditional milestone.
