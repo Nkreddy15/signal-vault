@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable checkpoint
 
-**Checkpoint:** PHASE1-2026-09-28-A (initial local Git commit).  
+**Checkpoint:** PHASE1-2026-09-28-B (verified private GitHub main branch, full 24-file source-tree import).  
 **Authorization:** Phase 1 architecture, repository scaffold and paper-only development ONLY. No deposits, paid services, broker account connections, market orders, real-money trades or deployments authorized.  
 **Target:** November 1, 2026 *conditional* $100 live pilot; no promise of profitability or go-live.
 
@@ -13,15 +13,15 @@
 
 ## Not yet implemented — do not claim otherwise
 
-- No new GitHub `signal-vault` remote (connected GitHub account does not have one; tool supports file writes but not repository creation).
+- Private GitHub repository established at https://github.com/Nkreddy15/signal-vault. The remote Phase 1 source tree SHA `78f21d5eafbea9a70fc60fadcbbeae85a10cb099` exactly matches the original local Git tree. Remote initial full-source commit `efb4b0c786701a909c7b9c9e67f54c9392e08613`.
 - No Alpaca credentials, SDK connection, API paper orders, trading data feed or historical strategy.
 - No persistent live ledger, PostgreSQL instance, working dashboard, public URL, cloud deployment, scheduled autonomous loop or real fill/P&L.
 - No stocks / Kalshi market integrations. No live-money execution path exists.
 
-## GitHub remote blocker
+## GitHub source of truth
 
-The linked GitHub account is `Nkreddy15`. Existing repositories do not contain Signal Vault. To avoid contaminating another project, the first checkpoint is initialized as a local Git repo and archived in the ChatGPT Library. The user must create a **new empty private** repository called `signal-vault` at https://github.com/new (do not initialize it with a template/README/license). Then provide its URL in the next turn to enable pushing this exact checkpoint through the connected tools or using standard local Git credentials.
+Private repository: https://github.com/Nkreddy15/signal-vault (branch `main`). Initial complete 24-file import: commit `efb4b0c786701a909c7b9c9e67f54c9392e08613`; verified tree SHA `78f21d5eafbea9a70fc60fadcbbeae85a10cb099`, exactly matching the original local source tree. The earlier local commit has a different SHA because the new remote was initialized separately, but its file tree is identical. GitHub is now the authoritative development source. Never overwrite GitHub files from an outdated archive without comparing state.
 
 ## Resume instructions
 
-Read this file and `NEXT_STEPS.md` from the saved Phase 1 archive / Library. Inspect actual Git state before making claims. Preserve paper-only constraints and rerun all tests. Update this status file at each successful checkpoint. Never rely on chat memory alone.
+Read this file and `NEXT_STEPS.md` from the GitHub `main` branch. Inspect actual Git state before making claims. Preserve paper-only constraints and rerun all tests. Update this status file at each successful checkpoint. Never rely on chat memory alone.
