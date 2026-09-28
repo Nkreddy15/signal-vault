@@ -1,7 +1,7 @@
-# Phase 2-D test report (2026-09-28)
+# Phase 2-E test report (2026-09-28)
 
 - Run `make smoke` from root with Python 3.11+; pure stdlib in initial build.
-- 101 offline `unittest` checks passing at the saved development checkpoint.
+- 124 offline `unittest` checks passing at the saved development checkpoint.
 - `make fake-scenario` exercises fake-only accepted -> terminal -> three-way
   source evidence -> reconciled. Absolutely ZERO authenticated Alpaca requests,
   zero real Alpaca paper fills, zero live-money trades, zero deployment.
@@ -11,6 +11,13 @@
   virtual budget, external account contamination, persistent operator HALT,
   loopback-only read-only dashboard, input fuzz regressions and fake complete
   order lifecycle.
+- Additional offline tests: explicit paper-account GET-only onboarding,
+  source venue minimum/step and dust-sell preview, once-per-bar unarmed
+  research supervisor with stale-input and worker-lock tests, agent-decision
+  schema rejects order/tool overrides, unsent draft TTL protections.
+- Source-driven virtual risk marks: persistent high-water drawdown pause,
+  UTC-day rollover, source mark conflict rejection and prohibition of fabricated
+  paper profits exceeding the original $100 allocation.
 - Remaining tests prior to pilot: actual provider paper integration (requires
   separately approved paper credentials), true venue fee precision and
   multi-order cash/BTC reconciliation, property/fault tests, authenticated

@@ -1,4 +1,4 @@
-# Signal Vault recovery and next work (after Phase 2-D)
+# Signal Vault recovery and next work (after Phase 2-E)
 
 1. Open the private `Nkreddy15/signal-vault` `main` branch and read
    `PROJECT_STATUS.md`, `ARCHITECTURE.md` and this file. Confirm latest branch
@@ -7,17 +7,21 @@
 2. Run `make smoke`. It includes offline unit tests, a deliberately fake paper
    broker lifecycle and Python source compilation. Verify live mode remains
    permanently rejected. Do not mistake simulation for provider paper fills.
-3. Implement isolated virtual $100 cash/BTC derivation for all production paper
-   proposals, record mark-to-market peak/day baselines, reserve sellable BTC,
-   enforce fee/spread budgets and convert Guardian to a durable preflight
-   using provider-backed snapshots rather than caller-supplied PortfolioSnapshot.
-4. Implement actual read-only paper-account onboarding and a provider API
-   compatibility smoke test **only after separate authorization and secure
-   paper credentials outside this chat**. Verify trading eligibility, account
+3. Wire `paper_store` into a single source-backed proposal method that uses
+   ONLY its independently reconciled virtual $100 ledger. Persist true
+   strict fair USD/BTC fee/spread budgets. Mark-to-market peak and UTC-day
+   baselines are now durably tracked; retain and extend the tests. Never trust the caller to manufacture a $100 PortfolioSnapshot.
+   Integrate the new source asset minimum/step and dust-aware exit preview;
+   the dust operating mandate still needs explicit owner confirmation.
+4. The uninvoked, mock-tested `paper_onboarding` GET-only code exists; run
+   a genuine paper-account API compatibility smoke test **only after separate
+   authorization and secure paper credentials outside this chat**. Verify trading eligibility, account
    status, BTC/USD metadata, quote/asset mapping, fee calculations and cash
    with real GETs before activating any provider paper POST.
-5. Paper-only autonomous scheduler: data staleness guard, exactly-once bar
-   processing, persisted operator HALT, interrupt-safe submission, UNKNOWN
+5. Promote the currently UNARMED read-only research scheduler to an
+   independently authorized PAPER-only broker orchestration after onboarding:
+   retain staleness guard, exactly-once bar processing, persisted operator
+   HALT, interrupt-safe submission, UNKNOWN
    lookup, terminal audit, full fill/fee ledger and restart recovery. Implement
    fault injection, single-writer isolation and structured event alerts.
 6. Upgrade local-only dashboard to a private authenticated owner interface;

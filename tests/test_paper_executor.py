@@ -29,7 +29,7 @@ def paper_preflight_reader():
         if path == "/v2/assets/BTC%2FUSD":
             return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
                     "tradable": True, "fractionable": True, "min_order_size": "0.0001",
-                    "min_trade_increment": "0.000000001"}
+                    "min_trade_increment": "0.000000001", "price_increment":"1"}
         if path == "/v2/account":
             return {"id": "paper-test", "cash": "10000", "equity": "10000",
                     "non_marginable_buying_power": "10000", "status": "ACTIVE",

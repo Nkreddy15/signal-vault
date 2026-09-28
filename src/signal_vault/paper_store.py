@@ -75,6 +75,18 @@ class PersistentPaperOrderStore:
             )
         """)
         self.connection.execute("""
+            CREATE TABLE IF NOT EXISTS paper_risk_marks (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                peak_equity TEXT NOT NULL,
+                current_equity TEXT NOT NULL,
+                session_start_equity TEXT NOT NULL,
+                session_day TEXT NOT NULL,
+                last_mark_price TEXT NOT NULL,
+                last_marked_utc TEXT NOT NULL,
+                evidence_id TEXT NOT NULL
+            )
+        """)
+        self.connection.execute("""
             CREATE TABLE IF NOT EXISTS operator_controls (
                 singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
                 halted INTEGER NOT NULL CHECK (halted IN (0,1)),
@@ -118,6 +130,77 @@ class PersistentPaperOrderStore:
             return None
         return dict(zip(("account_id","last_provider_cash","last_provider_btc",
                          "virtual_cash","virtual_btc","updated_utc"), row))
+
+    def risk_mark_snapshot(self) -> Mapping[str, str] | None:
+        row = self.connection.execute("""SELECT peak_equity,current_equity,
+            session_start_equity,session_day,last_mark_price,last_marked_utc,evidence_id
+            FROM paper_risk_marks WHERE singleton=1""").fetchone()
+        if row is None:
+            return None
+        return dict(zip(("peak_equity","current_equity","session_start_equity",
+                         "session_day","last_mark_price","last_marked_utc","evidence_id"), row))
+
+    def mark_virtual_quote(self, *, mark_price: Decimal, at: datetime,
+                           evidence_id: str) -> Mapping[str, str] | None:
+        """Persist quote-driven virtual peak and UTC-day risk baselines.
+
+        Caller must have already validated the closed bar and quote freshness.
+        This changes NO external position and NEVER authorizes an order.
+        On UTC day rollover the previous observed equity remains the session
+        open, so an overnight gap is not concealed by the reset.
+        """
+        if (not isinstance(mark_price, Decimal) or not mark_price.is_finite() or
+            mark_price <= 0 or at.tzinfo is None or at.utcoffset() is None or
+            not isinstance(evidence_id, str) or not evidence_id.strip() or
+            len(evidence_id) > 128):
+            raise ValueError("fresh source mark, aware time and evidence required")
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            budget = self.budget_snapshot()
+            if budget is None:
+                self.connection.execute("COMMIT")
+                return None
+            mark = self.risk_mark_snapshot()
+            prior = datetime.fromisoformat(mark["last_marked_utc"]) if mark else at
+            if at < prior:
+                raise PermissionError("source mark must not roll risk state backwards")
+            if at == prior and mark is not None:
+                if (Decimal(mark["last_mark_price"]) != mark_price or
+                    mark["evidence_id"] != evidence_id):
+                    raise PermissionError("same-time conflicting market mark")
+                self.connection.execute("COMMIT")
+                return mark
+            cash, btc = Decimal(budget["virtual_cash"]), Decimal(budget["virtual_btc"])
+            equity = cash + btc * mark_price
+            old_peak = Decimal(mark["peak_equity"]) if mark else Decimal("100")
+            day = at.astimezone(timezone.utc).date().isoformat()
+            session_start = (Decimal(mark["session_start_equity"])
+                             if mark is not None and mark["session_day"] == day else
+                             Decimal(mark["current_equity"]) if mark is not None else Decimal("100"))
+            peak = max(old_peak, equity)
+            stamp = at.astimezone(timezone.utc).isoformat()
+            self.connection.execute("""INSERT INTO paper_risk_marks
+                (singleton,peak_equity,current_equity,session_start_equity,session_day,
+                 last_mark_price,last_marked_utc,evidence_id)
+                VALUES(1,?,?,?,?,?,?,?)
+                ON CONFLICT(singleton) DO UPDATE SET
+                 peak_equity=excluded.peak_equity,current_equity=excluded.current_equity,
+                 session_start_equity=excluded.session_start_equity,
+                 session_day=excluded.session_day,last_mark_price=excluded.last_mark_price,
+                 last_marked_utc=excluded.last_marked_utc,evidence_id=excluded.evidence_id""",
+                (str(peak), str(equity), str(session_start), day,
+                 str(mark_price), stamp, evidence_id))
+            self.connection.execute("""INSERT INTO events
+                 (client_order_id,event_type,event_json,created_utc) VALUES (?,?,?,?)""",
+                ("_riskmark_", "VIRTUAL_MARK_TO_MARKET",
+                 json.dumps({"evidence_id": evidence_id,"equity_usd": str(equity),
+                             "peak_equity_usd": str(peak),
+                             "session_open_usd": str(session_start)}, sort_keys=True), stamp))
+            self.connection.execute("COMMIT")
+            return self.risk_mark_snapshot()
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
 
     def is_operator_halted(self) -> bool:
         row = self.connection.execute("SELECT halted FROM operator_controls WHERE singleton=1").fetchone()
@@ -207,6 +290,10 @@ class PersistentPaperOrderStore:
                 self.connection.execute("""INSERT INTO paper_virtual_budget VALUES(1,?,?,?,?,?,?)""",
                     (baseline.account_id, str(baseline.cash_usd), str(baseline.btc_qty),
                      str(virtual_cash), str(virtual_btc), at.astimezone(timezone.utc).isoformat()))
+                self.connection.execute("""INSERT INTO paper_risk_marks VALUES(1,?,?,?,?,?,?,?)""",
+                    ("100","100","100",at.astimezone(timezone.utc).date().isoformat(),
+                     str(draft.reference_price_usd),at.astimezone(timezone.utc).isoformat(),
+                     "initial-paper-budget-anchor"))
             else:
                 if (budget["account_id"] != baseline.account_id or
                     abs(Decimal(budget["last_provider_cash"]) - baseline.cash_usd) > EPS_USD or
@@ -220,8 +307,21 @@ class PersistentPaperOrderStore:
                 # power. A stale/fabricated external PortfolioSnapshot cannot
                 # trick the executor into bypassing the base loss pause.
                 marked_equity = virtual_cash + virtual_btc * draft.reference_price_usd
-                if marked_equity <= Decimal("97"):
-                    raise PermissionError("isolated virtual account lost >= $3 from initial $100; halt new buys")
+                marks = self.risk_mark_snapshot()
+                if marks is None:
+                    raise PermissionError("missing virtual risk high-water state")
+                marked_at = datetime.fromisoformat(marks["last_marked_utc"])
+                if marked_at > at or at - marked_at > timedelta(seconds=90):
+                    raise PermissionError("virtual risk mark is stale: no new buy")
+                peak = max(Decimal(marks["peak_equity"]), marked_equity)
+                day = at.astimezone(timezone.utc).date().isoformat()
+                session_start = (Decimal(marks["session_start_equity"])
+                                 if marks["session_day"] == day else
+                                 Decimal(marks["current_equity"]))
+                if session_start - marked_equity >= Decimal("3"):
+                    raise PermissionError("virtual portfolio daily equity loss >= $3; pause new buys")
+                if peak - marked_equity >= Decimal("10"):
+                    raise PermissionError("virtual portfolio peak drawdown >= $10; pause new buys")
                 amount = Decimal(draft.payload["notional"])
                 if amount > virtual_cash:
                     raise PermissionError("virtual $100 paper cash balance exhausted")
@@ -338,6 +438,22 @@ class PersistentPaperOrderStore:
                 raise ValueError("reconciled broker order exceeded isolated virtual capital")
             if next_cash < 0: next_cash = Decimal("0")  # provider rounding only
             if next_btc < 0: next_btc = Decimal("0")
+            marks = self.risk_mark_snapshot()
+            if marks is None:
+                raise ValueError("paper risk marks missing; do not release reserved capital")
+            row = self.connection.execute("""SELECT reference_price_usd FROM drafts
+                                          WHERE client_order_id=?""",(client_order_id,)).fetchone()
+            price = state.filled_avg_price if state.filled_avg_price is not None else Decimal(row[0])
+            current_equity = next_cash + next_btc * price
+            peak = max(Decimal(marks["peak_equity"]), current_equity)
+            day = at.astimezone(timezone.utc).date().isoformat()
+            session_start = (Decimal(marks["session_start_equity"])
+                             if day == marks["session_day"] else Decimal(marks["current_equity"]))
+            self.connection.execute("""UPDATE paper_risk_marks SET peak_equity=?,
+                current_equity=?,session_start_equity=?,session_day=?,last_mark_price=?,
+                last_marked_utc=?,evidence_id=? WHERE singleton=1""",
+                (str(peak),str(current_equity),str(session_start),day,str(price),
+                 at.astimezone(timezone.utc).isoformat(),"verified-terminal-"+client_order_id))
             new = state.confirm_reconciled(provider_cash_verified=True,
                                            provider_position_verified=True,
                                            provider_order_verified=True)

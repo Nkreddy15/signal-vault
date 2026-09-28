@@ -4,7 +4,7 @@ Private, modular autonomous trading engineering project. The initial venue is
 **Alpaca BTC/USD PAPER only**. Stock and event-contract adapters remain future
 components of the same architecture, not secretly enabled alternatives.
 
-## Current release: Phase 2-D (offline-tested prototype)
+## Current release: Phase 2-E (offline-tested prototype)
 
 - Strict hourly BTC historical data handling, immutable deterministic signals,
   research-only next-open backtesting with explicit hypothetical costs.
@@ -12,8 +12,13 @@ components of the same architecture, not secretly enabled alternatives.
   restart-safe UNKNOWN transport states and paper-host-bound source checks.
 - Pre-submission independent paper account snapshot, dynamic provider minimum
   quantity/precision checks, post-terminal fee-aware order/cash/BTC reconciliation.
-- Separate virtual $100 budget, fixed $30 marked exposure and manual persistent
-  emergency HALT across process restarts.
+- Separate virtual $100 budget, fixed $30 marked exposure, UTC-session/peak
+  equity marks and manual persistent emergency HALT across process restarts.
+- Unarmed research supervisor with persistent once-per-closed-bar decisions and
+  expiration of strictly unsubmitted stale drafts (never release a paper order).
+- Venue-specific BTC minimum/step checks and honest dust-aware SELL preview.
+- A strictly parsed optional AI selection gate that may choose HOLD or an
+  existing evidence-bound signal, never allocate capital or override Guardian.
 - LOCAL READ-ONLY dashboard. Never expose to the internet without an entirely
   separate authentication and deployment security review.
 
@@ -52,6 +57,9 @@ broker. Unknown orders must be reconciled before clearing HALT.
 - `make demo`: guarded dry-run proposal, never a fill.
 - `make compile`: compile src/tests.
 - `make fake-scenario`: one complete deliberately simulated paper lifecycle.
+- `PYTHONPATH=src python -m signal_vault.research_runner --db .data/offline-paper.sqlite3 --csv REAL_UTC_HOURLY.csv --as-of 2026-09-28T06:00:03Z`: local, unarmed research replay; no broker orders or authenticated calls.
+- `PYTHONPATH=src python -m signal_vault.research_runner --db .data/offline-paper.sqlite3 --public-data --confirm-read-only-market-data`: optional read-only public Alpaca market-data request, may need account entitlement; NEVER POSTs orders.
+- `PYTHONPATH=src python -m signal_vault.paper_onboarding --confirm-paper-read-only`: optional *authenticated GET-only* paper-account eligibility check, requires separate local `SV_ALPACA_PAPER_KEY` and `SV_ALPACA_PAPER_SECRET` environment variables; do not paste either into this chat or commit them.
 - `SIGNAL_VAULT_MODE=live make demo`: must be explicitly rejected.
 
 Research-only backtests can be invoked via

@@ -129,7 +129,7 @@ class EvidenceTests(unittest.TestCase):
             if path == "/v2/assets/BTC%2FUSD":
                 return {"symbol":"BTC/USD", "class":"crypto", "status":"active",
                         "tradable":True, "fractionable":True,
-                        "min_order_size":"0.0001", "min_trade_increment":"0.000000001"}
+                        "min_order_size":"0.0001", "min_trade_increment":"0.000000001", "price_increment":"1"}
             if path == "/v2/account":
                 return {"id":"paper-isolated-1", "cash":"10000", "equity":"10000",
                         "non_marginable_buying_power":"10000", "status":"ACTIVE",
@@ -275,6 +275,74 @@ class VirtualPaperBudgetTests(unittest.TestCase):
             d = store.journal.record(TradeIntent("crypto", "alpaca", "BTC/USD", Side.BUY,
                            Decimal("15"), "budget-loss", "new-evidence", later),
                            snap(), checked_at=later, reference_price=Decimal("40000"))
-            with self.assertRaisesRegex(PermissionError, "lost >= \\$3"):
+            with self.assertRaisesRegex(PermissionError, "daily equity loss"):
                 store.begin_submission(d, at=later, baseline=replace(POST, observed_at=later))
             self.assertFalse(store.has_unresolved_provider_order())
+
+class MarkToMarketRiskTests(unittest.TestCase):
+    def _book_after_fill(self):
+        store=PersistentPaperOrderStore(':memory:')
+        d=store.journal.record(intent('mark-first'),snap(),checked_at=T0,
+                               reference_price=Decimal('65000'))
+        store.begin_submission(d,at=T0,baseline=BASE)
+        store.observe_provider(BrokerObservation(d.client_order_id,'broker1','filled',
+                                                 Decimal('0.00023'),Decimal('65100')),at=T0)
+        store.finish_reconciliation(d.client_order_id,at=T0+timedelta(seconds=3),
+                       post=POST,provider_order=order(d.client_order_id))
+        return store
+
+    def test_peak_equity_mark_is_persistent_and_blocks_later_peak_drawdown(self):
+        with self._book_after_fill() as store:
+            peak=store.mark_virtual_quote(mark_price=Decimal('100000'),
+                       at=T0+timedelta(seconds=4),evidence_id='validated-market-high')
+            self.assertGreater(Decimal(peak['peak_equity']),Decimal('107'))
+            low=store.mark_virtual_quote(mark_price=Decimal('55000'),
+                       at=T0+timedelta(seconds=5),evidence_id='validated-market-low')
+            self.assertEqual(low['peak_equity'],peak['peak_equity'])
+            at=T0+timedelta(seconds=6)
+            d=store.journal.record(TradeIntent('crypto','alpaca','BTC/USD',Side.BUY,
+                 Decimal('15'),'mark-next','evidence-mark-next',at),snap(),
+                 checked_at=at,reference_price=Decimal('55000'))
+            with self.assertRaisesRegex(PermissionError,'peak drawdown'):
+                store.begin_submission(d,at=at,baseline=replace(POST,observed_at=at))
+            self.assertEqual(store.journal.total_reserved_usd(),Decimal('15'))
+
+    def test_same_time_conflicting_price_is_not_allowed(self):
+        with self._book_after_fill() as store:
+            at=T0+timedelta(seconds=4)
+            x=store.mark_virtual_quote(mark_price=Decimal('65000'),at=at,evidence_id='e1')
+            self.assertEqual(x,store.mark_virtual_quote(mark_price=Decimal('65000'),at=at,evidence_id='e1'))
+            with self.assertRaises(PermissionError):
+                store.mark_virtual_quote(mark_price=Decimal('65001'),at=at,evidence_id='e2')
+
+    def test_utc_rollover_uses_previous_observed_equity_as_session_open(self):
+        with self._book_after_fill() as store:
+            older=store.risk_mark_snapshot()
+            tomorrow=(T0+timedelta(days=1)).replace(hour=0,minute=0,second=3)
+            new=store.mark_virtual_quote(mark_price=Decimal('50000'),at=tomorrow,
+                                         evidence_id='validated-first-next-day-close')
+            self.assertEqual(new['session_start_equity'],older['current_equity'])
+            self.assertNotEqual(new['session_day'],older['session_day'])
+
+class ProvenVirtualProfitTests(unittest.TestCase):
+    def test_audited_mark_allows_proposal_above_initial_cap_but_forged_profits_fail(self):
+        store=MarkToMarketRiskTests()._book_after_fill()
+        with store:
+            px=Decimal('100000')
+            at=T0+timedelta(seconds=4)
+            mark=store.mark_virtual_quote(mark_price=px,at=at,evidence_id='independent-market-mark')
+            b=store.budget_snapshot()
+            cash=Decimal(b['virtual_cash']);btc=Decimal(b['virtual_btc'])
+            equity=cash+btc*px
+            self.assertGreater(equity,Decimal('100'))
+            proven=PortfolioSnapshot(equity,cash,Decimal(mark['peak_equity']),
+              Decimal(mark['session_start_equity']),long_positions_usd={'BTC/USD':btc*px})
+            i=TradeIntent('crypto','alpaca','BTC/USD',Side.SELL,btc*px,
+                 'source-proven-gain','confirmed-exit-signal',at)
+            draft=store.journal.record(i,proven,checked_at=at,reference_price=px,
+                                       full_sell_quantity=btc)
+            self.assertEqual(draft.payload['qty'],str(btc))
+            forged=replace(proven,equity_usd=equity+Decimal('1'))
+            with self.assertRaises(ValueError):
+                store.journal.record(replace(i,client_order_id='fake-profit-gain'),forged,
+                            checked_at=at,reference_price=px,full_sell_quantity=btc)

@@ -153,3 +153,56 @@ review.
 order -> accepted -> fake filled -> verified fake source snapshots ->
 reconciled lifecycle without ANY network or real keys. It is not a broker
 paper fill or proof of trading performance. Run `make smoke`.
+
+
+## Phase 2-E follow-on: venue, research supervisor and AI boundary
+
+`venue_rules.py` reads Alpaca source asset fields for current minimum BASE
+quantity, BTC step and USD price step. It refuses an order below provider
+minimum and calculates an **unsubmitted** proposed sell quantity and remaining
+non-executable dust; source-deduced fee-reduced holdings may not equal a whole
+step. The operating policy for dust remains unapproved, so the paper writer
+still rejects an unstepped full-quantity sell instead of silently rounding.
+
+`operations.py` records one research decision per immutable closed hourly BTC
+bar; stale bar input outside a 90-second post-close window gives STALE_WINDOW,
+and the durable operator halt/unresolved paper order prevent drafting. Old
+strictly UNSENT drafts may expire with an immutable event; a draft with an
+actual paper_order_states row is never voided by a TTL. `research_runner.py`
+adds an independent unarmed single-worker scheduler with a local CSV mode or
+owner-opted-in public read-only market-data GET. Even its continuous mode does
+not import or instantiate any executor, so it cannot send orders.
+
+`paper_onboarding.py` is a separate owner-invoked read-only paper eligibility
+check, using separately supplied environment credentials and no order APIs.
+It has not been run on real credentials. `agent_policy.py` defines a strict
+non-tool-bearing AI output schema. The adviser may select an existing
+reproducible BUY/SELL candidate or HOLD, but cannot invent an unrelated
+trade, modify risk parameters or send network requests. AI-model integration
+is not connected; the unarmed research supervisor currently uses the
+deterministic baseline. No AI strategy performance has been established.
+
+**Remaining before unattended real provider PAPER execution:** derive all
+source-backed proposals from the isolated virtual subledger (not an arbitrary
+external PortfolioSnapshot); mark-to-market peak/daily risk baselines and
+venue minimum/fees, introduce sellable-quantity/dust owner policy, integrate
+read-only paper onboarding and verify real source semantics, a durable order
+scheduler/owner notifications and an authenticated cloud operator UI. All of
+this remains separate from any live-money authorization.
+
+
+### Durable source equity marks (Phase 2-E)
+
+`paper_risk_marks` stores the virtual account's independently marked equity,
+observed peak, UTC session opening equity, evidence ID and last source price.
+The unarmed research supervisor records one mark for each fresh closed source
+candle when provider virtual holdings exist. A new buy is denied after a $3
+loss from the observed UTC-day open, a $10 drop from observed high-water, or
+when risk marks become too stale. On UTC rollover, prior observed equity is
+the next session's basis so overnight losses are not erased. Confirmed terminal
+cash/BTC changes and the initial virtual mark are persisted atomically with
+the order ledger. An above-$100 recorded portfolio snapshot is only allowed
+by the local draft journal when it exactly matches independently reconciled,
+durably marked budget values; a fabricated $100,000 paper account balance
+cannot be treated as profit. `dashboard.py` labels this **virtual paper** data,
+never actual or guaranteed P&L.

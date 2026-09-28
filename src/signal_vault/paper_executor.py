@@ -21,6 +21,7 @@ from .alpaca_paper import PAPER_ROOT, PaperAlpacaReadClient, PaperOrderDraft, _N
 from .paper_order_state import BrokerObservation, PaperOrderState, Stage
 from .paper_store import PersistentPaperOrderStore
 from .paper_audit import PaperHoldings
+from .venue_rules import BtcVenueRules
 from hmac import compare_digest
 
 _ORDER_PATH = "/v2/orders"
@@ -133,23 +134,17 @@ class PaperOnceExecutor:
             not compare_digest(reader._paper_secret, self._secret)
         ):
             raise PermissionError("preflight reader must be the same PAPER account as executor")
-        asset = reader.get_btc_asset()  # fail if BTC isn't confirmed tradable
-        try:
-            minimum = Decimal(str(asset["min_order_size"]))
-            step = Decimal(str(asset["min_trade_increment"]))
-            px = draft.reference_price_usd
-        except (KeyError, ValueError, TypeError, ArithmeticError) as exc:
-            raise ValueError("provider asset minimum/increment metadata missing or invalid") from exc
-        if (not minimum.is_finite() or minimum <= 0 or
-            not step.is_finite() or step <= 0 or
-            not isinstance(px, Decimal) or not px.is_finite() or px <= 0):
-            raise ValueError("invalid provider asset constraints or draft reference price")
+        constraints = BtcVenueRules.from_asset(reader.get_btc_asset())
+        px = draft.reference_price_usd
+        if not isinstance(px, Decimal) or not px.is_finite() or px <= 0:
+            raise ValueError("missing original approved reference price")
         if draft.payload["side"] == "buy":
-            if Decimal(draft.payload["notional"]) / px < minimum:
-                raise PermissionError("approved notional below source minimum; NEVER auto-increase")
+            constraints.check_buy(notional_usd=Decimal(draft.payload["notional"]),
+                                  reference_price=px)
         else:
             quantity = Decimal(draft.payload["qty"])
-            if quantity < minimum or quantity % step != 0:
+            if (quantity < constraints.minimum_base_qty or
+                quantity % constraints.base_trade_step != 0):
                 raise PermissionError("sell below venue minimum/step; manual dust policy required")
         baseline = reader.get_holdings(observed_at=at)
         if reader.get_open_orders():

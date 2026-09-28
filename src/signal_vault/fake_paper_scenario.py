@@ -39,7 +39,7 @@ class DeliberatelyFakePaperVenue:
         if path == "/v2/assets/BTC%2FUSD":
             return {"symbol":"BTC/USD", "class":"crypto", "status":"active",
                     "tradable":True,"fractionable":True,"min_order_size":"0.0001",
-                    "min_trade_increment":"0.000000001"}
+                    "min_trade_increment":"0.000000001", "price_increment":"1"}
         if path == "/v2/positions":
             return ([{"symbol":"BTC/USD", "side":"long", "qty":str(self.btc)}]
                     if self.btc else [])

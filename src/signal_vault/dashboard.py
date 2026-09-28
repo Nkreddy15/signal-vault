@@ -39,6 +39,8 @@ small,.muted{color:#a3c3b7} .warn{background:#48351d;color:#ffdeab;border-radius
 <div class="card"><small>Virtual isolated budget</small><p id="cash" class="number">—</p></div>
 <div class="card"><small>Recorded BTC quantity</small><p id="btc" class="number">—</p></div>
 <div class="card"><small>Unresolved broker records</small><p id="unresolved" class="number">—</p></div>
+<div class="card"><small>Virtual marked equity</small><p id="equity" class="number">—</p></div>
+<div class="card"><small>Virtual high-water / UTC day start</small><p id="riskmarks" class="number">—</p></div>
 </section>
 <div class="card"><h2>Persisted paper lifecycle</h2><div id="states" class="muted">Loading…</div></div>
 <div class="card"><h2>Audit activity (latest 50)</h2>
@@ -59,6 +61,9 @@ async function refresh() {
     write('cash', b ? '$'+b.virtual_cash : 'Not initialized');
     write('btc', b ? b.virtual_btc + ' BTC' : 'Not initialized');
     write('unresolved', String(obj.unresolved_provider_records));
+    const m = obj.paper_risk_marks;
+    write('equity', m ? '$'+m.current_equity : 'Not initialized');
+    write('riskmarks', m ? '$'+m.peak_equity+' / $'+m.session_start_equity : 'Not initialized');
     write('states', Object.entries(obj.paper_order_states).map(([a,n]) => a+': '+n).join(' · ') || 'No provider paper orders');
     const tb = document.getElementById('events'); tb.replaceChildren();
     for(const event of obj.events) {
@@ -96,6 +101,7 @@ def dashboard_snapshot(store: PersistentPaperOrderStore) -> dict[str, Any]:
             "no_provider_paper_profit_claim":True,"operator_halt":store.is_operator_halted(),
             "unresolved_provider_records": sum(n for stage,n in counts.items() if stage != "reconciled"),
             "paper_order_states":counts,"paper_virtual_budget":store.budget_snapshot(),
+            "paper_risk_marks":store.risk_mark_snapshot(),
             "events":events}
 
 

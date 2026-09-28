@@ -1,15 +1,16 @@
 # SIGNAL VAULT — durable project checkpoint
 
-**Checkpoint:** PHASE2-2026-09-28-D — integrated fake PAPER lifecycle and local
+**Checkpoint:** PHASE2-2026-09-28-E — unarmed research scheduler and explicit paper onboarding added to fake PAPER lifecycle and local
 operator controls; all real-money execution disabled.
 **Repository:** private https://github.com/Nkreddy15/signal-vault, `main`.
 Phase 2-C remote exact source tree SHA `b9feceab2cbefdb998d642cdb22d81685cf51ed3`
 was imported as GitHub commit `763e47ec87daf9b7b66546f2f2a2aaf32b1af297`.
-Phase 2-D full 57-file source tree was verified and imported into GitHub at
-commit `dd459e103158f4ed3e44550cc1951ee0b6022be5` (exact original local
-tree SHA `1735b2d186218042acd4729a79a9539ecf38ae43`). The archived local
-commit `faf13ed194cd4673216743240153f51a99cd8f1e` has the same source tree
-but separate history; treat the GitHub `main` branch as authoritative.
+Phase 2-D code was verified and imported at remote commit
+`dd459e103158f4ed3e44550cc1951ee0b6022be5`, source tree
+`1735b2d186218042acd4729a79a9539ecf38ae43`. A subsequent remote
+status-only commit was `a04dfdf5bb5aebf084eeba33a80d7fbfdf47756a`.
+Phase 2-E code must be imported and verified as another normal fast-forward;
+never assume Library source is already synchronized without the exact tree check.
 **Authorization:** engineering and offline paper-only tests. No deposits,
 paid services, broker credentials, authenticated requests, genuine paper broker
 orders, live orders or hosting deployed. November 1 is a conditional milestone.
@@ -40,7 +41,17 @@ orders, live orders or hosting deployed. November 1 is a conditional milestone.
 - `make fake-scenario` demonstrates a FAKE, offline accepted -> filled ->
   reconciled order against injected fake GET/POST responses; absolutely no
   claimed Alpaca fills, authenticated requests or real trading performance.
-- `make test`: **101/101 offline tests PASS** at this checkpoint, `make demo`
+- Phase 2-E: current provider minimum/quantity step parser and non-executable
+  dust-preserving sell preview; strictly unarmed once-per-hour research cycle
+  with local OS worker lock, stale quote rejection, crash restart/TTL protections;
+  read-only paper-account onboarding requiring an explicit owner confirmation
+  and environment-supplied paper credentials; constrained, evidence-bound AI
+  candidate-selection schema (no model provider currently connected).
+- Validated virtual mark-to-market high-water and UTC daily-equity baselines;
+  source-validated hourly marks now feed Guardian and independently guard paper
+  submissions. Legitimately proven paper gains above $100 cannot be confused
+  with caller-fabricated balances.
+- `make test`: **124/124 offline tests PASS** at this checkpoint, `make demo`
   remains local, and no actual trading advantage has been established.
 
 ## Honest blockers
@@ -48,10 +59,10 @@ orders, live orders or hosting deployed. November 1 is a conditional milestone.
 - No user Alpaca paper credentials, real public historical market dataset,
   authenticated broker tests, deployed scheduler, authenticated cloud UI,
   cloud runtime, messaging integration or seven-day provider paper run.
-- The true daily reset/high-water risk ledger, independent live-venue fee
-  reconciliation, a venue-accurate sellable-quantity/dust policy and a
-  source-backed paper proposal method remain mandatory before unattended
-  broker operation. The virtual ledger currently guards submission exposure,
+- Read-only market marks and true daily/peak ledger are now implemented;
+  independent live-venue fee precision, a venue-accurate sellable-quantity/dust
+  policy and an end-to-end source-backed production paper proposal method
+  remain mandatory before unattended broker operation. The virtual ledger currently guards submission exposure,
   but caller-provided research snapshots are not a production input.
 - The current dashboard must NOT be internet-exposed. It binds to 127.0.0.1;
   cloud hosting requires authentication, HTTPS and a deployment/security audit.

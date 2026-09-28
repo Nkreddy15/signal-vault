@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from hashlib import sha256
 from pathlib import Path
@@ -91,10 +91,31 @@ class OfflineDraftJournal:
         """
         if checked_at.tzinfo is None or checked_at.utcoffset() is None:
             raise ValueError("evaluation time must have timezone")
-        # Even the journal enforces the dedicated $100 logical test account cap.
-        if (not portfolio.cash_usd.is_finite() or not portfolio.equity_usd.is_finite() or
-            portfolio.cash_usd > Decimal("100") or portfolio.equity_usd > Decimal("100")):
-            raise ValueError("offline paper snapshot exceeds logical $100 cap")
+        if not portfolio.cash_usd.is_finite() or not portfolio.equity_usd.is_finite():
+            raise ValueError("invalid proposed virtual snapshot")
+        # The account begins with exactly $100; a legitimate audited profit
+        # can make virtual equity exceed $100. Never accept a caller's *claim*
+        # that it has grown: only a perfect match to our independently marked,
+        # durably reconciled virtual ledger lifts the initial cap.
+        if portfolio.cash_usd > Decimal("100") or portfolio.equity_usd > Decimal("100"):
+            try:
+                row = self.connection.execute("""SELECT virtual_cash,virtual_btc
+                    FROM paper_virtual_budget WHERE singleton=1""").fetchone()
+                mark = self.connection.execute("""SELECT current_equity,peak_equity,
+                    session_start_equity,last_mark_price FROM paper_risk_marks
+                    WHERE singleton=1""").fetchone()
+            except sqlite3.OperationalError as exc:
+                raise ValueError("offline paper snapshot exceeds logical $100 cap") from exc
+            if not row or not mark:
+                raise ValueError("offline paper snapshot exceeds logical $100 cap")
+            btc_exposure = Decimal(row[1]) * reference_price
+            if (Decimal(row[0]) != portfolio.cash_usd or
+                Decimal(mark[0]) != portfolio.equity_usd or
+                Decimal(mark[1]) != portfolio.peak_equity_usd or
+                Decimal(mark[2]) != portfolio.session_start_equity_usd or
+                Decimal(mark[3]) != reference_price or
+                portfolio.long_positions_usd.get("BTC/USD",Decimal("0")) != btc_exposure):
+                raise ValueError("paper gains require a matching independently audited virtual snapshot")
         key_hash = _fingerprint(intent)
         self.connection.execute("BEGIN IMMEDIATE")
         try:
@@ -166,6 +187,47 @@ class OfflineDraftJournal:
                                     (client_order_id, "DRAFT_VOIDED", json.dumps({"reason": reason}),
                                      at.astimezone(timezone.utc).isoformat()))
             self.connection.execute("COMMIT")
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+
+    def expire_unsent_drafts(self, *, at: datetime, ttl_seconds: int = 120) -> tuple[str, ...]:
+        """Release only strictly UNSUBMITTED expired proposals, never real orders.
+
+        A process crash after recording a proposal but before the research-cycle
+        checkpoint must not hold the virtual capital forever. Any draft with a
+        matching paper_order_states row is permanently excluded, even if it is
+        UNKNOWN or terminal-but-unreconciled.
+        """
+        if at.tzinfo is None or at.utcoffset() is None or not 90 <= ttl_seconds <= 86400:
+            raise ValueError("aware cleanup time and sane TTL required")
+        cutoff = at.astimezone(timezone.utc) - timedelta(seconds=ttl_seconds)
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            paper_table = bool(self.connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='paper_order_states'"
+            ).fetchone())
+            expired = []
+            for client_id, created in self.connection.execute(
+                "SELECT client_order_id,created_utc FROM drafts WHERE status='DRAFT_APPROVED'"):
+                stamp = datetime.fromisoformat(created)
+                if stamp.tzinfo is None or stamp.astimezone(timezone.utc) >= cutoff:
+                    continue
+                if paper_table and self.connection.execute(
+                    "SELECT 1 FROM paper_order_states WHERE client_order_id=?",
+                    (client_id,),
+                ).fetchone():
+                    continue
+                self.connection.execute("UPDATE drafts SET status='VOID',reserved_usd='0' WHERE client_order_id=?",
+                                        (client_id,))
+                self.connection.execute("""INSERT INTO events
+                    (client_order_id,event_type,event_json,created_utc) VALUES (?,?,?,?)""",
+                    (client_id,"UNSENT_DRAFT_EXPIRED",
+                     json.dumps({"ttl_seconds":ttl_seconds},sort_keys=True),
+                     at.astimezone(timezone.utc).isoformat()))
+                expired.append(client_id)
+            self.connection.execute("COMMIT")
+            return tuple(expired)
         except BaseException:
             self.connection.execute("ROLLBACK")
             raise
