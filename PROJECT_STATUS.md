@@ -1,41 +1,34 @@
 # SIGNAL VAULT — durable checkpoint
 
-**Checkpoint:** PHASE2-2026-09-28-E (paper runtime/reconciliation/accounting foundation; all provider interaction still unverified with real credentials).
-**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2D is already verified on GitHub at tree `00f1bc3792006298fb3174d013601d15093a1732`; Phase 2E is the next exact-tree checkpoint to sync.
-**Authorization:** Development plus paper-mode architecture only. No deposits, paid services, broker credentials, authenticated broker requests, genuine paper orders, real-money orders, real-money account connections or deployment have occurred in this work session. There is no live-trading endpoint in the codebase.
-**Target:** November 1, 2026 *conditional* $100 live pilot after a genuine paper run and a new explicit live authorization; profitability and launch are not promised.
+**Checkpoint:** PHASE2-2026-09-28-F (unattended paper-runtime hardening; provider credentials/order submission NOT activated).
+**Repository:** private https://github.com/Nkreddy15/signal-vault, branch `main`. Phase 2E is verified remotely at commit `fcfe1bfc14ba822553fd17a435fae7432b659d95`, tree `c65a568b2c764c6fd82c5f2f93890f0a6ff2bc26`. Phase 2F must be exact-tree synced before session stop.
+**Authorization:** Development and paper-mode architecture only. No deposits, paid services, broker credentials, authenticated broker requests, genuine paper orders, real-money orders, real-money account connections or deployment have occurred. There is no live-trading endpoint in the codebase.
+**Target:** November 1, 2026 *conditional* $100 live pilot only after genuine provider paper validation and a separate explicit live authorization; profitability and launch are not promised.
 
 ## Verified completed
 
-- Phase 1 modular architecture, deterministic Guardian, venue-aware intents and offline non-filling broker preserved.
-- Phase 2 research path: strict UTC hourly BTC/USD OHLCV validation, deterministic 12/26 EMA-cross candidate strategy with HOLD, evidence hashes, next-bar-open cost-aware hypothetical backtest and chronological non-overlapping evaluation folds. No backtest result is represented as broker performance.
-- Paper-only account boundary in `alpaca_paper.py` is hard-bound to `https://paper-api.alpaca.markets`; GET allowlists cover account, BTC/USD asset metadata, positions, open orders, order lookup and order-filtered FILL/CFEE/FEE activities. No withdrawal, transfer or live-host route exists.
-- `paper_credentials.py` accepts only explicit PAPER credential names and rejects generic/live key variables; secrets are redacted from repr/str.
-- `venue_rules.py` parses provider-reported `min_order_size`, `min_trade_increment`, and `price_increment`; orders are rejected rather than silently upsized.
-- `paper_order_state.py`, `paper_store.py`, `paper_executor.py`, and `paper_supervisor.py` implement persistent one-attempt paper-order lifecycle safety: durable pre-POST state, unique client IDs, UNKNOWN_RESULT after ambiguous failures, lookup-before-any-retry, no duplicate POST on restart, terminal state remains unreconciled until independent audit.
-- `paper_audit.py` validates provider FILL identities, quantities and weighted fill price, and separately validates CFEE/FEE activities.
-- `paper_reconciliation.py` independently verifies terminal order, FILL activities, active/unblocked paper account and BTC position. Logical accounting starts at exactly $100 and never adopts Alpaca's much larger default paper balance.
-- Logical provider-fill accounting is atomic: buy/sell fills, cost basis, realized P&L, fee-equivalent reporting and reservation release are committed together. Unique provider order IDs cannot be applied twice.
-- Crypto BUY fee timing is handled without trapping a position until end-of-day: if CFEE has not posted yet, net provider BTC inventory plus audited gross FILL quantity infers the exact BTC fee quantity, permits reconciliation/release, and queues a deferred fee audit. Later CFEE must match the inferred BTC quantity before its USD-equivalent valuation replaces the provisional amount. SELL USD fee remains a blocking reconciliation fact until provider FEE is available.
-- `market_data.py` now has authenticated fixed-host historical BTC/USD bars and authenticated latest-quote readers. Latest quotes are rejected if stale/future, crossed or above the configured spread bound; BUY uses ask and SELL uses bid as the execution reference. The legacy unauthenticated historical default now fails closed because current provider docs require authentication.
-- `paper_runtime.py` implements a one-cycle autonomous PAPER workflow: restart recovery -> terminal reconciliation -> deferred fee audit -> provider drift check -> closed-bar history -> fresh quote -> logical mark-to-market -> strategy -> Guardian/dynamic venue checks -> durable draft -> optional exactly-one paper POST. Default `allow_paper_submission=False` cannot POST.
-- Provider drift guard rejects unexplained open orders, non-BTC positions, BTC quantity mismatch, inactive/blocked account or malformed buying power before new execution.
-- Same signal/order ID cannot be posted twice; unresolved provider orders block new execution.
-- Logical gains above the initial $100 no longer trip the old offline snapshot guard when—and only when—the snapshot is verified against Signal Vault's own persistent ledger. Untrusted >$100 offline snapshots remain rejected.
-- `paper_worker.py` is an explicit one-cycle operator entry point. Paper POST is off by default and requires the exact `I_ACKNOWLEDGE_ALPACA_PAPER_ORDERS_ONLY` environment acknowledgement. Live-ish flags are rejected. The worker prints only sanitized logical metrics, not provider account IDs or secrets.
-- `paper_smoke.py` remains a separate authenticated GET-only paper readiness command; it imports no executor.
-- Current local checks: `make test` **116/116 PASS**, `make compile` PASS, `make demo` prints `DRY_RUN_RECORDED_NOT_FILLED`. No genuine provider call or paper fill has been performed.
+- All Phase 2E research, Guardian, authenticated fixed-host data readers, logical $100 accounting, paper order state, fill/fee audit, reconciliation, restart safety, provider-drift checks and one-cycle paper runtime remain intact.
+- Durable operator halt/resume is now stored and audited in the local ledger. Recovery/reconciliation still runs while halted, but no new draft or POST can occur.
+- UTC daily-loss session baseline now resets automatically on the first legitimate mark of a new UTC date instead of depending on a scheduler caller remembering to reset it.
+- `runtime_lock.py` provides an owner-only nonblocking OS file lock (with symlink refusal where supported) so a daemon and one-cycle worker cannot intentionally operate the same SQLite journal concurrently.
+- `paper_daemon.py` provides the unattended **paper-only** scheduler shell: deterministic cadence by runtime state, clean SIGTERM/SIGINT stop flag, shared single-instance lock, atomic health updates and local alert hooks. It inherits the exact paper-only POST acknowledgement gate and has no live host.
+- Scheduler behavior avoids busy loops: active provider lifecycle is polled quickly, bad market data retries after a bounded delay, reconciliation/fee/provider-drift faults back off, normal HOLD waits until shortly after the next UTC hour close, and operator halt is rechecked each minute.
+- Unexpected scheduler exceptions fail closed as `BLOCKED_RUNTIME_EXCEPTION`, write a health state without exception/provider body text, stop the daemon and require operator review.
+- `health.py` writes atomic owner-only JSON containing only safe logical portfolio/runtime state; raw provider responses, provider account IDs and credentials are excluded.
+- `alerts.py` writes owner-only local JSONL state-transition alerts without exception/provider payloads. No external notification service is connected or authorized.
+- `control.py` is a local-only halt/resume/status CLI and imports no broker/network client.
+- The one-cycle paper worker now participates in the same runtime lock as the daemon; a custom lock path can be supplied consistently through `SIGNAL_VAULT_RUNTIME_LOCK`.
+- Local checks after Phase 2F changes: `make test` **136/136 PASS**, `make compile` PASS, `make demo` still prints `DRY_RUN_RECORDED_NOT_FILLED`.
 
 ## Limitations — never claim these are finished
 
-- No real Alpaca paper credentials have been supplied; therefore account eligibility, actual response schemas, data entitlements/rate limits, BTC asset metadata, latest quote freshness and provider activity timing remain unverified in this account.
-- No genuine authenticated historical dataset has been collected by Signal Vault and no real broker paper order has been submitted. All network-bound lifecycle tests use fake transports.
-- SQLite is still the local prototype ledger. Before unattended cloud paper operation, migrate transactional order/accounting state to PostgreSQL (or justify and harden a single-writer SQLite deployment), add process locking and fault tests.
-- No long-running scheduler/service manager, private dashboard, notifications, hosted deployment or seven-day genuine broker-paper run yet.
-- Current strategy is a deterministic baseline candidate, not a demonstrated trading edge. Passing software tests says nothing about profitability.
-- No stocks, Kalshi/event-contract execution or real-money connector yet.
-- API behavior and fees must be rechecked against provider metadata/docs immediately before authenticated paper use.
+- No Alpaca paper credentials have been supplied and no genuine authenticated API request or paper order has been made. All network-bound order lifecycle tests use fake transports.
+- The unattended scheduler is code-complete enough for controlled paper integration tests but has not run continuously against a provider account.
+- SQLite is intentionally single-writer and now process-locked, but it is not a high-availability database. PostgreSQL remains the persistence gate before cloud unattended paper operation unless a narrowly scoped single-host SQLite pilot is explicitly justified.
+- No cloud/service-manager deployment, external notifications, private dashboard, seven-day genuine provider-paper run, stocks, Kalshi/event-contract execution or real-money connector.
+- Current EMA strategy is a deterministic baseline candidate, not a demonstrated trading edge. Software reliability tests are not evidence of profitability.
+- Provider metadata, rate limits, activity timing, fees, account eligibility and real response schemas must be checked with authenticated read-only smoke tests before any paper POST acknowledgement is enabled.
 
 ## Resume protocol
 
-Read `PROJECT_STATUS.md`, `NEXT_STEPS.md`, `ARCHITECTURE.md` and `docs/API_PROVIDER_ASSUMPTIONS.md` from latest private GitHub `main`, verify remote head/tree, run `make test`, `make compile`, and `make demo`, then continue paper-only development. Do not enable or add live execution. Create and verify an exact-tree GitHub checkpoint before stopping a session.
+Use latest private GitHub `main` as source of truth after Phase 2F sync. Read `PROJECT_STATUS.md`, `NEXT_STEPS.md`, `ARCHITECTURE.md` and `docs/API_PROVIDER_ASSUMPTIONS.md`; verify remote head/tree; run `make test`, `make compile`, and `make demo`; then continue paper-only development. Never enable or add live execution. Create and verify an exact-tree GitHub checkpoint before stopping a session.

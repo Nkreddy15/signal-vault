@@ -22,6 +22,7 @@ from .paper_credentials import PaperCredentials
 from .paper_executor import PaperOnceExecutor
 from .paper_runtime import PaperCycleRunner
 from .paper_store import PersistentPaperOrderStore
+from .runtime_lock import RuntimeFileLock
 
 PAPER_SUBMISSION_ACK = "I_ACKNOWLEDGE_ALPACA_PAPER_ORDERS_ONLY"
 
@@ -55,7 +56,11 @@ def main() -> int:
     allow_submission = paper_submission_authorized(env)
     db = _db_path(env)
 
-    with PersistentPaperOrderStore(db) as store:
+    raw_lock = env.get("SIGNAL_VAULT_RUNTIME_LOCK", "").strip()
+    if "\x00" in raw_lock:
+        raise ValueError("invalid paper runtime lock path")
+    lock_path = Path(raw_lock).expanduser() if raw_lock else db.with_name(db.name + ".lock")
+    with RuntimeFileLock(lock_path), PersistentPaperOrderStore(db) as store:
         reader = PaperAlpacaReadClient(credentials.key_id, credentials.secret_key)
         executor = PaperOnceExecutor(paper_key=credentials.key_id,
                                      paper_secret=credentials.secret_key,

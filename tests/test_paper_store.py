@@ -132,3 +132,31 @@ class LogicalDraftBridgeTests(unittest.TestCase):
                                                 reference_price=Decimal("60000"),
                                                 full_sell_quantity=Decimal("0.0002"))
             self.assertEqual(draft.payload["side"], "sell")
+
+class RuntimeControlsAndRiskSessionTests(unittest.TestCase):
+    def test_operator_halt_is_persistent_and_audited(self):
+        from datetime import datetime, timezone
+        now = datetime(2026, 9, 28, 20, 0, tzinfo=timezone.utc)
+        with PersistentPaperOrderStore(":memory:") as store:
+            self.assertEqual(store.operator_halt(), (False, ""))
+            store.set_operator_halt(True, reason="operator test", at=now)
+            self.assertEqual(store.operator_halt(), (True, "operator test"))
+            store.set_operator_halt(False, reason="review complete", at=now)
+            self.assertEqual(store.operator_halt(), (False, ""))
+            kinds = [e["type"] for e in store.journal.recent_events()]
+            self.assertIn("OPERATOR_HALT", kinds)
+            self.assertIn("OPERATOR_RESUME", kinds)
+
+    def test_daily_loss_session_resets_automatically_on_new_utc_date(self):
+        from datetime import datetime, timezone, timedelta
+        from decimal import Decimal
+        d1 = datetime(2026, 9, 28, 23, 50, tzinfo=timezone.utc)
+        d2 = d1 + timedelta(minutes=20)
+        with PersistentPaperOrderStore(":memory:") as store:
+            first = store.mark_portfolio(mark_price=Decimal("65000"), at=d1)
+            self.assertEqual(first.session_start_equity_usd, Decimal("100"))
+            store.connection.execute("UPDATE logical_portfolio SET cash_usd='99' WHERE singleton=1")
+            same = store.mark_portfolio(mark_price=Decimal("65000"), at=d1 + timedelta(minutes=5))
+            self.assertEqual(same.session_start_equity_usd, Decimal("100"))
+            next_day = store.mark_portfolio(mark_price=Decimal("65000"), at=d2)
+            self.assertEqual(next_day.session_start_equity_usd, Decimal("99"))

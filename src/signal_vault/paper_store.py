@@ -86,11 +86,27 @@ class PersistentPaperOrderStore:
                 created_utc TEXT NOT NULL,
                 FOREIGN KEY(client_order_id) REFERENCES applied_provider_orders(client_order_id)
             );
+            CREATE TABLE IF NOT EXISTS risk_session_meta (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                session_date_utc TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS runtime_controls (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1),
+                operator_halted INTEGER NOT NULL CHECK(operator_halted IN (0,1)),
+                halt_reason TEXT NOT NULL,
+                updated_utc TEXT NOT NULL
+            );
         """)
         self.connection.execute(
             """INSERT OR IGNORE INTO logical_portfolio VALUES
                (1,'100','0','0','0','0','100','100',?)""",
             (datetime.now(timezone.utc).isoformat(),))
+        now = datetime.now(timezone.utc)
+        self.connection.execute("INSERT OR IGNORE INTO risk_session_meta VALUES (1,?)",
+                                (now.date().isoformat(),))
+        self.connection.execute(
+            "INSERT OR IGNORE INTO runtime_controls VALUES (1,0,'',?)",
+            (now.isoformat(),))
 
     def close(self) -> None:
         self.journal.close()
@@ -256,6 +272,38 @@ class PersistentPaperOrderStore:
             self.connection.execute("ROLLBACK")
             raise
 
+    def operator_halt(self) -> tuple[bool, str]:
+        row = self.connection.execute(
+            "SELECT operator_halted,halt_reason FROM runtime_controls WHERE singleton=1").fetchone()
+        if row is None:
+            raise ValueError("runtime controls missing")
+        return bool(row[0]), str(row[1])
+
+    def set_operator_halt(self, halted: bool, *, reason: str, at: datetime) -> None:
+        if at.tzinfo is None or at.utcoffset() is None:
+            raise ValueError("timezone required")
+        if not isinstance(halted, bool):
+            raise ValueError("halted must be boolean")
+        clean_reason = reason.strip()
+        if halted and not clean_reason:
+            raise ValueError("halt reason required")
+        if len(clean_reason) > 500 or any(ch in clean_reason for ch in "\r\n\x00"):
+            raise ValueError("invalid halt reason")
+        stamp = at.astimezone(timezone.utc).isoformat()
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            self.connection.execute(
+                "UPDATE runtime_controls SET operator_halted=?,halt_reason=?,updated_utc=? WHERE singleton=1",
+                (1 if halted else 0, clean_reason if halted else "", stamp))
+            self.connection.execute(
+                "INSERT INTO events (client_order_id,event_type,event_json,created_utc) VALUES (?,?,?,?)",
+                ("SYSTEM", "OPERATOR_HALT" if halted else "OPERATOR_RESUME",
+                 json.dumps({"reason": clean_reason if halted else ""}, sort_keys=True), stamp))
+            self.connection.execute("COMMIT")
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+
     def logical_account(self) -> Mapping[str, Decimal]:
         row = self.connection.execute(
             "SELECT cash_usd,btc_qty,btc_cost_basis_usd,realized_pnl_usd,fees_usd_equiv,peak_equity_usd,session_start_equity_usd FROM logical_portfolio WHERE singleton=1"
@@ -289,10 +337,20 @@ class PersistentPaperOrderStore:
             position_value = qty * mark_price
             equity = cash + position_value
             peak = max(account["peak_equity_usd"], equity)
-            session = equity if reset_session else account["session_start_equity_usd"]
+            utc_at = at.astimezone(timezone.utc)
+            session_row = self.connection.execute(
+                "SELECT session_date_utc FROM risk_session_meta WHERE singleton=1").fetchone()
+            if session_row is None:
+                raise ValueError("risk session metadata missing")
+            today = utc_at.date().isoformat()
+            new_day = session_row[0] != today
+            session = equity if (reset_session or new_day) else account["session_start_equity_usd"]
+            if reset_session or new_day:
+                self.connection.execute(
+                    "UPDATE risk_session_meta SET session_date_utc=? WHERE singleton=1", (today,))
             self.connection.execute(
                 "UPDATE logical_portfolio SET peak_equity_usd=?,session_start_equity_usd=?,updated_utc=? WHERE singleton=1",
-                (str(peak), str(session), at.astimezone(timezone.utc).isoformat()))
+                (str(peak), str(session), utc_at.isoformat()))
             pending = self.journal.total_reserved_usd()
             self.connection.execute("COMMIT")
             positions = {"BTC/USD": position_value} if qty > 0 else {}

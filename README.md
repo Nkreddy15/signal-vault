@@ -1,12 +1,12 @@
 # SIGNAL VAULT
 
-**Phase 2-E — autonomous paper-runtime foundation (provider credentials/order submission NOT activated)**
+**Phase 2-F — unattended paper-runtime hardening (provider credentials/order submission NOT activated)**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
 ## Current state (2026-09-28)
 
-The repository now contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks and a one-cycle autonomous paper runtime. The runtime is extensively fake-transport tested but **has not been authenticated against the user's Alpaca paper account and has not sent a genuine paper order**. The default CLI remains offline and non-filling. Real-money execution does not exist.
+The repository now contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks, a one-cycle autonomous paper runtime, and a hardened single-instance scheduler shell with local health/alert files and durable operator halt controls. The runtime is extensively fake-transport tested but **has not been authenticated against the user's Alpaca paper account and has not sent a genuine paper order**. The default CLI remains offline and non-filling. Real-money execution does not exist.
 
 ### Safe local smoke test
 
@@ -27,6 +27,21 @@ To verify the fail-closed lock:
 SIGNAL_VAULT_MODE=live PYTHONPATH=src python -m signal_vault
 # Must exit with ValueError: Phase 1 is PAPER ONLY.
 ```
+
+
+### Unattended paper shell (not yet connected)
+
+`paper_daemon.py` is the long-running **paper-only** scheduler shell. It uses an owner-only filesystem lock so a second worker cannot operate the same SQLite journal, writes an atomic secret-free health snapshot, emits local state-transition alerts without provider payloads, rechecks a persistent operator halt, and fails closed on unexpected runtime exceptions. It still requires Alpaca PAPER credentials for authenticated reads, and it cannot select a live host. Paper POST remains disabled unless the exact paper-only acknowledgement is supplied.
+
+Local operator controls require no broker network access:
+
+```sh
+SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m signal_vault.control halt --reason "operator maintenance"
+SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m signal_vault.control status
+SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m signal_vault.control resume
+```
+
+Do not run `paper-daemon` until the authenticated read-only smoke gate is completed.
 
 ## Reading order for resuming work
 

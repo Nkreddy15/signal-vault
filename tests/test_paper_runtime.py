@@ -117,3 +117,20 @@ class PaperRuntimeTests(unittest.TestCase):
             result = runner.run_once(now=NOW, allow_paper_submission=True)
             self.assertEqual(result.state, "BLOCKED_PROVIDER_DRIFT")
         finally: store.close()
+
+class PaperRuntimeOperatorHaltTests(unittest.TestCase):
+    def test_operator_halt_prevents_draft_and_post_but_still_allows_provider_checks(self):
+        store = PersistentPaperOrderStore(":memory:")
+        calls = []
+        try:
+            store.set_operator_halt(True, reason="maintenance", at=NOW)
+            reader = PaperAlpacaReadClient("p", "s", transport=reader_transport)
+            executor = PaperOnceExecutor(paper_key="p", paper_secret="s", store=store,
+                                         transport=lambda payload,*_: calls.append(payload) or {})
+            runner = PaperCycleRunner(store=store, reader=reader, executor=executor,
+                                      bars=FakeBars(), quotes=FakeQuotes())
+            result = runner.run_once(now=NOW, allow_paper_submission=True)
+            self.assertEqual(result.state, "OPERATOR_HALTED")
+            self.assertEqual(calls, [])
+            self.assertEqual(store.list_states(), ())
+        finally: store.close()

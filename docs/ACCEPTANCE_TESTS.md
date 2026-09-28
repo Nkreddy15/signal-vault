@@ -24,15 +24,16 @@
 - [ ] Verified Alpaca paper credentials configured through secrets, never checked in.
 - [ ] BTC/USD asset metadata, min lot, market-data timestamp and price/quantity precision checked.
 - [x] Paper-order POST code hard-pinned to one literal paper-host endpoint and tested exclusively with fake transports. **No authenticated actual paper POST yet.**
-- [ ] Idempotent place/lookup/cancel/partial-fill lifecycle and durable cash reservations.
+- [x] Idempotent place/lookup/partial-fill lifecycle, durable cash reservations, UNKNOWN_RESULT recovery and terminal reconciliation are implemented under fake transports. Provider-authenticated verification remains pending.
 - [ ] Postgres state, fill reconciliation after restarts and audit trail.
 - [ ] Historical baseline strategy with look-ahead-free backtest and after-cost accounting.
 - [ ] Dashboard and daily report distinguish proposed, submitted, filled, paper and dry run.
 
 ## Phase 3 — operational validation (not started)
 
+- [x] Single-instance runtime lock, secret-free atomic health file, local deduplicated alert hook, automatic UTC daily-risk session reset, clean scheduler cadence policy and fatal unexpected-exception halt are unit-tested.
 - [ ] Fault tests: stale quotes, out-of-order stream, API timeouts, duplicate callbacks, restart, data gap, lost connectivity.
-- [ ] Emergency halt, maximum new order, aggregate exposure, daily pause and drawdown pause independently verified.
+- [x] Local emergency halt, maximum new order, aggregate exposure, daily pause and drawdown pause are independently unit-tested; provider-integrated fault validation remains pending.
 - [ ] Complete 7 uninterrupted days of **genuine broker paper** operation on a $100 logical allocation; no manual selection of trades.
 - [ ] Every order matches its provider record; all portfolio discrepancies resolved.
 - [ ] After-cost performance analysis and representative out-of-sample testing documented; extend paper testing if insufficient observations.

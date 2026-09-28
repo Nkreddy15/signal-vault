@@ -194,7 +194,12 @@ class PaperCycleRunner:
             return PaperCycleResult("HOLD_BAD_MARKET_DATA",
                                     f"market data failed closed: {type(exc).__name__}: {exc}")
 
-        portfolio = self.store.mark_portfolio(mark_price=quote.mid, at=now)
+        halted, halt_reason = self.store.operator_halt()
+        portfolio = self.store.mark_portfolio(mark_price=quote.mid, at=now, halted=halted)
+        if halted:
+            return PaperCycleResult("OPERATOR_HALTED",
+                                    "operator emergency halt active" +
+                                    (f": {halt_reason}" if halt_reason else ""))
         signal = generate_signal(history, self.strategy)
         if signal.action is Action.HOLD:
             return PaperCycleResult("HOLD", signal.explanation, evidence_id=signal.evidence_id)
