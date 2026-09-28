@@ -1,7 +1,7 @@
 # Exact recovery / implementation sequence
 
-1. Locate the latest saved `Signal Vault/phase1` source ZIP in the ChatGPT Library or local extraction. Verify it contains `.git` and `PROJECT_STATUS.md`; run `git log -1 --oneline` and `make test`.
-2. Obtain an **empty private** `Nkreddy15/signal-vault` repository URL from the user. Do not overwrite an unrelated repo. Push the initial local checkpoint / upload files using the GitHub connector. Verify canonical URLs and commit SHA; record them in `PROJECT_STATUS.md`.
+1. GitHub `main` is the authoritative current source at https://github.com/Nkreddy15/signal-vault. Read `PROJECT_STATUS.md`, `ARCHITECTURE.md`, and this document from GitHub, then run `make test` after checking out the latest commit.
+2. Confirm expected base tree/commit before writes. Phase 1 source tree `78f21d5eafbea9a70fc60fadcbbeae85a10cb099` was verified identical on GitHub. Do not re-import the original archived snapshot over newer changes.
 3. Phase 2: implement versioned market data, ATR/EMA or another explicitly defined baseline candidate strategy, walk-forward backtest with realistic costs and a strict HOLD state. No promises of returns.
 4. Add **Alpaca paper-only** SDK adapter with pinned endpoint, separate sandbox credentials, fresh asset metadata and `BTC/USD` valid GTC/IOC orders. Do not accept any `live` flag. Check symbol minimum order size — do not upscale a small $5 proposal to satisfy the provider automatically.
 5. Add durable Postgres persistence, idempotent submission state machine, reserve/release pending capital, order lookup before timeout retry, fill and balance reconciliation and risk controller integration. Add failure-injection and security tests.
