@@ -1,0 +1,42 @@
+# TEMPLATE ONLY. DO NOT ENABLE before Alpaca PAPER authenticated read-only smoke,
+# broker schema review and the owner's separate hosting authorization.
+[Unit]
+Description=Signal Vault ALPACA PAPER-only worker (single-host prototype)
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/var/lib/signal-vault/paper.sqlite3
+StartLimitIntervalSec=600
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=signalvault
+Group=signalvault
+WorkingDirectory=/opt/signal-vault
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+Environment=SIGNAL_VAULT_PAPER_DB=/var/lib/signal-vault/paper.sqlite3
+# File must be root-controlled; set only ALPACA_PAPER_KEY_ID and
+# ALPACA_PAPER_SECRET_KEY. DO NOT include a submission acknowledgement yet.
+EnvironmentFile=/etc/signal-vault/paper.env
+StateDirectory=signal-vault
+StateDirectoryMode=0700
+ExecStartPre=/opt/signal-vault/.venv/bin/python -m signal_vault.preflight --db /var/lib/signal-vault/paper.sqlite3
+ExecStart=/opt/signal-vault/.venv/bin/python -m signal_vault.paper_daemon
+# On intentional fail-closed exit code 2, stay stopped for operator review;
+# on abnormal termination, the ledger's UNKNOWN_RESULT recovery still applies.
+Restart=on-abnormal
+RestartSec=30s
+TimeoutStopSec=40s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/signal-vault
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target

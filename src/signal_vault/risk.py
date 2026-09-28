@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
-from typing import Tuple
+from typing import Tuple, Mapping
 
 from .domain import PortfolioSnapshot, Side, TradeIntent
 
@@ -29,6 +29,26 @@ class RiskLimits:
     allowed_market: str = "crypto"
     allowed_venue: str = "alpaca"
     allowed_symbol: str = "BTC/USD"
+
+    def __post_init__(self) -> None:
+        monetary_limits = (
+            self.max_single_buy_usd,
+            self.max_total_long_exposure_usd,
+            self.max_daily_equity_loss_usd,
+            self.max_peak_to_current_drawdown_usd,
+        )
+        if any(not isinstance(v, Decimal) or not v.is_finite() or v <= 0
+               for v in monetary_limits):
+            raise ValueError("risk limits require positive finite Decimal values")
+        if self.max_single_buy_usd > self.max_total_long_exposure_usd:
+            raise ValueError("single position limit cannot exceed aggregate exposure limit")
+        if (not isinstance(self.max_quote_age_seconds, int)
+                or isinstance(self.max_quote_age_seconds, bool)
+                or not 1 <= self.max_quote_age_seconds <= 3600):
+            raise ValueError("risk quote-age limit must be an integer in [1,3600]")
+        if any(not isinstance(v, str) or not v or v != v.strip()
+               for v in (self.allowed_market, self.allowed_venue, self.allowed_symbol)):
+            raise ValueError("risk policy market, venue and symbol must be explicit")
 
 
 @dataclass(frozen=True)
@@ -54,9 +74,19 @@ class RiskEngine:
         proceed unless the independent emergency halt is engaged. No shorting.
         """
         reasons: list[str] = []
-        current = now or datetime.now(timezone.utc)
-        if current.tzinfo is None or current.utcoffset() is None:
+        if not isinstance(intent, TradeIntent) or not isinstance(portfolio, PortfolioSnapshot):
+            return RiskDecision(False, ("invalid trade intent or portfolio snapshot",))
+        current = datetime.now(timezone.utc) if now is None else now
+        if (not isinstance(current, datetime) or current.tzinfo is None
+                or current.utcoffset() is None):
             return RiskDecision(False, ("evaluation time must be timezone-aware",))
+        if (not isinstance(portfolio.long_positions_usd, Mapping)
+                or any(not isinstance(symbol, str) for symbol in portfolio.long_positions_usd)):
+            return RiskDecision(False, ("invalid portfolio position mapping",))
+        if not isinstance(portfolio.halted, bool):
+            reasons.append("invalid emergency halt state")
+        if any(symbol != self.limits.allowed_symbol for symbol in portfolio.long_positions_usd):
+            reasons.append("unexpected instrument in portfolio; reconcile before ordering")
 
         if not isinstance(intent.side, Side):
             reasons.append("unrecognized order side")
@@ -66,7 +96,8 @@ class RiskEngine:
             self.limits.allowed_symbol,
         ):
             reasons.append("market, venue or symbol not enabled")
-        if not intent.client_order_id.strip() or not intent.signal_id.strip():
+        if (not isinstance(intent.client_order_id, str) or not intent.client_order_id.strip()
+                or not isinstance(intent.signal_id, str) or not intent.signal_id.strip()):
             reasons.append("missing unique order ID or signal evidence")
         if not _money_valid(intent.notional_usd) or intent.notional_usd == 0:
             reasons.append("invalid non-positive or non-finite order notional")
@@ -89,9 +120,13 @@ class RiskEngine:
                 reasons.append("inconsistent portfolio baseline")
             if portfolio.equity_usd < portfolio.cash_usd:
                 reasons.append("cash exceeds equity; reconcile before ordering")
+            if portfolio.equity_usd != (
+                    portfolio.cash_usd + sum(portfolio.long_positions_usd.values(), Decimal("0"))):
+                reasons.append("portfolio marked equity disagrees with cash plus held positions")
 
         stamp = intent.quote_timestamp
-        if stamp.tzinfo is None or stamp.utcoffset() is None:
+        if (not isinstance(stamp, datetime) or stamp.tzinfo is None
+                or stamp.utcoffset() is None):
             reasons.append("missing timezone-aware market quote")
         else:
             age = current - stamp

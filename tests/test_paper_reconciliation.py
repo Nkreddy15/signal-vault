@@ -152,12 +152,15 @@ class LogicalPortfolioAccountingTests(unittest.TestCase):
             notional = qty * sell_price
             i = TradeIntent("crypto", "alpaca", "BTC/USD", Side.SELL, notional,
                             "sell-cycle", "sig-sell", NOW)
-            p = PortfolioSnapshot(Decimal("100"), Decimal("87"), Decimal("100"), Decimal("100"),
-                                  long_positions_usd={"BTC/USD": notional})
+            # The Guardian requires marked equity to reconcile with cash plus held BTC.
+            # Reuse the actual logical ledger snapshot rather than a synthetic,
+            # internally inconsistent $100 snapshot after the BTC mark rises.
+            p = store.mark_portfolio(mark_price=sell_price, at=NOW)
+            self.assertEqual(p.equity_usd, p.cash_usd + p.long_positions_usd["BTC/USD"])
             d = build_non_executable_draft(i, p, checked_at=NOW, reference_price=sell_price,
                                            full_sell_quantity=qty)
-            store.journal.record(i, p, checked_at=NOW, reference_price=sell_price,
-                                 full_sell_quantity=qty)
+            store.record_logical_draft(i, p, checked_at=NOW, reference_price=sell_price,
+                                       full_sell_quantity=qty)
             def post(*_):
                 return {"id": SELL_ORDER, "client_order_id": d.client_order_id, "status":"filled",
                         "filled_qty":str(qty), "filled_avg_price":str(sell_price)}

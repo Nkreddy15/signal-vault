@@ -43,6 +43,18 @@ SIGNAL_VAULT_PAPER_DB=./data/signal-vault-paper.sqlite3 PYTHONPATH=src python -m
 
 Do not run `paper-daemon` until the authenticated read-only smoke gate is completed.
 
+## Phase 2G: private PAPER operator monitoring and local reliability
+
+The code now includes `operator_server.py` and `operator_view.py` (loopback-only,
+HTTP Basic-authenticated, read-only local dashboard and JSON state),
+`preflight.py` (owner/file mode/disk/integrity/ledger checks), `init_paper.py`
+(explicit local $100 paper journal initialization), and `local_backup.py`
+(consistent exclusive owner-only SQLite snapshot). The local SQLite journal
+now creates/tightens its primary file mode to 0600 before opening it. The
+`ops/systemd` service units are **uninstalled templates**, not deployed services.
+See `docs/OPERATOR_MONITOR.md` and `docs/DEPLOYMENT_PREPARATION.md`.
+No Alpaca authenticated interaction or real brokerage paper fill has occurred.
+
 ## Reading order for resuming work
 
 1. `PROJECT_STATUS.md` — authoritative completed work / known blockers.

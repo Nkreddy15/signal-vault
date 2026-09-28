@@ -40,3 +40,11 @@
 - [ ] Explicit owner review and approval before any real-money connector or activation.
 
 **Important:** Seven profitable paper days are not proof of sustainable live alpha. Failing a gate moves the live date; quality and the paper-only authorization cannot be waived to hit November 1.
+
+## Phase 2G offline operator & runtime safety (implemented, not deployed)
+
+- [x] Private read-only operator snapshot and HTTP Basic token local monitor, fixed IPv4 loopback binding, no order POST or broker imports; 401/405 and no secret/event body leakage covered by offline tests.
+- [x] Explicit owner-only journal initialization and preflight checks for permissions, corruption and low disk space.
+- [x] SQLite consistent backup into an owner-only exclusive filename with integrity/hash checks; never auto-resume trading after restoration.
+- [x] Guardian risk policy rejects invalid limits (NaN/Infinity/negative/string), invalid timing/identities/maps and cash+marked-position equity inconsistencies.
+- [ ] Authenticated real Alpaca PAPER smoke, provider/fill evidence, seven-day runtime, PostgreSQL critical ledger and production deployment remain outstanding.

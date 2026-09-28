@@ -7,6 +7,8 @@ balance reconciliation, PostgreSQL or an actual filled-order journal.
 from __future__ import annotations
 
 import json
+import os
+import stat
 import sqlite3
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -53,9 +55,37 @@ def _fingerprint(intent: TradeIntent) -> str:
     return sha256(json.dumps(canonical, sort_keys=True).encode()).hexdigest()
 
 
+def _protect_local_db(filename: str | Path) -> None:
+    """Create/tighten file mode before SQLite opens the local paper journal.
+
+    This is a local-file safety measure, not distributed lease/HA protection.
+    The containing directory must itself be trusted and controlled by operator.
+    """
+    if str(filename) == ":memory:":
+        return
+    target = Path(filename).expanduser()
+    if target.is_symlink():
+        raise ValueError("paper journal path must not be a symbolic link")
+    flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(target, flags, 0o600)
+    try:
+        details = os.fstat(fd)
+        if not stat.S_ISREG(details.st_mode):
+            raise ValueError("paper journal must be a regular file")
+        if hasattr(os, "geteuid") and details.st_uid != os.geteuid():
+            raise PermissionError("paper journal must be owned by runtime user")
+        if stat.S_IMODE(details.st_mode) != 0o600:
+            os.fchmod(fd, 0o600)
+    finally:
+        os.close(fd)
+
+
 class OfflineDraftJournal:
     def __init__(self, filename: str | Path) -> None:
         # :memory: is useful for tests only; no production persistence claim.
+        _protect_local_db(filename)
         self.connection = sqlite3.connect(str(filename), isolation_level=None, timeout=10)
         self.connection.executescript(_SQL)
         self.risk = RiskEngine(RiskLimits(max_single_buy_usd=Decimal("15"),

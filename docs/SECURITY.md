@@ -31,3 +31,12 @@
 ## Security gate before activating the paper broker writer
 
 Test invalid `mode`, unexpected API hostname, missing credentials, stale quote, concurrent duplicate IDs, unknown submission status, partial fills, disconnect during submit and a recovery loop. No live API URL or trading credential should appear in Phase 1 code or tracked examples.
+
+## Phase 2G monitoring and persistence safeguards
+
+- SQLite local journal pre-creates/tightens DB mode to 0600, refuses final-path symbolic links and requires same process ownership; WAL/SHM sidecars inherit the owner-only mode in offline tests. Control your containing directory too (0700 preferred).
+- Operator monitor binds only `127.0.0.1`, refuses missing/short tokens, uses constant-time token comparisons, Basic auth and no-store headers, serves an allowlisted read-only snapshot and rejects POST/PUT/PATCH/DELETE. It is NOT public TLS hosting: reach it remotely only via a separately secured SSH tunnel.
+- Operator view never exposes raw event JSON, broker account identifiers, API keys or order identifiers; it expressly avoids calling local BTC inventory "market value" without a fresh independently verified quote.
+- `preflight.py` does not create or repair a damaged ledger; missing, corrupted, world-readable or disk-constrained state fails closed.
+- `local_backup.py` makes a consistent SQLite online snapshot with exclusive filename and strict private destination permissions. Restoring historical state does **not** prove there are no later external provider orders. Any restore must keep execution halted pending provider reconciliation.
+- New systemd units are illustrative only; no cloud provider has been authorized or deployed.

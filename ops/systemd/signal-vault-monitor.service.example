@@ -1,0 +1,33 @@
+# TEMPLATE ONLY. Loopback-only read-only operator page.
+[Unit]
+Description=Signal Vault private PAPER ledger monitor (no trading controls)
+After=signal-vault-paper.service
+ConditionPathExists=/var/lib/signal-vault/paper.sqlite3
+
+[Service]
+Type=simple
+User=signalvault
+Group=signalvault
+WorkingDirectory=/opt/signal-vault
+UMask=0077
+Environment=PYTHONUNBUFFERED=1
+# File must be mode 0600, root-controlled, with a 32+ character random
+# SIGNAL_VAULT_OPERATOR_TOKEN. NEVER put this value in Git or a browser URL.
+EnvironmentFile=/etc/signal-vault/monitor.env
+StateDirectory=signal-vault
+StateDirectoryMode=0700
+ExecStart=/opt/signal-vault/.venv/bin/python -m signal_vault.operator_server --db /var/lib/signal-vault/paper.sqlite3 --host 127.0.0.1 --port 8765
+Restart=on-failure
+RestartSec=30s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/signal-vault
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+[Install]
+WantedBy=multi-user.target
