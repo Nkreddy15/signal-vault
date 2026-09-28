@@ -22,12 +22,19 @@ class StrategyConfig:
     fast_hours: int = 12
     slow_hours: int = 26
     strategy_version: str = "btc-hourly-ema-cross-v0.1"
+    # 1 retains the shipped v0.1 behavior. 2 is a research-only, separately
+    # versioned entry hypothesis: require one additional positive closed bar.
+    entry_confirmation_bars: int = 1
 
     def __post_init__(self) -> None:
         if not 1 < self.fast_hours < self.slow_hours <= 300:
             raise ValueError("invalid EMA windows")
         if not self.strategy_version.strip():
             raise ValueError("strategy version must be set")
+        if type(self.entry_confirmation_bars) is not int or self.entry_confirmation_bars not in (1, 2):
+            raise ValueError("entry confirmation must be 1 (baseline) or 2 (research candidate)")
+        if self.entry_confirmation_bars == 2 and self.strategy_version == "btc-hourly-ema-cross-v0.1":
+            raise ValueError("two-bar candidate must have its own strategy version")
 
 
 @dataclass(frozen=True)
@@ -68,10 +75,27 @@ def generate_signal(bars: Sequence[Bar], config: StrategyConfig | None = None) -
     action = Action.HOLD
     why = "Warmup / no confirmed crossover; HOLD"
     if len(bars) >= cfg.slow_hours + 2:
-        if fast_prev <= slow_prev and fast > slow:
-            action, why = Action.BUY, "Confirmed fast EMA upward crossover at previous closed bar"
-        elif fast_prev >= slow_prev and fast < slow:
+        if fast_prev >= slow_prev and fast < slow:
+            # Preserve immediate risk-reducing sell in both research versions.
             action, why = Action.SELL, "Confirmed fast EMA downward crossover at previous closed bar"
+        elif cfg.entry_confirmation_bars == 1 and fast_prev <= slow_prev and fast > slow:
+            action, why = Action.BUY, "Confirmed fast EMA upward crossover at previous closed bar"
+        elif cfg.entry_confirmation_bars == 2:
+            # The previous bar must have been the first strictly positive
+            # closed-bar EMA state after crossing, and the current *closed*
+            # bar must still be positive. This emits exactly once, after two
+            # positive closed bars, with no future-bar observations.
+            if len(bars) >= cfg.slow_hours + 3 and fast_prev > slow_prev and fast > slow:
+                fast_older, _ = _last_two_emas(bars[:-1], cfg.fast_hours)
+                slow_older, _ = _last_two_emas(bars[:-1], cfg.slow_hours)
+                if fast_older <= slow_older:
+                    action, why = Action.BUY, "Two closed bars confirmed upward EMA crossover"
+                else:
+                    why = "No new two-bar-confirmed upward crossover; HOLD"
+            elif fast_prev <= slow_prev and fast > slow:
+                why = "First positive closed bar; awaiting entry confirmation; HOLD"
+            else:
+                why = "No new two-bar-confirmed upward crossover; HOLD"
         else:
             why = "No new confirmed crossover; HOLD"
     last = bars[-1]
