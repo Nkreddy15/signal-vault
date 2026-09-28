@@ -63,6 +63,32 @@ class MarketDataTests(unittest.TestCase):
         self.assertTrue(all(urlsplit(url).netloc == "data.alpaca.markets" for url in urls))
         self.assertEqual(parse_qs(urlsplit(urls[0]).query)["symbols"], ["BTC/USD"])
 
+    def test_alpaca_inclusive_end_is_excluded_without_weakening_validation(self):
+        # Alpaca's API end parameter is inclusive, but our desired closed-hour
+        # interval is [start, end), with no candle beginning exactly at end.
+        end = START + timedelta(hours=3)
+        seen = []
+
+        def fetch(url):
+            seen.append(parse_qs(urlsplit(url).query))
+            return {"bars": {"BTC/USD": [record(i) for i in range(3)]},
+                    "next_page_token": None}
+
+        result = AlpacaPublicCryptoBars(fetch).fetch(start=START, end=end, as_of=AS_OF)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(seen[0]["start"], [START.isoformat()])
+        self.assertEqual(seen[0]["end"], [(end - timedelta(seconds=1)).isoformat()])
+
+        # If a provider violates our requested boundary, fail closed rather
+        # than silently accepting or dropping its unexpected additional row.
+        def unexpected_boundary_bar(_url):
+            return {"bars": {"BTC/USD": [record(i) for i in range(4)]},
+                    "next_page_token": None}
+
+        with self.assertRaisesRegex(ValueError, "outside requested closed interval"):
+            AlpacaPublicCryptoBars(unexpected_boundary_bar).fetch(
+                start=START, end=end, as_of=AS_OF)
+
     def test_broken_pagination_and_partial_data_fail_closed(self):
         one = {"bars": {"BTC/USD": [record(0)]}, "next_page_token": None}
         with self.assertRaisesRegex(ValueError, "incomplete at a boundary"):
