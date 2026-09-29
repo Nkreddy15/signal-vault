@@ -171,9 +171,28 @@ def combine_historical_archives(
     reviews={}
     for sym,segments in by_sym.items():
         ordered=sorted(segments,key=lambda pair:_stamp(pair[0].start_utc))
+        category=candidate(sym).asset_class
         for (before,_),(after,_) in zip(ordered,ordered[1:]):
-            if _stamp(before.end_utc)!=_stamp(after.start_utc):
-                raise ValueError("nonconsecutive historical window manifests for "+sym)
+            before_end=_stamp(before.end_utc)
+            after_start=_stamp(after.start_utc)
+            if before_end>after_start:
+                raise ValueError("overlapping/replayed historical provider segments for "+sym)
+            if category==AssetClass.CRYPTO and before_end!=after_start:
+                raise ValueError("nonconsecutive crypto historical windows for "+sym)
+        if category==AssetClass.US_EQUITY:
+            grid=calendars.get(sym)
+            if grid is None:
+                raise ValueError("verified exchange session grid required for equity archive joins")
+            # A stock MUST have no fabricated rows during overnight, weekends,
+            # holidays or early closes. A missing session bucket inside an
+            # expected market session is NOT patched into history either.
+            timeline=tuple(_stamp(x.isoformat()) for x in grid)
+            for batch,group in ordered:
+                start,end=_stamp(batch.start_utc),_stamp(batch.end_utc)
+                expected=tuple(t for t in timeline
+                               if start<=t and t+timedelta(hours=1)<=end)
+                if not expected or tuple(bar.start_utc for bar in group)!=expected:
+                    raise ValueError("stock historical window diverges from verified exchange grid")
         rows=tuple(bar for _,group in ordered for bar in group)
         report=validate_asset_dataset(
             rows,spec=candidate(sym),as_of=latest,
