@@ -16,15 +16,27 @@ recorded in `docs/RESEARCH_V02.md`, `docs/RESEARCH_V03.md` and
 v0.2/v0.3; do not use it to rescue failed development candidates.
 
 For a self-contained, fixed $15 BTC hypothetical round-trip cost audit, run
-`PYTHONPATH=src python -m signal_vault.research_economics`. A separate,
-explicitly owner-invoked **GET-only** `forward_capture` and local,
-transactional `forward_observer` can establish and append one genuinely new,
-fully closed hourly BTC/USD observation at a time; they never emit an order,
-do not create hindsight/backfilled observations and never connect to a live
-broker. They remain off until run manually. Raw CSV captures, source SHA
-manifests and the SQLite journal stay local under ignored `data/forward/`.
-See `docs/FORWARD_OBSERVATIONS.md` for the exact safe commands,
-conditions, limitations and missed-hour recovery.
+`PYTHONPATH=src python -m signal_vault.research_economics`. The owner reports
+successful real authenticated **GET-only** `forward_capture` and journal
+`forward_observer` bootstrap plus the FIRST new closed-hour observation
+(recorded 2026-09-29T05:05:56Z; journal count 1, no order). Existing capture
+CSV + source SHA manifest + SQLite journal stay local and Git-ignored under
+`data/forward/`.
+
+**Phase 2K usability improvement:** `PYTHONPATH=src python -m
+signal_vault.manual_forward_cycle` makes a safe, *single manual invocation*
+out of next-hour GET capture, verification and exactly-one new observation.
+It validates the already-bootstrapped journal's precise next consecutive UTC
+close **before prompting for local hidden PAPER DATA keys**, and only runs
+during UTC minute 03–24. A missed hour, repeated current hour, stale/altered
+capture, or concurrent cycle fails closed; it never backfills or bootstraps
+silently. A new segment must first be created explicitly with the original
+`forward_capture` + `forward_observer --bootstrap --db
+data/forward/observations-segment-02.sqlite3`. Only then may one-command
+mode specify the existing `--db` segment. The new feature is fake-provider
+CI-tested but has not yet been run against the owner's real provider. No
+scheduler, strategy signals, order POST or live connector is enabled. See
+`docs/FORWARD_OBSERVATIONS.md` for safe operator commands and incident handling.
 
 ### Safe local smoke test
 
