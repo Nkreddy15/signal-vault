@@ -201,10 +201,7 @@ class CloudCycleTests(unittest.TestCase):
         report2 = self.root/"cloud-shadow-receipts"/"shadow-20260929T2000Z.json"
         self.assertTrue(report2.is_file())
         self.assertEqual(hashlib.sha256(report1.read_bytes()).hexdigest(),
-                         hashlib.sha256(before[
-                             "cloud-shadow-receipts/shadow-20260929T1900Z.json"
-                         ].encode()).hexdigest() if False else
-                         hashlib.sha256(report1.read_bytes()).hexdigest())
+                         before["cloud-shadow-receipts/shadow-20260929T1900Z.json"])
         self.assertEqual(len(list((self.root/"cloud-shadow-receipts").glob("*.json"))), 2)
         status = cloud_status(root=self.root)
         self.assertEqual(status["status"], "READ_ONLY_STATUS_AVAILABLE")
