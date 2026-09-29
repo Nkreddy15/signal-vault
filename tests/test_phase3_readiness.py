@@ -58,6 +58,10 @@ class Phase3OfflineReadinessTests(unittest.TestCase):
         self.assertEqual(len(report["blockers"]), 3)
         self.assertIn("SEPARATE_PAPER_ACCOUNT_GET_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
                       report["blockers"])
+        self.assertIn("SUPERVISED_PAPER_ORDER_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
+                      report["blockers"])
+        self.assertNotIn("SUPERVISED_PAPER_ORDER_NOT_SEPARATELY_AUTHORIZED",
+                         report["blockers"])
         self.assertEqual(report["provider_account_check_scope"],
                          "NOT_PERFORMED_IN_THIS_OFFLINE_INVOCATION")
         self.assertEqual(report["separate_provider_get_receipt"],
