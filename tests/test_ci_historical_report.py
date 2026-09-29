@@ -86,6 +86,9 @@ class HistoricalReportTests(unittest.TestCase):
         self.assertEqual(content["historical_archive_audit"][0]["sha256"],original_sha)
         self.assertFalse(content["independent_forward_strategy_edge_established"])
         self.assertFalse(content["candidate_selection_from_untouched_test"])
+        self.assertEqual(content["simulation_accounting_version"],
+                         "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt")
+        self.assertTrue(content["previous_v1_historical_outputs_are_not_directly_comparable"])
         self.assertTrue(content["data_is_historical_not_new_prospective_observations"])
         self.assertEqual(hashlib.sha256(original.read_bytes()).hexdigest(),original_sha)
         for scenario in content["scenarios"].values():
@@ -99,6 +102,12 @@ class HistoricalReportTests(unittest.TestCase):
             self.assertEqual(
                 details["one_SHARED_100_usd_portfolio_by_fixed_hypothesis"]
                 ["cash-v1-predeclared"]["initial_bankroll_usd"],"100")
+            self.assertEqual(
+                details["simulation_accounting_version"],
+                "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt")
+            self.assertFalse(
+                details["one_SHARED_100_usd_portfolio_by_fixed_hypothesis"]
+                ["cash-v1-predeclared"]["persistent_peak_drawdown_entry_halt"])
         with self.assertRaises(ValueError):
             analyze_manual_history(folder=self.folder,plan=self.plan)
         self.assertEqual(path.read_bytes(),raw)
