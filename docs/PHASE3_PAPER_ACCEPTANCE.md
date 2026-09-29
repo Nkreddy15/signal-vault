@@ -1,6 +1,6 @@
 # Phase 3: Paper execution acceptance contract (CODE/PLANNING ONLY)
 
-Date: 2026-09-29. Branch: `phase3-paper-acceptance-20260929`. This is a non-executing engineering plan; it does NOT authorize any Alpaca order POST, funding, live trading, paid deployment or change to the installed Mac GET-only LaunchAgent.
+Date: 2026-09-29. Schedule principle: **finish as soon as acceptance criteria pass**. November 1, 2026 is an outside target, NOT a date to delay readiness; October 1 is an optional accelerated engineering checkpoint, NOT a promise that seven calendar days of unattended evidence can exist by then. Parallelize the read-only collector evidence window and independently testable paper-execution engineering. Branch: `phase3-paper-acceptance-20260929`. This is a non-executing engineering plan; it does NOT authorize any Alpaca order POST, funding, live trading, paid deployment or change to the installed Mac GET-only LaunchAgent.
 
 ## Verified current boundary (owner-reported)
 
