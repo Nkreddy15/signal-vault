@@ -28,13 +28,20 @@ V03 = StrategyConfig(
 )
 
 
-def development_gate(candidate: BacktestResult, baseline: BacktestResult) -> dict:
+def development_gate(candidate: BacktestResult, baseline: BacktestResult,
+                     candidate_zero_cost: BacktestResult) -> dict:
     """Apply the fixed five criteria in docs/RESEARCH_V03.md, never optimize."""
     if candidate.assumptions != baseline.assumptions:
         raise ValueError("cannot gate strategies under different cost assumptions")
+    if (candidate_zero_cost.assumptions.taker_fee_rate != 0
+            or candidate_zero_cost.assumptions.slippage_rate != 0
+            or candidate_zero_cost.strategy_version != candidate.strategy_version):
+        raise ValueError("missing matching zero-cost candidate control")
     reasons = []
     if candidate.net_pnl_usd <= 0:
         reasons.append("after-cost aggregate development P&L is not positive")
+    if candidate_zero_cost.net_pnl_usd <= 0:
+        reasons.append("zero-cost aggregate development P&L is not positive")
     if candidate.net_pnl_usd <= baseline.net_pnl_usd:
         reasons.append("after-cost P&L does not outperform v0.1")
     if candidate.net_pnl_usd <= candidate.passive_same_allocation_net_pnl_usd:
@@ -88,11 +95,7 @@ def main() -> int:
     v03 = simulate(bars, as_of=DEVELOPMENT_END, strategy=V03)
     v01_free = simulate(bars, as_of=DEVELOPMENT_END, strategy=V01, costs=free)
     v03_free = simulate(bars, as_of=DEVELOPMENT_END, strategy=V03, costs=free)
-    gate = development_gate(v03, v01)
-    if v03_free.net_pnl_usd <= 0:
-        gate["reasons"].insert(1, "zero-cost aggregate development P&L is not positive")
-        gate["passed"] = False
-        gate["eligible_for_reserved_holdout_review"] = False
+    gate = development_gate(v03, v01, v03_free)
     report = {
         "kind": "OFFLINE_PREDECLARED_V03_DEVELOPMENT_ONLY_NOT_PAPER_APPROVAL",
         "dataset_sha256": actual,
