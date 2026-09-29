@@ -98,3 +98,68 @@ jobs:
           path: private-historical-artifacts/*.json
           if-no-files-found: error
           retention-days: 7
+
+  # One CLICK for the new Sept14-26 six-crypto source triggers a SECOND,
+  # wholly keyless job: it joins that fully SHA-verified new historical
+  # source to the previously reviewed private six-stock IEX run #36637836735.
+  # NO provider secrets are exposed in this job; all data is retrospective.
+  paired-stocks-twelve-asset-offline-research:
+    needs: historical-get-only
+    if: |
+      github.repository == 'Nkreddy15/signal-vault' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.start_utc == '2026-09-14T00:00:00Z' &&
+      inputs.end_utc == '2026-09-26T00:00:00Z' &&
+      inputs.symbols == 'BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD'
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout strictly offline analysis source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install independent XNYS session validator, no Alpaca SDK
+        run: python -m pip install --no-cache-dir '.[equity-research]'
+
+      - name: Get EXACT new crypto history from successful first job
+        uses: actions/download-artifact@v4
+        with:
+          name: bounded-crypto-history-and-offline-research-${{ github.run_id }}
+          path: aligned-crypto-history
+
+      - name: Get previously verified PRIVATE historical IEX source, no DATA keys
+        uses: actions/download-artifact@v4
+        with:
+          name: historical-6-equities-IEX-core-hours-36637836735
+          run-id: 36637836735
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: reviewed-stock-IEX-history
+
+      - name: SHA/XNYS re-audit, synchronize horizons and compare ONE shared 100 dollars
+        run: |
+          python -m signal_vault.joint_historical_source \
+            --crypto-artifact aligned-crypto-history \
+            --stock-artifact reviewed-stock-IEX-history \
+            --output offline_twelve_market_joint_research.json
+
+      - name: Privately archive ONLY the combined offline 12-market research
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-12-market-common-horizon-${{ github.run_id }}
+          path: offline_twelve_market_joint_research.json
+          if-no-files-found: error
+          retention-days: 7
