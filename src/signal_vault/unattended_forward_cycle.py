@@ -344,6 +344,32 @@ def run_unattended_once(*, root: str | Path = ROOT, now: datetime,
     return report
 
 
+def _latest_receipt(root: Path) -> dict | None:
+    """Owner-local health summary from the last sanitized, immutable receipt."""
+    receipts = root / "automation" / "receipts"
+    if receipts.is_symlink() or (receipts.exists() and not receipts.is_dir()):
+        raise ValueError("automatic receipts directory is invalid")
+    if not receipts.exists():
+        return None
+    if receipts.stat().st_mode & 0o077:
+        raise PermissionError("automatic receipts directory must be private")
+    files = sorted(receipts.glob("*.json"))
+    if not files:
+        return None
+    source = files[-1]
+    if (source.is_symlink() or not source.is_file()
+            or source.stat().st_mode & 0o077 or source.stat().st_size > 4096):
+        raise ValueError("latest automated receipt is unsafe")
+    item = json.loads(source.read_text(encoding="utf-8"))
+    if not isinstance(item, dict) or item.get("kind") != "UNATTENDED_GET_ONLY_FORWARD_OBSERVATION_TICK":
+        raise ValueError("latest receipt has invalid kind")
+    return {
+        "checked_utc": item["checked_utc"],
+        "decision": item["decision"],
+        "failure_class": item.get("failure_class"),
+    }
+
+
 def status_unattended(*, root: str | Path = ROOT) -> dict:
     base = Path(root).expanduser()
     if not base.is_dir() or base.is_symlink():
@@ -352,7 +378,10 @@ def status_unattended(*, root: str | Path = ROOT) -> dict:
     path = _state_path(base)
     if not path.exists() and not path.is_symlink():
         return {"kind": "UNATTENDED_FORWARD_LOCAL_STATUS",
-                "state": "NO_AUTO_SEGMENT_STARTED", "broker_order_submission": "DISABLED"}
+                "state": "NO_AUTO_SEGMENT_STARTED",
+                "latest_tick": _latest_receipt(base),
+                "broker_order_submission": "DISABLED",
+                "network_requests": "NONE"}
     state = _load_state(base)
     audit = audit_forward_evidence(root=base, db=base/state["active_journal"])
     return {
@@ -363,6 +392,7 @@ def status_unattended(*, root: str | Path = ROOT) -> dict:
         "prospective_observations_verified": audit["prospective_observations_verified"],
         "last_anchored_bar_started_utc": audit["last_anchored_bar_started_utc"],
         "last_journal_recorded_utc": audit["last_journal_recorded_utc"],
+        "latest_tick": _latest_receipt(base),
         "broker_order_submission": "DISABLED",
         "network_requests": "NONE",
     }
