@@ -13,6 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 research = ["numpy>=2,<3", "scikit-learn>=1.7,<2"]
+equity-research = ["exchange-calendars>=4.13,<5"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
