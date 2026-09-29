@@ -1,4 +1,4 @@
-# Signal Vault — Phase 2O offline scratch recovery and reliability gates
+# Signal Vault — Phase 2O owner PASS; Phase 2P offline operator coverage next
 
 **Use private GitHub `Nkreddy15/signal-vault` branch `main` after the latest Phase 2K fast-forward pull.** Verify SHA/tree and run `make test`, `make compile`, `make demo` before editing; do not replace newer changes with an older ZIP. No live, broker paper POST or paid actions are authorized.
 
@@ -194,6 +194,45 @@ owner-invoked approved read-only GET; then preregister a substantively
 different research candidate without tuning against the reserved holdout.
 Real PAPER POST and any unattended service require new explicit approvals.
 Do not equate synthetic fault tests with an actual broker failover.
+
+**Owner's FIRST REAL PHASE 2O DRILL — PASSED (2026-09-29):**
+Owner independently reran `forward_snapshot --verify
+forward_20260929T070754_619609Z` and then invoked
+`PYTHONPATH=src python -m signal_vault.forward_recovery_drill --snapshot
+forward_20260929T070754_619609Z` on the local Mac. Shared result:
+`PASS_ISOLATED_RECONSTRUCTION_AND_FAULT_REJECTION`, 3 independently
+reconstructed forward observations, 4 source capture pairs, 10 snapshot
+files checked including the snapshot manifest; four disposable faults
+(`altered_csv`, `altered_source_manifest`, `altered_journal_metric`,
+`missing_capture_manifest`) **each rejected by BOTH verification layers**.
+The saved original snapshot hashes remained unchanged, temporary evidence
+cleanup completed, active journal not opened/modified, no network, broker
+orders or automatic scheduling. This is real owner-side execution of a
+same-device offline SCRATCH recovery DRILL, not a production restore or
+encrypted offsite backup. The saved snapshot was successfully repeat-verified
+before the drill; no need to rerun either command just to continue development.
+
+**NEXT ENGINEERING MILESTONE — Phase 2P**: Create a strictly read-only
+operator evidence-coverage/incident summary for the original and any separately
+named future forward segments: verified source/data fingerprints; bootstrap vs
+prospective counts and start/end times; next eligible contiguous UTC hour;
+meaningful gaps/segment boundaries without hindsight relabeling; existing
+verified snapshot name/status only if explicitly specified. No change to
+journal/capture/backups; no network, strategy signals, provider paper POST,
+live endpoint, account or scheduler. Build synthetic tests covering zero/one/
+three-observation chains, post-missed-hour classification, separate segment
+isolation and corrupt evidence. Then run on the owner's Mac using a single
+operator command, if/when convenient. Do not create another mandatory
+middle-of-the-night data collection window.
+
+**NEXT PAPER SAFETY GATES after 2P:** on disposable databases and fake broker
+transports exercise interrupted submission/UNKNOWN_RESULT, duplicate
+submission prevention, delayed/partial fills and provider/ledger reconciliation.
+Then separately verify actual account-specific fee, spread and venue rules
+through an approved owner-invoked GET-only procedure before choosing a new
+preregistered research candidate. v0.1/v0.2/v0.3 remain FAILED, not eligible
+for broker-paper shadow promotion; the untouched reserved post-gap data must
+not be used to rescue failed candidates.
 
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
