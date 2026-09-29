@@ -1,4 +1,4 @@
-# Signal Vault — Phase 2K safe manual forward continuation
+# Signal Vault — Phase 2L audited read-only forward evidence
 
 **Use private GitHub `Nkreddy15/signal-vault` branch `main` after the latest Phase 2K fast-forward pull.** Verify SHA/tree and run `make test`, `make compile`, `make demo` before editing; do not replace newer changes with an older ZIP. No live, broker paper POST or paid actions are authorized.
 
@@ -7,6 +7,26 @@
 **Forward journal milestone verified by owner:** A 72-hour read-only capture ending at 04:00Z was used for one zero-observation bootstrap at 04:09:24Z. The owner then captured a fresh 72-hour BTC/USD window ending 05:00Z (SHA-256 `af181756673f49c40e827b488ae79cdb7920abe8b1963ac724a80014b1ff3850`) and successfully added exactly ONE new observed candle (04:00–05:00Z) at 05:05:56Z. The follow-up journal status agrees: observation count 1, no brokerage orders. Raw market CSVs, manifests and SQLite journal remain local under Git-ignored `data/forward/`.
 
 **Next milestone: a one-command manual GET-only capture plus observation is now built and fake-transport tested.** The previous two-command ordering error (trying `--observe` before creating the new CSV) motivated `src/signal_vault/manual_forward_cycle.py`. On latest GitHub `main`, a single explicit `PYTHONPATH=src python -m signal_vault.manual_forward_cycle` validates the existing local journal FIRST, refuses missing or nonconsecutive hours before prompting for secrets or making a network request, then uses the same fixed-host Alpaca BTC/USD DATA GET and privately entered PAPER DATA keys to capture/verify exactly 72 closed candles and append exactly ONE new observation. Only call it between minute 03–24 of the **immediately next consecutive UTC clock hour**. It preserves raw CSV/manifest evidence if journal processing fails, refuses overlapping manual instances via an owner-local file lock and records no orders, strategy signals or hypothetical trade P&L. **Not yet executed against the owner's real provider by the assistant or verified on the owner's Mac.** No background service runs.
+
+**Additional safe development completed while waiting (Phase 2L):** Added
+`src/signal_vault/forward_evidence_audit.py`, a purely **OFFLINE READ-ONLY**
+cross-check. After fetching the latest source, an operator can run
+`PYTHONPATH=src python -m signal_vault.forward_evidence_audit` at **any
+time**, even after the original captures expire for prospective collection.
+This requires that the original 72h bootstrap CSV/manifest and every later
+standard-named capture/manifest are still kept under `data/forward/captures/`;
+they remain on the owner's Mac and are never uploaded. It opens SQLite with
+`mode=ro`, checks `integrity_check`, source SHA-256 and capture timestamps,
+reconstructs every anchored candle hash and rolling overlap, checks no time
+gaps and recomputes all recorded numeric observations from their own original
+CSV. It refuses missing/tampered/insecure evidence and makes **zero** provider
+requests, journal changes, orders or strategies. Its PASS means **internal
+unsigned local-evidence consistency only**, not provider authentication,
+profitability or a reserved validation holdout. See
+`docs/FORWARD_OBSERVATIONS.md`. Synthetic audit tests include two sequential
+prospective observations, feature/SHA/manifest/timestamp corruption and
+read-only file preservation. This auditor does not change the
+`manual_forward_cycle` command needed for the next UTC observation.
 
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
