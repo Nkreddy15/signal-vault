@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2N-2026-09-29 (owner-verified TWO genuine read-only forward observations and successful one-command manual capture; newly implemented, fake-provider CI-tested local independent source-evidence snapshot/verification).
+**Checkpoint:** PHASE2O-2026-09-29 (owner-verified THREE actual forward observations, successful full source audit, isolated snapshot creation and repeat verification; NEW offline scratch recovery drill built and CI-tested).
 **Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
 **Authorization/status update (owner-run, 2026-09-28):** Development and local/offline/PAPER-only implementation. The owner reports successful local authenticated Alpaca PAPER read-only account smoke and read-only BTC/USD quote/history capture. Keys were never supplied to ChatGPT or committed to GitHub. No broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
 **Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
@@ -326,6 +326,55 @@ PYTHONPATH=src python -m signal_vault.forward_snapshot --verify forward_20260929
 It must never modify/replace the original journal, capture new candles or call Alpaca. This snapshot is on the **same Mac, local SHA manifest unsigned and copies unencrypted**, NOT an independently authenticated provider attestation, encrypted offsite backup, formal production restoration, paper fill record, trade signal or validated profit. Raw CSVs/SQLite were not uploaded to GitHub and assistant did not directly inspect their bytes.
 
 Next phase (2O) should focus on a **separate scratch-only recovery and fault-injection drill**, with an explicit no-restore-over-original rule, and a consolidated offline operator coverage/incident summary that distinguishes missed-hour segments from proven continuous data. The main runtime's paper-order lifecycle and provider reconciliation also need exact fault tests against fakes; do not introduce broker POST, daemon deployment or new live permissions without explicit owner approval.
+
+## Phase 2O — owner repeat snapshot verification PASS; scratch recovery drill built
+
+The owner independently ran:
+`PYTHONPATH=src python -m signal_vault.forward_snapshot --verify forward_20260929T070754_619609Z`
+on the original owner-local Phase 2N backup. Shared JSON confirms
+`OFFLINE_ISOLATED_FORWARD_SNAPSHOT_VERIFICATION`,
+`PASS_INTERNAL_CONSISTENCY_ONLY`, **3** prospective observations,
+**4** archived CSV/manifest pairs and **9** SHA-verified copied files,
+`active_journal_modified=false`, `network_requests=NONE` and
+`broker_order_submission=DISABLED`.
+This is a successful real second check of the already-created owner-local
+archive. It does NOT mean provider-authenticated, encrypted/offsite or production
+restore; source/backup bytes remain on the owner's Mac, not in GitHub.
+
+Added `src/signal_vault/forward_recovery_drill.py` plus offline synthetic
+regression tests and `docs/FORWARD_RECOVERY_DRILL.md`. This Phase 2O
+operator-invoked command takes ONLY the exact existing snapshot name, verifies
+its original file inventory and source evidence, clones its files onto
+independent scratch inodes under Git-ignored private
+`data/forward/drills/`, proves the copied chain is independently readable,
+and injects four negative cases exclusively in separate disposable clones:
+modified CSV, changed source manifest, modified copied SQLite feature/anchor,
+and removed copied source manifest. BOTH the local forensic auditor and outer
+snapshot-manifest verifier MUST refuse each case. It then re-verifies the
+clean scratch clone, checks all original snapshot bytes retained the identical
+SHA fingerprint, and deletes all temporary evidence even on failure.
+
+The drill refuses path traversal/symlinks, group/world-open directories,
+corrupt initial snapshot, insufficient disk and failures undetected by either
+verification layer. It never opens or restores over original
+`data/forward/observations.sqlite3`, original capture evidence or
+`data/forward/backups/<NAME>/` for writing; cannot call a broker, record a
+new candle, create any trading action, enable scheduler or connect to network.
+A 0600 lock file under local drills may remain after cleanup.
+
+**CI on first complete code and test implementation:** 302 offline tests
+passed on Python 3.11 and 3.12 at run `36535242811`; an additional
+bootstrap-only source-fingerprint assertion also passed at run
+`36535306539`. Operator's REAL backup has NOT yet been used for Phase 2O
+scratch drill; its result must not be claimed until owner shares it.
+
+**Next requested operator action:** after pulling latest GitHub `main`, run
+`PYTHONPATH=src python -m signal_vault.forward_recovery_drill --snapshot forward_20260929T070754_619609Z`.
+Expected for this known backup: 3 recovered forward observations, 4 source
+capture pairs, 10 source snapshot file hashes including the local snapshot
+manifest, four distinct scratch-fault scenarios rejected by BOTH layers,
+complete disposable cleanup, and no active-journal interaction, network
+request or order. This is a rehearsal using copies, NOT a restore.
 
 ## Still NOT completed / mandatory blockers
 
