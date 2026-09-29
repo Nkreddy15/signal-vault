@@ -104,6 +104,73 @@ unobserved holdout once its features are inspected to develop a new model.
 Before independently validating a future strategy, preregister a separate,
 time-bounded period and freeze the candidate/code/cost assumptions first.
 
+## Phase 2K: safer ONE-command manual continuation (no scheduling)
+
+The owner verified the first real hourly journal append: 72-hour GET-only capture
+`btcusd_72h_end_20260929T0500Z.csv` (SHA-256
+`af181756673f49c40e827b488ae79cdb7920abe8b1963ac724a80014b1ff3850`),
+followed by `--observe` at `2026-09-29T05:05:56.858452Z`. Two status
+responses agreed: exactly **ONE new forward observation**, bar 04:00–05:00Z,
+close $83,171.445, no broker order.
+
+A former manual attempt called `--observe` *before* creating its new CSV,
+which correctly failed with `regular captured CSV and nonsymlink manifest
+required` and did not alter the journal. To eliminate that ordering mistake,
+the newly added command below does BOTH actions in one invocation, using the
+already-bootstrapped `data/forward/observations.sqlite3` journal:
+
+```sh
+# Only during the NEXT consecutive UTC hour, between minute :03 and :24:
+PYTHONPATH=src python -m signal_vault.manual_forward_cycle
+```
+
+**Do not run this at arbitrary times:** it preflights the existing journal
+**before asking for credentials**, and refuses if the next hourly candle
+hasn't closed, if a consecutive capture hour was missed, if a capture for the
+hour already exists, or if the journal is missing. It prints the eligible
+closed-hour boundary and target path. It then uses the local hidden PAPER DATA
+keys for the same allowlisted BTC/USD historical-data **GET only**, creates
+the unique non-overwritten 72h CSV + manifest, validates the new capture
+and 29+ immutable previous candles, and commits **exactly one** new
+observation atomically. It uses the actual time AFTER fetching (not the
+pre-fetch time) for final freshness validation; if the fetch is slow or
+crosses the hour, the journal cannot mislabel the result.
+
+This command has a local nonblocking file lock to refuse simultaneous
+instances of the *manual cycle*. It does not replace the main journal's
+SQLite transaction checks if a separate manual operator is active. If an
+append fails after data capture, the existing raw CSV and manifest remain
+on disk. Do **not** rerun the capture or delete the journal; inspect
+`forward_observer --status`, and only if the existing captured file is
+still fresh/current may you use the original two-step
+`forward_observer --observe --csv <EXACT_OLD_CAPTURE_PATH>` for recovery.
+
+**If a consecutive hour is missed**, this one-command tool deliberately
+stops; it never backfills or silently resets the main database. An operator
+can explicitly begin a separate future segment without altering the old one:
+
+```sh
+# At minute :03 or later in a fresh UTC hour, first create a new real capture:
+PYTHONPATH=src python -m signal_vault.forward_capture
+
+# Substitute the EXACT new CSV printed, not an earlier existing capture:
+PYTHONPATH=src python -m signal_vault.forward_observer --bootstrap \
+  --db data/forward/observations-segment-02.sqlite3 \
+  --csv data/forward/captures/<EXACT_NEW_FILE>.csv
+
+# In the following consecutive UTC hour (minute :03 through :24):
+PYTHONPATH=src python -m signal_vault.manual_forward_cycle \
+  --db data/forward/observations-segment-02.sqlite3
+```
+
+A new segment's bootstrap always has ZERO newly forward-observed bars. The
+`--db` argument must identify an **existing, privately permissioned,
+explicitly bootstrapped** SQLite file *within* `data/forward/`; the one-command
+tool does not create or reset it. Retain the old segment and every old raw
+capture. Neither a reopened segment nor an inspected forward record is an
+unseen model holdout. No daemon, cron, hosted endpoint or broker account order
+action is introduced by this usability improvement.
+
 ## Security and scope
 
 - No background scheduler/daemon is installed or launched. The operator runs
