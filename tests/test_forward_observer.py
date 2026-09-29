@@ -81,6 +81,30 @@ class ForwardObservationJournalTests(unittest.TestCase):
                 with self.assertRaises((OSError, ValueError)):
                     ForwardObservationJournal(db, initialize=True)
 
+    def test_captured_bar_cannot_be_reclassified_as_forward_after_next_utc_hour(self):
+        with tempfile.TemporaryDirectory() as root:
+            db = Path(root) / "observations.sqlite3"
+            with ForwardObservationJournal(db, initialize=True) as journal:
+                # 65 minutes after the latest candle closed is within the old
+                # 90-minute allowance, but the next completed UTC bar exists.
+                # Refuse even bootstrapping such a late window.
+                with self.assertRaisesRegex(ValueError, "stale for prospective"):
+                    journal.process(sample(), csv_sha256=FIRST_SHA,
+                                    observed_at=END + timedelta(minutes=65),
+                                    bootstrap=True)
+                self.assertEqual(journal.connection.execute(
+                    "SELECT COUNT(*) FROM forward_state").fetchone()[0], 0)
+                # Current UTC-hour bootstrap remains valid.
+                journal.process(sample(), csv_sha256=FIRST_SHA,
+                                observed_at=NOW, bootstrap=True)
+                # At 65m past the *next* bar's close, even an otherwise
+                # continuous one-bar capture may not be added retroactively.
+                with self.assertRaisesRegex(ValueError, "stale for prospective"):
+                    journal.process(sample(END+timedelta(hours=1)),
+                                    csv_sha256=SECOND_SHA,
+                                    observed_at=END+timedelta(hours=2, minutes=5))
+                self.assertEqual(journal.status()["new_forward_observation_count"], 0)
+
     def test_existing_journal_requires_private_file_mode(self):
         with tempfile.TemporaryDirectory() as root:
             db = Path(root) / "observation.sqlite3"
