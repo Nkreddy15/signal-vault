@@ -56,6 +56,12 @@ class Phase3OfflineReadinessTests(unittest.TestCase):
         self.assertEqual(report["paper_journal"]["status"],
                          "CLEAN_LOCAL_LEDGER_NOT_PROVIDER_ATTESTED")
         self.assertEqual(len(report["blockers"]), 3)
+        self.assertIn("SEPARATE_PAPER_ACCOUNT_GET_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
+                      report["blockers"])
+        self.assertEqual(report["provider_account_check_scope"],
+                         "NOT_PERFORMED_IN_THIS_OFFLINE_INVOCATION")
+        self.assertEqual(report["separate_provider_get_receipt"],
+                         "NOT_TRACKED_BY_THIS_REPORT")
         self.assertFalse(report["paper_order_post_attempted"])
         self.assertFalse(report["credentials_accessed"])
         self.assertFalse(report["provider_trading_account_checked"])
