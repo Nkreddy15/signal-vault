@@ -91,7 +91,7 @@ class ForwardReadinessTests(unittest.TestCase):
             response=forward_readiness(root=root,now=at+timedelta(minutes=1))
             self.assertEqual(response["decision"],"CURRENT_CAPTURE_EXISTS_REVIEW_MANUAL_APPEND")
             self.assertIn("--observe --csv",response["operator_instruction"])
-            self.assertNotIn("manual_forward_cycle",response["operator_instruction"])
+            self.assertNotIn("python -m signal_vault.manual_forward_cycle",response["operator_instruction"])
             self.assertEqual(response["existing_prospective_observations"],1)
             self.assertEqual(forward_readiness(root=root,
                             now=at+timedelta(minutes=40))["decision"],
@@ -125,7 +125,7 @@ class ForwardReadinessTests(unittest.TestCase):
             root=Path(tmp)/"forward"
             secondary=established(root,n=0,db_name="observations-segment-02.sqlite3")
             with self.assertRaisesRegex(ValueError,"timezone-aware"):
-                forward_readiness(root=root,db=secondary,now=END)
+                forward_readiness(root=root,db=secondary,now=END.replace(tzinfo=None))
             behind=forward_readiness(root=root,db=secondary,
                                      now=END+timedelta(minutes=6))
             self.assertEqual(behind["decision"],"HALT_LOCAL_CLOCK_BEHIND_JOURNAL")
