@@ -30,7 +30,8 @@ def fixture(closed):
     rows = []
     for n in range(72):
         date = first + n * HOUR
-        px = Decimal("80000") + Decimal(n * 12)
+        k = int((date - (END - 72 * HOUR)).total_seconds() / 3600)
+        px = Decimal("80000") + Decimal(k * 12)
         rows.append(Bar(date, px, px + Decimal("10"), px - Decimal("10"),
                         px, Decimal("5"), "alpaca_crypto_us"))
     return tuple(rows)
