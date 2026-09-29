@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2O-OWNER-PASS-2026-09-29 (three owner-verified consecutive BTC/USD observations; forensic audit, isolated local archive repeat verification, and FIRST REAL owner-side scratch-only recovery and four fault-injection checks all PASS).
+**Checkpoint:** UNATTENDED-GET-ONLY-MAC-BUILD-2026-09-29 (3 manual original forward observations + audit/archive/scratch recovery owner-verified; NEW explicit user-approved Mac hourly GET-only worker and Keychain-backed LaunchAgent build, activation NOT YET performed on owner Mac).
 **Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
 **Authorization/status update (owner-run, 2026-09-28):** Development and local/offline/PAPER-only implementation. The owner reports successful local authenticated Alpaca PAPER read-only account smoke and read-only BTC/USD quote/history capture. Keys were never supplied to ChatGPT or committed to GitHub. No broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
 **Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
@@ -418,6 +418,99 @@ duplicate/partial-fill and broker reconciliation fault tests against fake
 providers; provider cost/venue constraints need separately authorized
 read-only GET verification. Old EMA research versions v0.1/v0.2/v0.3 remain
 FAILED/NOT PROMOTED. Real PAPER POST/live/hosting/paid services remain OFF.
+
+## New authorization: unattended GET-only forward observer build, one-time MAC activation prepared
+
+After repeatedly running real manual captures at 05:05Z, 06:03Z, 07:04Z,
+independently auditing 3 forward hours, constructing/verifying the 3-record
+4-pair local snapshot `forward_20260929T070754_619609Z`, and running the
+first fully passing four-fault scratch-only Phase 2O recovery drill, the
+owner asked to stop personally attending each hour and explicitly selected:
+
+> Yes — build the unattended collector and prepare one-time Mac activation.
+
+This is authorization to develop unattended **read-only BTC/USD DATA GET
+observation** collection and to PREPARE owner-local activation only. It is NOT
+permission for the assistant to install processes on the Mac without owner
+running the installer, connect to cloud, send SMS/email, use paid services,
+submit paper orders, open live trading, fund accounts, access finance/holdout
+privately, or log/share credentials.
+
+New `src/signal_vault/unattended_forward_cycle.py`:
+- A **short-lived one-hour tick**, not a trading/order/strategy daemon,
+  scheduler itself, background cloud task or real-portfolio executor.
+- Scheduled minute `:07` after opt-in macOS LaunchAgent installation.
+  Guard 03:00–24:59 UTC minutes; a late sleep/wakeup skips rather than
+  retroactively claims history. Timing, unique file paths and existing
+  evidence preflight occur BEFORE asking the owner-login Keychain for two
+  explicitly named Alpaca PAPER DATA credential items.
+- GET-only existing fixed Alpaca BTC/USD hourly historical-data allowlist
+  with redirects refused. No broker orders/POST, LIVE credentials/host or
+  generic-environment variable fallback; no passwords in command argv,
+  .plist, receipt or stdout. Keychain read uses `/usr/bin/security
+  find-generic-password ... -w` with capture_output and discards stderr.
+- Starts a **SEPARATE new prospectively labeled**
+  `data/forward/observations-auto-YYYYMMDDTHHMMZ.sqlite3` zero-forward-
+  observation bootstrap. It NEVER resets or modifies the original,
+  separately owner-verified `data/forward/observations.sqlite3` or original
+  `data/forward/backups/forward_20260929T070754_619609Z` archive.
+  Every following consecutive scheduled cycle audits existing journal/raw
+  evidence, writes one unique 72h capture pair, appends exactly one new
+  fully closed bar, then independently audits entire chain again. Atomic
+  private `data/forward/automation/active_segment.json` is only a pointer;
+  if an observational append succeeded before a pointer update/crash, actual
+  audited SQLite truth takes precedence over stale pointer.
+- If a closed hour was missed due to Mac sleep, shutdown or failed first
+  attempt, it never reuses prior source/capture, retroactively backfills or
+  silently merges. The next eligible cycle (ONLY if preceding original
+  auto-segment passes full archival audit) creates a NEW nonoverwriting
+  auto-bootstrap with zero forward observations, records previous segment
+  and missed expected close, and preserves all old evidence. Invalid old
+  journal or occupied current raw capture HALTS rather than hides evidence.
+  Private nonsecret unique tick receipts, owner-only locks and offline
+  `--status` report latest tick decision/failure class; no hourly
+  notification service was installed.
+
+New `src/signal_vault/mac_forward_agent.py`:
+- Explicit owner `--preview` (NO installation), `--install`,
+  `--status` and `--uninstall`. `--install` demands the checked-out repo's
+  exact `.venv/bin/python`, existing owner login Keychain items and
+  filesystem-safe paths, writes 0600 plist under
+  `~/Library/LaunchAgents/com.signalvault.forwardobserver.plist`, then
+  calls `/bin/launchctl bootstrap gui/<UID> <PLIST>` once. If activation
+  fails, output states unloaded; it never incorrectly claims active.
+- Plist contains only absolute source/Python paths, no secrets, `--once`,
+  `StartCalendarInterval={Minute:7}`, `RunAtLoad=false`,
+  `KeepAlive=false`, `Umask=077`, and private local log paths.
+  macOS Keychain must be accessible in the logged-in user's session;
+  late wakeups are skipped. `--uninstall` stops this label and removes
+  its verified plist, NOT data, journals/backups or Keychain items.
+- Two Keychain fields are created by the owner with separate interactive
+  `security add-generic-password ... -U -w` commands, with `-w` the last
+  flag and secret entered at the hidden prompt, never shell-history/argv.
+  Do not use blanket Keychain `-A` grants. Full exact nonsecret procedure
+  in `docs/UNATTENDED_FORWARD_COLLECTION.md`.
+
+CI test modules `test_unattended_forward_cycle.py` and
+`test_mac_forward_agent.py` exercise fake-provider 0/1/2 forward ticks,
+no original manual-journal mutation, per-hour idempotence, missed-hour
+segmentation, stale pointer recovery, corrupted evidence/path refusal,
+late/sleep/time rollback and file collision, redacted Keychain, no generic
+LIVE fallbacks, private receipts and offline latest status, safe plist
+composition and explicit guarded one-time install/stop (mocked on Linux).
+**A successful GitHub CI run is NOT an owner-real unattended Mac/Keychain
+integration run.** Owner must Fetch/Pull latest repo, preview, interactively
+enter PAPER DATA credentials into Keychain once, locally invoke
+`PYTHONPATH=src python -m signal_vault.mac_forward_agent --install`,
+verify `--status`, then check the first bootstrap (count zero) and first
+following consecutive positive observation from local offline
+`unattended_forward_cycle --status`. Until owner reports this, mark
+Mac automatic collector NOT DEPLOYED/NOT VERIFIED.
+
+Mac must remain powered on, logged in, awake and connected at local
+minute `:07`; the logged-in Keychain must be accessible. The original
+Phase 2O backup currently remains unsigned, same-device and unencrypted;
+no external transport or production restore is being installed.
 
 ## Still NOT completed / mandatory blockers
 
