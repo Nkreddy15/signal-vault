@@ -75,6 +75,9 @@ class MultiAssetSimulationTests(unittest.TestCase):
             Decimal(passive["final_marked_equity_usd"]),
             Decimal(passive["passive_same_allocation_final_marked_usd"]))
         self.assertTrue(passive["mark_is_not_liquidated"])
+        self.assertLess(Decimal(passive["estimated_liquidation_equity_usd"]),
+                        Decimal(passive["final_marked_equity_usd"]))
+        self.assertTrue(passive["estimated_liquidation_not_an_order"])
         self.assertEqual(passive["broker_order_submission"],"DISABLED")
         self.assertFalse(passive["shared_portfolio_risk_evaluated"])
 
