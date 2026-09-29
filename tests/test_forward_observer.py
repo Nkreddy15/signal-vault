@@ -152,9 +152,10 @@ class ForwardObservationJournalTests(unittest.TestCase):
             with ForwardObservationJournal(Path(root) / "db.sqlite3", initialize=True) as journal:
                 journal.process(sample(), csv_sha256=FIRST_SHA,
                                 observed_at=NOW, bootstrap=True)
-                next_rows = sample(END + timedelta(hours=1))
+                # Reuse the already fully closed window, so the test reaches
+                # the clock guard instead of the earlier future-bar guard.
                 with self.assertRaisesRegex(ValueError, "clock moved backwards"):
-                    journal.process(next_rows, csv_sha256=SECOND_SHA,
+                    journal.process(sample(), csv_sha256=SECOND_SHA,
                                     observed_at=NOW - timedelta(minutes=1))
                 self.assertEqual(journal.status()["new_forward_observation_count"], 0)
 
