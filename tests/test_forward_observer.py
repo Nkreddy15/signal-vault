@@ -10,7 +10,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from signal_vault.data_capture import capture_dataset
-from signal_vault.forward_capture import capture_current_window, _read_data_get_no_redirect
+from signal_vault.forward_capture import capture_current_window, default_capture_path, _read_data_get_no_redirect
 from signal_vault.forward_observer import (
     ForwardObservationJournal, _local_forward_path, read_verified_capture,
 )
@@ -143,6 +143,10 @@ class ForwardObservationJournalTests(unittest.TestCase):
             manifest = capture_current_window(provider, now=NOW, output_csv=p)
             self.assertEqual(manifest.row_count, 72)
             self.assertEqual(provider.calls[0][:2], (END - timedelta(hours=72), END))
+            self.assertTrue(str(default_capture_path(NOW)).endswith("btcusd_72h_end_20261002T1200Z.csv"))
+            with self.assertRaisesRegex(ValueError, "immutable"):
+                capture_current_window(provider, now=NOW, output_csv=p)
+            self.assertEqual(len(provider.calls), 1)
             bars, digest = read_verified_capture(p, observed_at=NOW)
             self.assertEqual(len(bars), 72)
             self.assertEqual(digest, sha256(p.read_bytes()).hexdigest())
