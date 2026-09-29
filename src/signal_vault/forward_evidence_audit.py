@@ -218,6 +218,11 @@ def audit_forward_evidence(*, root: str | Path = "data/forward",
 
         if records and last_seen != previous_clock:
             raise ValueError("journal last_seen differs from newest observation timestamp")
+        if not records and (
+                last_seen.replace(minute=0, second=0, microsecond=0) != bootstrap_close
+                or last_seen < bootstrap_captured
+                or last_seen - bootstrap_captured > timedelta(minutes=30)):
+            raise ValueError("bootstrap observation clock disagrees with original archive timing")
         sql_anchors = connection.execute(
             "SELECT start_utc,close_utc,bar_sha256 FROM captured_bar_hashes").fetchall()
         observed_anchors = {s: (c, h) for s, c, h in sql_anchors}
