@@ -174,6 +174,16 @@ class ForwardSnapshotTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"missing"):
                 verify_forward_snapshot(root=root,name="copy")
 
+    def test_dangling_symlink_inside_snapshot_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)/"forward"
+            make_chain(root,count=0)
+            create_forward_snapshot(root=root,name="clean_copy")
+            folder=root/"backups"/"clean_copy"
+            (folder/"dangling").symlink_to(folder/"file-that-does-not-exist")
+            with self.assertRaisesRegex(ValueError,"no symbolic links"):
+                verify_forward_snapshot(root=root,name="clean_copy")
+
     def test_snapshot_folder_and_database_symlink_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"forward"
