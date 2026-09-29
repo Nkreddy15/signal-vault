@@ -52,3 +52,19 @@ The v0.2 model produced about **$0.01062 less negative** after-cost P&L but **$0
 ## Next research stage
 
 Perform **descriptive attribution**, not another ad-hoc parameter sweep. Investigate losing trade size/distribution, entry-to-exit timing, trend versus range regimes, and gross-versus-cost effects using the already-exposed pre-gap development sample only. Make no claim of an edge or promotion while both fixed variants fail. If a distinct v0.3 hypothesis is justified, preregister and version it before running it, limit candidate search, and reserve genuinely prospective observations (after the last previously inspected period) for independent testing. Paper POST, live, funding, deployment and spending remain disabled.
+
+## Completed trade-duration diagnostic (owner-reported 2026-09-28)
+
+The owner ran `PYTHONPATH=src python -m signal_vault.research_attribution` on the same SHA-verified 1,843-bar pre-gap development CSV. Both strategy versions produced `reconciliation: PASSED` for full marked-to-market net P&L and mutually exclusive holding-time cohorts.
+
+| Observed completed-trade category | v0.1 trades | v0.1 net P&L | v0.2 trades | v0.2 net P&L |
+|---|---:|---:|---:|---:|
+| Held 6 hours or less | 11 (0 positive, 11 negative) | -$3.174604 | 11 (0 positive, 11 negative) | -$3.021619 |
+| Held >6 hours and <24 hours | 10 (0 positive, 10 negative) | -$2.585837 | 9 (0 positive, 9 negative) | -$2.748671 |
+| Held 24 hours or more | 12 (7 positive, 5 negative) | +$0.952802 | 11 (7 positive, 4 negative) | +$0.868014 |
+| **Completed-trade total** | **33 (7 positive, 26 negative)** | **-$4.807639** | **31 (7 positive, 24 negative)** | **-$4.902276** |
+| Remaining open-position mark | 1 | -$0.105257 | None | $0 |
+
+The 24-hour cutoff was observed **after trades closed**. It is an outcome label, not information known at entry. These descriptive observations **do not** justify an artificial minimum holding period: a forced delay can increase losses or violate risk controls. Duration buckets from two highly related strategies on the same sample are not independent confirmations.
+
+The next distinct program, `PYTHONPATH=src python -m signal_vault.research_entry_context`, makes NO trading rule changes and reads only this same pre-gap development file. It reports median entry-time EMA spread, prior 6-hour and 24-hour return, 24-hour range, and signed trend efficiency for *subsequently* winning/loss-making and short-/long-duration completed trades. Every entry feature uses strictly the **closed candles preceding the hypothetical BUY execution candle**, never the candle's future OHLCV or eventual outcome. Results are exploratory small-sample observations, not optimized thresholds, causal evidence, or authorization to trade.
