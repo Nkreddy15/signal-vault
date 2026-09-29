@@ -345,9 +345,16 @@ def _serve() -> int:
     after corruption/network ambiguity. Sleep safely until the host stops it.
     """
     last: datetime | None = None
-    with RuntimeFileLock(CLOUD_ROOT / ".cloud_service.lock"):
+    # Never let RuntimeFileLock mkdir an absent or mispermissioned volume:
+    # the persistent, owner-private mount must already exist.
+    base = _private_volume(CLOUD_ROOT)
+    with RuntimeFileLock(base / ".cloud_service.lock"):
         while True:
-            if _read_pause(_private_volume(CLOUD_ROOT)):
+            try:
+                paused = _read_pause(base)
+            except Exception:
+                paused = True  # malformed pause marker also forbids further GET
+            if paused:
                 print(json.dumps({
                     "status": "PAUSED_OPERATOR_REVIEW_REQUIRED",
                     "broker_order_submission": "DISABLED",
