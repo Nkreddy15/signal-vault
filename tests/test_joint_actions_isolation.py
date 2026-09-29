@@ -1,6 +1,7 @@
 """Safety/activation contract of the optional second historical Actions job."""
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -47,8 +48,10 @@ class SeparateKeylessTwelveMarketActionsTests(unittest.TestCase):
             "symbols":"BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD",
         }
         for key,value in expected.items():
-            section=declared.split("\n      "+key+":",1)[1].split(
-                "\n      ",1)[0]
+            following=declared.split("\n      "+key+":",1)[1]
+            # Top-level input headers have exactly six leading spaces;
+            # their child properties have eight, and must remain included.
+            section=re.split(r"(?m)^      [a-z_]+:",following,maxsplit=1)[0]
             self.assertIn('default: "'+value+'"',section)
             self.assertIn("inputs."+key+" == '"+value+"'",gate)
         self.assertIn(
