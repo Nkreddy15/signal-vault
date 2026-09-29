@@ -286,6 +286,16 @@ unseen reserve. There is NO authorization for PAPER POST, real trades, or
 background hourly schedule. Do not promise the two-hour empirical sample
 supports predictive edge or profitability.
 
+## Owner's first real two-observation offline evidence audit — PASS, September 29 06:03 UTC source
+
+Owner supplied a successful real local run of `PYTHONPATH=src python -m signal_vault.forward_evidence_audit` after the second authenticated operator-initiated read-only capture + journal append. Reported exact JSON key fields: `kind=OFFLINE_READ_ONLY_FORWARD_EVIDENCE_AUDIT`, `result=PASS_INTERNAL_CONSISTENCY_ONLY`, `bootstrap_anchored_bars=72`, `prospective_observations_verified=2`, `archived_csv_manifest_pairs_verified=3`, `last_anchored_bar_started_utc=2026-09-29T05:00:00+00:00`, `last_journal_recorded_utc=2026-09-29T06:03:59.085819+00:00`, `journal_path=data/forward/observations.sqlite3`, `journal_modified=false`, `network_requests=NONE`, `broker_order_submission=DISABLED`. This completes the owner-side local Phase 2L **internal evidence** check for the original journal with 2 actual prospective market-data observations and 3 archived matching original CSV/manifest pairs.
+
+This is **NOT** third-party Alpaca signature/authentication, actual paper orders, fill performance, independent unseen model validation, or evidence of economic edge. Source CSVs and private SQLite remain only on the owner's Mac; assistant did not access the raw bytes.
+
+Next immediate clock-specific manual capture if owner voluntarily wants a third consecutive hour: UTC 2026-09-29 07:03 to before 07:25 (EDT 03:03–03:24:59), using unchanged `PYTHONPATH=src python -m signal_vault.manual_forward_cycle`. Expected new unique 72h CSV ending 07:00Z, observation from 06:00–07:00Z, count 3. Do not recapture older hours or bootstrap existing DB. If owner chooses to stop/misses window, preserve 2-record journal and begin a different future segment only explicitly.
+
+The newly built Phase 2N isolated archival snapshot utility is a separate opt-in local operation. After GitHub `main` head `89d351de68cdd4db31a26e15eced6c11378d7379` is pulled and no manual capture is underway, command `PYTHONPATH=src python -m signal_vault.forward_snapshot --create` should first audit local original evidence and generate private copied SQLite and original referenced CSV/manifest pairs, then run independent audit on the **snapshot** before publication. Owner real-data Phase 2N snapshot/verify has NOT yet run; request printed nonsecret JSON only, then optional `--verify <EXACT_SNAPSHOT_FOLDER_BASENAME>`. Avoid a Git pull while a time-sensitive local capture is underway.
+
 ## Still NOT completed / mandatory blockers
 
 1. Alpaca PAPER account, local read-only smoke, BTC/USD quote and asset-rule checks have been reported successful by the owner; reconfirm broker/provider readiness and fee/quote behavior before any separately authorized paper POST. Preserve local secret storage; never send secrets through chat/GitHub.
