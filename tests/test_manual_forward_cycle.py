@@ -136,6 +136,38 @@ class ManualForwardCycleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "not a symlink"):
                 plan_manual_observation(root=alias, now=DUE)
 
+    def test_explicit_existing_segment_can_continue_without_touching_primary(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "forward"
+            bootstrap(root)
+            segment = root / "observations-segment-02.sqlite3"
+            with ForwardObservationJournal(segment, initialize=True) as journal:
+                journal.process(synthetic(END), csv_sha256=BOOT_SHA,
+                                observed_at=BOOT_AT, bootstrap=True)
+            planned = plan_manual_observation(root=root, now=DUE, db_path=segment)
+            self.assertEqual(planned["journal_path"], str(segment))
+            provider = FakeGetProvider(synthetic(END+timedelta(hours=1)))
+            result = capture_and_observe(provider, now=DUE, root=root, db_path=segment,
+                                         after_capture_now=lambda: DUE+timedelta(minutes=1))
+            self.assertEqual(result["journal_path"], str(segment))
+            self.assertEqual(result["journal"]["new_forward_observation_count"], 1)
+            with ForwardObservationJournal(root/"observations.sqlite3") as primary:
+                self.assertEqual(primary.status()["new_forward_observation_count"], 0)
+            with ForwardObservationJournal(segment) as secondary:
+                self.assertEqual(secondary.status()["new_forward_observation_count"], 1)
+
+    def test_explicit_journal_path_cannot_escape_or_use_symlink(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "forward"
+            bootstrap(root)
+            escaped = root / ".." / "different.sqlite3"
+            with self.assertRaisesRegex(ValueError, "stay within"):
+                plan_manual_observation(root=root, now=DUE, db_path=escaped)
+            linked = root / "alias.sqlite3"
+            linked.symlink_to(root / "observations.sqlite3")
+            with self.assertRaisesRegex(ValueError, "stay within"):
+                plan_manual_observation(root=root, now=DUE, db_path=linked)
+
     def test_second_invocation_when_lock_held_does_not_capture(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "forward"
