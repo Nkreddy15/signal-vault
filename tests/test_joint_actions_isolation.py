@@ -38,17 +38,17 @@ class SeparateKeylessTwelveMarketActionsTests(unittest.TestCase):
         workflow=(ROOT/".github"/"workflows"/
                   "manual-historical-crypto-research.yml").read_text(
                       encoding="utf-8")
-        declared=workflow.split("\\non:\\n",1)[1].split("\\npermissions:\\n",1)[0]
+        declared=workflow.split("\non:\n",1)[1].split("\npermissions:\n",1)[0]
         before,gate=workflow.split(
-            "\\n  paired-stocks-twelve-asset-offline-research:",1)
+            "\n  paired-stocks-twelve-asset-offline-research:",1)
         expected={
             "start_utc":"2026-09-14T00:00:00Z",
             "end_utc":"2026-09-26T00:00:00Z",
             "symbols":"BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD",
         }
         for key,value in expected.items():
-            section=declared.split("\\n      "+key+":",1)[1].split(
-                "\\n      ",1)[0]
+            section=declared.split("\n      "+key+":",1)[1].split(
+                "\n      ",1)[0]
             self.assertIn('default: "'+value+'"',section)
             self.assertIn("inputs."+key+" == '"+value+"'",gate)
         self.assertIn(
