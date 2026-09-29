@@ -81,9 +81,12 @@ A successful observation adds **exactly one** fully closed, fresh new hour to
 a transactional journal, with last close, prior 6h/24h return, prior 24h
 range and the unchanged hypothetical break-even cost. It is labelled
 `ONE_NEW_CLOSED_BAR_RECORDED_NO_TRADE`; no order intent is created. Replaying
-the same current capture produces an idempotent no-op. A captured candle may
-not be open/future, stale by more than 90 minutes, or obtained from a manifest
-over 30 minutes old. The incoming rolling capture must contain at least 29
+the same current capture produces an idempotent no-op. A captured candle must
+have closed at the **start of the current UTC clock hour** (so run the capture
+and immediately bootstrap/observe during that same hour, after minute 03),
+must not be open/future, and must be backed by a manifest less than 30
+minutes old. This prevents late historical candles from being relabelled as
+prospective observations. The incoming rolling capture must contain at least 29
 previously hashed overlapping candles and include the exact latest anchored
 bar. Any historical mutation, reordering, missing hour, multiple hours of
 unobserved catch-up, symlink/path escape, invalid manifest, CSV fingerprint
