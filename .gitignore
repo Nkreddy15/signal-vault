@@ -25,3 +25,6 @@ build/
 .DS_Store
 # Owner-captured Alpaca research data stays local; do not accidentally commit provider datasets.
 data/research/
+
+# Prospective captures, manifests and observational SQLite state stay only on the owner's Mac.
+data/forward/
