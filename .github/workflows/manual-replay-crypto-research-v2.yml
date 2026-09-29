@@ -1,0 +1,69 @@
+# A one-time manual OFFLINE REPLAY of an existing PRIVATE historical artifact.
+# It does not re-fetch Alpaca market data or access market credentials.
+# Use this to compare original v1 risk gating against corrected v2 on EXACTLY
+# the same immutable source captures; do not rewrite or delete original ZIP.
+name: Replay existing crypto history with corrected v2 risk (no DATA keys)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Successful MANUAL historical-data workflow run in this private repo"
+        type: string
+        required: true
+        default: "36632386959"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: historical-crypto-offline-replay
+  cancel-in-progress: false
+
+jobs:
+  replay-existing-private-history-no-credentials:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout only reviewed default-branch analysis code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install source-only project (no broker executor)
+        run: python -m pip install --no-cache-dir .
+
+      - name: Read previously uploaded PRIVATE history artifact (GitHub only)
+        uses: actions/download-artifact@v4
+        with:
+          name: bounded-crypto-history-and-offline-research-${{ inputs.source_run_id }}
+          run-id: ${{ inputs.source_run_id }}
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: downloaded-history
+
+      - name: Independent historical SHA audit and corrected v2 OFFLINE report
+        env:
+          SIGNAL_VAULT_REPLAY_MODE: EXISTING_PRIVATE_HISTORY_ONLY
+          SIGNAL_VAULT_REPLAY_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: python -m signal_vault.ci_replay_history
+
+      - name: Upload v2 report and immutable source mapping only (7-day retention)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bounded-crypto-v2-offline-replay-${{ github.run_id }}
+          path: |
+            private-v2-replay/offline_research_analysis.json
+            private-v2-replay/replay_manifest.json
+          if-no-files-found: error
+          retention-days: 7

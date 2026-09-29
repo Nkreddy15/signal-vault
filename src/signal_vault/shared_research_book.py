@@ -8,6 +8,7 @@ performance. No imports of PAPER order, account, Keychain or live routes.
 """
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -100,6 +101,9 @@ def simulate_shared_research_book(
                 raise ValueError("unclosed execution candle")
             events.setdefault(bar.start_utc,[]).append((sym,idx,bar))
 
+    close_timestamps={
+        sym:tuple(bar.closed_utc for bar in rows[sym]) for sym in names
+    }
     cash=limits.initial_bankroll_usd
     owned={sym:Decimal("0") for sym in names}
     fee_total=Decimal("0")
@@ -107,15 +111,24 @@ def simulate_shared_research_book(
     max_dd=Decimal("0")
     daily_anchor=limits.initial_bankroll_usd
     last_day=None
-    buys_blocked=False
+    # v2: a breached daily limit suspends NEW research entries only until
+    # the next UTC day. The independent peak drawdown guard is DURABLE for the
+    # remaining simulated run. Exits are still assessed; no provider order.
+    daily_entry_pause=False
+    persistent_peak_drawdown_halt=False
+    daily_pause_dates:set[str]=set()
+    first_peak_halt_utc=None
     fills: list[dict[str,str]]=[]
     rejected: list[dict[str,str]]=[]
     signals={sym:{Action.HOLD.value:0,Action.BUY.value:0,Action.SELL.value:0}
              for sym in names}
 
     def previous_closed(sym: str, t: datetime) -> tuple[Decimal,datetime] | None:
-        prior=[r for r in rows[sym] if r.closed_utc<=t]
-        return (prior[-1].close,prior[-1].closed_utc) if prior else None
+        # Bisect immutable, already quality-validated per-asset closed times.
+        # A full linear scan at every multi-asset event was O(assets*bars^2).
+        idx=bisect_right(close_timestamps[sym],t)-1
+        return ((rows[sym][idx].close,close_timestamps[sym][idx])
+                if idx>=0 else None)
 
     def marked_holdings(marks: Mapping[str,Decimal]) -> Decimal:
         return sum((owned[sym]*marks[sym] for sym in names if owned[sym]>0),
@@ -130,6 +143,7 @@ def simulate_shared_research_book(
                 raise ValueError("cannot mark an asset without prior completed price")
         if last_day!=t.date():
             last_day=t.date()
+            daily_entry_pause=False  # UTC session reset; peak halt NEVER resets.
             # DAILY loss anchor is the PRIOR completed price, never the new
             # day's open. Otherwise overnight equity gaps could reset risk.
             daily_anchor=cash+sum(
@@ -149,9 +163,13 @@ def simulate_shared_research_book(
         before=cash+marked_holdings(marks)
         peak=max(peak,before)
         max_dd=max(max_dd,peak-before)
-        if (before<daily_anchor-limits.daily_loss_cap_usd or
-                before<peak-limits.peak_drawdown_cap_usd):
-            buys_blocked=True
+        if before<daily_anchor-limits.daily_loss_cap_usd:
+            daily_entry_pause=True
+            daily_pause_dates.add(t.date().isoformat())
+        if before<peak-limits.peak_drawdown_cap_usd:
+            persistent_peak_drawdown_halt=True
+            if first_peak_halt_utc is None:
+                first_peak_halt_utc=t.isoformat()
         all_actions=[]
         for sym,idx,bar in group:
             known=rows[sym][:idx]
@@ -189,7 +207,8 @@ def simulate_shared_research_book(
                 owned[sym]=Decimal("0")
                 marks.pop(sym,None)
             elif action==Action.BUY and owned[sym]==0:
-                if buys_blocked or stale_holdings:
+                if (daily_entry_pause or persistent_peak_drawdown_halt
+                        or stale_holdings):
                     code=("STALE_HELD_ASSET_MARK_BLOCKS_NEW_BUY" if stale_holdings
                           else "SHARED_DAILY_LOSS_OR_DRAWDOWN_NEW_BUY_BLOCK")
                 elif cash<limits.single_buy_usd:
@@ -200,7 +219,14 @@ def simulate_shared_research_book(
                 else:
                     code=""
                 if code:
-                    rejected.append({"symbol":sym,"at":t.isoformat(),"code":code})
+                    reason={
+                        "symbol":sym,"at":t.isoformat(),"code":code,
+                    }
+                    if code=="SHARED_DAILY_LOSS_OR_DRAWDOWN_NEW_BUY_BLOCK":
+                        reason["risk_source"]=(
+                            "PERSISTENT_PEAK_DRAWDOWN_HALT"
+                            if persistent_peak_drawdown_halt else "UTC_DAILY_ENTRY_PAUSE")
+                    rejected.append(reason)
                     continue
                 spend=limits.single_buy_usd
                 price=bar.open*assumptions[sym].buy_price_multiplier
@@ -221,9 +247,13 @@ def simulate_shared_research_book(
         after=cash+marked_holdings(marks)
         peak=max(peak,after)
         max_dd=max(max_dd,peak-after)
-        if (after<daily_anchor-limits.daily_loss_cap_usd or
-                after<peak-limits.peak_drawdown_cap_usd):
-            buys_blocked=True
+        if after<daily_anchor-limits.daily_loss_cap_usd:
+            daily_entry_pause=True
+            daily_pause_dates.add(t.date().isoformat())
+        if after<peak-limits.peak_drawdown_cap_usd:
+            persistent_peak_drawdown_halt=True
+            if first_peak_halt_utc is None:
+                first_peak_halt_utc=t.isoformat()
 
     # Final asset marks are their last *completed* candle as of the common
     # evaluation endpoint; a stale final equity mark is explicitly reported.
@@ -273,7 +303,14 @@ def simulate_shared_research_book(
         "open_positions_last_closed_mark_utc":final_mark_times,
         "estimated_fee_total_usd":str(fee_total),
         "sampled_event_max_drawdown_usd":str(max_dd),
-        "new_entries_gated_by_shared_loss_or_drawdown":buys_blocked,
+        "new_entries_gated_by_shared_loss_or_drawdown":
+            daily_entry_pause or persistent_peak_drawdown_halt,
+        "research_risk_gate_semantics_version":
+            "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt",
+        "utc_daily_entry_pause_dates":sorted(daily_pause_dates),
+        "utc_daily_entry_pause_current":daily_entry_pause,
+        "persistent_peak_drawdown_entry_halt":persistent_peak_drawdown_halt,
+        "first_persistent_peak_halt_utc":first_peak_halt_utc,
         "synthetic_fills":fills,
         "rejections":rejected,
         "signal_counts":signals,

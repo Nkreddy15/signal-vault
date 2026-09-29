@@ -255,7 +255,12 @@ def simulate_one_asset(
     counts={Action.HOLD.value:0,Action.BUY.value:0,Action.SELL.value:0}
     daily_anchor=bankroll_usd
     day=None
-    halted_new_entries=False
+    # One asset uses the same v2 risk rule as the shared research book:
+    # DAILY new-buy pause resets at the next UTC date; independent peak
+    # drawdown entry halt persists for the remainder of this simulation.
+    daily_entry_pause=False
+    persistent_peak_halt=False
+    daily_pause_dates:set[str]=set()
     # Model reference passive comparator: same max_one_buy allocation at the
     # same FIRST EVALUATION bar; it is not a retrospective whole-portfolio BTC
     # buy-and-hold and is deliberately not charged an unexecuted closing sale.
@@ -269,6 +274,7 @@ def simulate_one_asset(
         candle=seq[idx]
         if candle.start_utc.date()!=day:
             day=candle.start_utc.date()
+            daily_entry_pause=False
             # Prior completed close (not this bar's post-gap/open mark) anchors
             # the day so an overnight loss cannot be erased by resetting at open.
             prior_close=seq[idx-1].close
@@ -276,16 +282,24 @@ def simulate_one_asset(
         before=_gross_equity(cash,quantity,candle.open)
         peak=max(peak,before)
         max_dd=max(max_dd,peak-before)
-        if before < daily_anchor-daily_loss_cap_usd or before < peak-drawdown_cap_usd:
-            halted_new_entries=True
+        if before < daily_anchor-daily_loss_cap_usd:
+            daily_entry_pause=True
+            daily_pause_dates.add(day.isoformat())
+        if before < peak-drawdown_cap_usd:
+            persistent_peak_halt=True
         signal=decide_on_prior_closes(
             seq[:idx],config=hypothesis,has_position=quantity>0,
             next_open_utc=candle.start_utc)
         counts[signal.action.value]+=1
         if signal.action==Action.BUY and quantity==0:
-            if halted_new_entries:
-                rejected.append({"at":candle.start_utc.isoformat(),
-                                 "code":"DAILY_LOSS_OR_DRAWDOWN_BLOCKS_NEW_BUY"})
+            if daily_entry_pause or persistent_peak_halt:
+                rejected.append({
+                    "at":candle.start_utc.isoformat(),
+                    "code":"DAILY_LOSS_OR_DRAWDOWN_BLOCKS_NEW_BUY",
+                    "risk_source":(
+                        "PERSISTENT_PEAK_DRAWDOWN_HALT" if persistent_peak_halt
+                        else "UTC_DAILY_ENTRY_PAUSE"),
+                })
             elif cash<max_one_buy_usd:
                 rejected.append({"at":candle.start_utc.isoformat(),
                                  "code":"INSUFFICIENT_HYPOTHETICAL_CASH"})
@@ -321,8 +335,11 @@ def simulate_one_asset(
         mark=_gross_equity(cash,quantity,candle.close)
         peak=max(peak,mark)
         max_dd=max(max_dd,peak-mark)
-        if mark < daily_anchor-daily_loss_cap_usd or mark < peak-drawdown_cap_usd:
-            halted_new_entries=True
+        if mark < daily_anchor-daily_loss_cap_usd:
+            daily_entry_pause=True
+            daily_pause_dates.add(day.isoformat())
+        if mark < peak-drawdown_cap_usd:
+            persistent_peak_halt=True
     final=_gross_equity(cash,quantity,seq[last-1].close)
     estimated_exit=(
         cash + quantity * seq[last-1].close * costs.sell_price_multiplier *
@@ -357,7 +374,12 @@ def simulate_one_asset(
         "estimated_costs_not_measured_fills":_cost_dict(costs),
         "open_position_quantity":str(quantity),
         "mark_is_not_liquidated":quantity>0,
-        "entry_blocked_by_loss_cap":halted_new_entries,
+        "entry_blocked_by_loss_cap":daily_entry_pause or persistent_peak_halt,
+        "research_risk_gate_semantics_version":
+            "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt",
+        "utc_daily_entry_pause_dates":sorted(daily_pause_dates),
+        "utc_daily_entry_pause_current":daily_entry_pause,
+        "persistent_peak_drawdown_entry_halt":persistent_peak_halt,
         "signal_counts":counts,
         "fills":[f.__dict__ for f in fills],
         "rejected":rejected,

@@ -162,7 +162,16 @@ class MultiAssetSimulationTests(unittest.TestCase):
         # Passive keeps the open marked position; this is research only,
         # NOT a rule to automatically submit a liquidation order.
         self.assertEqual(len(result["fills"]),1)
-        self.assertTrue(result["entry_blocked_by_loss_cap"])
+        self.assertEqual(result["research_risk_gate_semantics_version"],
+                         "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt")
+        self.assertIn((FIRST+timedelta(hours=35)).date().isoformat(),
+                      result["utc_daily_entry_pause_dates"])
+        # The $3 daily loss suspends new entries for the remainder of that
+        # UTC day, but by the final next day the <$10 peak-loss guard has not
+        # been breached: daily entry gate is permitted to reset.
+        self.assertFalse(result["utc_daily_entry_pause_current"])
+        self.assertFalse(result["persistent_peak_drawdown_entry_halt"])
+        self.assertFalse(result["entry_blocked_by_loss_cap"])
         self.assertGreater(Decimal(result["max_marked_drawdown_usd"]),Decimal("3"))
         self.assertEqual(result["broker_order_submission"],"DISABLED")
 

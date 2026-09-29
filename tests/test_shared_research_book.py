@@ -152,5 +152,53 @@ class SharedResearchBookTests(unittest.TestCase):
         self.assertEqual(result["broker_order_submission"],"DISABLED")
 
 
+    def test_next_utc_day_releases_daily_pause_and_allows_second_asset_entry(self):
+        # BTC passive entry on hour 28; same-day mark falls enough to exceed
+        # the $3 daily cap but remains above the $10 portfolio peak guard.
+        # ETH history begins 24h later: its FIRST possible passive entry at
+        # hour 52 must be allowed after the following UTC daily reset.
+        btc_prices=[Decimal("100")]*35+[Decimal("75")]*40
+        btc=sample("BTC/USD",prices=btc_prices)
+        eth_start=START+timedelta(hours=24)
+        eth=sample(
+            "ETH/USD",prices=[Decimal("100")]*65,
+            starts=[eth_start+i*HOUR for i in range(65)])
+        series={"BTC/USD":btc,"ETH/USD":eth}
+        passive={s:HYPOTHESES[1] for s in series}
+        out=run(series,hypotheses=passive)
+        buys=[r for r in out["synthetic_fills"] if r["side"]=="buy"]
+        self.assertEqual([r["symbol"] for r in buys],["BTC/USD","ETH/USD"])
+        self.assertEqual(buys[0]["at_open_utc"],(START+28*HOUR).isoformat())
+        self.assertEqual(buys[1]["at_open_utc"],(START+52*HOUR).isoformat())
+        self.assertIn((START+35*HOUR).date().isoformat(),
+                      out["utc_daily_entry_pause_dates"])
+        self.assertFalse(out["persistent_peak_drawdown_entry_halt"])
+        self.assertEqual(out["research_risk_gate_semantics_version"],
+                         "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt")
+        self.assertEqual(out["broker_order_submission"],"DISABLED")
+
+    def test_peak_drawdown_stays_latched_across_utc_day_preventing_second_entry(self):
+        # Same timing, but a deeper BTC crash breaches the persistent $10
+        # peak drawdown. A new UTC date may reset daily pause, never peak halt.
+        btc_prices=[Decimal("100")]*35+[Decimal("10")]*40
+        btc=sample("BTC/USD",prices=btc_prices)
+        eth_start=START+timedelta(hours=24)
+        eth=sample(
+            "ETH/USD",prices=[Decimal("100")]*65,
+            starts=[eth_start+i*HOUR for i in range(65)])
+        out=run(
+            {"BTC/USD":btc,"ETH/USD":eth},
+            hypotheses={"BTC/USD":HYPOTHESES[1],"ETH/USD":HYPOTHESES[1]})
+        self.assertTrue(out["persistent_peak_drawdown_entry_halt"])
+        self.assertIsNotNone(out["first_persistent_peak_halt_utc"])
+        buys=[f for f in out["synthetic_fills"] if f["side"]=="buy"]
+        self.assertEqual([f["symbol"] for f in buys],["BTC/USD"])
+        self.assertTrue(any(
+            item["symbol"]=="ETH/USD" and
+            item.get("risk_source")=="PERSISTENT_PEAK_DRAWDOWN_HALT"
+            for item in out["rejections"]))
+        self.assertEqual(out["broker_order_submission"],"DISABLED")
+
+
 if __name__=="__main__":
     unittest.main()
