@@ -54,6 +54,8 @@ def simulate_shared_research_book(
     as_of: datetime,
     equity_calendars: Mapping[str, Sequence[datetime]] | None = None,
     limits: SharedResearchLimits = SharedResearchLimits(),
+    evaluation_start_utc: datetime | None = None,
+    evaluation_end_utc_exclusive: datetime | None = None,
 ) -> dict[str,object]:
     """Only closed history can generate a signal for an asset's next bar OPEN.
 
@@ -86,6 +88,7 @@ def simulate_shared_research_book(
     quality={}
     rows={}
     decisions_by_symbol={}
+    earliest_eligible={}
     events: dict[datetime,list[tuple[str,int,ResearchBar]]]={}
     for sym in names:
         data=tuple(datasets[sym])
@@ -98,11 +101,44 @@ def simulate_shared_research_book(
         start=max(hypotheses[sym].warmup_bars,2)
         if len(data)<=start:
             raise ValueError("insufficient per-symbol completed indicator warmup")
+        earliest_eligible[sym]=data[start].start_utc
         for idx in range(start,len(data)):
             bar=data[idx]
             if bar.closed_utc>moment:
                 raise ValueError("unclosed execution candle")
             events.setdefault(bar.start_utc,[]).append((sym,idx,bar))
+
+    aligned_scope = (
+        evaluation_start_utc is not None or
+        evaluation_end_utc_exclusive is not None
+    )
+    final_mark_cutoff=moment
+    if aligned_scope:
+        if evaluation_start_utc is None or evaluation_end_utc_exclusive is None:
+            raise ValueError("both shared-market horizon bounds are required")
+        if (not isinstance(evaluation_start_utc,datetime) or
+                evaluation_start_utc.tzinfo is None or
+                evaluation_start_utc.utcoffset() is None or
+                not isinstance(evaluation_end_utc_exclusive,datetime) or
+                evaluation_end_utc_exclusive.tzinfo is None or
+                evaluation_end_utc_exclusive.utcoffset() is None):
+            raise ValueError("global study start/end must be timezone-aware")
+        study_start=evaluation_start_utc.astimezone(timezone.utc)
+        study_end=evaluation_end_utc_exclusive.astimezone(timezone.utc)
+        # All assets must have their OWN full closed indicator warmups BEFORE
+        # the common portfolio's first eligible event. Crypto cannot spend
+        # the only $30 DAYS before shorter XNYS stock history becomes ready.
+        if (not study_start<study_end<=moment or
+                study_start<max(earliest_eligible.values()) or
+                study_end>min(rows[sym][-1].closed_utc for sym in names)):
+            raise ValueError("unmatched common history, warmup or global cutoff")
+        events={
+            t:items for t,items in events.items()
+            if study_start<=t and t+timedelta(hours=1)<=study_end
+        }
+        if not events or min(events)<study_start:
+            raise ValueError("no fully closed aligned next-open market events")
+        final_mark_cutoff=study_end
 
     close_timestamps={
         sym:tuple(bar.closed_utc for bar in rows[sym]) for sym in names
@@ -265,7 +301,7 @@ def simulate_shared_research_book(
     final_mark_times={}
     for sym in names:
         if owned[sym]>0:
-            mark=previous_closed(sym,moment)
+            mark=previous_closed(sym,final_mark_cutoff)
             if mark is None:
                 raise ValueError("missing closing mark for held research asset")
             final_marks[sym]=mark[0]
@@ -277,7 +313,7 @@ def simulate_shared_research_book(
         for sym in names if owned[sym]>0
     )
     max_dd=max(max_dd,max(peak,final_cash_and_mark)-final_cash_and_mark)
-    return {
+    outcome={
         "kind":"OFFLINE_SHARED_100USD_MULTI_ASSET_BOOK_NO_PROVIDER_ORDERS",
         "symbol_order":list(names),
         "allocation_policy":"SELLS_BEFORE_BUYS_THEN_SYMBOL_ASC_NO_ALPHA_RANKING",
@@ -326,3 +362,16 @@ def simulate_shared_research_book(
         "broker_order_submission":"DISABLED",
         "live_trading":"UNAVAILABLE",
     }
+    if aligned_scope:
+        # Backward-compatible default mode must NOT silently change the
+        # archived v2 source-report JSON schema or its SHA-replay equality.
+        outcome.update({
+            "global_common_horizon_applied":True,
+            "global_common_start_utc":study_start.isoformat(),
+            "global_common_end_utc_exclusive":study_end.isoformat(),
+            "all_asset_indicators_warmed_before_shared_capital_started":True,
+            "pre_horizon_hypothetical_fills_permitted":False,
+            "the_end_of_the_shortest_market_stops_joint_marking":True,
+            "cross_market_tradability_or_fractional_share_verified":False,
+        })
+    return outcome
