@@ -69,6 +69,11 @@ class OfflinePipelineTests(unittest.TestCase):
         self.assertEqual(len(report["assets"]),2)
         self.assertEqual(len(report["predeclared_hypotheses"]),4)
         self.assertEqual(report["one_shared_portfolio_baseline"]["initial_bankroll_usd"],"100")
+        self.assertEqual(len(report["all_predeclared_shared_bankroll_research_books"]),4)
+        self.assertFalse(report["portfolio_hypothesis_selection_performed"])
+        self.assertEqual(
+            report["all_predeclared_shared_bankroll_research_books"]
+                  ["cash-v1-predeclared"]["final_marked_equity_usd"],"100")
         self.assertEqual(report["broker_order_submission"],"DISABLED")
         self.assertTrue(report["research_only_historical"])
         for asset in report["assets"]:
