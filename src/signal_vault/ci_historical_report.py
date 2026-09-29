@@ -140,6 +140,11 @@ def _comparison_summary(raw: Mapping[str, object]) -> dict[str, object]:
                     book["net_pnl_if_hypothetically_liquidated_usd"],
                 "sampled_event_max_drawdown_usd":
                     book["sampled_event_max_drawdown_usd"],
+                "research_risk_gate_semantics_version":
+                    book["research_risk_gate_semantics_version"],
+                "utc_daily_entry_pause_dates": book["utc_daily_entry_pause_dates"],
+                "persistent_peak_drawdown_entry_halt":
+                    book["persistent_peak_drawdown_entry_halt"],
                 "estimated_fee_total_usd": book["estimated_fee_total_usd"],
                 "synthetic_fill_count": len(book["synthetic_fills"]),
                 "rejected_synthetic_fill_count": len(book["rejections"]),
@@ -150,6 +155,8 @@ def _comparison_summary(raw: Mapping[str, object]) -> dict[str, object]:
             for version, book in books.items()
         },
         "strategy_chosen_from_validation_or_test": False,
+        "simulation_accounting_version":
+            "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt",
     }
 
 
@@ -214,6 +221,9 @@ def analyze_manual_history(
         "scenarios": scenarios,
         "data_is_historical_not_new_prospective_observations": True,
         "independent_forward_strategy_edge_established": False,
+        "simulation_accounting_version":
+            "v2_utc_daily_reset_plus_persistent_peak_drawdown_halt",
+        "previous_v1_historical_outputs_are_not_directly_comparable": True,
         "candidate_selection_from_untouched_test": False,
         "strategy_promoted": False,
         "network_requests_during_analysis": "NONE",
