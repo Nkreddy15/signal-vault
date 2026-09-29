@@ -100,11 +100,12 @@ class OfflineRecoveryDrillTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"forward"
             db,snapshot=prepare(root,count=0)
+            before=sha(db)
             result=run_forward_recovery_drill(root=root,name=snapshot.name)
             self.assertEqual(result["recovered_observations_verified"],0)
             self.assertEqual(result["recovered_capture_pairs_verified"],1)
             self.assertEqual(len(result["injected_faults_rejected"]),4)
-            self.assertEqual(sha(db),sha(db))
+            self.assertEqual(sha(db),before)
 
     def test_one_observation_recovery(self):
         with tempfile.TemporaryDirectory() as tmp:
