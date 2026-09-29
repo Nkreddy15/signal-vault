@@ -91,13 +91,17 @@ def conservative_core_hour_plan(
         raise RuntimeError(
             "offline exchange session module requires optional [equity-research]"
         ) from exc
-    until=end_date_exclusive-timedelta(days=1)
     try:
-        x=xc.get_calendar("XNYS",start=start_date.isoformat(),end=until.isoformat())
-        # get_calendar already bounds this instance to the ACTUAL XNYS
-        # session range. sessions_in_range(...) would reject a weekend/
-        # holiday requested end because it lies after last_session.
-        sessions=x.sessions
+        # ExchangeCalendars requires start < end even for a one-session
+        # history request. Build through the EXCLUSIVE endpoint and then
+        # explicitly filter it out if it happens to be a trading day.
+        # This also handles weekend/holiday endpoints without out-of-bounds.
+        x=xc.get_calendar(
+            "XNYS",start=start_date.isoformat(),
+            end=end_date_exclusive.isoformat())
+        sessions=tuple(
+            session for session in x.sessions
+            if start_date<=session.date()<end_date_exclusive)
     except Exception as exc:
         raise ValueError("requested date outside supported independent XNYS calendar") from exc
     if not 1<=len(sessions)<=MAX_SESSIONS:
