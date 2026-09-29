@@ -56,6 +56,8 @@ class TwoIndependentArtifactTwelveMarketIntegrationTests(unittest.TestCase):
         cls.crypto=cls.root/"original-crypto"
         cls.stock=cls.root/"original-equity"
         cls.crypto.mkdir(mode=0o700)
+        FakeLiquidIEXProvider.drop_session=None
+        FakeLiquidIEXProvider.instances=[]
         stock_run=execute_manual_equity_history(
             env=ENV,as_of=NOW,provider_factory=FakeLiquidIEXProvider,
             output_folder=cls.stock)
