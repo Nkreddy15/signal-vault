@@ -1,0 +1,48 @@
+# PREPARATION TEMPLATE ONLY. No cloud host has been purchased or activated.
+# Run after privately provisioning host secret files and verifying mounting with
+#   docker compose -f ops/cloud/compose.yaml run --rm --no-deps observer --preflight
+#
+# This isolated service has no exposed ports, generic broker credentials, paper
+# account access, POST operation, order executor, or live trading capability.
+name: signal-vault-forward-research
+
+services:
+  observer:
+    build:
+      context: ../..
+      dockerfile: ops/cloud/Dockerfile
+    user: "10001:10001"
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      TZ: UTC
+    volumes:
+      # Named persistent volume: survives container rebuild/restart.
+      # Fresh first deployment starts a DISTINCT zero-prospective bootstrap.
+      - forward_evidence:/var/lib/signal-vault/forward
+    secrets:
+      - forward_data_key_id
+      - forward_data_secret
+    command: ["--serve"]
+    # NO ports, host network, privileged mode or docker socket mount.
+
+volumes:
+  forward_evidence:
+    name: signal_vault_forward_evidence
+
+secrets:
+  # Private, separately provisioned Alpaca PAPER DATA credential files.
+  # Never include their actual contents in ChatGPT, GitHub or the image.
+  # Source is relative to this Compose file (ops/cloud/).
+  forward_data_key_id:
+    file: ../../secrets/cloud_forward_key_id
+  forward_data_secret:
+    file: ../../secrets/cloud_forward_secret
