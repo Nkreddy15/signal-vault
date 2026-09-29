@@ -126,6 +126,25 @@ Alpaca attestation, profitability, filled trades or an unseen model holdout.
 No provider request, credentials, SQLite journal mutation, orders, daemon or
 deployment is involved. See `docs/FORWARD_OBSERVATIONS.md`.
 
+## Phase 2M: check the next collection window WITHOUT credentials
+
+For an explicit preflight at any time (including before the next UTC hour),
+run `PYTHONPATH=src python -m signal_vault.forward_readiness`. It performs
+the full offline Phase 2L archived-evidence audit, reads the recorded most
+recent anchored hour, and returns an exact UTC next-hour capture window and
+clear WAIT / READY / EXISTING_CAPTURE / MISSED / HALT status. It never asks
+for keys, calls Alpaca, writes SQLite, recaptures a preexisting filename,
+schedules anything or generates orders. It separately distinguishes an
+already-captured yet fresh hour from a new hour eligible for the manual
+collector, preventing accidental re-capture after an append error. Named
+existing segments use `--db data/forward/observations-segment-02.sqlite3`.
+
+A readiness result is ONLY a timing and local-evidence assessment, not proof
+of provider availability, tradability or predictive performance. Actual
+collection remains a separate, deliberate
+`PYTHONPATH=src python -m signal_vault.manual_forward_cycle` invocation.
+The user-local Python editable-install output `*.egg-info/` is now Git-ignored.
+
 ## Reading order for resuming work
 
 1. `PROJECT_STATUS.md` — authoritative completed work / known blockers.
