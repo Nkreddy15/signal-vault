@@ -1,10 +1,10 @@
 # SIGNAL VAULT
 
-**Phase 2-I plus read-only prospective observation MVP — broker PAPER POST and live trading NOT activated**
+**Phase 2N — owner-tested GET-only BTC/USD observation and local evidence preservation; broker PAPER POST/live NOT activated**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
-## Current state (2026-09-28)
+## Current state (2026-09-29)
 
 The repository contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks, a one-cycle paper runtime and a single-instance scheduler shell with operator halt controls. The owner reports successful LOCAL authenticated Alpaca PAPER account/quote READ-only smoke and SHA-verified historical captures; credentials have NOT been sent through chat/GitHub. v0.1, v0.2 and v0.3 failed their offline research gates and are NOT approved for paper-order submission. No genuine provider PAPER order, live order, deposit, paid deployment or real-money execution has occurred. The default CLI remains offline and non-filling.
 
@@ -17,9 +17,10 @@ v0.2/v0.3; do not use it to rescue failed development candidates.
 
 For a self-contained, fixed $15 BTC hypothetical round-trip cost audit, run
 `PYTHONPATH=src python -m signal_vault.research_economics`. The owner reports
-successful real authenticated **GET-only** `forward_capture` and journal
-`forward_observer` bootstrap plus the FIRST new closed-hour observation
-(recorded 2026-09-29T05:05:56Z; journal count 1, no order). Existing capture
+successful real authenticated **GET-only** `forward_capture`, zero-observation
+`forward_observer` bootstrap, first hourly append at 05:05:56Z, and the first
+real one-command `manual_forward_cycle` append at 06:03:59Z; journal count **2**,
+no broker order or scheduler. Existing capture
 CSV + source SHA manifest + SQLite journal stay local and Git-ignored under
 `data/forward/`.
 
@@ -144,6 +145,27 @@ of provider availability, tradability or predictive performance. Actual
 collection remains a separate, deliberate
 `PYTHONPATH=src python -m signal_vault.manual_forward_cycle` invocation.
 The user-local Python editable-install output `*.egg-info/` is now Git-ignored.
+
+## Phase 2N: snapshot and isolated verification of exploratory evidence
+
+The owner-reported local forward journal contains **two** actual chronological
+market DATA observations; its separate `forward_readiness` internal evidence
+audit passed before the second. A full owner-side post-second-observation
+`forward_evidence_audit` result is still awaited; do NOT claim it has run.
+
+`PYTHONPATH=src python -m signal_vault.forward_snapshot --create` is a new,
+**manual, offline** utility that first requires the source journal and all
+its archived genuine CSV/manifest data to pass the complete independent
+read-only consistency audit. It then uses a consistent SQLite online backup,
+copies only original captures referenced by that snapshotted journal into a
+separate private local folder, and verifies the copied chain before publishing
+a never-reused snapshot name. It does not replace, reset or restore over the
+active journal. A printed snapshot basename may later be checked offline via
+`PYTHONPATH=src python -m signal_vault.forward_snapshot --verify <NAME>`.
+The local snapshot SHA manifest is **unsigned, unencrypted, same-device**
+evidence, not an offsite disaster-recovery solution or provider attestation.
+Source files and backups are Git-ignored under `data/forward/`. Full procedure:
+`docs/FORWARD_SNAPSHOTS.md`. No orders, funding, credentials or scheduler.
 
 ## Reading order for resuming work
 
