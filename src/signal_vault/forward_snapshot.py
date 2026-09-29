@@ -111,9 +111,12 @@ def _verify_folder(folder: Path) -> dict:
     created = datetime.fromisoformat(meta["created_utc"])
     if created.tzinfo is None or created.utcoffset() != timedelta(0):
         raise ValueError("snapshot timestamp must be UTC")
+    entries = tuple(folder.rglob("*"))
+    if any(entry.is_symlink() for entry in entries):
+        raise ValueError("snapshot must contain no symbolic links")
     expected_paths = set(meta["file_sha256"])
     expected_paths.add(MANIFEST_FILE)
-    actual_paths = {str(path.relative_to(folder)) for path in folder.rglob("*") if path.is_file()}
+    actual_paths = {str(path.relative_to(folder)) for path in entries if path.is_file()}
     dirs = {str(path.relative_to(folder)) for path in folder.rglob("*") if path.is_dir()}
     if dirs != {"captures"} or expected_paths != actual_paths:
         raise ValueError("snapshot contains missing, unexpected or misnamed evidence")
