@@ -262,6 +262,8 @@ def summarize_parallel_research(
         "asset_count": len(verified_datasets),
         "prospective_asset_bar_count": cross_asset_bars,
         "distinct_prospective_clock_hours": len(all_prospective_hours),
+        "capture_timestamp_plausibility_only": True,
+        "independent_provider_archive_chain_verified": False,
         "strategy_validated": False,
         "live_trading": "UNAVAILABLE",
         "broker_order_submission": "DISABLED",
