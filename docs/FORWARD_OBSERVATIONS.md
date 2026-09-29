@@ -171,6 +171,55 @@ capture. Neither a reopened segment nor an inspected forward record is an
 unseen model holdout. No daemon, cron, hosted endpoint or broker account order
 action is introduced by this usability improvement.
 
+## Phase 2L: independent OFFLINE evidence consistency audit
+
+A new read-only command can inspect **all existing records in one named
+forward journal** at any later time, without contacting Alpaca, asking for
+credentials, appending a new observation, or changing the SQLite database:
+
+```sh
+# Default originally bootstrapped local observation journal:
+PYTHONPATH=src python -m signal_vault.forward_evidence_audit
+
+# Or audit a separately created segment, without mixing its original chain:
+PYTHONPATH=src python -m signal_vault.forward_evidence_audit \
+  --db data/forward/observations-segment-02.sqlite3
+```
+
+The auditor uses SQLite's read-only URI and `query_only` transaction. It
+requires existing owner-only (0600), nonsymlinked journal, CSV and manifest
+files **only under local `data/forward/`**, and runs SQLite's
+`integrity_check`. It identifies the original 72-hour bootstrap CSV from
+the journal's first anchored bar and checks that initial file's recorded
+SHA-256/source/boundaries against the original 72 anchored OHLCV hashes.
+For every newly observed hour, it reloads that hour's originally captured
+CSV + matching immutable manifest, recomputes the raw CSV SHA-256, enforces
+the 72-hour continuous window and recorded capture/observation time
+sequence, verifies rolling historical candle overlap, and **independently
+recomputes the saved close, previous 6h/24h returns, 24h range and modeled
+cost hurdle**. Finally, the entire anchored-hash table must equal the
+reconstructed chain, without gaps, altered bars or extra journal rows.
+
+The auditor deliberately validates the **original capture timing**, not its
+current freshness: an owner can run it tomorrow or later to review archived
+evidence, even though those files can no longer be admitted as new live-time
+forward observations. The standard `btcusd_72h_end_YYYYMMDDTHHMMZ.csv`
+filenames produced by `forward_capture` or `manual_forward_cycle` must
+remain intact. Do not rename evidence or use a historical research/holdout
+CSV as a replacement.
+
+Expected output is labelled
+`OFFLINE_READ_ONLY_FORWARD_EVIDENCE_AUDIT` with
+`PASS_INTERNAL_CONSISTENCY_ONLY`, the number of successfully verified
+original source-CSV/manifest pairs, and the number of prospective observations
+checked. **This is not third-party attestation:** the local SHA manifests are
+not digitally signed by Alpaca or an independent timestamping service, and a
+privileged attacker could rewrite multiple files together. It does not
+demonstrate alpha, broker execution or that the observations are untouched
+model-validation holdouts. If a check fails, retain all raw files and SQLite
+journal and stop treating the evidence as verified until reviewed; do not
+delete, recapture under an old filename, or modify stored observations.
+
 ## Security and scope
 
 - No background scheduler/daemon is installed or launched. The operator runs
