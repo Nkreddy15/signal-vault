@@ -74,6 +74,19 @@ operator inputs are:
 | `end_utc` | `2026-09-26T00:00:00Z` |
 | `symbols` | `BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD` |
 
+**Manual form correction, 2026-09-29:** run #36640599885 successfully
+downloaded the six symbols but GitHub retained the older workflow defaults
+`2026-07-01T00:00:00Z` to `2026-09-01T00:00:00Z` and therefore
+correctly SKIPPED the paired-stock job. The form's **three defaults have
+now been synchronized exactly to the gated September six-asset values
+above**. On the updated `main`, select **Run workflow**, confirm these
+displayed defaults, and submit once. The first job now publishes an
+explicit GitHub Actions step summary saying whether a subsequent
+twelve-market pairing is eligible or deliberately skipped. This avoids
+a misleading overall green historical download being interpreted as
+a successful joint backtest. No crypto/stock observations from different
+calendar periods may be combined as one measured portfolio.
+
 The first Actions job remains the historical Alpaca DATA GET, using
 the existing privately configured dedicated research DATA secrets in
 ONE authenticated step. It produces source SHA archives and separate
