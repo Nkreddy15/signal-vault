@@ -15,7 +15,7 @@ from decimal import Decimal
 from typing import Mapping, Sequence
 
 from .multi_asset_simulation import (
-    ExplicitRoundTripCosts, ResearchHypothesis, decide_on_prior_closes,
+    ExplicitRoundTripCosts, ResearchHypothesis, precompute_closed_bar_decisions,
 )
 from .research_universe import (
     AssetClass, CandidateAsset, ResearchBar, candidate, validate_asset_dataset,
@@ -85,6 +85,7 @@ def simulate_shared_research_book(
         raise ValueError("equity calendar must not be reused for crypto")
     quality={}
     rows={}
+    decisions_by_symbol={}
     events: dict[datetime,list[tuple[str,int,ResearchBar]]]={}
     for sym in names:
         data=tuple(datasets[sym])
@@ -92,6 +93,8 @@ def simulate_shared_research_book(
             data,spec=specs[sym],as_of=moment,
             expected_session_opens_utc=calendars.get(sym))
         rows[sym]=data
+        decisions_by_symbol[sym]=precompute_closed_bar_decisions(
+            data,config=hypotheses[sym])
         start=max(hypotheses[sym].warmup_bars,2)
         if len(data)<=start:
             raise ValueError("insufficient per-symbol completed indicator warmup")
@@ -175,9 +178,10 @@ def simulate_shared_research_book(
             known=rows[sym][:idx]
             if not known or known[-1].closed_utc>t:
                 raise ValueError("next-open strategy must never see its own execution bar")
-            signal=decide_on_prior_closes(
-                known,config=hypotheses[sym],has_position=owned[sym]>0,
-                next_open_utc=t)
+            pair=decisions_by_symbol[sym][idx]
+            if pair is None:
+                raise ValueError("no prior completed decision evidence")
+            signal=pair[1 if owned[sym]>0 else 0]
             signals[sym][signal.action.value]+=1
             all_actions.append((signal,sym,bar))
         # SELL before BUY so same-clock risk and funding is unambiguous.
@@ -281,6 +285,8 @@ def simulate_shared_research_book(
             sym:quality[sym].content_sha256 for sym in names},
         "market_feed_by_asset":{sym:quality[sym].feed for sym in names},
         "hypotheses":{sym:hypotheses[sym].name for sym in names},
+        "decision_evaluation_algorithm":
+            "v2_linear_precomputed_closed_bar_state_equivalent",
         "initial_bankroll_usd":str(limits.initial_bankroll_usd),
         "max_single_buy_usd":str(limits.single_buy_usd),
         "max_total_long_exposure_usd":str(limits.maximum_total_long_exposure_usd),

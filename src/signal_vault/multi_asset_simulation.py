@@ -179,6 +179,92 @@ def decide_on_prior_closes(
                              hashlib.sha256(src.encode()).hexdigest())
 
 
+def precompute_closed_bar_decisions(
+    bars: Sequence[ResearchBar],
+    *,
+    config: ResearchHypothesis,
+) -> tuple[tuple[SyntheticDecision, SyntheticDecision] | None, ...]:
+    """Linear-time equivalent of per-bar legacy decisions for BOTH book states.
+
+    Index i is the proposed execution bar; only rows[:i] may be considered.
+    The returned pair is (flat_book_decision, already_held_book_decision).
+    i=0 has no closed preceding evidence and remains None. No market data,
+    account, network, clock, Keychain or order integration exists here.
+
+    Historical alpha is the SAME Decimal recurrence/seed as _ema_pair;
+    earlier values are cached once rather than replaying the whole history
+    on every next-open event. For equity gaps the last completed candle must
+    still close no later than that asset's own next session open.
+    """
+    if not isinstance(config, ResearchHypothesis):
+        raise ValueError("explicit registered research hypothesis required")
+    seq = tuple(bars)
+    if not seq:
+        raise ValueError("empty closed-bar decision timeline")
+    sym, feed = seq[0].symbol, seq[0].feed
+    if not sym or not isinstance(feed,str) or not feed.strip():
+        raise ValueError("decision source/asset identity required")
+    for i, bar in enumerate(seq):
+        if bar.symbol != sym or bar.feed != feed:
+            raise ValueError("mixed symbol/feed in precomputed decision timeline")
+        if bar.start_utc.tzinfo is None or bar.start_utc.utcoffset() is None:
+            raise ValueError("decision rows require timezone-aware timestamps")
+        if i and (seq[i-1].start_utc >= bar.start_utc
+                  or seq[i-1].closed_utc > bar.start_utc):
+            raise ValueError("out-of-order, overlapping or future decision evidence")
+
+    # Only EMA requires a cumulative numeric cache. The resulting initial
+    # seed and Decimal recurrence are identical to _ema_pair(known, period).
+    fast: list[Decimal] = []
+    slow: list[Decimal] = []
+    if config.kind == HypothesisKind.EMA:
+        fast_alpha = Decimal("2") / Decimal(config.fast_bars + 1)
+        slow_alpha = Decimal("2") / Decimal(config.slow_bars + 1)
+        fast = [seq[0].close]
+        slow = [seq[0].close]
+        for bar in seq[1:]:
+            fast.append(fast_alpha * bar.close +
+                        (Decimal("1") - fast_alpha) * fast[-1])
+            slow.append(slow_alpha * bar.close +
+                        (Decimal("1") - slow_alpha) * slow[-1])
+    if config.kind not in tuple(HypothesisKind):
+        raise ValueError("unknown hypothesis")
+
+    cached: list[tuple[SyntheticDecision, SyntheticDecision] | None] = [None]
+    for i in range(1, len(seq)):
+        prior = seq[i - 1]  # closed when hypothetical seq[i] next OPEN begins
+        flat_action, held_action = Action.HOLD, Action.HOLD
+        if config.kind == HypothesisKind.PASSIVE:
+            flat_action = Action.BUY
+        elif config.kind == HypothesisKind.EMA and i >= config.slow_bars + 2:
+            if fast[i-2] <= slow[i-2] and fast[i-1] > slow[i-1]:
+                flat_action = Action.BUY
+            if fast[i-2] >= slow[i-2] and fast[i-1] < slow[i-1]:
+                held_action = Action.SELL
+        elif config.kind == HypothesisKind.MOMENTUM and i >= config.lookback_bars + 1:
+            change = (
+                prior.close / seq[i-1-config.lookback_bars].close -
+                Decimal("1")
+            ) * Decimal("10000")
+            if change >= config.entry_return_bps:
+                flat_action = Action.BUY
+            if change <= config.exit_return_bps:
+                held_action = Action.SELL
+
+        stamp = prior.closed_utc.isoformat()
+        def build(action: Action, held: bool) -> SyntheticDecision:
+            evidence = (
+                f"{config.name}|{sym}|{prior.feed}|{stamp}|"
+                f"{prior.close}|{action.value}|held={held}"
+            )
+            return SyntheticDecision(
+                sym, stamp, config.name, action,
+                hashlib.sha256(evidence.encode()).hexdigest(),
+            )
+        cached.append((build(flat_action, False), build(held_action, True)))
+    return tuple(cached)
+
+
 @dataclass(frozen=True)
 class SyntheticFill:
     symbol: str
@@ -245,6 +331,7 @@ def simulate_one_asset(
     if (type(first) is not int or type(last) is not int or
             first<low or last>len(seq) or first>=last):
         raise ValueError("evaluation indices must follow predeclared warmup")
+    decisions = precompute_closed_bar_decisions(seq, config=hypothesis)
     cash=bankroll_usd
     quantity=Decimal("0")
     peak=bankroll_usd
@@ -287,9 +374,10 @@ def simulate_one_asset(
             daily_pause_dates.add(day.isoformat())
         if before < peak-drawdown_cap_usd:
             persistent_peak_halt=True
-        signal=decide_on_prior_closes(
-            seq[:idx],config=hypothesis,has_position=quantity>0,
-            next_open_utc=candle.start_utc)
+        pair = decisions[idx]
+        if pair is None:
+            raise ValueError("no closed pre-execution evidence")
+        signal = pair[1 if quantity > 0 else 0]
         counts[signal.action.value]+=1
         if signal.action==Action.BUY and quantity==0:
             if daily_entry_pause or persistent_peak_halt:
@@ -353,6 +441,8 @@ def simulate_one_asset(
         "symbol":spec.symbol,
         "market":spec.asset_class.value,
         "hypothesis":hypothesis.name,
+        "decision_evaluation_algorithm":
+            "v2_linear_precomputed_closed_bar_state_equivalent",
         "feed":review.feed,
         "data_sha256":review.content_sha256,
         "historical_data_not_forward_strategy_proof":True,
