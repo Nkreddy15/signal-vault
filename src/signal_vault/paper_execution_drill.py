@@ -175,8 +175,13 @@ def run_offline_execution_drill() -> dict[str, object]:
         else:
             raise RuntimeError("synthetic invalid amount was not rejected")
         _require(not calls, "invalid payload never reaches mock POST")
-        _require(store.get(draft.client_order_id).stage is Stage.DRAFT_APPROVED,
-                 "invalid payload did not mutate pending order state")
+        _require(store.connection.execute(
+            "SELECT COUNT(*) FROM paper_order_states").fetchone()[0] == 0,
+            "invalid payload created no submission state")
+        _require(store.connection.execute(
+            "SELECT status FROM drafts WHERE client_order_id=?",
+            (draft.client_order_id,)).fetchone()[0] == "DRAFT_APPROVED",
+            "invalid payload preserved the untouched approved draft")
         scenarios["guardian_envelope_invalid_amount_rejected_pretransport"] = "PASS"
 
     # 5. Even a synthetic FILLED broker response is terminal UNRECONCILED.
