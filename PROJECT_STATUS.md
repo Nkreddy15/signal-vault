@@ -207,6 +207,21 @@ while waiting, but it cannot capture/append by itself. Do NOT run
 If the window is missed, preserve the segment and use a new manually
 bootstrapped prospective segment rather than fabricate a catch-up.
 
+## Phase 2K first real one-command owner test — 2026-09-29 06:03:59 UTC
+
+After verifying GitHub Phase 2M was available on the Mac (the offline `forward_readiness` CLI produced `PASS_INTERNAL_CONSISTENCY_ONLY` and `WAIT_NEXT_HOURLY_CANDLE_TO_CLOSE` at `2026-09-29T05:37:11.619903Z`), the owner ran the NEW Phase 2K `PYTHONPATH=src python -m signal_vault.manual_forward_cycle` once in the proper next UTC hour, with local hidden Alpaca PAPER DATA credentials. The owner-supplied JSON reports:
+
+- kind `ONE_MANUAL_READ_ONLY_CAPTURE_AND_FORWARD_OBSERVATION`;
+- `capture_csv=data/forward/captures/btcusd_72h_end_20260929T0600Z.csv`, matching unique `.csv.manifest.json`, SHA-256 `a3561b7f7cd64c5f2cd0bb3c7f5d098223f0d47896208a88799fb5d935c2b91f`, 72 rows of closed hourly BTC/USD bars, exclusive capture end `2026-09-29T06:00:00Z`;
+- journal's original bootstrap untouched: first bar start `2026-09-26T04:00:00Z`, original SHA `6e95c45d803d8ef5b575f9b40460ee80994526a3d44d37d47bb373b8ec034ab6`;
+- **new forward observation count now 2**, latest anchored new bar `2026-09-29T05:00:00Z` through close `06:00:00Z`, recorded at `2026-09-29T06:03:59.085819Z`, outcome `ONE_NEW_CLOSED_BAR_RECORDED_NO_TRADE`;
+- new recorded close `83391.026` USD, prior 6h return `-7.574690033723870710463603000` bps, prior 24h return `28.22226182633819622171923000` bps, prior 24h range `221.7514388178891095547859071` bps, fixed hypothetical round-trip break-even `70.30862370967018550890511000` bps;
+- both `paper_order_submission` and `automatic_scheduling` explicitly `DISABLED`. This is local provider market-data observation only, NOT independent sealed validation, an order, actual fill or profit.
+
+This is the **first owner-real/provider test of the one-command helper**, distinct from CI's fake-provider tests. The assistant has not directly opened the owner's raw CSV, manifest or SQLite bytes. Run the separately written `PYTHONPATH=src python -m signal_vault.forward_evidence_audit` offline on the Mac and inspect its JSON next; expected internal chain is original bootstrap + TWO unique observation-capture files (3 required CSV/manifest pairs, 74 total anchored unique bars), but do not claim that audit has passed on owner data before seeing its output. The extra early exploratory 03:00Z capture is retained but is NOT part of this bootstrap journal.
+
+If voluntarily collecting a third consecutive hour, the NEXT manual one-command interval is after 2026-09-29T07:03Z and strictly before 07:25Z (03:03–03:24:59 EDT). Missing that window MUST NOT trigger backfill; preserve the two-observation journal and begin a separate explicit new segment in a later fresh hour only if the owner wishes to continue.
+
 ## Still NOT completed / mandatory blockers
 
 1. Alpaca PAPER account, local read-only smoke, BTC/USD quote and asset-rule checks have been reported successful by the owner; reconfirm broker/provider readiness and fee/quote behavior before any separately authorized paper POST. Preserve local secret storage; never send secrets through chat/GitHub.
