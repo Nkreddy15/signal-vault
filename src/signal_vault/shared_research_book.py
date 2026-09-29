@@ -237,6 +237,11 @@ def simulate_shared_research_book(
             final_marks[sym]=mark[0]
             final_mark_times[sym]=mark[1].isoformat()
     final_cash_and_mark=cash+marked_holdings(final_marks)
+    estimated_exit_cash = cash+sum(
+        (owned[sym]*final_marks[sym]*assumptions[sym].sell_price_multiplier*
+         (Decimal("1")-assumptions[sym].taker_fee_bps/Decimal("10000")))
+        for sym in names if owned[sym]>0
+    )
     max_dd=max(max_dd,max(peak,final_cash_and_mark)-final_cash_and_mark)
     return {
         "kind":"OFFLINE_SHARED_100USD_MULTI_ASSET_BOOK_NO_PROVIDER_ORDERS",
@@ -254,6 +259,16 @@ def simulate_shared_research_book(
         "cash_usd":str(cash),
         "final_marked_equity_usd":str(final_cash_and_mark),
         "net_marked_pnl_usd":str(final_cash_and_mark-limits.initial_bankroll_usd),
+        "estimated_liquidation_equity_usd":str(estimated_exit_cash),
+        "net_pnl_if_hypothetically_liquidated_usd":
+            str(estimated_exit_cash-limits.initial_bankroll_usd),
+        "estimated_liquidation_not_an_order":True,
+        "per_asset_hypothetical_cost_assumptions":{
+            sym:{
+                "fee_bps_each_side":str(assumptions[sym].taker_fee_bps),
+                "full_spread_bps":str(assumptions[sym].full_spread_bps),
+                "slippage_bps_each_side":str(assumptions[sym].slippage_per_side_bps),
+            } for sym in names},
         "open_positions_quantity":{sym:str(q) for sym,q in owned.items() if q>0},
         "open_positions_last_closed_mark_utc":final_mark_times,
         "estimated_fee_total_usd":str(fee_total),
