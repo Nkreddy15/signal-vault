@@ -225,23 +225,27 @@ def describe_multi_asset_research(
                     "data_sha256":v["data_sha256"],
                 } for fold,v in folds["evaluation_folds"].items()
             }
-    # A single predeclared baseline portfolio (one strategy on every asset)
-    # avoids choosing "winners" using the untouched test interval.
-    shared_hypothesis=next(
-        (h for h in hypotheses if h.name=="generic-ema12x26-v1-predeclared"),None)
-    if shared_hypothesis is None:
-        raise ValueError("shared book must use predeclared EMA baseline")
-    book=simulate_shared_research_book(
-        datasets,specs={sym:candidate(sym) for sym in names},
-        hypotheses={sym:shared_hypothesis for sym in names},
-        assumptions=costs,as_of=as_of,equity_calendars=calendars,
-        limits=limits)
+    # Compare each PREDECLARED hypothesis using ONE shared $100 across all
+    # symbols. This is a descriptive comparison, not test-period selection.
+    # Keep the separately named EMA baseline for stable downstream readers.
+    per_hypothesis_shared_books={}
+    for hypothesis in hypotheses:
+        per_hypothesis_shared_books[hypothesis.name]=simulate_shared_research_book(
+            datasets,specs={sym:candidate(sym) for sym in names},
+            hypotheses={sym:hypothesis for sym in names},
+            assumptions=costs,as_of=as_of,equity_calendars=calendars,
+            limits=limits)
+    if "generic-ema12x26-v1-predeclared" not in per_hypothesis_shared_books:
+        raise ValueError("shared book must include predeclared EMA baseline")
+    book=per_hypothesis_shared_books["generic-ema12x26-v1-predeclared"]
     return {
         "kind":"OFFLINE_MULTIASSET_COMPARATIVE_HISTORICAL_RESEARCH_NOT_TRADING",
         "assets":list(names),
         "predeclared_hypotheses":[h.name for h in hypotheses],
         "per_asset_chronological_folds":detail,
         "one_shared_portfolio_baseline":book,
+        "all_predeclared_shared_bankroll_research_books":per_hypothesis_shared_books,
+        "portfolio_hypothesis_selection_performed":False,
         "research_only_historical":True,
         "untouched_test_used_for_model_selection":False,
         "future_returns_guaranteed":False,
