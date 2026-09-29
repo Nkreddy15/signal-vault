@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
@@ -49,7 +49,7 @@ def resolve_manual_ci_configuration(*, env: Mapping[str,str]) -> dict[str,object
         raise ValueError("manual workflow symbols exceed predeclared crypto universe")
     start=aware(env["SIGNAL_VAULT_RESEARCH_START_UTC"])
     end=aware(env["SIGNAL_VAULT_RESEARCH_END_UTC"])
-    if end > datetime.now(timezone.utc)-__import__("datetime").timedelta(hours=1):
+    if end > datetime.now(timezone.utc)-timedelta(hours=1):
         raise ValueError("manual historical backfill requires an already closed period")
     plan=historical_plan(
         symbols=symbols,start=start,end=end,market=AssetClass.CRYPTO)
