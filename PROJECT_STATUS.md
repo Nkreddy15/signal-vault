@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2M-2026-09-29 (owner-verified first forward observation; tested one-command manual cycle; independent archived-evidence audit; new credential-free next-hour readiness report).
+**Checkpoint:** PHASE2N-2026-09-29 (owner-verified TWO genuine read-only forward observations and successful one-command manual capture; newly implemented, fake-provider CI-tested local independent source-evidence snapshot/verification).
 **Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
 **Authorization/status update (owner-run, 2026-09-28):** Development and local/offline/PAPER-only implementation. The owner reports successful local authenticated Alpaca PAPER read-only account smoke and read-only BTC/USD quote/history capture. Keys were never supplied to ChatGPT or committed to GitHub. No broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
 **Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
@@ -222,10 +222,74 @@ This is the **first owner-real/provider test of the one-command helper**, distin
 
 If voluntarily collecting a third consecutive hour, the NEXT manual one-command interval is after 2026-09-29T07:03Z and strictly before 07:25Z (03:03–03:24:59 EDT). Missing that window MUST NOT trigger backfill; preserve the two-observation journal and begin a separate explicit new segment in a later fresh hour only if the owner wishes to continue.
 
+## Phase 2N engineering — source-preserving offline forward backup and isolated proof
+
+The owner reported a successful first real `manual_forward_cycle` at
+`2026-09-29T06:03:59.085819Z`. It created new closed 72h provider DATA GET
+capture ending `06:00Z`, SHA
+`a3561b7f7cd64c5f2cd0bb3c7f5d098223f0d47896208a88799fb5d935c2b91f`,
+and advanced the existing original SQLite journal to TWO real chronological
+forward observations with PAPER POST and automatic scheduling DISABLED. The
+owner's earlier standalone `forward_readiness` succeeded against the
+one-observation state at 05:37Z; the independent post-second-observation source
+audit has been requested but its owner-local real-data result is not yet
+received. Never claim a real successful independent two-observation forensic
+audit before inspecting the new owner output.
+
+Implemented **`src/signal_vault/forward_snapshot.py`**, a dedicated separate
+backup for the *observation* journal and every local CSV/manifest actually
+referenced by its SQLite snapshot (not the unrelated PAPER order ledger).
+It is entirely offline and operator-invoked, OFF by default.
+
+- A read-only full `forward_evidence_audit` of the ORIGINAL owner-local
+  journal and all original referenced CSVs/manifests must PASS before staging.
+  The tool opens SQLite in read-only mode and uses SQLite's online backup API
+  to get a consistent isolated private database copy. The list of captures
+  comes from that COPIED journal, avoiding falsely claiming unobserved raw
+  files or missing a concurrently appended observation.
+- Every original source CSV and original matching SHA manifest is copied to a
+  NEW (not hardlinked) file under a private owner-only staging directory in
+  `data/forward/backups/`, which remains Git-ignored and Mac-local.
+  The archive is checked independently with the existing complete forensic
+  auditor; it additionally publishes a local unsigned SHA manifest of all
+  its own files, and a verification command refuses extra/missing files,
+  altered SHA, symlink, bad mode, wrong chain/counter or nonowner directory.
+  Completed snapshot is given a unique non-overwriting folder name; on
+  failure staged output is cleaned but the ACTIVE source journal/captures
+  are not touched.
+- Commands after owner pulls new main: at any time first run
+  `PYTHONPATH=src python -m signal_vault.forward_evidence_audit`, and ONLY
+  after PASS, run `PYTHONPATH=src python -m signal_vault.forward_snapshot --create`.
+  `--create` prints the generated local snapshot folder; owner may rerun
+  offline proof with `PYTHONPATH=src python -m signal_vault.forward_snapshot
+  --verify <EXACT_SNAPSHOT_FOLDER_BASENAME>`. Existing explicitly separated
+  journals can be selected with `--create --db data/forward/<SEGMENT>.sqlite3`.
+- This is an **ISOLATED VERIFICATION DRILL, not a production restore**.
+  The snapshot utility has no restore-over-original operation, broker API
+  client, scheduler, credentials or POST. Its SHA manifest is local and
+  UNSIGNED, and the backup is UNENCRYPTED and on the SAME MAC. This does not
+  prove third-party Alpaca source authentication or offsite disaster
+  resilience; never commit/archive raw user files into GitHub.
+- New fake-provider offline tests cover zero/one/two observation evidence
+  chains, extra unlinked raw capture exclusion, DB source preservation,
+  private folder/modes, named segment, tampering, partial source, path
+  traversal, existing snapshot and nested/dangling symlinks.
+  `docs/FORWARD_SNAPSHOTS.md` describes exact commands and caveats.
+
+**Next developer gates:** review actual Mac output from owner-side independent
+source auditor (expected two forward records and 3 capture/manifest pairs);
+then request one local Phase 2N archive+verify JSON after latest pull.
+Only then mark owner-specific Phase 2N successful. Continue offline scratch
+transaction/recovery fault drills, genuine approved GET-only provider venue
+rule/fee verification, and strategy preregistration separate from the
+unseen reserve. There is NO authorization for PAPER POST, real trades, or
+background hourly schedule. Do not promise the two-hour empirical sample
+supports predictive edge or profitability.
+
 ## Still NOT completed / mandatory blockers
 
 1. Alpaca PAPER account, local read-only smoke, BTC/USD quote and asset-rule checks have been reported successful by the owner; reconfirm broker/provider readiness and fee/quote behavior before any separately authorized paper POST. Preserve local secret storage; never send secrets through chat/GitHub.
-2. Genuine historical BTC/USD data was captured locally (see above). v0.1/v0.2/v0.3 remain negative/not promoted; v0.3 failed its explicit development gate and must not be evaluated on reserved post-gap data. **Next operator step:** the owner finished the fixed offline cost audit, zero-observation bootstrap and **first real prospective hourly market observation** (05:05:56Z; count 1). NEVER bootstrap the existing journal again. Optional next manual operation uses `PYTHONPATH=src python -m signal_vault.manual_forward_cycle`, which checks the precise consecutive UTC hour and either captures+observes safely or refuses missed-time catch-up. For missed hours, deliberately start a separate fresh segment without resetting old evidence; see `docs/FORWARD_OBSERVATIONS.md`. Do not share keys, backfill missed hours or enable background scheduling. See `docs/FORWARD_OBSERVATIONS.md`. Review costs and preregister a materially different, lower-turnover hypothesis only after sufficient independent thinking/evidence. There is NO authorization for paper POST, live trading or ML shadow promotion.
+2. Genuine historical BTC/USD data was captured locally (see above). v0.1/v0.2/v0.3 remain negative/not promoted; v0.3 failed its explicit development gate and must not be evaluated on reserved post-gap data. **Next operator step:** the owner finished the fixed offline cost audit, zero-observation bootstrap and **TWO genuine prospective hourly market observations** (the newest at 06:03:59Z; count 2). Run an independent offline source-evidence audit, then opt into a Phase 2N local snapshot verification only after that audit PASS. NEVER bootstrap the existing journal again. Optional next manual operation uses `PYTHONPATH=src python -m signal_vault.manual_forward_cycle`, which checks the precise consecutive UTC hour and either captures+observes safely or refuses missed-time catch-up. For missed hours, deliberately start a separate fresh segment without resetting old evidence; see `docs/FORWARD_OBSERVATIONS.md`. Do not share keys, backfill missed hours or enable background scheduling. See `docs/FORWARD_OBSERVATIONS.md`. Review costs and preregister a materially different, lower-turnover hypothesis only after sufficient independent thinking/evidence. There is NO authorization for paper POST, live trading or ML shadow promotion.
 3. Complete transaction-integrity and restoration drills, an actual PostgreSQL Python port + PG concurrency tests or a separately reviewed single-host SQLite pilot acceptance. No multi-host execution against SQLite.
 4. Separately authorized hosting, hardened service configuration and notifications. No services have been installed.
 5. Actual broker PAPER execution with provider-confirmed order/fill/fee/cash/position reconciliation, at least seven days uninterrupted operation and incident review. Simulation result is not evidence of sustainable gains.
