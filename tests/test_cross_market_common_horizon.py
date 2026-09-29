@@ -92,6 +92,42 @@ class CrossMarketCommonHorizonTests(unittest.TestCase):
         self.assertFalse(outcome["cross_market_tradability_or_fractional_share_verified"])
         self.assertEqual(outcome["broker_order_submission"],"DISABLED")
 
+    def test_explicit_order_requires_exact_universe_and_aligned_horizon(self):
+        data,grids=aligned_data()
+        first=data["AAPL"][28].start_utc
+        last=data["AAPL"][-1].closed_utc
+        default=run(
+            data,grids,evaluation_start_utc=first,
+            evaluation_end_utc_exclusive=last)
+        stock_first=run(
+            data,grids,evaluation_start_utc=first,
+            evaluation_end_utc_exclusive=last,
+            allocation_priority_order=("AAPL","BTC/USD"))
+        crypto_first=run(
+            data,grids,evaluation_start_utc=first,
+            evaluation_end_utc_exclusive=last,
+            allocation_priority_order=("BTC/USD","AAPL"))
+        self.assertEqual(default["synthetic_fills"],stock_first["synthetic_fills"])
+        self.assertEqual(
+            [f["symbol"] for f in crypto_first["synthetic_fills"] if f["side"]=="buy"],
+            ["BTC/USD","AAPL"])
+        self.assertNotIn("explicit_fixed_allocation_priority_order",default)
+        self.assertTrue(crypto_first["same_clock_order_is_only_a_backtest_convention"])
+        self.assertFalse(crypto_first["priority_selected_by_historical_outcomes"])
+        self.assertEqual(crypto_first["broker_order_submission"],"DISABLED")
+        for bad in (
+            ("AAPL",),
+            ("AAPL","AAPL"),
+            ("AAPL","BTC/USD","AVAX/USD"),
+            ("UNKNOWN","BTC/USD"),
+        ):
+            with self.subTest(priority=bad),self.assertRaises(ValueError):
+                run(data,grids,evaluation_start_utc=first,
+                    evaluation_end_utc_exclusive=last,
+                    allocation_priority_order=bad)
+        with self.assertRaises(ValueError):
+            run(data,grids,allocation_priority_order=("BTC/USD","AAPL"))
+
     def test_unscoped_legacy_book_preserves_original_result_shape(self):
         data,grids=aligned_data()
         outcome=run(data,grids)
