@@ -15,16 +15,16 @@ AS_OF=datetime(2026,10,1,tzinfo=timezone.utc)
 HOUR=timedelta(hours=1)
 
 
-def equity_batch(spec):
+def equity_batch(spec, captured=AS_OF):
     points=spec.expected_opens
     return HistoricalDataBatch(
         "us_equity",("SPY",),"alpaca_equity_iex","all",
         spec.query_start.isoformat(),spec.query_end.isoformat(),
-        AS_OF.isoformat(),1,{
+        captured.isoformat(),1,{
             "SPY":tuple(ResearchBar(
                 "SPY",t,Decimal("100"),Decimal("101"),Decimal("99"),
                 Decimal("100"),Decimal("100"),
-                "alpaca_equity_iex|adjustment=all",AS_OF,False)
+                "alpaca_equity_iex|adjustment=all",captured,False)
                 for t in points)
         })
 
@@ -80,7 +80,7 @@ class StockHistoryJoinsTests(unittest.TestCase):
             start_date=date(2026,11,27),
             end_date_exclusive=date(2026,11,28),
             as_of=datetime(2026,12,1,tzinfo=timezone.utc))[0]
-        batch=equity_batch(early)
+        batch=equity_batch(early,captured=datetime(2026,12,1,tzinfo=timezone.utc))
         rows,reviews=combine_historical_archives(
             (batch,),as_of=AS_OF+timedelta(days=70),
             equity_calendars={"SPY":early.expected_opens})
