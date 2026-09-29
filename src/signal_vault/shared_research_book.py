@@ -56,14 +56,18 @@ def simulate_shared_research_book(
     limits: SharedResearchLimits = SharedResearchLimits(),
     evaluation_start_utc: datetime | None = None,
     evaluation_end_utc_exclusive: datetime | None = None,
+    allocation_priority_order: Sequence[str] | None = None,
 ) -> dict[str,object]:
     """Only closed history can generate a signal for an asset's next bar OPEN.
 
     Mark-to-market at event time uses current opens for instruments with an
     opening event and only the most recently CLOSED bar for other holdings.
     Two simultaneous BUYs compete for a single max $30, not $30 each.
-    Selection order is predeclared sort(symbol); this is a deterministic
-    simulation convention, not an alpha ranking/asset recommendation.
+    Default selection order is predeclared sort(symbol), which is only a
+    deterministic convention, not alpha ranking. An EXPLICIT fixed priority
+    may be supplied in a bounded ALIGNED cross-market sensitivity analysis;
+    it must be a permutation of the same approved symbols, must not derive
+    from outcomes and changes no account/order permission.
     """
     if as_of.tzinfo is None:
         raise ValueError("timezone-aware shared research as_of required")
@@ -74,6 +78,18 @@ def simulate_shared_research_book(
     if (set(names)!=set(specs) or set(names)!=set(hypotheses) or
             set(names)!=set(assumptions)):
         raise ValueError("independent per-symbol spec/strategy/cost required")
+    if allocation_priority_order is None:
+        priority_names=names
+    else:
+        priority_names=tuple(allocation_priority_order)
+        if (priority_names==() or len(priority_names)!=len(names) or
+                len(set(priority_names))!=len(names) or
+                set(priority_names)!=set(names) or
+                any(type(sym) is not str for sym in priority_names) or
+                evaluation_start_utc is None or
+                evaluation_end_utc_exclusive is None):
+            raise ValueError("explicit allocation policy requires a complete fixed approved universe and common horizon")
+    priority_rank={sym:idx for idx,sym in enumerate(priority_names)}
     calendars={} if equity_calendars is None else dict(equity_calendars)
     for sym in names:
         if candidate(sym)!=specs[sym]:
@@ -174,7 +190,7 @@ def simulate_shared_research_book(
                    Decimal("0"))
 
     for t in sorted(events):
-        group=tuple(sorted(events[t],key=lambda item:item[0]))
+        group=tuple(sorted(events[t],key=lambda item:priority_rank[item[0]]))
         current={sym:bar for sym,_,bar in group}
         prior={sym:previous_closed(sym,t) for sym in names}
         for sym in names:
@@ -222,7 +238,7 @@ def simulate_shared_research_book(
             all_actions.append((signal,sym,bar))
         # SELL before BUY so same-clock risk and funding is unambiguous.
         all_actions.sort(key=lambda item:(0 if item[0].action==Action.SELL else 1,
-                                          item[1]))
+                                          priority_rank[item[1]]))
         for signal,sym,bar in all_actions:
             action=signal.action
             fees=assumptions[sym].taker_fee_bps/Decimal("10000")
@@ -316,7 +332,10 @@ def simulate_shared_research_book(
     outcome={
         "kind":"OFFLINE_SHARED_100USD_MULTI_ASSET_BOOK_NO_PROVIDER_ORDERS",
         "symbol_order":list(names),
-        "allocation_policy":"SELLS_BEFORE_BUYS_THEN_SYMBOL_ASC_NO_ALPHA_RANKING",
+        "allocation_policy":(
+            "SELLS_BEFORE_BUYS_THEN_SYMBOL_ASC_NO_ALPHA_RANKING"
+            if allocation_priority_order is None else
+            "SELLS_BEFORE_BUYS_FIXED_PREDECLARED_PERMUTATION_NO_ALPHA_RANKING"),
         "historical_assets_sha256":{
             sym:quality[sym].content_sha256 for sym in names},
         "market_feed_by_asset":{sym:quality[sym].feed for sym in names},
@@ -362,6 +381,13 @@ def simulate_shared_research_book(
         "broker_order_submission":"DISABLED",
         "live_trading":"UNAVAILABLE",
     }
+    if allocation_priority_order is not None:
+        outcome.update({
+            "explicit_fixed_allocation_priority_order":list(priority_names),
+            "same_clock_order_is_only_a_backtest_convention":True,
+            "priority_selected_by_historical_outcomes":False,
+            "no_provider_trade_permission_added":True,
+        })
     if aligned_scope:
         # Backward-compatible default mode must NOT silently change the
         # archived v2 source-report JSON schema or its SHA-replay equality.

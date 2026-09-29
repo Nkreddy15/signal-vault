@@ -1,0 +1,79 @@
+# Historical SOURCE REPLAY only, not an ongoing data job or broker bot.
+# Runs once when this reviewed Phase 12 code lands on the PRIVATE repo main.
+# All 12 sources were independently archived under old explicit owner-run IDs.
+# Never requests Alpaca DATA credentials, trades, provider quotes, or SIP.
+name: Offline twelve-market fixed allocation sensitivity (keyless)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/signal_vault/shared_research_book.py
+      - src/signal_vault/cross_market_joint_review.py
+      - src/signal_vault/joint_historical_source.py
+      - .github/workflows/offline-12-market-allocation-sensitivity.yml
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: keyless-history-fixed-order-audit-main
+  cancel-in-progress: false
+
+jobs:
+  inspect-preregistered-tie-order-bias:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout exact merged offline research commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install independent offline XNYS calendar
+        run: python -m pip install --no-cache-dir '.[equity-research]'
+
+      - name: Fetch EXACT reviewed September crypto retrospective source (GitHub only)
+        uses: actions/download-artifact@v4
+        with:
+          name: bounded-crypto-history-and-offline-research-36647061726
+          run-id: 36647061726
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: immutable-september-crypto-source
+
+      - name: Fetch EXACT reviewed six-stock IEX retrospective source (GitHub only)
+        uses: actions/download-artifact@v4
+        with:
+          name: historical-6-equities-IEX-core-hours-36637836735
+          run-id: 36637836735
+          repository: ${{ github.repository }}
+          github-token: ${{ github.token }}
+          path: immutable-reviewed-stock-source
+
+      - name: Independently SHA-audit BOTH source sets and test three fixed allocation conventions
+        run: |
+          python -m signal_vault.joint_historical_source \
+            --crypto-artifact immutable-september-crypto-source \
+            --stock-artifact immutable-reviewed-stock-source \
+            --allocation-sensitivity \
+            --output offline_twelve_market_allocation_sensitivity.json
+
+      - name: Archive private fixed-policy descriptive sensitivity (7 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-twelve-market-fixed-priority-sensitivity-${{ github.run_id }}
+          path: offline_twelve_market_allocation_sensitivity.json
+          if-no-files-found: error
+          retention-days: 7

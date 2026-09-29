@@ -40,6 +40,23 @@ STOCK_SIX=tuple(sorted(
 FRICTION_LABELS=("low","base","high")
 
 
+def _fixed_priority_regimes() -> dict[str,tuple[str,...]]:
+    """Predeclared class-first/alternating conventions, no return-based selection."""
+    alternating=tuple(
+        name for stock,crypto in zip(STOCK_SIX,CRYPTO_SIX)
+        for name in (stock,crypto))
+    regimes={
+        "stock_first_alphabetic":STOCK_SIX+CRYPTO_SIX,
+        "crypto_first_alphabetic":CRYPTO_SIX+STOCK_SIX,
+        "alternating_stock_crypto_alphabetic":alternating,
+    }
+    expected=set(STOCK_SIX)|set(CRYPTO_SIX)
+    if any(len(v)!=12 or len(set(v))!=12 or set(v)!=expected
+           for v in regimes.values()):
+        raise ValueError("predeclared alternative order does not cover all twelve assets")
+    return regimes
+
+
 def evaluate_predeclared_twelve_market_common_history(
     *,
     crypto: Mapping[str,Sequence[ResearchBar]],
@@ -47,8 +64,11 @@ def evaluate_predeclared_twelve_market_common_history(
     independently_verified_stock_core_opens_utc: Sequence[datetime],
     as_of: datetime,
     limits:SharedResearchLimits=SharedResearchLimits(),
+    include_order_sensitivity:bool=False,
 ) -> dict[str,object]:
     """Strict precondition: do not join retrospective studies with zero overlap."""
+    if type(include_order_sensitivity) is not bool:
+        raise ValueError("predeclared allocation sensitivity must be an explicit boolean")
     if (set(crypto)!=set(CRYPTO_SIX) or set(equities)!=set(STOCK_SIX)):
         raise ValueError("exactly six approved historical crypto and six stock sources required")
     if (as_of.tzinfo is None or as_of.utcoffset() is None):
@@ -96,6 +116,7 @@ def evaluate_predeclared_twelve_market_common_history(
     scenario_results={}
     names=tuple(sorted(datasets))
     per_class={sym:candidate(sym).asset_class for sym in names}
+    priority_regimes=_fixed_priority_regimes() if include_order_sensitivity else {}
     for label in FRICTION_LABELS:
         crypto_model=CRYPTO_COST_SCENARIOS["illustrative_"+label+"_friction"]
         stock_model=EQUITY_ESTIMATED_COST_SCENARIOS[
@@ -146,7 +167,51 @@ def evaluate_predeclared_twelve_market_common_history(
             "prices_fees_spreads_and_fractional_shares_NOT_verified_fills":True,
             "predeclared_hypothesis_results":strategies,
         }
-    return {
+        if include_order_sensitivity:
+            alternatives={}
+            for policy_name,policy_order in priority_regimes.items():
+                tested={}
+                for hypothesis in HYPOTHESES:
+                    alt=simulate_shared_research_book(
+                        datasets,specs={sym:candidate(sym) for sym in names},
+                        hypotheses={sym:hypothesis for sym in names},
+                        assumptions=costs,as_of=observed,
+                        equity_calendars={sym:stock_grid for sym in STOCK_SIX},
+                        limits=limits,
+                        evaluation_start_utc=earliest,
+                        evaluation_end_utc_exclusive=latest,
+                        allocation_priority_order=policy_order)
+                    if (not alt["global_common_horizon_applied"] or
+                            alt["explicit_fixed_allocation_priority_order"]!=list(policy_order)
+                            or alt["broker_order_submission"]!="DISABLED"):
+                        raise ValueError("fixed-order study escaped audited aligned mode")
+                    tested[hypothesis.name]={
+                        "net_PNL_if_hypothetically_liquidated_usd":
+                            alt["net_pnl_if_hypothetically_liquidated_usd"],
+                        "estimated_fee_usd":alt["estimated_fee_total_usd"],
+                        "sampled_max_drawdown_usd":
+                            alt["sampled_event_max_drawdown_usd"],
+                        "hypothetical_buy_symbols_in_fill_order":[
+                            item["symbol"] for item in alt["synthetic_fills"]
+                            if item["side"]=="buy"],
+                        "hypothetical_fill_count":len(alt["synthetic_fills"]),
+                        "rejected_new_entry_count":len(alt["rejections"]),
+                        "initial_ONE_shared_bankroll_usd":alt["initial_bankroll_usd"],
+                        "maximum_total_exposure_usd":
+                            alt["max_total_long_exposure_usd"],
+                        "historical_priority_is_not_an_alpha_signal":True,
+                        "broker_order_submission":"DISABLED",
+                    }
+                alternatives[policy_name]={
+                    "fixed_order":list(policy_order),
+                    "per_hypothesis_descriptive_results":tested,
+                }
+            scenario_results["illustrative_"+label+"_friction"].update({
+                "separate_FIXED_order_counterfactuals_NOT_a_selection":alternatives,
+                "baseline_alphabetical_priority_remains_separately_preserved":True,
+                "no_policy_optimization_using_test_or_outcomes":True,
+            })
+    result={
         "kind":"OFFLINE_SYNCHRONIZED_TWELVE_ASSET_MIXED_CALENDAR_RESEARCH",
         "twelve_source_data_sha256":{
             sym:quality[sym].content_sha256 for sym in names},
@@ -175,3 +240,14 @@ def evaluate_predeclared_twelve_market_common_history(
         "broker_order_submission":"DISABLED",
         "live_trading":"UNAVAILABLE",
     }
+    if include_order_sensitivity:
+        result.update({
+            "additional_allocation_sensitivity_version":
+                "v1_three_fixed_class_based_tie_breaks_preserve_baseline",
+            "alternative_priority_orders":{
+                name:list(order) for name,order in priority_regimes.items()},
+            "baseline_allocation_is_global_symbol_alphabetical":True,
+            "no_priority_winner_selected_or_recommended":True,
+            "historical_tie_break_policy_is_NOT_out_of_sample_validation":True,
+        })
+    return result

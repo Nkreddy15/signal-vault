@@ -106,6 +106,7 @@ def analyze_two_verified_history_artifacts(
     crypto_artifact:Path,
     stock_artifact:Path,
     require_reference_stock_digest:bool=True,
+    include_order_sensitivity:bool=False,
 ) -> dict[str,object]:
     """Fail closed when the old July-Aug crypto & Sep stock data do NOT overlap."""
     with tempfile.TemporaryDirectory(
@@ -165,7 +166,8 @@ def analyze_two_verified_history_artifacts(
         result=evaluate_predeclared_twelve_market_common_history(
             crypto=crypto,equities=stocks,
             independently_verified_stock_core_opens_utc=grid,
-            as_of=max(crypto_as_of,stock_as_of))
+            as_of=max(crypto_as_of,stock_as_of),
+            include_order_sensitivity=include_order_sensitivity)
         return {
             **result,
             "source_pair_provenance":{
@@ -195,10 +197,13 @@ def main(argv:list[str]|None=None) -> int:
     parser.add_argument("--crypto-artifact",required=True,type=Path)
     parser.add_argument("--stock-artifact",required=True,type=Path)
     parser.add_argument("--output",required=True,type=Path)
+    parser.add_argument("--allocation-sensitivity",action="store_true",
+                        help="add three fixed class-based tie-order alternatives; no optimizer")
     args=parser.parse_args(argv)
     study=analyze_two_verified_history_artifacts(
         crypto_artifact=args.crypto_artifact,
-        stock_artifact=args.stock_artifact)
+        stock_artifact=args.stock_artifact,
+        include_order_sensitivity=args.allocation_sensitivity)
     raw=(json.dumps(study,indent=2,sort_keys=True)+"\n").encode("utf-8")
     _create_exact(args.output,raw)
     print(json.dumps({
@@ -210,6 +215,7 @@ def main(argv:list[str]|None=None) -> int:
         "post_warmup_stock_core_hour_count":
             study["evaluated_stock_regular_CORE_hour_opens_after_global_warmup"],
         "report_basename":args.output.name,
+        "allocation_sensitivity_included":args.allocation_sensitivity,
         "report_sha256":hashlib.sha256(raw).hexdigest(),
         "keys_or_network_or_broker_orders":"NONE",
     },indent=2,sort_keys=True))

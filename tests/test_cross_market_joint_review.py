@@ -86,6 +86,61 @@ class TwelveMarketCommonResearchTests(unittest.TestCase):
                 independently_verified_stock_core_opens_utc=STOCK_GRID,
                 as_of=AS_OF))
 
+    def test_three_predeclared_same_clock_priority_regimes_prove_baseline_concentration(self):
+        crypto,equity=datasets()
+        regular=evaluate_predeclared_twelve_market_common_history(
+            crypto=crypto,equities=equity,
+            independently_verified_stock_core_opens_utc=STOCK_GRID,
+            as_of=AS_OF)
+        expanded=evaluate_predeclared_twelve_market_common_history(
+            crypto=crypto,equities=equity,
+            independently_verified_stock_core_opens_utc=STOCK_GRID,
+            as_of=AS_OF,include_order_sensitivity=True)
+        self.assertNotIn("alternative_priority_orders",regular)
+        self.assertEqual(expanded["additional_allocation_sensitivity_version"],
+                         "v1_three_fixed_class_based_tie_breaks_preserve_baseline")
+        self.assertEqual(len(expanded["alternative_priority_orders"]),3)
+        self.assertTrue(expanded["no_priority_winner_selected_or_recommended"])
+        self.assertFalse(expanded["future_edge_established"])
+        self.assertEqual(expanded["broker_order_submission"],"DISABLED")
+        for label,case in expanded["three_estimated_friction_scenarios"].items():
+            prior=regular["three_estimated_friction_scenarios"][label]
+            self.assertEqual(case["predeclared_hypothesis_results"],
+                             prior["predeclared_hypothesis_results"])
+            modes=case["separate_FIXED_order_counterfactuals_NOT_a_selection"]
+            self.assertEqual(set(modes),{
+                "stock_first_alphabetic","crypto_first_alphabetic",
+                "alternating_stock_crypto_alphabetic"})
+            passive="one-allocation-passive-v1-predeclared"
+            self.assertEqual(
+                modes["stock_first_alphabetic"][
+                    "per_hypothesis_descriptive_results"][passive][
+                    "hypothetical_buy_symbols_in_fill_order"][:2],
+                ["AAPL","AMD"])
+            self.assertEqual(
+                modes["crypto_first_alphabetic"][
+                    "per_hypothesis_descriptive_results"][passive][
+                    "hypothetical_buy_symbols_in_fill_order"][:2],
+                ["AVAX/USD","BTC/USD"])
+            self.assertEqual(
+                modes["alternating_stock_crypto_alphabetic"][
+                    "per_hypothesis_descriptive_results"][passive][
+                    "hypothetical_buy_symbols_in_fill_order"][:2],
+                ["AAPL","AVAX/USD"])
+            for mode in modes.values():
+                self.assertEqual(len(mode["fixed_order"]),12)
+                self.assertEqual(len(set(mode["fixed_order"])),12)
+                self.assertEqual(len(mode["per_hypothesis_descriptive_results"]),4)
+                for outcome in mode["per_hypothesis_descriptive_results"].values():
+                    self.assertEqual(outcome["initial_ONE_shared_bankroll_usd"],"100")
+                    self.assertEqual(outcome["maximum_total_exposure_usd"],"30")
+                    self.assertEqual(outcome["broker_order_submission"],"DISABLED")
+        self.assertEqual(
+            expanded,evaluate_predeclared_twelve_market_common_history(
+                crypto=crypto,equities=equity,
+                independently_verified_stock_core_opens_utc=STOCK_GRID,
+                as_of=AS_OF,include_order_sensitivity=True))
+
     def test_disjoint_real_history_sept_stocks_vs_july_aug_crypto_fails_before_pnl(self):
         crypto,equity=datasets(
             crypto_start=datetime(2026,8,20,tzinfo=UTC),
