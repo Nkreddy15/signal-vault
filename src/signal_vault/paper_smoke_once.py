@@ -25,9 +25,10 @@ from typing import Callable
 from .alpaca_paper import PaperAlpacaReadClient
 from .domain import Side, TradeIntent
 from .operator_view import read_local_paper_snapshot
-from .paper_executor import PaperOnceExecutor
+from .paper_executor import PaperOnceExecutor, parse_paper_observation
 from .paper_order_state import Stage
-from .paper_reconciliation import audit_terminal_paper_order, release_verified_terminal
+from .paper_reconciliation import audit_terminal_paper_order, release_verified_terminal, _btc_position_qty
+from .paper_audit import audit_crypto_fee_activities
 from .paper_smoke_preview import (
     AMOUNT, MAX_SPREAD_BPS, _quote_client, _usd, _valid_local, _validate_quote,
 )
@@ -253,6 +254,63 @@ def execute_one_paper_smoke(
         return report
 
 
+def _check_and_finalize_deferred_buy_fee(
+    *, store: PersistentPaperOrderStore, reader: PaperAlpacaReadClient,
+    state, at: datetime,
+) -> bool:
+    """One GET-only provider fee check for an already RECONCILED first BUY.
+
+    A broker fee may post later than its fill. Only the first persisted order's
+    own fee can be settled, and only if independent read-only provider checks
+    still match the exact broker order, inventory and fee quantity inferred at
+    fill reconciliation. No POST/cancel/withdrawal is reachable here.
+    """
+    pending = store.pending_fee_order_ids()
+    if not pending:
+        return True
+    if (pending != (state.client_order_id,) or state.stage is not Stage.RECONCILED
+            or state.provider_status != "filled" or not state.broker_order_id
+            or state.cumulative_filled_qty <= 0):
+        raise ValueError("deferred fee does not belong to reconciled first filled order")
+
+    raw = reader.lookup_order(state.client_order_id)
+    if raw is None:
+        raise ValueError("original provider order lookup missing")
+    observed = parse_paper_observation(raw, state.client_order_id)
+    if (observed.broker_order_id != state.broker_order_id
+            or observed.provider_status != "filled"
+            or observed.cumulative_filled_qty != state.cumulative_filled_qty
+            or observed.filled_avg_price != state.filled_avg_price):
+        raise ValueError("original provider filled order changed since reconciliation")
+
+    account = reader.get_account()
+    if (str(account.get("status", "")).upper() != "ACTIVE"
+            or account.get("trading_blocked") is not False):
+        raise ValueError("provider paper account not active/unblocked")
+    _usd(account.get("non_marginable_buying_power"))
+    if reader.get_open_orders():
+        raise ValueError("unexpected paper open order during deferred fee audit")
+    positions = reader.get_positions()
+    if any(str(row.get("symbol", "")).replace("/", "") != "BTCUSD"
+           for row in positions):
+        raise ValueError("unexpected paper account position during deferred fee audit")
+    if _btc_position_qty(positions) != store.logical_account()["btc_qty"]:
+        raise ValueError("provider BTC quantity no longer matches reconciled local ledger")
+
+    audited = audit_crypto_fee_activities(
+        state.broker_order_id, reader.get_fee_activities(state.broker_order_id))
+    if not audited.final:
+        # No fee activity yet. Retain the inferred provisional fee and the
+        # durable fee-pending record; never silently assume the fee was zero.
+        return False
+    store.settle_pending_buy_fee(
+        state.client_order_id, at=at,
+        final_fee_usd_equiv=audited.fee_usd_equivalent,
+        final_btc_fee_qty=audited.btc_fee_qty,
+        final_usd_fee_amount=audited.usd_fee_amount)
+    return True
+
+
 def reconcile_one_paper_smoke(
     *, db: str | Path = "data/signal-vault-paper.sqlite3",
     clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
@@ -276,9 +334,33 @@ def reconcile_one_paper_smoke(
                 state = states[0]
                 report["client_order_id"] = state.client_order_id
                 if state.stage is Stage.RECONCILED:
-                    report["status"] = "ALREADY_RECONCILED"
+                    report["provider_stage"] = state.stage.value
+                    pending = store.pending_fee_order_ids()
+                    if not pending:
+                        report["status"] = "ALREADY_RECONCILED_FEES_FINAL"
+                        report["reason_code"] = "NONE"
+                        report["pending_fee_audits"] = 0
+                        return report
+                    # Even once the order/position is reconciled, its provider
+                    # crypto fee may post later. --reconcile is the ONLY manual
+                    # first-smoke continuation and it never sends a new POST.
+                    try:
+                        key, secret = _credentials(credential_loader)
+                        reader = paper_factory(key, secret)
+                        final = _check_and_finalize_deferred_buy_fee(
+                            store=store, reader=reader, state=state, at=_clock(clock))
+                    except Exception as exc:
+                        report["status"] = "RECONCILED_ORDER_FEE_AUDIT_REQUIRES_REVIEW"
+                        report["reason_code"] = "PROVIDER_FEE_FINALIZATION_FAILED_CLOSED"
+                        report["failure_class"] = type(exc).__name__
+                        report["pending_fee_audits"] = len(store.pending_fee_order_ids())
+                        report["operator_review_required"] = True
+                        return report
+                    report["status"] = ("PAPER_ORDER_RECONCILED_FEE_FINALIZED"
+                                        if final else "PAPER_ORDER_RECONCILED_FEE_STILL_PENDING")
                     report["reason_code"] = "NONE"
                     report["pending_fee_audits"] = len(store.pending_fee_order_ids())
+                    report["operator_review_required"] = False
                     return report
                 try:
                     key, secret = _credentials(credential_loader)
@@ -356,7 +438,9 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["status"] in (
         "ONE_PAPER_POST_ATTEMPT_RECORDED_RECONCILIATION_REQUIRED",
-        "PAPER_ORDER_RECONCILED", "ALREADY_RECONCILED") else 2
+        "PAPER_ORDER_RECONCILED", "ALREADY_RECONCILED_FEES_FINAL",
+        "PAPER_ORDER_RECONCILED_FEE_FINALIZED",
+        "PAPER_ORDER_RECONCILED_FEE_STILL_PENDING") else 2
 
 
 if __name__ == "__main__":
