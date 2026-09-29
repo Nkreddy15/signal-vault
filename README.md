@@ -1,6 +1,6 @@
 # SIGNAL VAULT
 
-**Phase 2N — owner-tested GET-only BTC/USD observation and local evidence preservation; broker PAPER POST/live NOT activated**
+**Phase 2O — three owner-verified observations, isolated evidence snapshot and offline recovery drills; broker PAPER POST/live NOT activated**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
@@ -166,6 +166,10 @@ The local snapshot SHA manifest is **unsigned, unencrypted, same-device**
 evidence, not an offsite disaster-recovery solution or provider attestation.
 Source files and backups are Git-ignored under `data/forward/`. Full procedure:
 `docs/FORWARD_SNAPSHOTS.md`. No orders, funding, credentials or scheduler.
+
+## Phase 2O — local scratch recovery drill
+
+The owner repeated the Phase 2N snapshot verification successfully. The new `forward_recovery_drill.py` checks the saved snapshot, copies it into temporary private folders, verifies that the isolated chain can be read, and checks that four separately damaged test copies are rejected. The original journal and original snapshot are not modified. Run the command only after pulling current main; see `docs/FORWARD_RECOVERY_DRILL.md`. This is an offline, same-device rehearsal, not a production restore.
 
 ## Reading order for resuming work
 
