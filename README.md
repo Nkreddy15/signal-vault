@@ -171,6 +171,42 @@ Source files and backups are Git-ignored under `data/forward/`. Full procedure:
 
 The owner repeated the Phase 2N snapshot verification successfully. The new `forward_recovery_drill.py` checks the saved snapshot, copies it into temporary private folders, verifies that the isolated chain can be read, and checks that four separately damaged test copies are rejected. The original journal and original snapshot are not modified. Run the command only after pulling current main; see `docs/FORWARD_RECOVERY_DRILL.md`. This is an offline, same-device rehearsal, not a production restore.
 
+## User-approved unattended GET-only local Mac observation (NOT DEPLOYED YET)
+
+Following three genuine owner-invoked forward observations, a full original
+forensic check, locally created/reverified snapshot, and a successful real
+scratch recovery/four-fault drill, the owner explicitly approved engineering
+an **unattended market DATA GET-only** observation collector.
+
+The new `unattended_forward_cycle.py` provides one short-lived per-hour
+time-gated capture with a private operational active-segment marker,
+nonsecret JSON receipts and offline `--status`. It starts with a fresh
+SEPARATELY named zero-observation automated segment, so the previously
+owner-verified three-record manual journal and snapshot are never reset.
+It requires a complete previous-chain audit before every append; when a
+sleep/shutdown/failed tick misses one hour, it never backfills and may
+bootstrap a wholly different future segment after rechecking source
+integrity. Only strict Alpaca PAPER BTC/USD historical DATA GET is allowed:
+no order API, generic/LIVE credential env fallbacks, strategy signal or
+trade instruction.
+
+`mac_forward_agent.py` builds a per-user macOS LaunchAgent scheduled at
+minute `:07` EVERY hour (`RunAtLoad=false`; no long-lived daemon).
+Its separate Keychain-backed PAPER DATA credential retrieval keeps keys
+out of process argv, the LaunchAgent plist, GitHub and operator receipts.
+The user must explicitly perform the one-time Keychain setup and invoke
+`--install` on their own already checked-out Mac; a GitHub push does not
+automatically install or activate a local process. Mac ON/logged in/awake
+and accessible Keychain are required; late wakeups safely skip.
+
+**Exact preparation, local activation, status, stop and caveats:**
+[`docs/UNATTENDED_FORWARD_COLLECTION.md`](docs/UNATTENDED_FORWARD_COLLECTION.md).
+Tests exercise fake data and mocked macOS activation; report actual
+owner Mac scheduler success ONLY after receiving the first local
+zero-observation automated bootstrap and next consecutive hourly append.
+Broker PAPER order POST, real/live orders, payments, hosting and paid
+services remain disabled and separately require explicit owner approval.
+
 ## Reading order for resuming work
 
 1. `PROJECT_STATUS.md` — authoritative completed work / known blockers.
