@@ -105,6 +105,27 @@ now creates/tightens its primary file mode to 0600 before opening it. The
 See `docs/OPERATOR_MONITOR.md` and `docs/DEPLOYMENT_PREPARATION.md`.
 No Alpaca authenticated interaction or real brokerage paper fill has occurred.
 
+## Phase 2L: local evidence audit without altering ongoing capture
+
+`PYTHONPATH=src python -m signal_vault.forward_evidence_audit` is a fully
+offline **SQLite read-only forensic check** of the owner-local
+`data/forward/observations.sqlite3` journal and its standard captured
+CSV/manifest files. It reconstructs the original 72-hour bootstrap hashes
+and every later prospectively observed hour; verifies source labels, raw CSV
+SHA-256s, expected UTC-hour windows, immutable overlapping candles, captured
+vs observed chronology and the stored 6h/24h/range/cost calculations.
+It checks SQLite integrity and compares the entire reconstructed anchored
+hash table to the persisted one. For separate segments, use
+`--db data/forward/observations-segment-02.sqlite3`.
+
+Unlike the collector, the auditor is intentionally suitable for older
+archives: it checks their **original** capture timestamps rather than
+pretending aged captures can count as new future observations. Its pass
+means **internal unsigned local-evidence consistency only**, not independent
+Alpaca attestation, profitability, filled trades or an unseen model holdout.
+No provider request, credentials, SQLite journal mutation, orders, daemon or
+deployment is involved. See `docs/FORWARD_OBSERVATIONS.md`.
+
 ## Reading order for resuming work
 
 1. `PROJECT_STATUS.md` — authoritative completed work / known blockers.
