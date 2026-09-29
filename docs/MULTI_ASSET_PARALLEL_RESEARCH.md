@@ -101,3 +101,104 @@ signals suitable for broker execution.
   live/paper orders and no spurious inference from correlated samples.
 - CI uses purely synthetic fixtures with no broker calls or network;
   original single-BTC tests still pass on Python 3.11 and 3.12.
+
+## Phase 4 implementation details added after the initial foundation
+
+The following modules have now been implemented on the isolated Phase 4
+research branch and tested using synthetic offline-only datasets:
+
+| Module | Implementation |
+|---|---|
+| `research_universe.py` | Initial 6 crypto + 6 equity/ETF disabled research candidates; canonical per-asset OHLCV/feed and explicit equity candle-grid validation; reports distinct shared UTC hours separately from total asset-hour records |
+| `multi_asset_historical.py` | Fixed Alpaca `data.alpaca.markets` crypto and equity historical DATA GET paths, redirect refusal, strict symbol/query allowlists, explicit stock `iex` or `sip` with `adjustment=all`, total 1000-row page limit, page-token cycle/cap protection and no partial bundle on API failure |
+| `multi_asset_simulation.py` | Same generic cash, passive, 12x26 EMA and 24-bar momentum hypotheses for any vetted asset; only prior *closed* bars decide the next OPEN; separately supplied per-market fee/full-spread/slippage, same-allocation comparator, fee-aware estimated hypothetical liquidation and 50/25/25 disjoint chronological descriptive folds |
+| `shared_research_book.py` | One **shared $100** simulated portfolio, $15 single allocation, $30 combined maximum entry exposure, daily loss $3 and peak drawdown $10; same-timestamp SELLs before BUYs, deterministic allocation order, no provider account API or orders |
+| `offline_multimarket_pipeline.py` | Read-only strict 0600 archived file + content-addressed name SHA validation; no historic/forward relabeling; feed-consistent nonoverlapping archival joins, source and OHLCV rechecks; per-strategy comparative folds plus shared-book EMA descriptive report |
+| `multi_asset_research_cli.py` | Default zero-network/zero-credential plan, explicitly operator-triggered historically bounded download, private terminal prompts (never argv/JSON) and purely offline archive/estimated-cost report; no trading command |
+
+Official provider API contracts consulted:
+[Alpaca historical crypto bars](https://docs.alpaca.markets/us/reference/cryptobars-1),
+[Alpaca historical stock bars](https://docs.alpaca.markets/us/reference/stockbars).
+Alpaca documents comma-separated symbols and a **total** returned row limit
+for multi-symbol stock responses: one response page may have just one asset
+until `next_page_token` is consumed. Stock feed is explicitly `iex` (one
+exchange) or `sip` (consolidated data); this implementation never implies
+a free IEX account has SIP entitlement. The client does not access brokerage
+trading/account endpoints.
+
+### Bounded planning and isolated execution
+
+A multi-asset historical request covers at most 14 calendar days and 1-6
+same-class instruments. Up to 30 consecutive bounded windows can be planned
+in one explicit invocation. A 12-instrument universe is handled as **two
+separate groups** of six, crypto and stocks, because calendars, feeds,
+data quality and costs differ. Full-calendar range and entitlement checks
+happen before the first credentialed provider request. No downloaded
+historical bar is counted as genuinely prospectively observed just because
+it was fetched from Alpaca in September 2026.
+
+For example, purely offline with no credentials or API call:
+
+```sh
+PYTHONPATH=src python -m signal_vault.multi_asset_research_cli \
+  --dry-run --market crypto \
+  --symbols BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD \
+  --start 2026-03-01T00:00:00Z --end 2026-09-01T00:00:00Z
+```
+
+Actual DATA GET is separately gated by `--download-history`; its data keys
+are privately requested via hidden terminal prompts and never placed in
+ChatGPT, git commits, command-line arguments or filenames. Archive target
+must already exist as an owner-private 0700 directory outside the persistent
+production `/var/lib/signal-vault/forward` path. A failure preserves all
+previously completed immutable content-hash archives without inventing a
+backfill or claiming an uninterrupted capture. For equities, one must also
+supply an independently **reviewed provider candle grid** per symbol and
+select an entitled feed. The program refuses to guess US market holidays,
+DST, partial sessions, extended-hours behavior or Alpaca's equity hourly
+bar timestamp alignment.
+
+An offline-only report requires historical archive paths and an explicit
+private `--costs-file` mapping **every** instrument to modeled fee,
+full bid/ask spread and per-side slippage in basis points. Example file
+structure (illustrative only, NOT verified real current trading costs):
+
+```json
+{
+  "BTC/USD": {
+    "taker_fee_bps": "25",
+    "full_spread_bps": "3",
+    "slippage_per_side_bps": "10"
+  },
+  "ETH/USD": {
+    "taker_fee_bps": "25",
+    "full_spread_bps": "4",
+    "slippage_per_side_bps": "10"
+  }
+}
+```
+
+The offline report includes net marked P&L AND estimated all-position
+liquidation P&L. Those are different: an unsold holding has not paid the
+future exit's spread, slippage and fee. Reported equity is approximate and
+not a broker-reconciled execution. Stock cost parameters MUST be supplied
+separately instead of cloning crypto taker fees. Comparisons are descriptive:
+neither the later chronological holdout nor the number of candidate assets
+authorizes strategy promotion.
+
+### Production isolation and practical Free-plan limit
+
+These Phase 4 modules are deliberately **not imported or enabled by** the
+deployed Railway `btcusd-hourly-get-cron` entrypoint. Its running GET-only
+BTC observer, independent 500 MB persistent volume, first zero-count
+historical bootstrap, protected variables, paper-order disable flags and
+Mac evidence do not change merely because research code exists in a PR.
+
+Railway's Free storage budget is not a credible basis for retaining endless
+duplicated uncompressed full-market archives. Start with bounded,
+source-attributed historical samples, create checked content-hash snapshots
+in an appropriate separate research environment, and estimate storage/
+request costs before enabling ongoing multi-instrument hosted collection.
+No parallel automatic collector, equity provider entitlement or paid hosting
+has yet been activated. This is not a blocker for offline multi-asset
+architecture development or simulated tests.
