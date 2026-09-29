@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2K-2026-09-29 (owner-verified first real hourly forward observation, plus CI-verified single-command manual continuation: 271 offline tests PASS on Python 3.11/3.12).
+**Checkpoint:** PHASE2L-2026-09-29 (owner-verified first forward market observation, safe one-command manual continuation, and NEW offline read-only archived forward evidence audit).
 **Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
 **Authorization/status update (owner-run, 2026-09-28):** Development and local/offline/PAPER-only implementation. The owner reports successful local authenticated Alpaca PAPER read-only account smoke and read-only BTC/USD quote/history capture. Keys were never supplied to ChatGPT or committed to GitHub. No broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
 **Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
@@ -94,6 +94,60 @@ the new CSV/manifest existed. Added **`src/signal_vault/manual_forward_cycle.py`
 - Documentation: `docs/FORWARD_OBSERVATIONS.md` and README. **GitHub Actions run `36525359113` succeeded on both Python 3.11 and 3.12: 271/271 offline tests passed, source head `2a85d72543dcda9df5d4a75f4908bea647f647e8`.** Tests also compile sources, verify live-mode refusal and reject live Alpaca trading host usage. v0.1/v0.2/v0.3 still failed and remain OFF. No extra crypto markets, broker paper POST, live orders, deposits, paid services, hourly background tasks or outside deployments were enabled.
 
 **Next operator action:** Pull the latest source when convenient and inspect `forward_observer --status`. If the very next consecutive hour has not been missed, at UTC minute 03–24, manually run `PYTHONPATH=src python -m signal_vault.manual_forward_cycle` (existing journal by default), and send the output with credentials excluded. If even ONE expected hour was missed, this command will correctly refuse to append; preserve that journal and explicitly bootstrap an independent future segment after a new GET-only capture, then use `--db` for that segment. There is no need to stay awake just to keep the existing segment continuous.
+
+## Phase 2L engineering — archived evidence check without modifying active journal
+
+While the owner waits for the next consecutive UTC candle, added
+`src/signal_vault/forward_evidence_audit.py`. This is a new **operator-invoked,
+entirely OFFLINE, read-only** validator; it deliberately does NOT change the
+already-bootstrapped `data/forward/observations.sqlite3` file or the existing
+collection/strategy logic.
+
+- `PYTHONPATH=src python -m signal_vault.forward_evidence_audit` audits the
+  existing segment at any time; `--db data/forward/observations-segment-02.sqlite3`
+  audits an explicitly different future segment. Both enforce only paths inside
+  `data/forward/`, require source captures/manifests and journal to be regular
+  owner-only 0600 files (not symlinks), open SQLite `mode=ro`/`query_only`
+  and check `PRAGMA integrity_check` within a consistent read transaction.
+- Reconstruct the initial genuine 72h bootstrap file by first journal start
+  timestamp and compare original raw CSV SHA-256, manifest/source/UTC window
+  and all 72 saved candle hashes. For each stored new forward observation,
+  independently reread the uniquely timestamped original 72h local CSV and
+  source-labelled manifest; verify captured/observed original chronology,
+  overlap with every earlier anchored candle, no missing/reordered hourly
+  segment, new bar identity, and exact saved close/prior 6h/prior 24h/
+  24h range/cost calculations. Reconstructed hashes must exactly match the
+  journal table (no extra or missing row).
+- Unlike an ordinary `--observe`, the auditor checks archived capture
+  timestamps against THEIR ORIGINAL UTC clock hour. It does not require a file
+  to be fresh today, and it **cannot** turn past evidence into new prospective
+  observations. No secrets, network GET, broker POST, order state, scheduling,
+  new data capture, writing or sqlite schema migration are present.
+- Its `PASS_INTERNAL_CONSISTENCY_ONLY` is **not** a cryptographic provider
+  signature, independent attestation or sealed unseen performance test; the
+  SHA manifests are local and unsigned and a privileged adversary could
+  rewrite them with the database. The actual owner's local raw files and DB
+  have NOT been accessed by the assistant. Owner can run the auditor locally
+  after pulling.
+- Added fake-capture regression tests for zero/one/two observation chains,
+  missing/changed source, wrong manifest timestamps, journal feature and
+  candle hash tampering, observation-clock changes, insecure/missing SQLite,
+  isolated segments and read-only DB byte equality. After adding one
+  additional zero-observation bootstrap-clock regression, **280/280 offline
+  GitHub CI tests passed on both Python 3.11 and 3.12** at source commit
+  `50cf792ef8c9e91d87a4c7c4779fbd39cb1027f4`, Actions run
+  `36526054470`. The README, NEXT_STEPS and
+  `docs/FORWARD_OBSERVATIONS.md` describe operator usage and limitations.
+
+**Immediate clock-specific operation remains UNCHANGED:** if the next
+consecutive hour of the owner's existing segment is still available,
+at UTC minute 03–24 run
+`PYTHONPATH=src python -m signal_vault.manual_forward_cycle`
+on the already-pulled Phase 2K code. Phase 2L needs NO pull to make that
+already-installed command work. If a consecutive UTC hour was missed, do
+not backfill; preserve the old segment and explicitly fresh-bootstrap a
+separate named one. Offline `forward_evidence_audit` is available after
+pulling this new code and can be run even if the journal is now old.
 
 ## Still NOT completed / mandatory blockers
 
