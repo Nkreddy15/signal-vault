@@ -148,7 +148,7 @@ def analyze_two_verified_history_artifacts(
         for item in stocks_report["source_sha256"]:
             name=item["filename"]
             _create_exact(stock_root/name,sbytes[name])
-        sbatches=tuple(read_historical_archive(stock_root[item["filename"]])
+        sbatches=tuple(read_historical_archive(stock_root/item["filename"])
                        for item in stocks_report["source_sha256"])
         stock_as_of=max(datetime.fromisoformat(b.downloaded_utc)
                         .astimezone(timezone.utc) for b in sbatches)
