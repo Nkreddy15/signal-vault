@@ -56,6 +56,22 @@ review of `forward_observer --observe --csv <EXACT_PATH>`, not re-capture
 or deletion. The new readiness code can be pulled after the old collector
 has finished its intended window if preferred.
 
+**Owner outcome: REAL Phase 2K single-command continuation succeeded (2026-09-29 UTC).** After the original 05:05:56Z first manual two-command observation, the owner ran `PYTHONPATH=src python -m signal_vault.manual_forward_cycle` at the next eligible hour. It captured 72 authentic-looking provider GET-only hourly candles ending `06:00Z`, at `data/forward/captures/btcusd_72h_end_20260929T0600Z.csv` (SHA-256 `a3561b7f7cd64c5f2cd0bb3c7f5d098223f0d47896208a88799fb5d935c2b91f`), verified file/manifest, and atomically appended the second prospective hour (05:00–06:00Z) at `06:03:59.085819Z`; local journal now reports `new_forward_observation_count=2`, outcome `ONE_NEW_CLOSED_BAR_RECORDED_NO_TRADE`, no broker orders or scheduler. The only actual source is the owner's shared Terminal output; the assistant has not materialized owner-local raw data.
+
+**Next useful owner verification (can run at any time, no credentials/network/write):**
+`PYTHONPATH=src python -m signal_vault.forward_evidence_audit`.
+For this specific original journal expect
+`PASS_INTERNAL_CONSISTENCY_ONLY`, `prospective_observations_verified=2`,
+`archived_csv_manifest_pairs_verified=3`. If it fails, do not change raw
+evidence; share error. The prior earliest 03:00Z capture is not part of this
+journal. If intentionally collecting hour three consecutively, run
+`PYTHONPATH=src python -m signal_vault.manual_forward_cycle` in UTC
+`2026-09-29 07:03:00Z–07:24:59Z` only. Optional
+`PYTHONPATH=src python -m signal_vault.forward_readiness` can verify
+eligibility first without credentials. If missed, retain the current
+2-observation journal and begin only a distinct, freshly bootstrapped
+segment on a later hour; never replay prior captures as forward data.
+
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
 1. **Local PAPER authentication/readiness CLEARED for read-only research (owner-reported 2026-09-28).** Local authenticated `paper_smoke` returned READY with logical $100 limit and BTC/USD constraints; quote GET succeeded; no credentials were shared to chat/GitHub. Recheck account and venue readiness, fee/tick rules, actual quote/feed behavior before any future separately authorized paper POST. Keep paper-order acknowledgement OFF.
