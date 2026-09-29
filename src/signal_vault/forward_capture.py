@@ -18,7 +18,7 @@ from .market_data import AlpacaAuthenticatedCryptoBars, CRYPTO_BARS_ENDPOINT
 from .read_retry import retry_read
 
 WINDOW_HOURS = 72
-CAPTURE_CSV = Path("data/forward/latest_72h.csv")
+CAPTURE_FOLDER = Path("data/forward/captures")
 
 
 class _RejectRedirects(HTTPRedirectHandler):
@@ -56,8 +56,15 @@ def _read_data_get_no_redirect(url: str, key: str, secret: str) -> dict:
     return payload
 
 
+def default_capture_path(now: datetime) -> Path:
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("capture time must be timezone-aware")
+    end = now.astimezone(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    return CAPTURE_FOLDER / f"btcusd_72h_end_{end:%Y%m%dT%H%MZ}.csv"
+
+
 def capture_current_window(provider: HistoricalBarsProvider, *,
-                           now: datetime, output_csv: str | Path = CAPTURE_CSV
+                           now: datetime, output_csv: str | Path | None = None
                            ) -> DatasetManifest:
     if now.tzinfo is None or now.utcoffset() is None:
         raise ValueError("capture time must be timezone-aware")
@@ -65,10 +72,15 @@ def capture_current_window(provider: HistoricalBarsProvider, *,
     end = instant.replace(minute=0, second=0, microsecond=0)
     if instant - end < timedelta(minutes=3):
         raise ValueError("wait at least three minutes after the UTC hour for provider candle publication")
+    output = Path(output_csv) if output_csv is not None else default_capture_path(instant)
+    manifest = output.with_suffix(output.suffix + ".manifest.json")
+    # Deliberately never overwrite previously captured raw hourly evidence.
+    if output.is_symlink() or manifest.is_symlink() or output.exists() or manifest.exists():
+        raise ValueError("capture already exists; previously recorded raw evidence is immutable")
     start = end - timedelta(hours=WINDOW_HOURS)
     result = capture_dataset(
         provider, start=start, end=end, as_of=instant,
-        output_csv=output_csv, captured_at=instant,
+        output_csv=output, captured_at=instant,
     )
     if result.row_count != WINDOW_HOURS or result.source != "alpaca_crypto_us":
         raise ValueError("unexpected forward capture count/source")
@@ -83,11 +95,13 @@ def main() -> int:
     if not key.strip() or not secret.strip():
         raise ValueError("local read-only data credentials required")
     provider = AlpacaAuthenticatedCryptoBars(key, secret, transport=_read_data_get_no_redirect)
-    result = capture_current_window(provider, now=datetime.now(timezone.utc))
+    now = datetime.now(timezone.utc)
+    target = default_capture_path(now)
+    result = capture_current_window(provider, now=now, output_csv=target)
     print(json.dumps({
         "kind": "EXPLICIT_OPERATOR_INVOKED_READ_ONLY_DATA_CAPTURE",
-        "csv": str(CAPTURE_CSV),
-        "manifest": str(CAPTURE_CSV.with_suffix(CAPTURE_CSV.suffix + ".manifest.json")),
+        "csv": str(target),
+        "manifest": str(target.with_suffix(target.suffix + ".manifest.json")),
         "sha256": result.csv_sha256,
         "first_bar_start": result.start_utc,
         "last_bar_closed": result.end_utc,
