@@ -83,10 +83,18 @@ jobs:
           SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
         run: python -m signal_vault.ci_historical_crypto
 
-      - name: Archive SHA-named historical-only results (expires in 7 days)
+      - name: Offline SHA audit and THREE cost-stress research reports (no secrets)
+        env:
+          SIGNAL_VAULT_RESEARCH_READ_APPROVED: HISTORICAL_CRYPTO_DATA_GET_ONLY
+          SIGNAL_VAULT_RESEARCH_START_UTC: ${{ inputs.start_utc }}
+          SIGNAL_VAULT_RESEARCH_END_UTC: ${{ inputs.end_utc }}
+          SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
+        run: python -m signal_vault.ci_historical_report
+
+      - name: Archive SHA-named history AND offline report (expires in 7 days)
         uses: actions/upload-artifact@v4
         with:
-          name: bounded-crypto-history-${{ github.run_id }}
-          path: private-historical-artifacts/historical-crypto-*.json
+          name: bounded-crypto-history-and-offline-research-${{ github.run_id }}
+          path: private-historical-artifacts/*.json
           if-no-files-found: error
           retention-days: 7
