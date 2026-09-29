@@ -115,7 +115,7 @@ class SharedResearchBookTests(unittest.TestCase):
             datetime(2026,9,14,13,30,tzinfo=timezone.utc)+timedelta(days=d,hours=i)
             for d in days for i in range(6))
         spy=sample("SPY",prices=[100+i for i in range(len(opens))],starts=opens)
-        crypto_start=opens[-1]-timedelta(hours=64)
+        crypto_start=(opens[-1]-timedelta(hours=64)).replace(minute=0)
         eth_times=[crypto_start+i*HOUR for i in range(65)]
         eth=sample("ETH/USD",starts=eth_times)
         with self.assertRaises(ValueError):
