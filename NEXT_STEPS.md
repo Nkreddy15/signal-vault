@@ -1,4 +1,4 @@
-# Signal Vault — Phase 2N owner-local evidence snapshot + pilot reliability roadmap
+# Signal Vault — Phase 2O offline scratch recovery and reliability gates
 
 **Use private GitHub `Nkreddy15/signal-vault` branch `main` after the latest Phase 2K fast-forward pull.** Verify SHA/tree and run `make test`, `make compile`, `make demo` before editing; do not replace newer changes with an older ZIP. No live, broker paper POST or paid actions are authorized.
 
@@ -146,6 +146,54 @@ never restore over or rewrite `data/forward/observations.sqlite3`.
 No pull required for this verification if Phase 2N `--create` just ran
 successfully on the same Mac. The old 2-observation and bootstrap notes
 elsewhere are historical milestones, not the current observation count.
+
+**Phase 2N REAL local repeat verification PASSED:** Owner executed
+`PYTHONPATH=src python -m signal_vault.forward_snapshot --verify
+forward_20260929T070754_619609Z`; local JSON reports
+`PASS_INTERNAL_CONSISTENCY_ONLY`, 3 genuine forward observations,
+4 source CSV/manifest pairs and 9 file hashes; original journal untouched;
+zero network and no broker orders. No additional snapshot creation is
+necessary for the next drill.
+
+**New Phase 2O code now available on private GitHub main (offline only):**
+`src/signal_vault/forward_recovery_drill.py` safely copies exactly the
+already-verified original private snapshot into isolated scratch directories,
+verifies the copied chain, then challenges both read-only verification
+layers with four independently mutated DISPOSABLE clones. Finally it checks
+that original backup fingerprints remain unchanged and removes scratch data.
+It never attempts an active restore or opens the active original journal,
+collects no new market bar and needs no credentials or provider calls.
+CI passed 302 offline tests on Python 3.11 and 3.12 (run `36535242811`);
+bootstrap-only no-source-write check also passed in subsequent CI.
+**User's real Mac Phase 2O drill remains PENDING.**
+
+**Exact next operator command, once latest GitHub main has been pulled:**
+
+```sh
+PYTHONPATH=src python -m signal_vault.forward_recovery_drill \
+  --snapshot forward_20260929T070754_619609Z
+```
+
+Expect `PASS_ISOLATED_RECONSTRUCTION_AND_FAULT_REJECTION`,
+`recovered_observations_verified=3`,
+`recovered_capture_pairs_verified=4`, 10 original archive
+file hashes including `snapshot.manifest.json`,
+FOUR injected faults independently rejected by both verification layers,
+scratch cleanup COMPLETE, original backup hashes unchanged, original active
+journal untouched, no API calls, orders or scheduling. Send only the nonsecret
+JSON output. Refer to `docs/FORWARD_RECOVERY_DRILL.md`; this is a
+same-device unsigned/unencrypted scratch rehearsal and not production
+disaster recovery or proof of strategy performance.
+
+**Subsequent Phase 2O/2P path:** consolidate an operator coverage/incident
+report that classifies continuous vs missed-hour segments; exercise the
+separate PAPER ledger's interrupted-submission/UNKNOWN_RESULT and recovery
+paths strictly with injected/fake providers and disposable databases;
+separately confirm account-specific fees, spread and venue constraints by
+owner-invoked approved read-only GET; then preregister a substantively
+different research candidate without tuning against the reserved holdout.
+Real PAPER POST and any unattended service require new explicit approvals.
+Do not equate synthetic fault tests with an actual broker failover.
 
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
