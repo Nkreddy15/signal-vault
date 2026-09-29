@@ -11,7 +11,6 @@ import argparse
 import json
 import os
 import plistlib
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -107,7 +106,6 @@ def install_agent(*, repo: Path | None = None,
     load_keychain_paper_data_credentials()
     _private_automation_dir(source/"data"/"forward")
     _agent_folder(userhome)
-    target.write_bytes(b"") if False else None  # Prevent accidental template interpolation.
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os,"O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
@@ -223,7 +221,7 @@ def main() -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
         return 2
     print(json.dumps(result, indent=2, sort_keys=True))
-    return 0 if result.get("launch_agent_loaded",True) else 2
+    return 2 if args.install and not result.get("launch_agent_loaded",False) else 0
 
 
 if __name__ == "__main__":
