@@ -178,9 +178,10 @@ def validate_asset_dataset(
             raise ValueError("mixed symbols / malformed asset row")
         at = _utc(bar.start_utc)
         captured = _utc(bar.captured_utc)
-        if (bar.start_utc.utcoffset() != timedelta(0) or at.minute or at.second
-                or at.microsecond):
-            raise ValueError("research hour must have UTC-aligned start")
+        if (bar.start_utc.utcoffset() != timedelta(0) or at.second
+                or at.microsecond or
+                (spec.asset_class == AssetClass.CRYPTO and at.minute)):
+            raise ValueError("research start must align to its market's candle timeline")
         if at + HOUR > observed_at:
             raise ValueError("unclosed or future bar cannot enter research")
         if not isinstance(bar.feed, str) or not bar.feed.strip() or len(bar.feed) > 100:
@@ -214,8 +215,8 @@ def validate_asset_dataset(
 
     if expected_session_opens_utc is not None:
         timeline = tuple(_utc(m) for m in expected_session_opens_utc)
-        if any(m.minute or m.second or m.microsecond for m in timeline):
-            raise ValueError("equity exchange timeline must be UTC-hour-aligned")
+        if any(m.second or m.microsecond for m in timeline):
+            raise ValueError("exchange timeline must contain exact minute-level opens")
         if tuple(all_times) != timeline:
             raise ValueError("equity bars differ from independently specified sessions")
     canonical = [bar.to_dict() for bar in items]
