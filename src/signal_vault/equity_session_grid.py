@@ -94,7 +94,10 @@ def conservative_core_hour_plan(
     until=end_date_exclusive-timedelta(days=1)
     try:
         x=xc.get_calendar("XNYS",start=start_date.isoformat(),end=until.isoformat())
-        sessions=x.sessions_in_range(start_date.isoformat(),until.isoformat())
+        # get_calendar already bounds this instance to the ACTUAL XNYS
+        # session range. sessions_in_range(...) would reject a weekend/
+        # holiday requested end because it lies after last_session.
+        sessions=x.sessions
     except Exception as exc:
         raise ValueError("requested date outside supported independent XNYS calendar") from exc
     if not 1<=len(sessions)<=MAX_SESSIONS:
