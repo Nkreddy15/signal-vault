@@ -220,6 +220,67 @@ model-validation holdouts. If a check fails, retain all raw files and SQLite
 journal and stop treating the evidence as verified until reviewed; do not
 delete, recapture under an old filename, or modify stored observations.
 
+## Phase 2M: zero-secret collection-readiness check (any time)
+
+For owners who do not want to guess whether the next hourly capture is
+eligible or accidentally rerun the wrong command, this separate **offline,
+read-only** check combines Phase 2L's complete archived-evidence audit with
+a time-specific plan for the immediately next **consecutive** new hourly
+candle:
+
+```sh
+PYTHONPATH=src python -m signal_vault.forward_readiness
+
+# If auditing a separately initialized segment:
+PYTHONPATH=src python -m signal_vault.forward_readiness \
+  --db data/forward/observations-segment-02.sqlite3
+```
+
+The command uses only the Mac's current UTC clock; there is **no CLI
+backdate/override flag**. It never requests credentials, connects to Alpaca,
+modifies SQLite, creates or deletes evidence, schedules a capture, or places
+any order. Before presenting a timing recommendation, it requires the
+entire known journal/capture chain to pass the independent **internal**
+read-only integrity audit; missing or changed archived CSVs, unsigned SHA
+manifest mismatches, private-file-mode violations and inconsistent recorded
+values halt this readiness check.
+
+The JSON output identifies the last anchored hour, existing observation
+count, precise next new hourly candle, safe capture window (UTC minute
+`:03` up to but excluding `:25`), expected CSV and one of these outcomes:
+
+- `WAIT_NEXT_HOURLY_CANDLE_TO_CLOSE` or
+  `WAIT_THREE_MINUTES_FOR_CANDLE_PUBLICATION`: too early; do nothing.
+- `READY_FOR_ONE_EXPLICIT_READ_ONLY_MANUAL_CYCLE`: safe *timing* for the
+  **operator's separate manual** `manual_forward_cycle` command. This is
+  not a BUY/SELL recommendation or proof of new provider availability.
+- `CURRENT_CAPTURE_EXISTS_REVIEW_MANUAL_APPEND`: an already saved
+  fresh/verifiable file occupies that filename. Do **not** recapture; inspect
+  and, if appropriate, use the original explicit `forward_observer
+  --observe --csv <EXACT_ALREADY_CAPTURED_FILE>` path while it is current.
+  The observer still independently checks prior-bar overlap.
+- `HALT_...`, `MANUAL_CAPTURE_START_WINDOW_CLOSED` or
+  `MISSED_CONSECUTIVE_HOUR_PRESERVE_SEGMENT`: stop, retain the old journal
+  and CSVs, never backfill. If the hour was truly missed, begin only an
+  explicitly new prospective segment in a future UTC hour.
+
+**Owner-specific example following the verified first observation:** The
+original journal's last anchored bar **starts at 2026-09-29 04:00Z** and
+closes 05:00Z. Its next eligible observation concerns the **05:00–06:00Z**
+new candle, with a capture window **2026-09-29 06:03Z through 06:24:59Z**
+(2:03–2:24 AM US Eastern). Before 06:00Z the checker should report WAIT;
+during the eligible minute range, with no existing 06:00Z CSV and valid
+archived evidence, it should report READY; after 07:00Z it must refuse
+backfilling the missed hour. If the user has already captured the
+`btcusd_72h_end_20260929T0600Z.csv` file, it must preserve the original
+rather than recapture over it.
+
+The new command only **reports** eligibility; the previously built
+`manual_forward_cycle` remains an intentionally independent, operator-run
+GET capture + single journal append. Phase 2M also ignores generated
+`*.egg-info/` package metadata in Git, fixing the harmless untracked
+editable-install artifact observed earlier on the owner's Mac.
+
 ## Security and scope
 
 - No background scheduler/daemon is installed or launched. The operator runs
