@@ -32,7 +32,6 @@ jobs:
     env:
       PYTHONDONTWRITEBYTECODE: "1"
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
-      GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
     steps:
       - name: Checkout reviewed source only
         uses: actions/checkout@v4
