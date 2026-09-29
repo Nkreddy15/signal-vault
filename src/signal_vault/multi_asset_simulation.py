@@ -324,6 +324,13 @@ def simulate_one_asset(
         if mark < daily_anchor-daily_loss_cap_usd or mark < peak-drawdown_cap_usd:
             halted_new_entries=True
     final=_gross_equity(cash,quantity,seq[last-1].close)
+    estimated_exit=(
+        cash + quantity * seq[last-1].close * costs.sell_price_multiplier *
+        (Decimal("1")-costs.taker_fee_bps/Decimal("10000")))
+    passive_estimated_exit=(
+        (bankroll_usd-max_one_buy_usd)+passive_qty*seq[last-1].close*
+        costs.sell_price_multiplier*
+        (Decimal("1")-costs.taker_fee_bps/Decimal("10000")))
     return {
         "kind":"OFFLINE_PER_ASSET_NEXT_OPEN_SIMULATION_NOT_BROKER_TRADING",
         "symbol":spec.symbol,
@@ -338,7 +345,11 @@ def simulate_one_asset(
         "initial_cash_usd":str(bankroll_usd),
         "final_marked_equity_usd":str(final),
         "net_marked_pnl_usd":str(final-bankroll_usd),
+        "estimated_liquidation_equity_usd":str(estimated_exit),
+        "net_pnl_if_hypothetically_liquidated_usd":str(estimated_exit-bankroll_usd),
+        "estimated_liquidation_not_an_order":True,
         "passive_same_allocation_final_marked_usd":str(passive_final),
+        "passive_estimated_liquidation_equity_usd":str(passive_estimated_exit),
         "passive_same_allocation_marked_pnl_usd":str(passive_final-bankroll_usd),
         "cash_only_comparator_final_usd":str(bankroll_usd),
         "max_marked_drawdown_usd":str(max_dd),
