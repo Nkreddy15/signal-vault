@@ -79,3 +79,34 @@ prospective holdout would be data first arriving **after** the latest period
 examined in September 2026. Never reuse an inspected period as supposedly
 unseen. No result authorizes Alpaca paper-order POST, live trading, money
 movement, hosting or spending.
+
+## Recorded first and ONLY predeclared development run — owner-reported 2026-09-28
+
+The owner executed `PYTHONPATH=src python -m signal_vault.research_v03` on GitHub head `12475bd7cb996c27e1a5890704543983c3fcac44`. The runner verified the exact pre-gap CSV SHA-256 `0f31fa3e6226a504db4b60185ae7388ae8979c14e3ccef1fc1b98e2b809071cc` and explicitly did not open post-gap observations.
+
+| Metric | Original v0.1 | Preregistered v0.3 |
+|---|---:|---:|
+| After-cost full-development net P&L ($100 initial) | -$4.9128961148 | -$2.2277733837 |
+| Zero-cost full-development net P&L | -$1.4141588344 | -$0.6614925183 |
+| Estimated fees | $2.5035522826 | $1.1208263825 |
+| Simulated fills | 67 | 30 (15 buy/sell pairs; closed) |
+| After-cost max drawdown | $5.5819649357 | $3.4372539539 |
+| Same-allocation passive BTC P&L (after cost) | -$3.0042961546 | -$3.0042961546 |
+| Rejected actions | 0 | 0 |
+| Open position at end | Yes | No |
+
+168-hour development folds (eleven distinct evaluation windows, past-only warmup, each reset to $100):
+- v0.1: aggregate net -$4.6752502811, median fold -$0.4296251528, 2 positive folds, 4 folds above passive comparator, 64 fills.
+- v0.3: aggregate net -$2.0126983476, median fold -$0.2732507049, 4 positive folds, 6 folds above passive comparator, 28 fills.
+
+**Exact predeclared gate outcome: FAILED.** The two failed criteria were:
+1. `after-cost aggregate development P&L is not positive`
+2. `zero-cost aggregate development P&L is not positive`
+
+The new veto reduced modeled fills by 37 and estimated fees by approximately $1.38273; after-cost P&L improved by approximately $2.68512 versus v0.1. But gross/zero-cost research P&L remained negative and the eleven-fold aggregate was also negative. Because the original v0.1 and v0.3 endpoint position statuses differ, these aggregate comparisons must not be described as clean paired trade treatment effects. The +50 bps cutoff was chosen after looking at development summaries, so its development performance cannot establish predictive validity.
+
+### Binding research disposition
+
+**v0.3 is frozen as failed and NOT eligible for reserved-holdout review, provider-paper order submission or live trading.** Do not adjust the threshold, change risk limits to show positive returns, reuse development cohorts as independent testing, or open `btcusd_older_postgap.csv` to rescue it. v0.1 and v0.2 likewise remain not promoted.
+
+Next engineering/research direction: pause serial EMA parameter/filter adjustments and independently review the $15-notional transaction economics and whether a materially different, lower-turnover trading design merits preregistration. A read-only prospective data/decision journal can be designed without paper-order POST or hosting/spend, but collecting observations is not itself evidence that these failed versions should trade. Preserve the four original owner-held CSVs, SHA manifests and known March 12 one-hour gap.
