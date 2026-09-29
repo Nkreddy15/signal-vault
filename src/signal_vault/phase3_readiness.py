@@ -138,11 +138,12 @@ def assess_offline_readiness(
         blockers.append("COLLECTOR_FORWARD_ACCEPTANCE_NOT_YET_CONFIRMED")
     if ledger["status"] != "CLEAN_LOCAL_LEDGER_NOT_PROVIDER_ATTESTED":
         blockers.append("PAPER_LOCAL_LEDGER_NOT_CLEAN_OR_INITIALIZED")
-    # Other commands may have been run successfully. This offline report does not
-    # persist or attest their results; NEVER claim the provider GET was not done.
+    # Other commands may already have succeeded. This offline reporter cannot
+    # attest the independent provider GET or the one-time supervised PAPER order.
+    # NEVER claim either was not performed merely because this command is offline.
     blockers.extend((
         "SEPARATE_PAPER_ACCOUNT_GET_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
-        "SUPERVISED_PAPER_ORDER_NOT_SEPARATELY_AUTHORIZED",
+        "SUPERVISED_PAPER_ORDER_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
         "NO_STRATEGY_PROMOTED_V01_V02_V03",
     ))
     local_ok = len(blockers) == 3
