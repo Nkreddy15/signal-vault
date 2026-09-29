@@ -115,6 +115,11 @@ def reanalyze_existing_history(
             any(entry.is_symlink() or not entry.is_file() for entry in original_files)):
         raise ValueError("missing/extra/symlinked original historical captures")
     audited_bytes={}
+    requested={
+        (window["start_utc"],window["end_utc"])
+        for window in plan["windows"]
+    }
+    actual_intervals=set()
     for entry in manifests:
         basename=entry["filename"]
         expected_sha=entry["sha256"]
@@ -124,10 +129,29 @@ def reanalyze_existing_history(
         blob=(root/basename).read_bytes()
         if not 0<len(blob)<=8_000_000 or hashlib.sha256(blob).hexdigest()!=expected_sha:
             raise ValueError("original historical dataset SHA does not match report")
+        # Precheck source report-to-capture provenance BEFORE creating the
+        # destination folder. The independent strict archive reader later
+        # reruns the entire canonical OHLCV, source-SHA and timestamp audit.
+        recorded=json.loads(blob)
+        if (not isinstance(recorded,dict) or
+                recorded.get("kind") !=
+                    "BOUNDED_HISTORICAL_MULTIASSET_DATA_GET_NOT_FORWARD_EVIDENCE"
+                or recorded.get("symbols")!=plan["symbols"]
+                or recorded.get("prospective_observations_verified")!=0
+                or recorded.get("historical_not_independent_validation") is not True
+                or recorded.get("broker_order_submission")!="DISABLED"):
+            raise ValueError("original historical capture has invalid source contract")
+        interval=(recorded.get("start_utc"),recorded.get("end_utc"))
+        if interval not in requested or interval in actual_intervals:
+            raise ValueError("source capture dates do not match the requested plan")
+        actual_intervals.add(interval)
         audited_bytes[basename]=blob
+    if actual_intervals!=requested:
+        raise ValueError("one or more original requested history windows are missing")
 
     # No on-disk output exists until all source archives have passed their
-    # exact original SHA audit. Old source artifact remains UNCHANGED.
+    # exact original SHA and request-window provenance audit. Old source
+    # artifact remains UNCHANGED.
     destination.mkdir(mode=0o700)
     if destination.stat().st_mode & 0o077:
         raise PermissionError("replay output directory must be private")
