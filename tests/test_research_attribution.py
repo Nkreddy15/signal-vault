@@ -62,7 +62,7 @@ class TradeAttributionTests(unittest.TestCase):
         self.assertEqual(out["completed"]["completed_trades"], 3)
         self.assertEqual(out["completed"]["profitable"], 2)
         self.assertEqual(out["completed"]["losing"], 1)
-        self.assertEqual(out["median_holding_hours"], "10")
+        self.assertEqual(D(out["median_holding_hours"]), D("10"))
         self.assertEqual(out["held_at_most_6_hours"]["completed_trades"], 1)
         self.assertEqual(out["held_over_6_under_24_hours"]["completed_trades"], 1)
         self.assertEqual(out["held_at_least_24_hours"]["completed_trades"], 1)
