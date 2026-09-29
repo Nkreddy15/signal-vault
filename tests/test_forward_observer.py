@@ -12,7 +12,7 @@ from pathlib import Path
 from signal_vault.data_capture import capture_dataset
 from signal_vault.forward_capture import capture_current_window, default_capture_path, _read_data_get_no_redirect
 from signal_vault.forward_observer import (
-    ForwardObservationJournal, _local_forward_path, read_verified_capture,
+    ForwardObservationJournal, _bar_sha256, _local_forward_path, read_verified_capture,
 )
 from signal_vault.market_data import Bar
 
@@ -135,6 +135,28 @@ class ForwardObservationJournalTests(unittest.TestCase):
                 next_status = journal.process(values, csv_sha256=SECOND_SHA,
                                               observed_at=NOW + timedelta(hours=1))
                 self.assertEqual(next_status["new_forward_observation_count"], 1)
+
+    def test_overlapping_candle_hash_preserves_more_than_28_significant_digits(self):
+        original = replace(sample()[-1],
+                           close=D("107.123456789012345678901234567891"))
+        modified = replace(original,
+                           close=D("107.123456789012345678901234567892"))
+        self.assertNotEqual(_bar_sha256(original), _bar_sha256(modified))
+        self.assertEqual(
+            _bar_sha256(replace(original, close=D("107.1234567890123456789012345678910"))),
+            _bar_sha256(original),
+        )
+
+    def test_observation_clock_cannot_move_backwards(self):
+        with tempfile.TemporaryDirectory() as root:
+            with ForwardObservationJournal(Path(root) / "db.sqlite3", initialize=True) as journal:
+                journal.process(sample(), csv_sha256=FIRST_SHA,
+                                observed_at=NOW, bootstrap=True)
+                next_rows = sample(END + timedelta(hours=1))
+                with self.assertRaisesRegex(ValueError, "clock moved backwards"):
+                    journal.process(next_rows, csv_sha256=SECOND_SHA,
+                                    observed_at=NOW - timedelta(minutes=1))
+                self.assertEqual(journal.status()["new_forward_observation_count"], 0)
 
     def test_verified_provenance_and_capture_freshness(self):
         with tempfile.TemporaryDirectory() as root:
