@@ -276,6 +276,24 @@ class UnattendedForwardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"LIVE credential"):
                 load_keychain_paper_data_credentials()
 
+    def test_offline_health_status_reports_last_safe_receipt_without_secrets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)/"forward";root.mkdir(mode=0o700)
+            self.assertEqual(status_unattended(root=root)["state"],
+                             "NO_AUTO_SEGMENT_STARTED")
+            bad=tick(root,END,lambda: (_ for _ in ()).throw(
+                RuntimeError("do-not-repeat-this-private-value")))
+            self.assertEqual(bad["decision"],"HALT_PRESERVE_ALL_ORIGINAL_EVIDENCE")
+            idle=status_unattended(root=root)
+            self.assertEqual(idle["latest_tick"]["failure_class"],"RuntimeError")
+            self.assertNotIn("do-not-repeat-this-private-value",json.dumps(idle))
+            tick(root,END+HOUR,SourceFactory().at(END+HOUR))
+            ready=status_unattended(root=root)
+            self.assertEqual(ready["latest_tick"]["decision"],
+                             "FIRST_AUTO_SEGMENT_BOOTSTRAPPED")
+            self.assertEqual(ready["prospective_observations_verified"],0)
+            self.assertEqual(ready["network_requests"],"NONE")
+
     def test_duplicate_worker_lock_refuses_without_get(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"forward";root.mkdir(mode=0o700)
