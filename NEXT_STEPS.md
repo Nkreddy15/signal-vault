@@ -132,6 +132,21 @@ isolated segment backup. This is NOT a restored operational paper account.
    services, live transfer and deposits each require distinct explicit
    decisions. No live code path is currently enabled.
 
+**Phase 2N first real-data snapshot now PASSED (owner report, 2026-09-29 07:07:54Z):** The owner's original forward journal has been independently audited at 3 genuine new observations and four source CSV/manifest pairs. Owner ran `PYTHONPATH=src python -m signal_vault.forward_snapshot --create` successfully: `OFFLINE_FORWARD_SNAPSHOT_CREATED_AND_ISOLATED_VERIFIED`, `PASS_INTERNAL_CONSISTENCY_ONLY`, 3 observations, 4 source capture pairs, 9 SHA-verified copied files, no journal mutation, network or orders, overwrite disabled. Unique existing private Mac-local snapshot name:
+`forward_20260929T070754_619609Z`. This backup is same-device, unsigned and unencrypted. It is not a production restoration, filled-paper-trade result or offsite backup.
+
+**Immediate next optional command, WITHOUT broker credentials or data GET:**
+```sh
+PYTHONPATH=src python -m signal_vault.forward_snapshot --verify forward_20260929T070754_619609Z
+```
+Repeat the isolated read-only archive verification; expect 3 observations,
+4 CSV/manifest pairs, 9 file hashes and `PASS_INTERNAL_CONSISTENCY_ONLY`.
+Then proceed to Phase 2O offline scratch-folder failure/recovery validation;
+never restore over or rewrite `data/forward/observations.sqlite3`.
+No pull required for this verification if Phase 2N `--create` just ran
+successfully on the same Mac. The old 2-observation and bootstrap notes
+elsewhere are historical milestones, not the current observation count.
+
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
 1. **Local PAPER authentication/readiness CLEARED for read-only research (owner-reported 2026-09-28).** Local authenticated `paper_smoke` returned READY with logical $100 limit and BTC/USD constraints; quote GET succeeded; no credentials were shared to chat/GitHub. Recheck account and venue readiness, fee/tick rules, actual quote/feed behavior before any future separately authorized paper POST. Keep paper-order acknowledgement OFF.
