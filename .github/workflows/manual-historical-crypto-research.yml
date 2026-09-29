@@ -91,6 +91,29 @@ jobs:
           SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
         run: python -m signal_vault.ci_historical_report
 
+      - name: Explain whether this request activates the paired twelve-market job
+        env:
+          REQUEST_START: ${{ inputs.start_utc }}
+          REQUEST_END: ${{ inputs.end_utc }}
+          REQUEST_SYMBOLS: ${{ inputs.symbols }}
+        run: |
+          python - <<'PY'
+          import os
+          eligible=(
+              os.environ["REQUEST_START"]=="2026-09-14T00:00:00Z" and
+              os.environ["REQUEST_END"]=="2026-09-26T00:00:00Z" and
+              os.environ["REQUEST_SYMBOLS"]==
+              "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
+          )
+          label=("PAIRED_12_MARKET_JOB_ELIGIBLE_AFTER_ARCHIVE_UPLOAD" if eligible
+                 else "HISTORICAL_ONLY_PAIRED_12_MARKET_JOB_WILL_SKIP")
+          print(label)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as out:
+              out.write("### Manual historical run\\n\\n"+
+                        ("Twelve-market stock pairing: **ELIGIBLE**.\\n" if eligible
+                         else "Twelve-market stock pairing: **SKIPPED by chosen input dates/symbols**.\\n"))
+          PY
+
       - name: Archive SHA-named history AND offline report (expires in 7 days)
         uses: actions/upload-artifact@v4
         with:
