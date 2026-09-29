@@ -1,0 +1,76 @@
+# MANUAL ONLY: six predeclared liquid US equity/ETF historical IEX DATA GET.
+# No SIP billing/entitlement request, no trading, no Railway deploy, no schedule.
+# The same privately held RESEARCH DATA secrets are injected in ONE step only.
+name: Manual six-stock historical IEX CORE-HOUR GET (research only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Inclusive XNYS market date; default two historical weeks"
+        type: string
+        required: true
+        default: "2026-09-14"
+      end_date_exclusive:
+        description: "Exclusive XNYS market date; max 25 actual sessions"
+        type: string
+        required: true
+        default: "2026-09-26"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-equity-iex-manual-data-only
+  cancel-in-progress: false
+
+jobs:
+  historical-iex-core-hour-get-only:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
+    steps:
+      - name: Checkout reviewed source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install offline XNYS exchange calendar (optional stock research only)
+        run: python -m pip install --no-cache-dir '.[equity-research]'
+
+      - name: Independent real-session and conservative core-hour plan (NO keys/network)
+        env:
+          SIGNAL_VAULT_EQUITY_READ_APPROVED: HISTORICAL_IEX_XNYS_FULL_CORE_HOURS_DATA_GET_ONLY
+          SIGNAL_VAULT_EQUITY_START_DATE: ${{ inputs.start_date }}
+          SIGNAL_VAULT_EQUITY_END_DATE_EXCLUSIVE: ${{ inputs.end_date_exclusive }}
+          SIGNAL_VAULT_EQUITY_SYMBOLS: "AAPL AMD MSFT NVDA QQQ SPY"
+          SIGNAL_VAULT_EQUITY_FEED: iex
+        run: python -m signal_vault.ci_historical_equities --dry-run
+
+      - name: Bounded authenticated historical IEX-only data GET (NO orders)
+        env:
+          SIGNAL_VAULT_EQUITY_READ_APPROVED: HISTORICAL_IEX_XNYS_FULL_CORE_HOURS_DATA_GET_ONLY
+          SIGNAL_VAULT_EQUITY_START_DATE: ${{ inputs.start_date }}
+          SIGNAL_VAULT_EQUITY_END_DATE_EXCLUSIVE: ${{ inputs.end_date_exclusive }}
+          SIGNAL_VAULT_EQUITY_SYMBOLS: "AAPL AMD MSFT NVDA QQQ SPY"
+          SIGNAL_VAULT_EQUITY_FEED: iex
+          SIGNAL_VAULT_RESEARCH_DATA_KEY_ID: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_KEY_ID }}
+          SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
+        run: python -m signal_vault.ci_historical_equities --download-history
+
+      - name: Archive only COMPLETED historical IEX core-session datasets (7 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-6-equities-IEX-core-hours-${{ github.run_id }}
+          path: private-equity-artifacts/*.json
+          if-no-files-found: error
+          retention-days: 7
