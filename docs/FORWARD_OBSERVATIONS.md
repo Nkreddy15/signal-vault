@@ -24,6 +24,22 @@ spread, real order-book execution and liquidity are **not verified** by this
 calculator. Do not change the assumed notional or implement a new strategy just
 because one sensitivity cell is positive.
 
+## Owner's first exact cost-audit result (2026-09-28 US Eastern / September 29 UTC)
+
+The owner ran `PYTHONPATH=src python -m signal_vault.research_economics` after syncing GitHub head `3ad835ecfcf80a0d4acb8ca3cf04bea3e2ead373`. It returned the expected `OFFLINE_HYPOTHETICAL_SMALL_NOTIONAL_COST_AUDIT` with `broker_order_submission=DISABLED` and the fixed existing assumptions:
+
+| Reference-price rise during $15 BTC hypothetical buy/sell cycle | Net modeled P&L after costs |
+|---|---:|
+| 0 bps (flat BTC price) | -$0.1047266171 |
+| +25 bps (+0.25%) | -$0.0674884337 |
+| +50 bps (+0.50%) | -$0.0302502502 |
+| +75 bps (+0.75%) | +$0.0069879332 |
+| +100 bps (+1.00%) | +$0.0442261167 |
+| +150 bps (+1.50%) | +$0.1187024836 |
+| +200 bps (+2.00%) | +$0.1931788505 |
+
+The exact model break-even **reference-to-reference** price move is `70.30862370967018550890511000` bps, or approximately **+0.7031%**. A flat-price round trip loses approximately $0.1047 because of the assumed two-sided costs, versus exactly $0 in the hypothetical zero-cost control. The arithmetic matches `backtest.py`; it does NOT verify the user's actual Alpaca fee tier, bid/ask spread, order-book depth or future slippage. `v0.3` also lost money at zero cost; fewer trades is not, by itself, proof of a predictive edge. Do not create a guessed profitability target, threshold sweep or automatic BUY instruction from this report.
+
 ## Manual fresh-data procedure (only when explicitly requested by the owner)
 
 Run `forward_capture` **after at least three minutes past an exact UTC
