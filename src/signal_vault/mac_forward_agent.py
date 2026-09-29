@@ -69,13 +69,13 @@ def agent_configuration(*, repo: Path, home: Path, python_bin: Path) -> dict:
 
 
 def _mac_only() -> None:
-    if sys.platform != "darwin" or not Path("/usr/bin/launchctl").is_file():
+    if sys.platform != "darwin" or not Path("/bin/launchctl").is_file():
         raise RuntimeError("this activation command can run only in a macOS user session")
 
 
 def _launchctl(*args: str) -> bool:
     # No password, token, shell expansion or secret-bearing environment args.
-    result = subprocess.run(["/usr/bin/launchctl", *args],
+    result = subprocess.run(["/bin/launchctl", *args],
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                             timeout=15, check=False)
     return result.returncode == 0
