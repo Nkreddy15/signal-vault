@@ -1,4 +1,4 @@
-# Signal Vault — Phase 2L audited read-only forward evidence
+# Signal Vault — Phase 2M offline forward readiness and collection
 
 **Use private GitHub `Nkreddy15/signal-vault` branch `main` after the latest Phase 2K fast-forward pull.** Verify SHA/tree and run `make test`, `make compile`, `make demo` before editing; do not replace newer changes with an older ZIP. No live, broker paper POST or paid actions are authorized.
 
@@ -27,6 +27,34 @@ profitability or a reserved validation holdout. See
 prospective observations, feature/SHA/manifest/timestamp corruption and
 read-only file preservation. This auditor does not change the
 `manual_forward_cycle` command needed for the next UTC observation.
+
+**New optional credential-free preflight (Phase 2M):** After pulling
+latest `main`, run `PYTHONPATH=src python -m
+signal_vault.forward_readiness` before deciding whether to capture. It
+requires that the original owner-local journal and all earlier captured
+CSV/manifest files pass the Phase 2L **offline internal evidence audit**,
+then reads the clock and determines the exact single consecutive next
+UTC-hour capture window. It reports WAIT if the next hour has not closed,
+WAIT during minutes 00–02, READY during `:03`–`:24`, EXISTING_CAPTURE
+if that hour already has a fresh SHA/source-verified CSV/manifest pair, or
+HALT/MISSED when backfill would be required. The command never prompts for
+keys, calls a provider, alters SQLite, captures data, starts a scheduler, or
+creates any order. A readiness result is an operational *data collection*
+check, NOT evidence of trading eligibility or predictive edge. Run
+`--db data/forward/observations-segment-02.sqlite3` only for a different
+already-bootstrapped named segment. This functionality is offline
+synthetic-test validated (GitHub CI 286 tests passed on 3.11 and 3.12 at
+run `36526615489`), not yet owner-side Mac-tested.
+
+**The owner's original clock plan is unaffected:** the one-button manual
+collector is still `PYTHONPATH=src python -m
+signal_vault.manual_forward_cycle`, between **2026-09-29 06:03 UTC and
+before 06:25 UTC**, provided no new capture already exists for 06:00 UTC.
+Do not run `--bootstrap` again against the original journal. A readiness
+result of EXISTING_CAPTURE requires preservation and possible explicit
+review of `forward_observer --observe --csv <EXACT_PATH>`, not re-capture
+or deletion. The new readiness code can be pulled after the old collector
+has finished its intended window if preferred.
 
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
