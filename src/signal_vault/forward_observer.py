@@ -25,7 +25,9 @@ from .research_economics import break_even_price_move_bps
 
 SCHEMA_VERSION = 1
 MIN_OVERLAP = 29
-MAX_BAR_AGE = timedelta(minutes=90)
+# A new observation must be processed during the SAME UTC clock hour as
+# its newest fully closed bar, rather than relabel a late historical bar as
+# prospective evidence. Capture publication itself waits at least 3 minutes.
 MAX_CAPTURE_AGE = timedelta(minutes=30)
 
 
@@ -97,9 +99,13 @@ def read_verified_capture(csv_file: str | Path, *, observed_at: datetime
 
 def _fresh_closed_sequence(bars: Sequence[Bar], now: datetime) -> tuple[Bar, ...]:
     sequence = validate_bars(bars, as_of=now, min_count=MIN_OVERLAP + 1)
-    age = now - sequence[-1].close_time
-    if age < timedelta(0) or age > MAX_BAR_AGE:
-        raise ValueError("latest fully closed hourly bar is stale or future-dated")
+    # A prospective observation cannot be appended from an earlier UTC-hour
+    # capture, even if the raw file was obtained less than 90 minutes ago.
+    # This also prevents a delayed bootstrap from labelling the following
+    # already-closed bar as a new forward observation.
+    last_expected_close = now.replace(minute=0, second=0, microsecond=0)
+    if sequence[-1].close_time != last_expected_close:
+        raise ValueError("latest fully closed hourly bar is stale for prospective recording")
     return sequence
 
 
