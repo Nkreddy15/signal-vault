@@ -138,9 +138,10 @@ def assess_offline_readiness(
         blockers.append("COLLECTOR_FORWARD_ACCEPTANCE_NOT_YET_CONFIRMED")
     if ledger["status"] != "CLEAN_LOCAL_LEDGER_NOT_PROVIDER_ATTESTED":
         blockers.append("PAPER_LOCAL_LEDGER_NOT_CLEAN_OR_INITIALIZED")
-    # These requirements cannot be silently cleared by inspecting the local machine.
+    # Other commands may have been run successfully. This offline report does not
+    # persist or attest their results; NEVER claim the provider GET was not done.
     blockers.extend((
-        "SEPARATE_PAPER_TRADING_ACCOUNT_GET_PREFLIGHT_NOT_PERFORMED",
+        "SEPARATE_PAPER_ACCOUNT_GET_RESULT_NOT_TRACKED_BY_OFFLINE_REPORT",
         "SUPERVISED_PAPER_ORDER_NOT_SEPARATELY_AUTHORIZED",
         "NO_STRATEGY_PROMOTED_V01_V02_V03",
     ))
@@ -152,6 +153,8 @@ def assess_offline_readiness(
         "paper_journal": ledger,
         "local_engineering_prechecks": "PASSED_NOT_TRADE_AUTHORIZATION" if local_ok else "INCOMPLETE",
         "provider_trading_account_checked": False,
+        "provider_account_check_scope": "NOT_PERFORMED_IN_THIS_OFFLINE_INVOCATION",
+        "separate_provider_get_receipt": "NOT_TRACKED_BY_THIS_REPORT",
         "network_requests": "NONE",
         "credentials_accessed": False,
         "paper_order_post_attempted": False,
