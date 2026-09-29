@@ -25,6 +25,9 @@ class StrategyConfig:
     # 1 retains the shipped v0.1 behavior. 2 is a research-only, separately
     # versioned entry hypothesis: require one additional positive closed bar.
     entry_confirmation_bars: int = 1
+    # None preserves all earlier strategy versions. A separately versioned
+    # v0.3 research candidate can veto a BUY using only prior closed prices.
+    entry_minimum_prior_24h_return_bps: Decimal | None = None
 
     def __post_init__(self) -> None:
         if not 1 < self.fast_hours < self.slow_hours <= 300:
@@ -35,6 +38,18 @@ class StrategyConfig:
             raise ValueError("entry confirmation must be 1 (baseline) or 2 (research candidate)")
         if self.entry_confirmation_bars == 2 and self.strategy_version == "btc-hourly-ema-cross-v0.1":
             raise ValueError("two-bar candidate must have its own strategy version")
+        threshold = self.entry_minimum_prior_24h_return_bps
+        if threshold is not None:
+            if (not isinstance(threshold, Decimal) or not threshold.is_finite()
+                    or threshold < 0 or threshold > 10000):
+                raise ValueError("invalid prior-24h BUY momentum threshold")
+            if self.entry_confirmation_bars != 1:
+                raise ValueError("momentum research gate cannot combine with two-bar entry confirmation")
+            if self.strategy_version in (
+                "btc-hourly-ema-cross-v0.1",
+                "btc-hourly-ema-cross-confirm2-v0.2-RESEARCH-ONLY",
+            ):
+                raise ValueError("momentum research gate requires its own candidate version")
 
 
 @dataclass(frozen=True)
@@ -79,7 +94,22 @@ def generate_signal(bars: Sequence[Bar], config: StrategyConfig | None = None) -
             # Preserve immediate risk-reducing sell in both research versions.
             action, why = Action.SELL, "Confirmed fast EMA downward crossover at previous closed bar"
         elif cfg.entry_confirmation_bars == 1 and fast_prev <= slow_prev and fast > slow:
-            action, why = Action.BUY, "Confirmed fast EMA upward crossover at previous closed bar"
+            threshold = cfg.entry_minimum_prior_24h_return_bps
+            if threshold is None:
+                # Preserve v0.1 exactly when the research-only filter is absent.
+                action, why = Action.BUY, "Confirmed fast EMA upward crossover at previous closed bar"
+            elif len(bars) < 25:
+                why = "Prior-24h entry evidence unavailable; HOLD"
+            else:
+                # bars[-1] is the last completed hour. bars[-25] closed exactly
+                # 24 hours earlier. bars that executes the order is NOT accessed.
+                prior_24h_return_bps = (
+                    bars[-1].close / bars[-25].close - Decimal("1")
+                ) * Decimal("10000")
+                if prior_24h_return_bps >= threshold:
+                    action, why = Action.BUY, "Confirmed upward EMA cross and completed 24h momentum entry gate"
+                else:
+                    why = "Upward EMA crossover vetoed by prior-24h momentum; HOLD"
         elif cfg.entry_confirmation_bars == 2:
             # The previous bar must have been the first strictly positive
             # closed-bar EMA state after crossing, and the current *closed*
