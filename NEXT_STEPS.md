@@ -1,4 +1,4 @@
-# Signal Vault — Phase 2M offline forward readiness and collection
+# Signal Vault — Phase 2N owner-local evidence snapshot + pilot reliability roadmap
 
 **Use private GitHub `Nkreddy15/signal-vault` branch `main` after the latest Phase 2K fast-forward pull.** Verify SHA/tree and run `make test`, `make compile`, `make demo` before editing; do not replace newer changes with an older ZIP. No live, broker paper POST or paid actions are authorized.
 
@@ -71,6 +71,66 @@ journal. If intentionally collecting hour three consecutively, run
 eligibility first without credentials. If missed, retain the current
 2-observation journal and begin only a distinct, freshly bootstrapped
 segment on a later hour; never replay prior captures as forward data.
+
+**Phase 2N BUILD NOW IMPLEMENTED (OFF by default):** The repository now
+contains a dedicated forward observation archive utility at
+`src/signal_vault/forward_snapshot.py`. This is separate from the existing
+paper-order-ledger backup. It verifies the full local original source evidence
+first, uses SQLite's backup API to take a consistent standalone local journal,
+then copies the exact one-bootstrap-plus-N recorded-hour immutable CSV/source
+manifest pairs referenced by that consistent journal. Before publishing a
+new, private owner-only directory under ignored
+`data/forward/backups/`, the *copied* journal and copied source files must
+pass a second independent offline audit. It never opens Alpaca, prompts for
+credentials, trades, overwrites an existing snapshot, resets an owner database
+or restores into the active original. It produces a locally unsigned,
+unencrypted, same-Mac archive; no third-party provider attestation or offsite
+backup is claimed. Run only after an owner-side full source audit passes:
+
+```sh
+# At any time; entirely READ-ONLY, with expected post-06:00Z counts:
+PYTHONPATH=src python -m signal_vault.forward_evidence_audit
+# Expect PASS_INTERNAL_CONSISTENCY_ONLY, observation_count 2,
+# and three source CSV/manifest pairs for the originally bootstrapped segment.
+
+# Once that returns PASS and AFTER pulling the new Phase 2N code:
+PYTHONPATH=src python -m signal_vault.forward_snapshot --create
+# Manually copy the exact printed snapshot folder BASENAME into:
+PYTHONPATH=src python -m signal_vault.forward_snapshot --verify <NAME>
+```
+
+Do not paste PAPER keys, raw CSVs or database bytes to ChatGPT or GitHub;
+send only the nonsecret auditor/backup JSON. Full failure/limited
+restoration procedure: `docs/FORWARD_SNAPSHOTS.md`. Synthetic fake-provider
+tests cover zero/one/two hour chains, source non-mutation, extra unrelated
+capture exclusion, hash checks, tampering, symlinks, path traversal and
+isolated segment backup. This is NOT a restored operational paper account.
+
+**Roadmap AFTER Phase 2N:**
+1. Local read-only source/snapshot validation and failure injection on a
+   separate temporary scratch directory; preserve originals and demonstrate
+   that restoration never automatically enables order submission. Complete
+   paper ledger interruption/UNKNOWN_RESULT and provider-drift test drills
+   against fakes; choose separately between a single-host SQLite PAPER pilot
+   and a real PostgreSQL Python/concurrency port. PostgreSQL migration SQL
+   alone is not operational high availability.
+2. Optional operator-only status/incident report for observation coverage,
+   source hashes, gaps/segments, modeled cost assumptions and data quality.
+   No personal secrets, order execution or public dashboard exposure.
+3. Verify actual PAPER account/venue constraints, spread and fee rules using
+   only separately owner-invoked approved GET requests, and compare against
+   the fixed hypothetical 70.3086bps round-trip hurdle; do not assume
+   empirical profitability from hypothetical costs.
+4. Design/preregister a substantially different, reduced-turnover research
+   candidate on permitted development data. v0.1/v0.2/v0.3 FAILED and are
+   NOT promoted. Keep the reserved post-gap v0.3 dataset unopened. Any
+   inspected forward observation is exploratory development data, never
+   described retroactively as a sealed independent validation sample.
+5. Only if a fixed candidate passes its predeclared evidence gates, develop
+   an offline-only shadow signal/report and validate incident behavior.
+   Actual Alpaca PAPER order POST, unattended deployment, hosting, paid
+   services, live transfer and deposits each require distinct explicit
+   decisions. No live code path is currently enabled.
 
 **If the existing journal's next consecutive hour was already missed:** do not try to backfill, delete/reset or repeatedly retry the primary journal. Keep it. Begin a new explicitly named prospective journal in a fresh UTC hour with the original `forward_capture`, followed within that same hour by `forward_observer --bootstrap --db data/forward/observations-segment-02.sqlite3 --csv <EXACT_NEW_CAPTURE_PATH>`; that new segment begins with ZERO retrospective observations. In the NEXT consecutive hour, use `PYTHONPATH=src python -m signal_vault.manual_forward_cycle --db data/forward/observations-segment-02.sqlite3`. Full owner procedure and failure handling: `docs/FORWARD_OBSERVATIONS.md`. No scheduler, paper POST, funding or live permissions are enabled.
 
