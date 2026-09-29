@@ -169,6 +169,16 @@ class ArchivedEvidenceAuditTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "existing nonsymlink"):
                 audit_forward_evidence(root=root, db=other)
 
+    def test_zero_observation_bootstrap_clock_tamper_is_detected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)/"forward"
+            db = setup_evidence(root,n=0)
+            with sqlite3.connect(db) as conn:
+                conn.execute("UPDATE forward_state SET last_seen_utc=?",
+                             ((END+timedelta(hours=1, minutes=2)).isoformat(),))
+            with self.assertRaisesRegex(ValueError, "bootstrap observation clock"):
+                audit_forward_evidence(root=root)
+
     def test_named_explicit_segment_supported_without_modifying_primary(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)/"forward"
