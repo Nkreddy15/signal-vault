@@ -1,12 +1,30 @@
 # SIGNAL VAULT
 
-**Phase 2-I — paper-only research, risk, operator tools (provider credentials/order submission NOT activated)**
+**Phase 2-I plus read-only prospective observation MVP — broker PAPER POST and live trading NOT activated**
 
 Signal Vault is intended to become an autonomous, independently hosted multi-market research, risk and execution platform. The *first enabled integration* will be BTC/USD in **Alpaca paper trading**. Equity and event-contract adapters are future work; they are not simulated by silently treating their instruments as Bitcoin.
 
 ## Current state (2026-09-28)
 
-The repository now contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks, a one-cycle autonomous paper runtime, and a hardened single-instance scheduler shell with local health/alert files and durable operator halt controls. The runtime is extensively fake-transport tested but **has not been authenticated against the user's Alpaca paper account and has not sent a genuine paper order**. The default CLI remains offline and non-filling. Real-money execution does not exist.
+The repository contains the modular architecture, deterministic Guardian, authenticated fixed-host market-data readers, logical $100 portfolio ledger, persistent paper order lifecycle, fill/fee/position reconciliation, restart recovery, provider-drift checks, a one-cycle paper runtime and a single-instance scheduler shell with operator halt controls. The owner reports successful LOCAL authenticated Alpaca PAPER account/quote READ-only smoke and SHA-verified historical captures; credentials have NOT been sent through chat/GitHub. v0.1, v0.2 and v0.3 failed their offline research gates and are NOT approved for paper-order submission. No genuine provider PAPER order, live order, deposit, paid deployment or real-money execution has occurred. The default CLI remains offline and non-filling.
+
+### Current offline research and manual observation MVP
+
+The fixed v0.1/v0.2/v0.3 candidate history and negative after-cost results are
+recorded in `docs/RESEARCH_V02.md`, `docs/RESEARCH_V03.md` and
+`PROJECT_STATUS.md`. The reserve post-gap period remains unexamined for
+v0.2/v0.3; do not use it to rescue failed development candidates.
+
+For a self-contained, fixed $15 BTC hypothetical round-trip cost audit, run
+`PYTHONPATH=src python -m signal_vault.research_economics`. A separate,
+explicitly owner-invoked **GET-only** `forward_capture` and local,
+transactional `forward_observer` can establish and append one genuinely new,
+fully closed hourly BTC/USD observation at a time; they never emit an order,
+do not create hindsight/backfilled observations and never connect to a live
+broker. They remain off until run manually. Raw CSV captures, source SHA
+manifests and the SQLite journal stay local under ignored `data/forward/`.
+See `docs/FORWARD_OBSERVATIONS.md` for the exact safe commands,
+conditions, limitations and missed-hour recovery.
 
 ### Safe local smoke test
 
