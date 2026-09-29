@@ -1,6 +1,6 @@
 # SIGNAL VAULT — durable engineering checkpoint
 
-**Checkpoint:** PHASE2O-2026-09-29 (owner-verified THREE actual forward observations, successful full source audit, isolated snapshot creation and repeat verification; NEW offline scratch recovery drill built and CI-tested).
+**Checkpoint:** PHASE2O-OWNER-PASS-2026-09-29 (three owner-verified consecutive BTC/USD observations; forensic audit, isolated local archive repeat verification, and FIRST REAL owner-side scratch-only recovery and four fault-injection checks all PASS).
 **Private repository:** https://github.com/Nkreddy15/signal-vault (`main`). Prior remote Phase 2H commit `338094301d368a7d5afe506ebcd47884bec330ed`, exact file tree `e17305a09eeda46465d825dd507eb8ca2e9c4347`. Phase 2I source must be separately exact-tree synced before stopping; do not force-push or overwrite others' work.
 **Authorization/status update (owner-run, 2026-09-28):** Development and local/offline/PAPER-only implementation. The owner reports successful local authenticated Alpaca PAPER read-only account smoke and read-only BTC/USD quote/history capture. Keys were never supplied to ChatGPT or committed to GitHub. No broker paper POST, cash deposit, live order, live endpoint, cloud deployment, purchase or public publishing has occurred.
 **Deadline:** November 1, 2026 is a *conditional* target for an owner-authorized $100 experiment, not a guaranteed profitable system or automatic live launch.
@@ -376,10 +376,53 @@ manifest, four distinct scratch-fault scenarios rejected by BOTH layers,
 complete disposable cleanup, and no active-journal interaction, network
 request or order. This is a rehearsal using copies, NOT a restore.
 
+## First REAL Phase 2O recovery and four-fault drill — OWNER PASS
+
+The owner completed the previously pending operator-invoked
+`PYTHONPATH=src python -m signal_vault.forward_recovery_drill --snapshot forward_20260929T070754_619609Z`
+using the existing verified local Phase 2N backup. Owner-pasted JSON reports:
+
+- `kind=OFFLINE_DISPOSABLE_FORWARD_RECOVERY_AND_FAULT_DRILL`,
+  `result=PASS_ISOLATED_RECONSTRUCTION_AND_FAULT_REJECTION`;
+- Reconstructed **3 prospective observation records** and **4 capture pairs**
+  in isolated disposable copies; **10 snapshot files checked** (the 9 hashed
+  copied evidence files plus `snapshot.manifest.json`);
+- All four negative cases — `altered_csv`, `altered_source_manifest`,
+  `altered_journal_metric`, `missing_capture_manifest` — each returned
+  `REJECTED_BY_BOTH_INDEPENDENT_CHECKS`;
+- `original_snapshot_file_hashes_unchanged=true`,
+  `disposable_evidence_cleanup=COMPLETE`,
+  `active_journal_opened_or_modified=false`,
+  `snapshot_overwritten=false`,
+  `network_requests=NONE`,
+  `broker_order_submission=DISABLED`,
+  `automatic_scheduling=DISABLED`.
+
+The operator also independently reran
+`PYTHONPATH=src python -m signal_vault.forward_snapshot --verify forward_20260929T070754_619609Z`
+immediately beforehand, receiving `PASS_INTERNAL_CONSISTENCY_ONLY`,
+three observations, four source pairs, nine hashed copied files, and no
+active journal changes/network/orders. Both Phase 2N and Phase 2O are NOW
+OWNER-VALIDATED, separate from earlier 302 synthetic CI safety checks.
+These checks demonstrate reconstruction/internal corruption detection only,
+NOT a real restore over any active journal, encrypted off-device backup,
+signed Alpaca evidence, trading execution or economic returns.
+
+**Next engineering milestone:** Phase 2P offline read-only operator evidence
+coverage and incident report (segment starts/ends, no retrospective catch-up,
+expected vs actual observation and archive pairs, integrity, latest capture
+age/clock, backup verification status and explicit halted/missed-hour state).
+It must not quietly merge separate observation segments or infer trades from
+market returns. After that, conduct isolated PAPER-ledger UNKNOWN_RESULT,
+duplicate/partial-fill and broker reconciliation fault tests against fake
+providers; provider cost/venue constraints need separately authorized
+read-only GET verification. Old EMA research versions v0.1/v0.2/v0.3 remain
+FAILED/NOT PROMOTED. Real PAPER POST/live/hosting/paid services remain OFF.
+
 ## Still NOT completed / mandatory blockers
 
 1. Alpaca PAPER account, local read-only smoke, BTC/USD quote and asset-rule checks have been reported successful by the owner; reconfirm broker/provider readiness and fee/quote behavior before any separately authorized paper POST. Preserve local secret storage; never send secrets through chat/GitHub.
-2. Genuine historical BTC/USD data was captured locally (see above). v0.1/v0.2/v0.3 remain negative/not promoted; v0.3 failed its explicit development gate and must not be evaluated on reserved post-gap data. **Next operator step:** the owner finished the fixed offline cost audit, zero-observation bootstrap and **TWO genuine prospective hourly market observations** (the newest at 06:03:59Z; count 2). Run an independent offline source-evidence audit, then opt into a Phase 2N local snapshot verification only after that audit PASS. NEVER bootstrap the existing journal again. Optional next manual operation uses `PYTHONPATH=src python -m signal_vault.manual_forward_cycle`, which checks the precise consecutive UTC hour and either captures+observes safely or refuses missed-time catch-up. For missed hours, deliberately start a separate fresh segment without resetting old evidence; see `docs/FORWARD_OBSERVATIONS.md`. Do not share keys, backfill missed hours or enable background scheduling. See `docs/FORWARD_OBSERVATIONS.md`. Review costs and preregister a materially different, lower-turnover hypothesis only after sufficient independent thinking/evidence. There is NO authorization for paper POST, live trading or ML shadow promotion.
+2. Genuine historical BTC/USD data was captured locally (see above). v0.1/v0.2/v0.3 remain negative/not promoted; v0.3 failed its explicit development gate and must not be evaluated on reserved post-gap data. **Latest completed owner checkpoint:** three genuine hourly forward-data observations (latest 07:04:29Z), complete forensic audit, standalone Phase 2N archive, repeat archive proof and Phase 2O scratch recovery/four-fault drill ALL PASS. No additional data capture is required to proceed to the next offline engineering phase. NEVER bootstrap the existing journal again. Optional next manual operation uses `PYTHONPATH=src python -m signal_vault.manual_forward_cycle`, which checks the precise consecutive UTC hour and either captures+observes safely or refuses missed-time catch-up. For missed hours, deliberately start a separate fresh segment without resetting old evidence; see `docs/FORWARD_OBSERVATIONS.md`. Do not share keys, backfill missed hours or enable background scheduling. See `docs/FORWARD_OBSERVATIONS.md`. Review costs and preregister a materially different, lower-turnover hypothesis only after sufficient independent thinking/evidence. There is NO authorization for paper POST, live trading or ML shadow promotion.
 3. Complete transaction-integrity and restoration drills, an actual PostgreSQL Python port + PG concurrency tests or a separately reviewed single-host SQLite pilot acceptance. No multi-host execution against SQLite.
 4. Separately authorized hosting, hardened service configuration and notifications. No services have been installed.
 5. Actual broker PAPER execution with provider-confirmed order/fill/fee/cash/position reconciliation, at least seven days uninterrupted operation and incident review. Simulation result is not evidence of sustainable gains.
