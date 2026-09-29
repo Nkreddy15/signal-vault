@@ -7,6 +7,7 @@ The existing bootstrap is never modified or recreated.
 """
 from __future__ import annotations
 
+import argparse
 import getpass
 import json
 from datetime import datetime, timedelta, timezone
@@ -43,8 +44,17 @@ def _safe_root(root: str | Path) -> Path:
     return base
 
 
+def _journal_path(root: Path, db_path: str | Path | None) -> Path:
+    """Support explicit non-overwriting segments, but only under data/forward."""
+    target = root / "observations.sqlite3" if db_path is None else Path(db_path).expanduser()
+    if target.is_symlink() or not target.resolve().is_relative_to(root.resolve()):
+        raise ValueError("forward journal path must stay within its own data/forward root")
+    return target
+
+
 def plan_manual_observation(*, root: str | Path = DEFAULT_FORWARD_ROOT,
-                            now: datetime) -> dict[str, str]:
+                            now: datetime,
+                            db_path: str | Path | None = None) -> dict[str, str]:
     """Fail fast without network/credentials: only the EXACT next closed hour.
 
     The anchored START at the last recorded hour precedes its close by 1h;
@@ -54,7 +64,8 @@ def plan_manual_observation(*, root: str | Path = DEFAULT_FORWARD_ROOT,
     moment = _utc(now)
     if moment.minute < MIN_START_MINUTE or moment.minute >= LAST_START_MINUTE_EXCLUSIVE:
         raise ValueError("run manual cycle between UTC minute 03 and 24 to leave verification time")
-    with ForwardObservationJournal(base / "observations.sqlite3") as journal:
+    chosen_db = _journal_path(base, db_path)
+    with ForwardObservationJournal(chosen_db) as journal:
         snapshot = journal.status()
     latest = utc_timestamp(snapshot["latest_anchored_bar_start_utc"])
     expected_next_close = latest + timedelta(hours=2)
@@ -82,11 +93,13 @@ def plan_manual_observation(*, root: str | Path = DEFAULT_FORWARD_ROOT,
         "target_csv": str(target),
         "target_manifest": str(manifest),
         "prior_observation_count": str(snapshot["new_forward_observation_count"]),
+        "journal_path": str(chosen_db),
     }
 
 
 def capture_and_observe(provider, *, now: datetime,
                         root: str | Path = DEFAULT_FORWARD_ROOT,
+                        db_path: str | Path | None = None,
                         after_capture_now: Callable[[], datetime] | None = None) -> dict:
     """The only API-capable object here is an injected historical DATA GET reader.
 
@@ -97,7 +110,7 @@ def capture_and_observe(provider, *, now: datetime,
     base = _safe_root(root)
     # Prevent another invocation of THIS manual helper racing on raw capture.
     with RuntimeFileLock(base / ".manual_forward_cycle.lock"):
-        plan = plan_manual_observation(root=base, now=now)
+        plan = plan_manual_observation(root=base, now=now, db_path=db_path)
         path = Path(plan["target_csv"])
         manifest = capture_current_window(provider, now=_utc(now), output_csv=path)
         # Use the genuine post-fetch clock (not the pre-fetch call time). If a
@@ -110,7 +123,7 @@ def capture_and_observe(provider, *, now: datetime,
             bars, digest = read_verified_capture(path, observed_at=completed)
             if digest != manifest.csv_sha256:
                 raise ValueError("captured CSV SHA differs from newly written manifest")
-            with ForwardObservationJournal(base / "observations.sqlite3") as journal:
+            with ForwardObservationJournal(plan["journal_path"]) as journal:
                 outcome = journal.process(
                     bars, csv_sha256=digest, observed_at=completed, bootstrap=False)
         except Exception as exc:
@@ -131,6 +144,7 @@ def capture_and_observe(provider, *, now: datetime,
             "capture_row_count": manifest.row_count,
             "capture_end_utc": manifest.end_utc,
             "journal": outcome,
+            "journal_path": plan["journal_path"],
             "paper_order_submission": "DISABLED",
             "automatic_scheduling": "DISABLED",
             "warning": "One current-hour data observation only; no trading signals, paper fills or holdout validation.",
@@ -138,13 +152,18 @@ def capture_and_observe(provider, *, now: datetime,
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Manual BTC/USD DATA GET then ONE prospective observation; no broker orders")
+    parser.add_argument("--db", default=None,
+                        help="Optional already-bootstrapped segment SQLite under data/forward/; never created here")
+    args = parser.parse_args()
     print("Signal Vault: one manual DATA GET + new closed-hour observation. No broker orders.")
     # Preflight BEFORE asking for credentials, so an early/late/missed hour
     # cannot trigger an unnecessary authenticated network request.
     start = datetime.now(timezone.utc)
-    plan = plan_manual_observation(now=start)
+    plan = plan_manual_observation(now=start, db_path=args.db)
     print("Eligible UTC close:", plan["expected_closed_utc"])
     print("New local capture:", plan["target_csv"])
+    print("Existing forward journal:", plan["journal_path"])
     key = getpass.getpass("Local Alpaca PAPER data key ID (hidden): ")
     secret = getpass.getpass("Local Alpaca PAPER data secret (hidden): ")
     creds = PaperCredentials(key, secret)
@@ -152,7 +171,8 @@ def main() -> int:
         creds.key_id, creds.secret_key, transport=_read_data_get_no_redirect)
     # If a human spends too long finding credentials, second preflight uses
     # the true start of API capture rather than relabelling earlier time.
-    result = capture_and_observe(provider, now=datetime.now(timezone.utc))
+    result = capture_and_observe(provider, now=datetime.now(timezone.utc),
+                                 db_path=args.db)
     print(json.dumps(result, indent=2))
     return 0
 
