@@ -81,6 +81,19 @@ class ForwardObservationJournalTests(unittest.TestCase):
                 with self.assertRaises((OSError, ValueError)):
                     ForwardObservationJournal(db, initialize=True)
 
+    def test_existing_journal_requires_private_file_mode(self):
+        with tempfile.TemporaryDirectory() as root:
+            db = Path(root) / "observation.sqlite3"
+            with ForwardObservationJournal(db, initialize=True) as journal:
+                journal.process(sample(), csv_sha256=FIRST_SHA,
+                                observed_at=NOW, bootstrap=True)
+            db.chmod(0o644)
+            with self.assertRaisesRegex(PermissionError, "0600"):
+                ForwardObservationJournal(db)
+            db.chmod(0o600)
+            with ForwardObservationJournal(db) as journal:
+                self.assertEqual(journal.status()["new_forward_observation_count"], 0)
+
     def test_changed_overlapping_candle_fails_and_does_not_append(self):
         with tempfile.TemporaryDirectory() as root:
             with ForwardObservationJournal(Path(root) / "db.sqlite3", initialize=True) as journal:
