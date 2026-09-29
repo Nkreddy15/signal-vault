@@ -19,6 +19,7 @@ from signal_vault.paper_smoke_once import (
 from signal_vault.paper_store import PersistentPaperOrderStore
 
 NOW = datetime(2026, 9, 29, 18, 45, tzinfo=timezone.utc)
+BROKER_ORDER_ID = "12345678-1234-1234-1234-123456789abc"
 ACCOUNT = {
     "equity": "100000", "status": "ACTIVE", "trading_blocked": False,
     "non_marginable_buying_power": "100000",
@@ -52,6 +53,8 @@ class SupervisedPaperSmokeSafetyTests(unittest.TestCase):
         )
         self.lookup_state = "accepted"
         self.lookup_missing = False
+        self.fee_posted = False
+        self.fee_qty = "-0.00000045"
 
     def credentials(self):
         self.key_count += 1
@@ -69,9 +72,27 @@ class SupervisedPaperSmokeSafetyTests(unittest.TestCase):
             if path.startswith("/v2/orders:by_client_order_id?client_order_id="):
                 if test.lookup_missing: return {"found": False}
                 cid = path.split("=", 1)[1]
-                return {"id": "synthetic-broker-id", "client_order_id": cid,
-                        "status": test.lookup_state, "filled_qty": "0",
-                        "filled_avg_price": None}
+                filled = test.lookup_state == "filled"
+                return {"id": BROKER_ORDER_ID, "client_order_id": cid,
+                        "status": test.lookup_state,
+                        "filled_qty": "0.00018" if filled else "0",
+                        "filled_avg_price": "83000" if filled else None}
+            if path == "/v2/account/activities/FILL?order_id=" + BROKER_ORDER_ID:
+                return [{
+                    "activity_type": "FILL", "type": "fill", "id": "synthetic-fill-1",
+                    "order_id": BROKER_ORDER_ID, "symbol": "BTCUSD",
+                    "side": "buy", "qty": "0.00018", "price": "83000",
+                }]
+            if path == "/v2/account/activities/CFEE?order_id=" + BROKER_ORDER_ID:
+                if not test.fee_posted:
+                    return []
+                return [{
+                    "id": "synthetic-fee-1", "activity_type": "CFEE",
+                    "order_id": BROKER_ORDER_ID, "symbol": "BTCUSD",
+                    "qty": test.fee_qty, "price": "83000",
+                }]
+            if path == "/v2/account/activities/FEE?order_id=" + BROKER_ORDER_ID:
+                return []
             raise AssertionError("GET outside fake fixed-paper path: " + path)
         return PaperAlpacaReadClient(key, secret, transport=transport)
 
@@ -89,7 +110,7 @@ class SupervisedPaperSmokeSafetyTests(unittest.TestCase):
         self.assertEqual(payload["side"], "buy")
         self.assertEqual(payload["notional"], "15.00")
         self.posts.append(dict(payload))
-        return {"id": "synthetic-broker-id", "client_order_id": payload["client_order_id"],
+        return {"id": BROKER_ORDER_ID, "client_order_id": payload["client_order_id"],
                 "status": "accepted", "filled_qty": "0", "filled_avg_price": None}
 
     def run_smoke(self, *, approval=CONSENT, transport=None):
@@ -228,6 +249,77 @@ class SupervisedPaperSmokeSafetyTests(unittest.TestCase):
         self.assertEqual(state["broker_order_submission"],
                          "DISABLED_ALWAYS_FOR_RECONCILIATION")
         self.assertEqual(len(self.posts), 1)
+
+    def test_deferred_buy_fee_rechecks_original_fill_and_finalizes_without_post(self):
+        initial = self.run_smoke()
+        self.assertEqual(initial["provider_stage"], Stage.BROKER_ACCEPTED.value)
+        self.lookup_state = "filled"
+        self.positions = [{"symbol": "BTCUSD", "qty": "0.00017955"}]
+        self.fee_posted = False
+
+        def reconcile():
+            with patch("signal_vault.alpaca_paper.build_opener",
+                       side_effect=AssertionError("real network not allowed in fixture")):
+                return reconcile_one_paper_smoke(
+                    db=self.db, clock=lambda: NOW, credential_loader=self.credentials,
+                    paper_factory=self.paper)
+
+        first = reconcile()
+        self.assertEqual(first["status"], "PAPER_ORDER_RECONCILED")
+        self.assertEqual(first["pending_fee_audits"], 1)
+        self.assertEqual(len(self.posts), 1)
+
+        pending = reconcile()
+        self.assertEqual(pending["status"], "PAPER_ORDER_RECONCILED_FEE_STILL_PENDING")
+        self.assertEqual(pending["pending_fee_audits"], 1)
+        self.assertEqual(pending["broker_order_submission"],
+                         "DISABLED_ALWAYS_FOR_RECONCILIATION")
+        with PersistentPaperOrderStore(self.db) as store:
+            self.assertEqual(store.pending_fee_order_ids(), (first["client_order_id"],))
+            provisional_fee = store.logical_account()["fees_usd_equiv"]
+
+        # Provider CFEE could post after the original accepted and filled
+        # transitions; its base amount MUST match position-inferred BTC fee.
+        self.fee_posted = True
+        final = reconcile()
+        self.assertEqual(final["status"], "PAPER_ORDER_RECONCILED_FEE_FINALIZED")
+        self.assertEqual(final["pending_fee_audits"], 0)
+        self.assertFalse(final["actual_paper_post_possibly_attempted"])
+        self.assertEqual(len(self.posts), 1)
+        with PersistentPaperOrderStore(self.db) as store:
+            self.assertEqual(store.pending_fee_order_ids(), ())
+            self.assertEqual(store.logical_account()["fees_usd_equiv"],
+                             Decimal("0.00000045") * Decimal("83000"))
+            self.assertEqual(store.logical_account()["btc_qty"], Decimal("0.00017955"))
+        repeated = reconcile()
+        self.assertEqual(repeated["status"], "ALREADY_RECONCILED_FEES_FINAL")
+        self.assertEqual(repeated["pending_fee_audits"], 0)
+        self.assertEqual(len(self.posts), 1)
+
+    def test_deferred_buy_fee_wrong_provider_amount_fails_closed_without_rewriting(self):
+        self.run_smoke()
+        self.lookup_state = "filled"
+        self.positions = [{"symbol": "BTCUSD", "qty": "0.00017955"}]
+        first = reconcile_one_paper_smoke(
+            db=self.db, clock=lambda: NOW, credential_loader=self.credentials,
+            paper_factory=self.paper)
+        self.assertEqual(first["status"], "PAPER_ORDER_RECONCILED")
+        self.assertEqual(first["pending_fee_audits"], 1)
+        self.fee_posted = True
+        self.fee_qty = "-0.00000040"  # conflicts with exact provider net inventory
+        failed = reconcile_one_paper_smoke(
+            db=self.db, clock=lambda: NOW, credential_loader=self.credentials,
+            paper_factory=self.paper)
+        self.assertEqual(failed["status"],
+                         "RECONCILED_ORDER_FEE_AUDIT_REQUIRES_REVIEW")
+        self.assertEqual(failed["reason_code"],
+                         "PROVIDER_FEE_FINALIZATION_FAILED_CLOSED")
+        self.assertEqual(failed["failure_class"], "ValueError")
+        self.assertEqual(failed["pending_fee_audits"], 1)
+        self.assertEqual(len(self.posts), 1)
+        with PersistentPaperOrderStore(self.db) as store:
+            self.assertEqual(store.pending_fee_order_ids(), (first["client_order_id"],))
+            self.assertEqual(store.logical_account()["btc_qty"], Decimal("0.00017955"))
 
     def test_non_tty_cli_cannot_obtain_order_consent(self):
         fake_stdin = SimpleNamespace(isatty=lambda: False)
