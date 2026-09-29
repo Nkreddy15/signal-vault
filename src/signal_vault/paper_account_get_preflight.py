@@ -51,9 +51,6 @@ def inspect_account_get_only(
         "error_class": None,
         "local_ledger_checked": False,
         "paper_account_get_attempted": False,
-        "paper_asset_get_attempted": False,
-        "paper_positions_get_attempted": False,
-        "paper_open_orders_get_attempted": False,
         "credential_source": "OWNER_KEYCHAIN_IF_LOCAL_PREFLIGHT_PASSES",
         "credentials_logged": False,
         "broker_order_submission": "DISABLED",
@@ -113,9 +110,6 @@ def inspect_account_get_only(
         # import paper_executor, paper_worker, POST transport, or live host here.
         client = client_factory(key, secret)
         report["paper_account_get_attempted"] = True
-        report["paper_asset_get_attempted"] = True
-        report["paper_positions_get_attempted"] = True
-        report["paper_open_orders_get_attempted"] = True
         checked = client.readiness()
     except Exception as exc:
         report["reason_codes"] = ["PAPER_READ_ONLY_PROVIDER_PREFLIGHT_FAILED"]
