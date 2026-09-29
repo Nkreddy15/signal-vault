@@ -35,11 +35,19 @@ def _require_utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+def _canonical_number(value: Decimal) -> str:
+    # String-only normalization never rounds high-precision Decimal values.
+    rendered = format(value, "f")
+    if "." in rendered:
+        rendered = rendered.rstrip("0").rstrip(".")
+    return "0" if value == 0 else rendered
+
+
 def _bar_sha256(bar: Bar) -> str:
     # Canonicalize numerical values so harmless provider formatting (100/100.0)
     # does not invalidate an otherwise identical previously captured candle.
     fields = [bar.start.isoformat()] + [
-        format(getattr(bar, name).normalize(), "f")
+        _canonical_number(getattr(bar, name))
         for name in ("open", "high", "low", "close", "volume")
     ]
     return sha256(json.dumps(fields, separators=(",", ":")).encode("utf-8")).hexdigest()
