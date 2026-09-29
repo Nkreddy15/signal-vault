@@ -37,3 +37,11 @@ This reads only sanitized local operator state; it does NOT run a market capture
 - Task E: CI tests for forbidden live host, paper POST by GET worker, duplicate submission, unknown results, missing/invalid permissions, bad symbol increments, stale quote and halt override.
 
 **Implementation of an execution command is not authorization to invoke it.** No change to currently running macOS LaunchAgent is requested in this branch.
+
+## New Phase 3 offline readiness reporter (development branch, not Mac-deployed)
+
+```sh
+PYTHONPATH=src python -m signal_vault.phase3_readiness
+```
+
+The report independently reads the existing verified automatic forward-journal status and an **existing** paper ledger. It never creates an absent ledger or observation path, loads a Keychain secret, performs network requests, accesses an Alpaca trading account, imports an order executor or enables a POST. The initial scheduled collector bootstrap is explicitly **zero** prospective observations and remains incomplete until the next consecutive successful tick. HALT, malformed evidence, unresolved orders and unsafe status claims fail closed. It always retains separate blockers for authenticated PAPER trading-account GET preflight, explicit owner authorization of a supervised smoke and lack of promoted v0.1/v0.2/v0.3 strategy. The default ledger path is `data/signal-vault-paper.sqlite3`, but merely running this report will **never** initialize it. Readiness is NOT a trade instruction or license to bypass the provider reconciliation gate. Unit tests: `tests/test_phase3_readiness.py`.
