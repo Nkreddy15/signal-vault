@@ -202,3 +202,46 @@ request costs before enabling ongoing multi-instrument hosted collection.
 No parallel automatic collector, equity provider entitlement or paid hosting
 has yet been activated. This is not a blocker for offline multi-asset
 architecture development or simulated tests.
+
+### Optional separate GitHub Actions historical ingestion (MANUAL only)
+
+`.github/workflows/manual-historical-crypto-research.yml` allows a human to
+trigger the first **BTC+ETH** archive download on private GitHub Actions
+without giving new credentials to ChatGPT or touching Railway's production
+forward volume. It has no `push`, `pull_request`, cron, live trading or paper
+order trigger. It refuses any execution outside `Nkreddy15/signal-vault`
+`main` + `workflow_dispatch`, checks all supplied symbols against the
+predeclared crypto research universe and requires a dedicated approval flag.
+It explicitly defaults to a 2026-07-01 through 2026-09-01 historical
+window, two months of retrospective DATA ONLY. Download periods are split
+into at most 14-day bounded API requests, six symbols maximum per group.
+
+GitHub repository owners must privately install two encrypted **Actions**
+repository secrets; do not put values in chat, code or workflow inputs:
+
+- `SIGNAL_VAULT_RESEARCH_DATA_KEY_ID`
+- `SIGNAL_VAULT_RESEARCH_DATA_SECRET`
+
+These are an additional research workflow credential location, not a
+request to expose Railway's variable values via a connector. A separate
+PAPER-only data pair is preferable if the provider permits it. Some PAPER
+API key pairs may still have wider venue/account capabilities despite this
+GET-only application's own restrictions.
+
+Following a manually initiated successful run, SHA-named **historical**
+snapshots are retained as a private GitHub Actions artifact for **7 days**.
+They are not commits, not public URLs, not genuine prospective observations
+and not automatically merged into a future Railway archive. The current
+private GitHub repository's Actions usage/quota should be reviewed before
+clicking Run workflow. Historical GET has not been executed simply because
+the workflow was committed. The stock/equity lane stays additionally gated
+by explicit IEX/SIP entitlement and an independently reviewed hourly
+session timestamp grid; it is not faked as 24/7 crypto.
+
+**Production deployment isolation:** Railway
+`btcusd-hourly-get-cron` was separately configured with exact SOURCE
+watch paths for only its production collector, Dockerfile and direct
+dependencies. Changes confined to the new Phase 4 research files,
+tests, GitHub workflow and this documentation should not trigger a
+Railway BTC collector rebuild. Verify the collector and volume status after
+merging research code; do not assume any historical run took place.
