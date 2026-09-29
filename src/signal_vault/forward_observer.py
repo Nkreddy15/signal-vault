@@ -114,6 +114,8 @@ class ForwardObservationJournal:
         self.path = Path(path)
         if self.path.is_symlink() or (self.path.exists() and not self.path.is_file()):
             raise ValueError("forward database must be a regular nonsymlink file")
+        if self.path.exists() and self.path.stat().st_mode & 0o077:
+            raise PermissionError("forward journal must not be readable or writable by group/others (0600)")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if initialize:
             # No overwrite/reset: old prospective evidence must stay immutable.
