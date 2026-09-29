@@ -32,7 +32,7 @@ from .offline_multimarket_pipeline import (
     combine_historical_archives, describe_multi_asset_research,
     read_historical_archive,
 )
-from .research_universe import AssetClass,candidate
+from .research_universe import AssetClass,candidate,validate_asset_dataset
 
 SYMBOLS=("AAPL","AMD","MSFT","NVDA","QQQ","SPY")
 ROOT=Path("private-equity-artifacts")
@@ -139,7 +139,6 @@ def execute_manual_equity_history(
     if not isinstance(as_of,datetime) or as_of.tzinfo is None:
         raise ValueError("explicit retrospective capture timestamp required")
     _create_private_folder(output_folder)
-    from .equity_session_grid import ConservativeEquitySession
     # Reconstruct from the verified source (no human-edited source grid) so
     # the plan's independent calendar identity and version are not discarded.
     sessions=conservative_core_hour_plan(
@@ -157,10 +156,20 @@ def execute_manual_equity_history(
             equity_feed="iex",equity_expected_open_minutes=expected)
         if (batch.asset_class!="us_equity" or
                 batch.feed!="alpaca_equity_iex" or
+                batch.adjustment!="all" or
                 set(batch.bars)!=set(SYMBOLS)):
             raise ValueError("not an explicitly provenance-checked IEX equity bundle")
-        # This call's source and QA reject missing/sparse IEX buckets, excess
-        # extended-session buckets, feed mixing, duplicates and price errors.
+        # Independently recheck the returned bundle's source, OHLCV and each
+        # exact XNYS regular-core bucket before writing an immutable archive.
+        # This deliberately catches sparse IEX hours rather than interpolating
+        # or mislabeling the provider as consolidated SIP.
+        for symbol in SYMBOLS:
+            review=validate_asset_dataset(
+                batch.bars[symbol],spec=candidate(symbol),as_of=as_of,
+                expected_session_opens_utc=expected[symbol])
+            if (review.feed!="alpaca_equity_iex|adjustment=all" or
+                    review.bar_count!=len(spec.expected_opens)):
+                raise ValueError("IEX provider hour/count/provenance mismatch")
         filename=archive_historical_batch(batch,output_folder=output_folder)
         archived.append(filename)
     if len(archived)!=len(sessions):
