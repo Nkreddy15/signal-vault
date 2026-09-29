@@ -135,6 +135,13 @@ class LogicalPortfolioAccountingTests(unittest.TestCase):
     def test_mark_to_market_uses_logical_100_not_provider_default_balance(self):
         with PersistentPaperOrderStore(":memory:") as store:
             self._buy_then_reconcile(store)
+            # The journal initializes its UTC session date using the actual
+            # clock. Pin this historical fixture's date explicitly so the
+            # assertion behaves identically across CI midnight rollover.
+            store.connection.execute(
+                "UPDATE risk_session_meta SET session_date_utc=? WHERE singleton=1",
+                (NOW.date().isoformat(),),
+            )
             snap = store.mark_portfolio(mark_price=Decimal("70000"), at=NOW)
             self.assertEqual(snap.cash_usd, Decimal("87.00000"))
             self.assertEqual(snap.equity_usd, Decimal("100.9650000"))
