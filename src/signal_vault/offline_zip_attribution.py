@@ -95,7 +95,7 @@ def analyze_six_asset_zip(source: str | Path) -> dict[str, object]:
         raise ValueError("original SHA-bound offline research report absent")
     report = json.loads(files[ANALYSIS_FILENAME])
     plan = _manifest_plan(report)
-    if (len(plan["symbols"]) < 2 or len(plan["symbols"]) > 6 or
+    if (len(plan["symbols"]) != 6 or
             report.get("simulation_accounting_version") != RESEARCH_VERSION or
             set(report.get("scenarios", {})) != set(SCENARIOS)):
         raise ValueError("wrong historical report/version or no multi-asset dataset")
