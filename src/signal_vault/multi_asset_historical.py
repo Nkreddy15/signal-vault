@@ -188,9 +188,13 @@ class BoundedAlpacaHistoricalBatch:
         start, end, as_of = _utc(start), _utc(end), _utc(as_of)
         if not start < end <= as_of or end - start > timedelta(hours=MAX_WINDOW_HOURS):
             raise ValueError("research history must be fully closed and <=14 days/request")
-        if (start.minute or start.second or start.microsecond or
-                end.minute or end.second or end.microsecond):
-            raise ValueError("request bounds must be whole UTC hours")
+        if (start.second or start.microsecond or end.second or end.microsecond):
+            raise ValueError("request boundaries must be exact UTC minutes")
+        if category == AssetClass.CRYPTO and (start.minute or end.minute):
+            raise ValueError("crypto request boundaries must align to whole UTC hours")
+        if category == AssetClass.US_EQUITY and (
+                start.minute not in (0, 30) or end.minute not in (0, 30)):
+            raise ValueError("equity request boundaries must be 00/30 UTC minutes")
         if category == AssetClass.CRYPTO:
             if equity_feed is not None or equity_expected_open_minutes is not None:
                 raise ValueError("crypto fetch cannot claim an equity data feed")
@@ -227,6 +231,8 @@ class BoundedAlpacaHistoricalBatch:
             incoming = result["bars"]
             if set(incoming) - set(symbols):
                 raise ValueError("provider returned unrequested historical symbol")
+            if sum(len(rows) for rows in incoming.values() if isinstance(rows, list)) > PAGE_LIMIT:
+                raise ValueError("provider returned more than total per-page row cap")
             for sym, rows in incoming.items():
                 if not isinstance(rows, list) or len(rows) > PAGE_LIMIT:
                     raise ValueError("invalid per-symbol provider bar list")
