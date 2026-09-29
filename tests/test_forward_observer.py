@@ -26,9 +26,13 @@ def sample(end=END, n=72):
     start = end - timedelta(hours=n)
     result = []
     for i in range(n):
-        px = D("100") + D(i) / D("10")
+        stamp = start + timedelta(hours=i)
+        # The price is a pure function of absolute candle time, not of the
+        # rolling 72-hour capture window's changing array index.
+        absolute_hour = int((stamp - (END - timedelta(hours=72))).total_seconds() // 3600)
+        px = D("100") + D(absolute_hour) / D("10")
         result.append(Bar(
-            start + timedelta(hours=i), px, px + D("10"), px - D("10"),
+            stamp, px, px + D("10"), px - D("10"),
             px, D("100"), "alpaca_crypto_us",
         ))
     return tuple(result)
