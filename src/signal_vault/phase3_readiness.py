@@ -41,7 +41,8 @@ def _collector_summary(raw: object, failure: str | None) -> dict[str, object]:
         "SKIP_OUTSIDE_SAFE_UTC_MINUTE_03_TO_24",
         "HALT_PRESERVE_ALL_ORIGINAL_EVIDENCE",
     }
-    result["latest_tick_decision"] = (decision if isinstance(decision, str) and decision in choices\n                                      else "NONE_OR_UNRECOGNIZED")
+    result["latest_tick_decision"] = (decision if isinstance(decision, str) and decision in choices
+                                      else "NONE_OR_UNRECOGNIZED")
     if decision == "HALT_PRESERVE_ALL_ORIGINAL_EVIDENCE":
         result["status"] = "HALTED_REQUIRES_OPERATOR_REVIEW"
         return result
