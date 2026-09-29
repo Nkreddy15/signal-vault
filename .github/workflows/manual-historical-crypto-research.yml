@@ -7,23 +7,23 @@ on:
   workflow_dispatch:
     inputs:
       start_utc:
-        description: "Inclusive historical UTC start, up to 420 days before end"
+        description: "Inclusive UTC start; default aligned Sept 14 twelve-market history"
         type: string
         required: true
-        default: "2026-07-01T00:00:00Z"
+        default: "2026-09-14T00:00:00Z"
       end_utc:
-        description: "Exclusive UTC end; at least one CLOSED hour ago"
+        description: "Exclusive UTC end; default Sep 26 closed history"
         type: string
         required: true
-        default: "2026-09-01T00:00:00Z"
+        default: "2026-09-26T00:00:00Z"
       symbols:
-        description: "Bounded predeclared crypto group; first verify BTC+ETH"
+        description: "Default SIX crypto to auto-join previously verified stock history"
         type: choice
         options:
           - "BTC/USD ETH/USD"
           - "BTC/USD ETH/USD SOL/USD"
           - "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
-        default: "BTC/USD ETH/USD"
+        default: "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
         required: true
 
 permissions:
@@ -90,6 +90,29 @@ jobs:
           SIGNAL_VAULT_RESEARCH_END_UTC: ${{ inputs.end_utc }}
           SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
         run: python -m signal_vault.ci_historical_report
+
+      - name: Explain whether this request activates the paired twelve-market job
+        env:
+          REQUEST_START: ${{ inputs.start_utc }}
+          REQUEST_END: ${{ inputs.end_utc }}
+          REQUEST_SYMBOLS: ${{ inputs.symbols }}
+        run: |
+          python - <<'PY'
+          import os
+          eligible=(
+              os.environ["REQUEST_START"]=="2026-09-14T00:00:00Z" and
+              os.environ["REQUEST_END"]=="2026-09-26T00:00:00Z" and
+              os.environ["REQUEST_SYMBOLS"]==
+              "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
+          )
+          label=("PAIRED_12_MARKET_JOB_ELIGIBLE_AFTER_ARCHIVE_UPLOAD" if eligible
+                 else "HISTORICAL_ONLY_PAIRED_12_MARKET_JOB_WILL_SKIP")
+          print(label)
+          with open(os.environ["GITHUB_STEP_SUMMARY"],"a",encoding="utf-8") as out:
+              out.write("### Manual historical run\\n\\n"+
+                        ("Twelve-market stock pairing: **ELIGIBLE**.\\n" if eligible
+                         else "Twelve-market stock pairing: **SKIPPED by chosen input dates/symbols**.\\n"))
+          PY
 
       - name: Archive SHA-named history AND offline report (expires in 7 days)
         uses: actions/upload-artifact@v4
