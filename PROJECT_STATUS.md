@@ -312,6 +312,21 @@ Owner ran `PYTHONPATH=src python -m signal_vault.forward_evidence_audit` on the 
 
 **NEXT independent Phase 2N owner test (not yet performed):** once GitHub Desktop pulls the latest `main`, run `PYTHONPATH=src python -m signal_vault.forward_snapshot --create` manually on Mac (after captures complete). This first re-audits original source, makes a consistent SQLite copy and copies exactly four referenced CSV/manifest pairs (one bootstrap plus 3 observations) to a unique private Git-ignored `data/forward/backups/` directory, verifies the copied chain, and reports a fresh snapshot path. Do not upload raw data or backup bytes. Then verify using `PYTHONPATH=src python -m signal_vault.forward_snapshot --verify <EXACT_PRINTED_SNAPSHOT_BASENAME>`. Expected if no further observations before snapshot: `prospective_observations_verified=3`, `csv_manifest_pairs_verified=4`, `file_hashes_verified=9` (one SQLite copy plus 8 raw/manifest files). No network or broker POST. If another hour is appended before snapshot, derive expected counts from that new journal rather than treating 3 as fixed.
 
+## Phase 2N first owner-real local evidence snapshot — CREATED and isolated verification PASSED
+
+After the third consecutive owner read-only BTC/USD capture (newest candle 06:00–07:00Z, recorded `2026-09-29T07:04:29.648511Z`), owner executed `PYTHONPATH=src python -m signal_vault.forward_evidence_audit`. Real Mac result `PASS_INTERNAL_CONSISTENCY_ONLY`, 72 original bootstrap anchors, **3 prospective forward observations**, **4 complete archived CSV/manifest pairs**, `journal_modified=false`, zero network, no broker POST.
+
+The owner then successfully invoked the NEW real-data Phase 2N `PYTHONPATH=src python -m signal_vault.forward_snapshot --create`. Operator-shared JSON confirms `kind=OFFLINE_FORWARD_SNAPSHOT_CREATED_AND_ISOLATED_VERIFIED`, `result=PASS_INTERNAL_CONSISTENCY_ONLY`, **3 observations verified, 4 CSV/manifest pairs verified, 9 file SHA-256 values verified**, original journal unmodified, no network requests, no broker orders, `snapshot_overwrite=DISABLED`. Newly published owner-local, Git-ignored snapshot path:
+`data/forward/backups/forward_20260929T070754_619609Z`, with original journal `data/forward/observations.sqlite3`. The snapshot creation itself already included isolated verification, so this is **owner-real Phase 2N create-and-verify success** (not merely fake-provider CI).
+
+Optional repeat verification entry point was requested but has **not yet been reported**:
+```sh
+PYTHONPATH=src python -m signal_vault.forward_snapshot --verify forward_20260929T070754_619609Z
+```
+It must never modify/replace the original journal, capture new candles or call Alpaca. This snapshot is on the **same Mac, local SHA manifest unsigned and copies unencrypted**, NOT an independently authenticated provider attestation, encrypted offsite backup, formal production restoration, paper fill record, trade signal or validated profit. Raw CSVs/SQLite were not uploaded to GitHub and assistant did not directly inspect their bytes.
+
+Next phase (2O) should focus on a **separate scratch-only recovery and fault-injection drill**, with an explicit no-restore-over-original rule, and a consolidated offline operator coverage/incident summary that distinguishes missed-hour segments from proven continuous data. The main runtime's paper-order lifecycle and provider reconciliation also need exact fault tests against fakes; do not introduce broker POST, daemon deployment or new live permissions without explicit owner approval.
+
 ## Still NOT completed / mandatory blockers
 
 1. Alpaca PAPER account, local read-only smoke, BTC/USD quote and asset-rule checks have been reported successful by the owner; reconfirm broker/provider readiness and fee/quote behavior before any separately authorized paper POST. Preserve local secret storage; never send secrets through chat/GitHub.
