@@ -30,3 +30,25 @@ Run `PYTHONPATH=src python -m signal_vault.research_v02` **only** in the owner's
 After reviewing results, either reject the candidate or **freeze** the candidate's code, dataset boundaries, cost assumptions and risk settings. Only after that review may a new candidate be evaluated on a truly reserved time segment. For stronger independent inference, obtain genuinely future hourly observations after the last previously examined data, as the previous 90-day holdout was already exposed in the v0.1 diagnostic.
 
 No activity in this research workflow enables a broker order, a cloud service, live mode or a deposit.
+
+## Observed first development run — owner-reported 2026-09-28
+
+The owner ran the predeclared command on the exact SHA-verified development CSV above. All values below are **offline/hypothetical**, not provider fills or broker PAPER performance.
+
+| Metric | v0.1 baseline | v0.2 two-bar confirmation |
+|---|---:|---:|
+| After-cost net P&L on reset $100 | -$4.91289611 | -$4.90227649 |
+| Zero-cost net P&L | -$1.41415883 | -$1.66739272 |
+| Estimated fees | $2.50355228 | $2.31562713 |
+| Simulated fill count | 67 | 62 |
+| Maximum drawdown after costs | $5.58196494 | $5.57696992 |
+| Marked open BTC at dataset end | Yes | No |
+| Same-allocation passive BTC comparator | -$3.00429615 | -$3.00429615 |
+
+The v0.2 model produced about **$0.01062 less negative** after-cost P&L but **$0.25323 more negative** zero-cost P&L, with 5 fewer fills and approximately $0.18793 fewer estimated fees. Open-position statuses differ, so these endpoint comparisons are not paired completed-trade treatment effects.
+
+**Disposition: Do not promote v0.2 to provider-paper shadow or order execution.** Both variants remain loss-making on this development sample, and the apparent costed difference is not meaningful evidence of predictive advantage. Preserve v0.1 and v0.2 code plus this record as fixed, evaluated research artifacts. Do not open the post-gap reserved dataset merely to rescue either variant. No future holdout result has been observed for v0.2.
+
+## Next research stage
+
+Perform **descriptive attribution**, not another ad-hoc parameter sweep. Investigate losing trade size/distribution, entry-to-exit timing, trend versus range regimes, and gross-versus-cost effects using the already-exposed pre-gap development sample only. Make no claim of an edge or promotion while both fixed variants fail. If a distinct v0.3 hypothesis is justified, preregister and version it before running it, limit candidate search, and reserve genuinely prospective observations (after the last previously inspected period) for independent testing. Paper POST, live, funding, deployment and spending remain disabled.
