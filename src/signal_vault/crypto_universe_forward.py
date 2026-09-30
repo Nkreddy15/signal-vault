@@ -36,6 +36,13 @@ HOUR=timedelta(hours=1)
 BOOTSTRAP_HOURS=72
 ROOT=Path("/var/lib/signal-vault/forward-universe")
 EXISTING_BTC_ROOT=Path("/var/lib/signal-vault/forward")
+# The Railway FREE plan permits only one persistent volume/project. This
+# allowlisted sibling LOGICAL namespace may live INSIDE the already attached
+# BTC volume, but it is never the BTC root or ANY of the original source,
+# capture, state, pause, journal or shadow files. Only an explicitly enabled
+# BTC-FIRST combined cron may create this subdirectory after verifying the
+# existing volume itself. All other nested names remain forbidden.
+SHARED_VOLUME_SIDECAR_ROOT=EXISTING_BTC_ROOT/"isolated-six-crypto-prospective"
 FILENAME=re.compile(r"hour-[0-9]{8}T[0-9]{4}Z\.json\Z")
 CRYPTO_SIX=tuple(sorted(
     c.symbol for c in RESEARCH_CANDIDATES
@@ -54,10 +61,13 @@ def _safe_root(root:Path) -> Path:
     if root.is_symlink() or not root.is_dir() or root.stat().st_mode&0o077:
         raise ValueError("NEW SEPARATE nonsymlink 0700 persistent universe root required")
     absolute=root.resolve()
-    if (absolute==EXISTING_BTC_ROOT or
-            absolute.is_relative_to(EXISTING_BTC_ROOT) or
-            absolute==EXISTING_BTC_ROOT.parent):
-        raise ValueError("six-asset collection must never share the BTC forward volume")
+    if absolute in (EXISTING_BTC_ROOT,EXISTING_BTC_ROOT.parent):
+        raise ValueError("six-asset collection cannot use the existing BTC journal root")
+    if absolute.is_relative_to(EXISTING_BTC_ROOT):
+        if (absolute!=SHARED_VOLUME_SIDECAR_ROOT or
+                root.parent.resolve()!=EXISTING_BTC_ROOT or
+                root.parent.stat().st_mode&0o077):
+            raise ValueError("only the exact separate BTC-volume sidecar namespace is permitted")
     if not os.access(root,os.R_OK|os.W_OK|os.X_OK):
         raise PermissionError("isolated universe evidence root not writable")
     return root
