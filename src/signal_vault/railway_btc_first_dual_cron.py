@@ -86,6 +86,35 @@ BTC_HEALTHY={
 }
 
 
+def _restrict_known_sidecar_directories(*,sidecar_root:Path) -> list[str]:
+    """Repair ONLY permission bits on exact direct child dirs we created.
+
+    Railway persistent volumes can preserve owner-private contents while a
+    directory mode drifts across runtime/image transitions. We never chmod
+    the sidecar root itself here (an insecure root remains fail-closed), never
+    follow symlinks, never touch original BTC paths, and never alter evidence
+    file bytes. Root UID is required for any repair.
+    """
+    repaired=[]
+    for name in ("hourly-receipts","immutable-six-crypto-shadows"):
+        child=sidecar_root/name
+        if child.is_symlink():
+            raise ValueError("sidecar-owned directory cannot be a symlink")
+        if not child.exists():
+            continue
+        if not child.is_dir():
+            raise ValueError("sidecar-owned evidence namespace is not a directory")
+        mode=child.stat().st_mode&0o777
+        if mode!=0o700:
+            if os.geteuid()!=0:
+                raise PermissionError("sidecar child permission drift requires root-only restriction")
+            os.chmod(child,0o700)
+            if child.stat().st_mode&0o777!=0o700:
+                raise PermissionError("could not restrict sidecar child directory to 0700")
+            repaired.append(name)
+    return repaired
+
+
 def _new_private_sidecar(*,verified_btc_root:Path,sidecar_root:Path) -> Path:
     if (verified_btc_root.is_symlink() or
             verified_btc_root.resolve()!=CLOUD_ROOT or
@@ -204,6 +233,8 @@ def combined_btc_first_once(
         "automatic_paper_trading":"DISABLED",
         "live_trading":"UNAVAILABLE",
         "credential_values_in_output":False,
+        "sidecar_stage":"NOT_STARTED",
+        "sidecar_directory_permissions_restricted":[],
     }
     try:
         verified=configured_railway_volume(
@@ -252,14 +283,20 @@ def combined_btc_first_once(
         # BTC has already completed its own hourly transaction. Snapshot every
         # original BTC evidence byte NOW and compare after the sidecar stage,
         # excluding only the dedicated six-market child namespace.
+        output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_BEFORE"
         btc_before_sidecar=fingerprint_btc_evidence_tree(
             verified,excluded_sidecar_name=BASENAME)
         output["btc_evidence_before_sidecar_SHA256"]=btc_before_sidecar[
             "tree_sha256"]
         output["btc_evidence_before_sidecar_file_count"]=btc_before_sidecar[
             "file_count"]
+        output["sidecar_stage"]="SIDE_CAR_ROOT_VALIDATION"
         root=_new_private_sidecar(
             verified_btc_root=verified,sidecar_root=sidecar_root)
+        output["sidecar_stage"]="SIDE_CAR_CHILD_PERMISSION_RESTRICTION"
+        output["sidecar_directory_permissions_restricted"]=_restrict_known_sidecar_directories(
+            sidecar_root=root)
+        output["sidecar_stage"]="SIDE_CAR_STORAGE_BUDGET"
         _sidecar_has_safe_storage_budget(
             verified_btc_root=verified,sidecar_root=root)
         factory=sidecar_provider_factory
@@ -272,6 +309,7 @@ def combined_btc_first_once(
                 return BoundedAlpacaHistoricalBatch(
                     creds.key_id,creds.secret_key)
         clock=sidecar_clock() if sidecar_clock is not None else datetime.now(timezone.utc)
+        output["sidecar_stage"]="SIX_CRYPTO_SOURCE_COLLECTION"
         source=collect_six_crypto_once(
             root=root,now=clock,provider_factory=factory)
         output["sidecar_status"]=source["status"]
@@ -280,6 +318,7 @@ def combined_btc_first_once(
         output["sidecar_recorded_distinct_prospective_UTC_hours"]=source.get(
             "recorded_distinct_prospective_UTC_hours",0)
         output["sidecar_source_SHA256"]=source.get("source_SHA256")
+        output["sidecar_stage"]="SIX_CRYPTO_SOURCE_CHAIN_AUDIT"
         cumulative=universe_status(root=root)
         output["sidecar_current_segment_index"]=cumulative["segment_index"]
         output["sidecar_current_segment_independent_prospective_hours"]=cumulative[
@@ -301,12 +340,14 @@ def combined_btc_first_once(
             if (source["status"]=="SIX_NEW_PROSPECTIVE_ASSET_BARS_ONE_CLOCK_HOUR" or
                     source.get("last_verified_close_utc")==due):
                 try:
+                    output["sidecar_stage"]="SIX_CRYPTO_SHADOW_ARCHIVE"
                     shadow=archive_six_crypto_shadow(root=root)
                     output["sidecar_shadow_status"]=shadow["status"]
                     output["sidecar_shadow_SHA256"]=shadow.get("shadow_payload_sha256")
                 except Exception as exc:
                     output["sidecar_status"]="SOURCE_PRESERVED_SHADOW_REQUIRES_RETRY"
                     output["sidecar_shadow_failure_class"]=type(exc).__name__
+        output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_AFTER"
         btc_after_sidecar=fingerprint_btc_evidence_tree(
             verified,excluded_sidecar_name=BASENAME)
         output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar[
@@ -315,6 +356,8 @@ def combined_btc_first_once(
             btc_after_sidecar["tree_sha256"]!=
             btc_before_sidecar["tree_sha256"])
         output["existing_BTC_evidence_deleted_or_reset"]=False
+        if not output["btc_evidence_changed_during_sidecar_stage"]:
+            output["sidecar_stage"]="COMPLETE"
         if output["btc_evidence_changed_during_sidecar_stage"]:
             output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
             output["sidecar_failure_class"]="BtcEvidenceFingerprintMismatch"
