@@ -134,6 +134,13 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(out["sidecar_latest_hour_utc"],
                          (FIRST+HOUR).replace(minute=0).isoformat())
         self.assertFalse(out["sidecar_ready_for_seven_day_audit"])
+        self.assertFalse(out["sidecar_source_168_hour_collection_ready"])
+        self.assertFalse(out["sidecar_full_168_precommitted_decision_outcomes_ready"])
+        self.assertEqual(
+            out["sidecar_fully_observed_precommitted_decision_intervals"],0)
+        self.assertEqual(
+            out["sidecar_scorecard_status"],
+            "ONE_PROSPECTIVE_HOUR_SHADOW_PRECOMMITTED_WAITING_FOR_OUTCOME")
         self.assertEqual(
             out["sidecar_shadow_status"],
             "OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY")
