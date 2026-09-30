@@ -103,7 +103,7 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(captured["sidecar_recorded_distinct_prospective_UTC_hours"],1)
         self.assertEqual(captured["sidecar_shadow_status"],
                          "NEW_IMMUTABLE_SIX_MARKET_SHADOW")
-        self.assertEqual(captured["sidecar_shadow_archive_status"],"PASS")
+        self.assertEqual(captured["sidecar_shadow_archive_status"],"COMPLETE")
         self.assertEqual(captured["sidecar_current_segment_shadow_files_verified"],1)
         self.assertTrue(captured["sidecar_current_segment_shadow_archive_complete"])
         self.assertEqual(
