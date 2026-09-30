@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable,Mapping
 
 from .cloud_forward_service import CLOUD_ROOT,cloud_status
-from .btc_evidence_fingerprint import fingerprint_btc_evidence_tree
+from .btc_evidence_fingerprint import (\n    BtcEvidencePermissionError,fingerprint_btc_evidence_tree,\n)
 from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
