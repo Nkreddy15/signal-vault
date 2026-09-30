@@ -23,7 +23,7 @@ from .kalshi_resolved_market_evidence import capture_resolved_market_evidence
 from .offline_kalshi_corpus_validation import validate_kalshi_resolved_corpus
 
 MAX_SAMPLE_SIZE=50
-DEFAULT_SAMPLE_SIZE=25
+DEFAULT_SAMPLE_SIZE=50
 DEFAULT_MAX_TRADE_PAGES=20
 
 
