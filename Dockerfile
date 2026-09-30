@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN python -m pip install --no-cache-dir --no-compile . \
+RUN python -m pip install --no-cache-dir --no-compile '.[equity-research]' \
     && mkdir -p /var/lib/signal-vault/forward \
     && chmod 0700 /var/lib/signal-vault/forward
 
