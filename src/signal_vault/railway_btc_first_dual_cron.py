@@ -38,7 +38,9 @@ from .six_crypto_shadow import (
     archive_six_crypto_shadow,audit_six_crypto_shadow_archive,
     inspect_six_crypto_shadow,
 )
-from .six_crypto_forward_scorecard import prospective_shadow_scorecard
+from .six_crypto_forward_scorecard import (
+    FULLY_SCORED_DECISIONS,SOURCE_168_HOURS,prospective_shadow_scorecard,
+)
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -240,6 +242,46 @@ def combined_offline_status(
         return out
 
 
+def _attach_hourly_sidecar_readiness_audit(
+    *,output:dict[str,object],root:Path,
+) -> None:
+    """Attach a credential-free, network-free readiness receipt to this tick.
+
+    This audits the immutable shadow archive and scores only already-observed
+    precommitted outcomes. It cannot authorize paper/live orders or promote a
+    strategy. Any audit failure remains a sidecar failure and never rewrites
+    the original BTC receipt.
+    """
+    output["sidecar_stage"]="SIX_CRYPTO_OFFLINE_READINESS_AUDIT"
+    archive=audit_six_crypto_shadow_archive(root=root)
+    score=prospective_shadow_scorecard(root=root)
+    source_hours=int(score["current_segment_prospective_source_hours"])
+    scored=int(score["fully_observed_precommitted_decision_intervals"])
+    output["sidecar_shadow_archive_status"]=archive["status"]
+    output["sidecar_current_segment_shadow_files_verified"]=archive[
+        "current_segment_shadow_files_verified"]
+    output["sidecar_current_segment_shadow_archive_complete"]=archive[
+        "current_segment_shadow_archive_complete"]
+    output["sidecar_scorecard_status"]=score["status"]
+    output["sidecar_fully_observed_precommitted_decision_intervals"]=scored
+    output["sidecar_source_168_hour_collection_ready"]=bool(
+        score["source_168_consecutive_hour_collection_ready"] and
+        archive["current_segment_shadow_archive_complete"] and
+        archive["current_segment_shadow_files_verified"]==source_hours)
+    output["sidecar_full_168_precommitted_decision_outcomes_ready"]=bool(
+        score["full_168_precommitted_decision_outcomes_ready"])
+    output["sidecar_source_hours_remaining_to_168"]=max(
+        0,SOURCE_168_HOURS-source_hours)
+    output["sidecar_scored_intervals_remaining_to_168"]=max(
+        0,FULLY_SCORED_DECISIONS-scored)
+    output["sidecar_observation_complete"]=bool(
+        output["sidecar_source_168_hour_collection_ready"] and
+        output["sidecar_full_168_precommitted_decision_outcomes_ready"])
+    output["sidecar_readiness_audit_network_requests"]="NONE"
+    output["sidecar_readiness_audit_credentials_accessed"]="NONE"
+    output["sidecar_readiness_audit_broker_order_submission"]="DISABLED"
+
+
 def combined_btc_first_once(
     *,now:datetime,environ:Mapping[str,str]|None=None,
     btc_root:Path=CLOUD_ROOT,
@@ -398,6 +440,7 @@ def combined_btc_first_once(
             btc_before_sidecar["tree_sha256"])
         output["existing_BTC_evidence_deleted_or_reset"]=False
         if not output["btc_evidence_changed_during_sidecar_stage"]:
+            _attach_hourly_sidecar_readiness_audit(output=output,root=root)
             output["sidecar_stage"]="COMPLETE"
         if output["btc_evidence_changed_during_sidecar_stage"]:
             output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
