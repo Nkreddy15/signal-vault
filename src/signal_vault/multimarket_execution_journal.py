@@ -215,6 +215,26 @@ class MultiMarketExecutionJournal:
             self.connection.execute("ROLLBACK")
             raise
 
+    def attach_uncertain_provider_identity(
+        self,client_order_id:str,broker_order_id:str,*,at:datetime,
+    ) -> PaperOrderState:
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            state=self.get_state(client_order_id).attach_uncertain_broker_identity(
+                broker_order_id)
+            self._save(
+                state,
+                "UNKNOWN_PROVIDER_IDENTITY_RETAINED",
+                {"provider_order_id_present":True,
+                 "provider_status_still_unknown":True,
+                 "blind_retry_forbidden":True},
+                at)
+            self.connection.execute("COMMIT")
+            return state
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+
     def recover_pending_after_restart(self,*,at:datetime) -> tuple[str,...]:
         self.connection.execute("BEGIN IMMEDIATE")
         try:
