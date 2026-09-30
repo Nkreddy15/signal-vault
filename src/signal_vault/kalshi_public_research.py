@@ -145,6 +145,12 @@ class KalshiPublicResearchClient:
             cursor=next_cursor
         raise ValueError("Kalshi historical pagination exceeded bound")
 
+    def live_public_market(self,ticker:str) -> dict[str,object]:
+        if (not isinstance(ticker,str) or not ticker or len(ticker)>128 or
+                any(ch not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for ch in ticker)):
+            raise ValueError("invalid Kalshi market ticker")
+        return self._get(f"/markets/{ticker}")
+
     def live_public_markets(
         self,*,status:str="open",limit:int=1000,cursor:str|None=None,
     ) -> dict[str,object]:
