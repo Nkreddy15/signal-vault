@@ -14,6 +14,7 @@ from signal_vault.crypto_universe_forward import (
 from signal_vault.railway_universe_cron import universe_railway_once,KEY,SECRET,MOUNT
 from signal_vault.six_crypto_shadow import (
     FOLDER,inspect_six_crypto_shadow,archive_six_crypto_shadow,
+    audit_six_crypto_shadow_archive,repair_six_crypto_shadow_archive,
 )
 from test_crypto_universe_forward import FixtureSixCryptoProvider,FIRST,HOUR
 
@@ -115,6 +116,45 @@ class VerifiedSixSymbolShadowTests(unittest.TestCase):
         self.assertTrue(all(
             q["genuinely_prospective_observed_bars"]==2
             for q in last["asset_reviews"].values()))
+
+    def test_missing_older_shadow_is_keylessly_repaired_from_immutable_source_chain(self):
+        self.observe(FIRST)
+        self.observe(FIRST+HOUR)
+        first=archive_six_crypto_shadow(root=self.root)
+        self.assertEqual(first["status"],"NEW_IMMUTABLE_SIX_MARKET_SHADOW")
+        old=next((self.root/FOLDER).glob("*.json"))
+        old_name=old.name
+        old.unlink()
+        audit=audit_six_crypto_shadow_archive(root=self.root)
+        self.assertEqual(audit["status"],"INCOMPLETE_MISSING_DERIVED_SHADOWS")
+        self.assertEqual(audit["missing_shadow_files"],[old_name])
+        self.assertFalse(audit["current_segment_shadow_archive_complete"])
+        before=self.provider_calls
+        repaired=repair_six_crypto_shadow_archive(root=self.root)
+        self.assertEqual(self.provider_calls,before)
+        self.assertEqual(repaired["status"],"COMPLETE_NEW_DERIVED_SHADOWS_WRITTEN")
+        self.assertEqual(repaired["new_shadow_files_written"],1)
+        self.assertTrue(repaired["current_segment_shadow_archive_complete"])
+        self.assertEqual(repaired["current_segment_shadow_files_verified"],1)
+        self.assertEqual(audit_six_crypto_shadow_archive(root=self.root)["status"],
+                         "COMPLETE")
+
+    def test_later_source_hour_repairs_missing_prior_shadow_without_new_history_GET(self):
+        self.observe(FIRST)
+        self.observe(FIRST+HOUR)
+        archive_six_crypto_shadow(root=self.root)
+        old=next((self.root/FOLDER).glob("*.json"))
+        old.unlink()
+        self.observe(FIRST+2*HOUR)
+        before=self.provider_calls
+        result=archive_six_crypto_shadow(root=self.root)
+        self.assertEqual(self.provider_calls,before)
+        self.assertEqual(result["status"],"NEW_IMMUTABLE_SIX_MARKET_SHADOW")
+        audit=audit_six_crypto_shadow_archive(root=self.root)
+        self.assertEqual(audit["status"],"COMPLETE")
+        self.assertEqual(audit["current_segment_source_prospective_hours"],2)
+        self.assertEqual(audit["current_segment_shadow_files_verified"],2)
+        self.assertTrue(audit["current_segment_shadow_archive_complete"])
 
     def test_gap_new_baseline_has_no_shadow_and_preserves_prior_shadow_files(self):
         self.observe(FIRST)

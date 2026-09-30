@@ -12,7 +12,7 @@ from unittest.mock import patch
 from signal_vault.crypto_universe_forward import universe_status
 from signal_vault.railway_btc_first_dual_cron import (
     ACTIVATION_FLAG,ACTIVATION_VALUE,BASENAME,
-    combined_btc_first_once,
+    combined_btc_first_once,combined_offline_status,
 )
 from test_crypto_universe_forward import FixtureSixCryptoProvider,FIRST,HOUR
 
@@ -106,6 +106,60 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
                          "ALREADY_ARCHIVED_IDENTICAL")
         self.assertEqual(self.six_factory_calls,2)
         self.assertEqual(self.sentinel.read_bytes(),before)
+
+    def test_offline_status_reports_cumulative_independent_hours_without_provider_GET(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        self.tick(FIRST)
+        self.tick(FIRST+HOUR)
+        before=self.six_factory_calls
+        with patch(
+            "signal_vault.railway_btc_first_dual_cron.cloud_status",
+            return_value={
+                "status":"READ_ONLY_STATUS_AVAILABLE",
+                "network_requests":"NONE",
+                "broker_order_submission":"DISABLED",
+            },
+        ):
+            with patch("signal_vault.railway_btc_first_dual_cron.CLOUD_ROOT",self.btc):
+                out=combined_offline_status(
+                    environ=self.env,btc_root=self.btc,sidecar_root=self.side)
+        self.assertEqual(self.six_factory_calls,before)
+        self.assertEqual(out["status"],"READ_ONLY_STATUS_AVAILABLE")
+        self.assertEqual(out["network_requests"],"NONE")
+        self.assertEqual(out["credential_access"],"NONE")
+        self.assertEqual(out["sidecar_current_segment_index"],1)
+        self.assertEqual(
+            out["sidecar_current_segment_independent_prospective_hours"],1)
+        self.assertEqual(out["sidecar_current_segment_prospective_asset_bar_count"],6)
+        self.assertEqual(out["sidecar_latest_hour_utc"],
+                         (FIRST+HOUR).replace(minute=0).isoformat())
+        self.assertFalse(out["sidecar_ready_for_seven_day_audit"])
+        self.assertFalse(out["sidecar_source_168_hour_collection_ready"])
+        self.assertFalse(out["sidecar_full_168_precommitted_decision_outcomes_ready"])
+        self.assertEqual(
+            out["sidecar_fully_observed_precommitted_decision_intervals"],0)
+        self.assertEqual(
+            out["sidecar_scorecard_status"],
+            "ONE_PROSPECTIVE_HOUR_SHADOW_PRECOMMITTED_WAITING_FOR_OUTCOME")
+        self.assertEqual(
+            out["sidecar_shadow_status"],
+            "OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY")
+        self.assertEqual(len(out["sidecar_latest_shadow_SHA256"]),64)
+        self.assertEqual(out["broker_order_submission"],"DISABLED")
+
+    def test_offline_status_does_not_create_sidecar_when_not_activated(self):
+        self.assertFalse(self.side.exists())
+        with patch(
+            "signal_vault.railway_btc_first_dual_cron.cloud_status",
+            return_value={"status":"READ_ONLY_STATUS_AVAILABLE"},
+        ):
+            with patch("signal_vault.railway_btc_first_dual_cron.CLOUD_ROOT",self.btc):
+                out=combined_offline_status(
+                    environ=self.env,btc_root=self.btc,sidecar_root=self.side)
+        self.assertEqual(out["status"],"READ_ONLY_BTC_STATUS_AVAILABLE")
+        self.assertEqual(out["sidecar_status"],"NOT_ACTIVATED_OR_UNRECOGNIZED")
+        self.assertFalse(self.side.exists())
+        self.assertEqual(self.six_factory_calls,0)
 
     def test_bad_optin_and_failed_BTC_never_touch_six_data(self):
         self.env[ACTIVATION_FLAG]="ENABLE_TRADES_OR_UNKNOWN"

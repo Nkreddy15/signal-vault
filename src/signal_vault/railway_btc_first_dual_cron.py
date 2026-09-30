@@ -22,15 +22,19 @@ from datetime import datetime,timezone
 from pathlib import Path
 from typing import Callable,Mapping
 
-from .cloud_forward_service import CLOUD_ROOT
+from .cloud_forward_service import CLOUD_ROOT,cloud_status
 from .crypto_universe_forward import (
-    SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,_safe_root,
+    SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
 from .multi_asset_historical import BoundedAlpacaHistoricalBatch
 from .railway_forward_cron import (
     configured_railway_volume,railway_data_credentials,railway_once,
 )
-from .six_crypto_shadow import archive_six_crypto_shadow
+from .six_crypto_shadow import (
+    archive_six_crypto_shadow,audit_six_crypto_shadow_archive,
+    inspect_six_crypto_shadow,
+)
+from .six_crypto_forward_scorecard import prospective_shadow_scorecard
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -94,6 +98,87 @@ def _new_private_sidecar(*,verified_btc_root:Path,sidecar_root:Path) -> Path:
         # parent creation, no chmod/migration/deletion of BTC journal files.
         os.mkdir(sidecar_root,0o700)
     return _safe_root(sidecar_root)
+
+
+def combined_offline_status(
+    *,environ:Mapping[str,str]|None=None,
+    btc_root:Path=CLOUD_ROOT,
+    sidecar_root:Path=SHARED_VOLUME_SIDECAR_ROOT,
+) -> dict[str,object]:
+    """Read-only BTC + six-market progress. No DATA credentials or provider calls."""
+    env=os.environ if environ is None else environ
+    out:dict[str,object]={
+        "kind":"RAILWAY_BTC_FIRST_SIX_CRYPTO_OFFLINE_STATUS",
+        "status":"BLOCKED",
+        "network_requests":"NONE",
+        "credential_access":"NONE",
+        "broker_order_submission":"DISABLED",
+        "automatic_paper_trading":"DISABLED",
+        "live_trading":"UNAVAILABLE",
+    }
+    try:
+        verified=configured_railway_volume(
+            environ=env,expected_root=btc_root,
+            allow_owner_permission_repair=False)
+        out["btc"]=cloud_status(root=verified)
+        out["sidecar_activation_flag_present"]=(env.get(ACTIVATION_FLAG,"")!="")
+        out["sidecar_activation_exact"]=(env.get(ACTIVATION_FLAG,"")==ACTIVATION_VALUE)
+        if not out["sidecar_activation_exact"]:
+            out["sidecar_status"]="NOT_ACTIVATED_OR_UNRECOGNIZED"
+            out["status"]="READ_ONLY_BTC_STATUS_AVAILABLE"
+            return out
+        if not sidecar_root.exists():
+            out["sidecar_status"]="ACTIVATED_BUT_BASELINE_NOT_CREATED_YET"
+            out["status"]="READ_ONLY_STATUS_AVAILABLE"
+            return out
+        root=_safe_root(sidecar_root)
+        source=universe_status(root=root)
+        out["sidecar"]=source
+        out["sidecar_status"]=source["status"]
+        out["sidecar_current_segment_index"]=source["segment_index"]
+        out["sidecar_current_segment_independent_prospective_hours"]=source[
+            "current_segment_independent_prospective_hours"]
+        out["sidecar_current_segment_prospective_asset_bar_count"]=source[
+            "current_segment_prospective_asset_bar_count"]
+        out["sidecar_latest_hour_utc"]=source["latest_hour_utc"]
+        out["sidecar_ready_for_seven_day_audit"]=source["ready_for_seven_day_audit"]
+        shadow=inspect_six_crypto_shadow(root=root)
+        archive=audit_six_crypto_shadow_archive(root=root)
+        out["sidecar_shadow_status"]=shadow.get("status",shadow.get("kind"))
+        out["sidecar_shadow_archive_status"]=archive["status"]
+        out["sidecar_current_segment_shadow_files_verified"]=archive[
+            "current_segment_shadow_files_verified"]
+        out["sidecar_current_segment_shadow_archive_complete"]=archive[
+            "current_segment_shadow_archive_complete"]
+        if source["current_segment_independent_prospective_hours"]>0:
+            if shadow.get("kind")!="OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY":
+                raise ValueError("prospective six-market source lacks audited latest shadow")
+            if (shadow.get("current_segment_distinct_prospective_UTC_hours")!=
+                    source["current_segment_independent_prospective_hours"] or
+                    shadow.get("latest_newly_observed_UTC_close")!=source["latest_hour_utc"]):
+                raise ValueError("six-market source and shadow progress disagree")
+            out["sidecar_latest_shadow_SHA256"]=shadow.get("shadow_payload_sha256")
+        out["sidecar_source_168_hour_collection_ready"]=bool(
+            source["ready_for_seven_day_audit"] and
+            archive["current_segment_shadow_archive_complete"] and
+            archive["current_segment_shadow_files_verified"]==
+            source["current_segment_independent_prospective_hours"])
+        score=prospective_shadow_scorecard(root=root)
+        out["sidecar_scorecard_status"]=score["status"]
+        out["sidecar_fully_observed_precommitted_decision_intervals"]=score[
+            "fully_observed_precommitted_decision_intervals"]
+        out["sidecar_full_168_precommitted_decision_outcomes_ready"]=score.get(
+            "full_168_precommitted_decision_outcomes_ready",False)
+        # Preserve older field name as SOURCE collection milestone only.
+        out["sidecar_ready_for_seven_day_audit"]=out[
+            "sidecar_source_168_hour_collection_ready"]
+        out["status"]="READ_ONLY_STATUS_AVAILABLE"
+        return out
+    except Exception as exc:
+        out.update(
+            status="BLOCKED_OFFLINE_STATUS_AUDIT_FAILED",
+            failure_class=type(exc).__name__)
+        return out
 
 
 def combined_btc_first_once(
@@ -185,6 +270,15 @@ def combined_btc_first_once(
         output["sidecar_recorded_distinct_prospective_UTC_hours"]=source.get(
             "recorded_distinct_prospective_UTC_hours",0)
         output["sidecar_source_SHA256"]=source.get("source_SHA256")
+        cumulative=universe_status(root=root)
+        output["sidecar_current_segment_index"]=cumulative["segment_index"]
+        output["sidecar_current_segment_independent_prospective_hours"]=cumulative[
+            "current_segment_independent_prospective_hours"]
+        output["sidecar_current_segment_prospective_asset_bar_count"]=cumulative[
+            "current_segment_prospective_asset_bar_count"]
+        output["sidecar_latest_hour_utc"]=cumulative["latest_hour_utc"]
+        output["sidecar_ready_for_seven_day_audit"]=cumulative[
+            "ready_for_seven_day_audit"]
         if source["status"] in (
             "SIX_NEW_PROSPECTIVE_ASSET_BARS_ONE_CLOCK_HOUR",
             "SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET",
@@ -218,15 +312,23 @@ def combined_btc_first_once(
 
 def main(argv:list[str]|None=None) -> int:
     parser=argparse.ArgumentParser(
-        description="UNACTIVATED optional BTC-first + six-crypto GET-only single-volume cron.")
-    parser.add_argument("--once",action="store_true",required=True)
+        description="BTC-first + six-crypto GET-only single-volume cron / read-only status.")
+    modes=parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--once",action="store_true")
+    modes.add_argument("--status",action="store_true")
     parsed=parser.parse_args(argv)
-    result=combined_btc_first_once(now=datetime.now(timezone.utc))
+    if parsed.status:
+        result=combined_offline_status()
+        code=0 if result["status"] in (
+            "READ_ONLY_STATUS_AVAILABLE","READ_ONLY_BTC_STATUS_AVAILABLE") else 2
+    else:
+        result=combined_btc_first_once(now=datetime.now(timezone.utc))
+        # Preserve original BTC cron health semantics; a six-market sidecar
+        # failure is loudly and separately logged but never rolls back or
+        # reclassifies the completed original BTC observation.
+        code=0 if result["btc_status"] in BTC_HEALTHY else 2
     print(json.dumps(result,sort_keys=True,indent=2))
-    # Preserve original BTC cron health semantics; a six-market sidecar
-    # failure is loudly and separately logged but never rolls back or
-    # reclassifies the completed original BTC observation.
-    return 0 if result["btc_status"] in BTC_HEALTHY else 2
+    return code
 
 
 if __name__=="__main__":

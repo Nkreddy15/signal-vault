@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from dataclasses import replace
 from datetime import datetime,timezone
 from pathlib import Path
@@ -29,6 +30,7 @@ from .research_universe import candidate,validate_asset_dataset
 from .runtime_lock import RuntimeFileLock
 
 FOLDER="immutable-six-crypto-shadows"
+SHADOW_NAME=re.compile(r"shadow-hour-[0-9]{8}T[0-9]{4}Z\.json\Z")
 
 
 def _safe_folder(root:Path,*,create:bool=False) -> Path:
@@ -116,6 +118,117 @@ def _latest_payload(chain:list[dict[str,object]]) -> dict[str,object]|None:
     }
 
 
+def _expected_shadow_entries(
+    chain:list[dict[str,object]],
+) -> list[tuple[Path,bytes,dict[str,object]]]:
+    """Deterministically reconstruct every prospective shadow from source receipts."""
+    expected=[]
+    for index,receipt in enumerate(chain):
+        if receipt["event"]!="ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR":
+            continue
+        payload=_latest_payload(chain[:index+1])
+        if payload is None:
+            raise ValueError("prospective source receipt has no derivable shadow")
+        payload["shadow_payload_sha256"]=_sha(payload)
+        stamp=_utc(datetime.fromisoformat(payload["latest_newly_observed_UTC_close"]))
+        name=Path("shadow-hour-"+stamp.strftime("%Y%m%dT%H%MZ")+".json")
+        raw=(json.dumps(payload,sort_keys=True,indent=2)+"\n").encode("utf-8")
+        expected.append((name,raw,payload))
+    return expected
+
+
+def audit_six_crypto_shadow_archive(*,root:Path=ROOT) -> dict[str,object]:
+    """Read-only all-segment source→shadow parity. Missing is incomplete, tamper raises."""
+    base=_safe_root(Path(root))
+    chain=_audit_chain(base)
+    expected=_expected_shadow_entries(chain)
+    folder=_safe_folder(base)
+    actual={}
+    if folder.exists():
+        for file in folder.iterdir():
+            if (file.is_symlink() or not file.is_file() or
+                    not SHADOW_NAME.fullmatch(file.name) or
+                    file.stat().st_mode&0o077 or
+                    not 0<file.stat().st_size<=2_000_000):
+                raise ValueError("unexpected or insecure six-market shadow archive entry")
+            actual[file.name]=file
+    missing=[]
+    for name,raw,_ in expected:
+        file=actual.get(name.name)
+        if file is None:
+            missing.append(name.name)
+        elif file.read_bytes()!=raw:
+            raise ValueError("immutable six-market shadow differs from source-derived payload")
+    expected_names={name.name for name,_,_ in expected}
+    extras=sorted(set(actual)-expected_names)
+    if extras:
+        raise ValueError("shadow archive contains receipt not derivable from source chain")
+    segment=chain[-1]["segment_index"] if chain else 0
+    current_expected=sum(
+        receipt["event"]=="ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR" and
+        receipt["segment_index"]==segment
+        for receipt in chain)
+    current_missing=sum(
+        name.name in missing and payload["segment_index"]==segment
+        for name,_,payload in expected)
+    return {
+        "kind":"OFFLINE_SIX_CRYPTO_ALL_SHADOWS_SOURCE_PARITY_AUDIT",
+        "status":"COMPLETE" if not missing else "INCOMPLETE_MISSING_DERIVED_SHADOWS",
+        "total_source_prospective_hours":len(expected),
+        "total_shadow_files_verified":len(expected)-len(missing),
+        "missing_shadow_files":missing,
+        "current_segment_index":segment,
+        "current_segment_source_prospective_hours":current_expected,
+        "current_segment_shadow_files_verified":current_expected-current_missing,
+        "current_segment_shadow_archive_complete":current_missing==0,
+        "network_requests":"NONE",
+        "credential_access":"NONE",
+        "broker_order_submission":"DISABLED",
+    }
+
+
+def repair_six_crypto_shadow_archive(*,root:Path=ROOT) -> dict[str,object]:
+    """Keyless crash recovery: create ONLY missing deterministic derived shadows."""
+    base=_safe_root(Path(root))
+    with RuntimeFileLock(base/".six-crypto-source.lock"):
+        chain=_audit_chain(base)
+        folder=_safe_folder(base,create=bool(
+            any(r["event"]=="ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR" for r in chain)))
+        created=0
+        latest_sha=None
+        for name,raw,payload in _expected_shadow_entries(chain):
+            file=folder/name
+            if file.exists() or file.is_symlink():
+                if (file.is_symlink() or not file.is_file() or
+                        file.stat().st_mode&0o077 or file.read_bytes()!=raw):
+                    raise ValueError("immutable shadow source/receipt conflict")
+            else:
+                fd=os.open(
+                    file,os.O_WRONLY|os.O_CREAT|os.O_EXCL|
+                    getattr(os,"O_NOFOLLOW",0),0o600)
+                with os.fdopen(fd,"wb") as output:
+                    os.fchmod(output.fileno(),0o600)
+                    output.write(raw);output.flush();os.fsync(output.fileno())
+                created+=1
+            latest_sha=payload["shadow_payload_sha256"]
+        if folder.exists():
+            directory_fd=os.open(
+                folder,os.O_RDONLY|getattr(os,"O_DIRECTORY",0))
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        audited=audit_six_crypto_shadow_archive(root=base)
+        return {
+            "kind":"OFFLINE_SIX_MARKET_SHADOW_ARCHIVE_REPAIR",
+            "status":("COMPLETE_NEW_DERIVED_SHADOWS_WRITTEN"
+                      if created else "COMPLETE_ALREADY_ARCHIVED"),
+            "new_shadow_files_written":created,
+            "latest_shadow_payload_sha256":latest_sha,
+            **{k:v for k,v in audited.items() if k not in ("kind","status")},
+        }
+
+
 def inspect_six_crypto_shadow(*,root:Path=ROOT) -> dict[str,object]:
     """Read-only full source chain and latest shadow decisions; ZERO writes."""
     base=_safe_root(Path(root))
@@ -133,51 +246,29 @@ def inspect_six_crypto_shadow(*,root:Path=ROOT) -> dict[str,object]:
 
 
 def archive_six_crypto_shadow(*,root:Path=ROOT) -> dict[str,object]:
-    """Safe retry after source receipt has committed but shadow archiving crashed."""
+    """Backward-compatible latest-shadow call, now repairs any older missing derived shadow."""
     base=_safe_root(Path(root))
-    with RuntimeFileLock(base/".six-crypto-source.lock"):
-        payload=_latest_payload(_audit_chain(base))
-        if payload is None:
-            return {
-                "status":"NO_NEW_PROSPECTIVE_HOUR_NO_RETROSPECTIVE_SHADOW",
-                "broker_order_submission":"DISABLED",
-                "network_requests":"NONE",
-            }
-        payload["shadow_payload_sha256"]=_sha(payload)
-        stamp=_utc(datetime.fromisoformat(payload["latest_newly_observed_UTC_close"]))
-        name="shadow-hour-"+stamp.strftime("%Y%m%dT%H%MZ")+".json"
-        folder=_safe_folder(base,create=True)
-        file=folder/name
-        raw=(json.dumps(payload,sort_keys=True,indent=2)+"\n").encode("utf-8")
-        if file.exists() or file.is_symlink():
-            if (file.is_symlink() or not file.is_file() or
-                    file.stat().st_mode&0o077 or file.read_bytes()!=raw):
-                raise ValueError("immutable shadow source/receipt conflict")
-            action="ALREADY_ARCHIVED_IDENTICAL"
-        else:
-            fd=os.open(
-                file,os.O_WRONLY|os.O_CREAT|os.O_EXCL|
-                getattr(os,"O_NOFOLLOW",0),0o600)
-            with os.fdopen(fd,"wb") as output:
-                os.fchmod(output.fileno(),0o600)
-                output.write(raw)
-                output.flush()
-                os.fsync(output.fileno())
-            directory_fd=os.open(folder,os.O_RDONLY|getattr(os,"O_DIRECTORY",0))
-            try:
-                os.fsync(directory_fd)
-            finally:
-                os.close(directory_fd)
-            action="NEW_IMMUTABLE_SIX_MARKET_SHADOW"
+    inspected=inspect_six_crypto_shadow(root=base)
+    if inspected.get("status")=="NO_GENUINE_PROSPECTIVE_SIX_MARKET_HOUR_TO_EVALUATE":
         return {
-            "kind":"OFFLINE_SIX_MARKET_SHADOW_ARCHIVE_RESULT",
-            "status":action,
-            "latest_prospective_close_utc":
-                payload["latest_newly_observed_UTC_close"],
-            "shadow_payload_sha256":payload["shadow_payload_sha256"],
-            "current_segment_distinct_prospective_UTC_hours":
-                payload["current_segment_distinct_prospective_UTC_hours"],
-            "new_data_requests_during_shadow":"NONE",
-            "credentials_accessed":"NONE",
+            "status":"NO_NEW_PROSPECTIVE_HOUR_NO_RETROSPECTIVE_SHADOW",
             "broker_order_submission":"DISABLED",
+            "network_requests":"NONE",
         }
+    repaired=repair_six_crypto_shadow_archive(root=base)
+    return {
+        "kind":"OFFLINE_SIX_MARKET_SHADOW_ARCHIVE_RESULT",
+        "status":("NEW_IMMUTABLE_SIX_MARKET_SHADOW"
+                  if repaired["new_shadow_files_written"] else
+                  "ALREADY_ARCHIVED_IDENTICAL"),
+        "latest_prospective_close_utc":
+            inspected["latest_newly_observed_UTC_close"],
+        "shadow_payload_sha256":inspected["shadow_payload_sha256"],
+        "current_segment_distinct_prospective_UTC_hours":
+            inspected["current_segment_distinct_prospective_UTC_hours"],
+        "all_source_derived_shadows_complete":
+            repaired["current_segment_shadow_archive_complete"],
+        "new_data_requests_during_shadow":"NONE",
+        "credentials_accessed":"NONE",
+        "broker_order_submission":"DISABLED",
+    }
