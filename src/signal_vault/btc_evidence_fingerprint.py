@@ -4,9 +4,11 @@ Used immediately AFTER the existing BTC-first collector finishes and again
 AFTER the six-crypto sidecar stage. A mismatch proves the sidecar interval
 coincided with a mutation outside its dedicated child namespace.
 
-This is an integrity tripwire, not a backup or external signature. It never
-reads environment variables, network, broker accounts or order APIs and
-never writes, chmods, repairs, deletes or migrates the evidence tree.
+The fingerprint is an integrity tripwire, not a backup or external signature.
+It never reads environment variables, network, broker accounts or order APIs
+and never mutates evidence. A separate explicit helper may only restrict
+permission mode bits on current-process-owned entries; it never rewrites,
+deletes, renames, migrates, or changes evidence content.
 """
 from __future__ import annotations
 
