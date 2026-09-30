@@ -1,8 +1,6 @@
 name: Phase 74 diagnostic test capture
 on:
-  push:
-    branches:
-      - integration-phase74-multimarket
+  pull_request:
 permissions:
   contents: read
 jobs:
