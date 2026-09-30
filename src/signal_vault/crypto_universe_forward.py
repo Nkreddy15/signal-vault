@@ -305,6 +305,15 @@ def collect_six_crypto_once(
             start=first,end=close,as_of=stamp)
         if not isinstance(batch,HistoricalDataBatch):
             raise ValueError("source did not return canonical historical DATA batch")
+        expected_length=BOOTSTRAP_HOURS if bootstrap else 1
+        if (tuple(batch.symbols)!=CRYPTO_SIX or
+                set(batch.bars)!=set(CRYPTO_SIX) or
+                any(not isinstance(batch.bars[sym],tuple) or
+                    len(batch.bars[sym])!=expected_length
+                    for sym in CRYPTO_SIX)):
+            # Fail descriptively for sparse/missing provider bars BEFORE
+            # accessing rows[0], writing receipt or marking prospectivity.
+            raise ValueError("incomplete six-market returned source time window")
         event=("HISTORICAL_72H_BOOTSTRAP" if bootstrap else
                "ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR")
         raw=batch.canonical()
