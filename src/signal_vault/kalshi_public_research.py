@@ -71,6 +71,12 @@ class KalshiPublicResearchClient:
     def historical_cutoff(self) -> dict[str,object]:
         return self._get("/historical/cutoff")
 
+    def historical_market(self,ticker:str) -> dict[str,object]:
+        if (not isinstance(ticker,str) or not ticker or len(ticker)>128 or
+                any(ch not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for ch in ticker)):
+            raise ValueError("invalid Kalshi historical market ticker")
+        return self._get(f"/historical/markets/{ticker}")
+
     def historical_markets(
         self,*,limit:int=1000,cursor:str|None=None,
         series_ticker:str|None=None,event_ticker:str|None=None,
