@@ -110,6 +110,23 @@ class OperatorViewTests(unittest.TestCase):
             self.assertTrue(lanes["us_equity"]["historical_research"])
             self.assertTrue(lanes["kalshi_event_contract"]["historical_research"])
             self.assertFalse(any(x["live_execution"] for x in lanes.values()))
+            readiness=data["market_readiness"]
+            self.assertEqual(
+                set(readiness["lanes"]),
+                {"crypto","us_equity","kalshi_event_contract"},
+            )
+            self.assertFalse(
+                readiness["lanes"]["crypto"][
+                    "technically_ready_for_live_activation_review"
+                ]
+            )
+            self.assertIn(
+                "prospective_or_shadow_complete",
+                readiness["lanes"]["crypto"][
+                    "technical_blockers_before_live_activation_review"
+                ],
+            )
+            self.assertFalse(readiness["any_live_activation_permitted"])
             req = Request(root + "/", headers={"Authorization": auth})
             with urlopen(req, timeout=3) as result:
                 page = result.read().decode()
@@ -119,6 +136,8 @@ class OperatorViewTests(unittest.TestCase):
             self.assertIn("crypto", page)
             self.assertIn("us_equity", page)
             self.assertIn("kalshi_event_contract", page)
+            self.assertIn("Technical live-review ready", page)
+            self.assertIn("Blockers:", page)
             self.assertNotIn("<script", page)
             req = Request(root + "/api/status", data=b"{}", method="POST",
                           headers={"Authorization": auth})
