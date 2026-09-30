@@ -36,6 +36,7 @@ MAX_CLOSE_AHEAD_DAYS=30
 MIN_PLAN_LEAD_HOURS=25
 HORIZONS=(86400,21600)
 CAPTURE_WINDOW=timedelta(minutes=60)
+OPEN_MARKET_STATUSES=frozenset(("open","active"))
 
 
 class ProspectiveClient(Protocol):
@@ -109,7 +110,10 @@ def _private_root(root:Path)->Path:
 
 
 def _eligible_market(market:Mapping[str,object], *, planned_at:datetime)->dict[str,object]|None:
-    if market.get("status")!="open" or market.get("market_type")!="binary":
+    # Kalshi's public list endpoint currently accepts status=open as a query
+    # while returning live market objects with status="active". Keep legacy
+    # "open" compatibility, but still require an explicit binary contract.
+    if market.get("status") not in OPEN_MARKET_STATUSES or market.get("market_type")!="binary":
         return None
     if market.get("mve_collection_ticker") not in (None,""):
         return None
@@ -358,7 +362,8 @@ def collect_due_kalshi_snapshots(
                 raise ValueError("Kalshi public snapshot identity mismatch")
             provider_close=_stamp(market.get("close_time"),name="provider close")
             valid=(
-                market.get("status")=="open"
+                market.get("status") in OPEN_MARKET_STATUSES
+                and market.get("market_type")=="binary"
                 and provider_close==close
             )
             invalid_reason=(
