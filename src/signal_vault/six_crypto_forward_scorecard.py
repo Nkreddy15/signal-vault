@@ -166,6 +166,7 @@ def prospective_shadow_scorecard(
         "latest_shadow_is_not_scored_until_next_hour_arrives":True,
         "all_archived_current_segment_shadows_verified":
             len(shadows)==prospective_hours,
+        "verified_preoutcome_shadow_count":len(shadows),
         "network_requests":"NONE",
         "credentials_accessed":"NONE",
         "provider_account_positions_queried":False,
@@ -274,7 +275,6 @@ def prospective_shadow_scorecard(
         "status":status,
         "evaluation_start_first_precommitted_shadow_utc":start.isoformat(),
         "evaluation_end_exclusive_latest_observed_close_utc":end.isoformat(),
-        "verified_preoutcome_shadow_count":len(shadows),
         "scenarios":scenarios,
         "warning":"Forward observations reduce hindsight risk but remain one short, correlated market sample; no strategy selection or order authorization.",
     }
