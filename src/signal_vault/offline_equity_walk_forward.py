@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -286,3 +287,82 @@ def validate_long_equity_walk_forward(
     result["phase48_source_manifest_sha256"] = baseline["source_manifest_sha256"]
     result["phase48_three_way_validation_replayed_first"] = True
     return result
+
+
+def _write_exclusive(path: Path, payload: Mapping[str, object]) -> str:
+    if path.exists() or path.is_symlink():
+        raise ValueError("walk-forward output must be a new regular file")
+    raw = (json.dumps(payload, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(path, flags, 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        os.fchmod(handle.fileno(), 0o600)
+        handle.write(raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return hashlib.sha256(raw).hexdigest()
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Offline expanding walk-forward validation for six US equities"
+    )
+    parser.add_argument("--source-root", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--initial-train-core-hours",
+        type=int,
+        default=DEFAULT_INITIAL_TRAIN_CORE_HOURS,
+    )
+    parser.add_argument(
+        "--validation-core-hours",
+        type=int,
+        default=DEFAULT_VALIDATION_CORE_HOURS,
+    )
+    parser.add_argument(
+        "--step-core-hours",
+        type=int,
+        default=DEFAULT_STEP_CORE_HOURS,
+    )
+    args = parser.parse_args(argv)
+    try:
+        result = validate_long_equity_walk_forward(
+            args.source_root,
+            as_of=datetime.now(timezone.utc),
+            initial_train_count=args.initial_train_core_hours,
+            validation_count=args.validation_core_hours,
+            step_count=args.step_core_hours,
+        )
+        digest = _write_exclusive(args.output, result)
+        print(json.dumps({
+            "status": "LONG_EQUITY_EXPANDING_WALK_FORWARD_COMPLETE",
+            "symbols": result["symbols"],
+            "fold_count": result["fold_count"],
+            "verified_core_hours_per_asset":
+                result["verified_core_hours_per_asset"],
+            "output_sha256": digest,
+            "strategy_selection_performed": False,
+            "prospective_observations_verified": 0,
+            "broker_order_submission": "DISABLED",
+            "live_trading": "UNAVAILABLE",
+        }, sort_keys=True, indent=2))
+        return 0
+    except Exception as exc:
+        print(json.dumps({
+            "status": "FAIL_CLOSED",
+            "failure_class": type(exc).__name__,
+            "strategy_selection_performed": False,
+            "credentials_accessed": "NONE",
+            "network_requests": "NONE",
+            "broker_order_submission": "DISABLED",
+            "live_trading": "UNAVAILABLE",
+        }, sort_keys=True))
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
