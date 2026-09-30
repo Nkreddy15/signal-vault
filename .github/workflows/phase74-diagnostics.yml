@@ -1,0 +1,32 @@
+name: Phase 74 diagnostic test capture
+on:
+  push:
+    branches:
+      - integration-phase74-multimarket
+permissions:
+  contents: read
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project
+        run: python -m pip install -e '.[research,equity-research]'
+      - name: Capture compile and unit test output
+        shell: bash
+        run: |
+          set +e
+          python -m compileall -q src tests > phase74-diagnostic.log 2>&1
+          compile_code=$?
+          PYTHONPATH=src python -m unittest discover -s tests -v >> phase74-diagnostic.log 2>&1
+          test_code=$?
+          printf '\nCOMPILE_EXIT=%s\nTEST_EXIT=%s\n' "$compile_code" "$test_code" >> phase74-diagnostic.log
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase74-diagnostic-log
+          path: phase74-diagnostic.log
+          retention-days: 1
