@@ -61,6 +61,53 @@ def _private_files(root:Path, pattern:str)->tuple[Path,...]:
     return files
 
 
+def _equity_next_action(
+    *,
+    status:str,
+    integrity_status:str,
+    source_ready:bool,
+    due_open:int,
+    missing_expired:int,
+)->str:
+    if status=="NOT_STARTED":
+        return "WAIT_FOR_NEXT_XNYS_PREMARKET_SESSION_PLAN"
+    if integrity_status=="FAILED":
+        return "OPERATOR_REVIEW_STOCK_SOURCE_INTEGRITY_FAILED_NO_TRADING"
+    if source_ready:
+        return "OFFLINE_STOCK_SHADOW_SCORING_INPUTS_REQUIRED"
+    if due_open>0:
+        return "CAPTURE_DUE_STOCK_CORE_HOURS_GET_ONLY"
+    if missing_expired>0:
+        return "CONTINUE_NEW_CLEAN_STOCK_SEGMENT_NO_BACKFILL"
+    return "CONTINUE_UNATTENDED_STOCK_FORWARD_COLLECTION"
+
+
+def _kalshi_next_action(
+    *,
+    status:str,
+    integrity_status:str,
+    source_ready:bool,
+    window_open:int,
+    missing_expired:int,
+    settlement_pending:int,
+)->str:
+    if status=="NOT_STARTED":
+        return "PRECOMMIT_PUBLIC_KALSHI_PROSPECTIVE_PLAN_GET_ONLY"
+    if status=="SIDE_CAR_PRESENT_NO_PLAN":
+        return "PRECOMMIT_PUBLIC_KALSHI_PROSPECTIVE_PLAN_GET_ONLY"
+    if integrity_status=="FAILED":
+        return "OPERATOR_REVIEW_KALSHI_SOURCE_INTEGRITY_FAILED_NO_TRADING"
+    if source_ready:
+        return "OFFLINE_KALSHI_SHADOW_SCORING_INPUTS_REQUIRED"
+    if window_open>0:
+        return "CAPTURE_DUE_KALSHI_FIXED_HORIZON_QUOTES_GET_ONLY"
+    if missing_expired>0:
+        return "CONTINUE_PRECOMMITTED_SAMPLE_WITH_MISSES_RECORDED_NO_BACKFILL"
+    if settlement_pending>0:
+        return "RETRY_PUBLIC_KALSHI_SETTLEMENT_GETS"
+    return "CONTINUE_UNATTENDED_KALSHI_FORWARD_COLLECTION"
+
+
 def _equity_status(
     base:Path,
     *,
@@ -79,6 +126,7 @@ def _equity_status(
             "decision_hours_capture_window_open":0,
             "decision_hours_missing_after_window":0,
             "offline_integrity_audit_required":True,
+            "next_action":"WAIT_FOR_NEXT_XNYS_PREMARKET_SESSION_PLAN",
         }
     plans=_private_files(root,"equity-forward-plan-*.json")
     receipts=_private_files(root,"equity-forward-*.json")
@@ -153,6 +201,13 @@ def _equity_status(
         "current_segment_integrity_verified_core_hours":current_segment_hours,
         "current_segment_integrity_verified_sessions":current_segment_sessions,
         "prospective_source_integrity_ready_for_shadow_scoring":source_ready,
+        "next_action":_equity_next_action(
+            status="EVIDENCE_PRESENT",
+            integrity_status=integrity_status,
+            source_ready=source_ready,
+            due_open=due_open,
+            missing_expired=missing_expired,
+        ),
         "artifact_counts_are_not_gate_pass":True,
         "time_aware_progress_is_not_integrity_audit":True,
         "offline_integrity_audit_required":True,
@@ -191,6 +246,7 @@ def _kalshi_status(
             "settlements_not_due_yet":0,
             "settlements_pending_after_planned_close":0,
             "offline_integrity_audit_required":True,
+            "next_action":"PRECOMMIT_PUBLIC_KALSHI_PROSPECTIVE_PLAN_GET_ONLY",
         }
     plans=_private_files(root,"kalshi-prospective-plan-*.json")
     if len(plans)>1:
@@ -288,6 +344,14 @@ def _kalshi_status(
         "integrity_verified_valid_markets":valid_markets,
         "integrity_verified_distinct_events":valid_events,
         "prospective_source_integrity_ready_for_shadow_scoring":source_ready,
+        "next_action":_kalshi_next_action(
+            status=("EVIDENCE_PRESENT" if plans else "SIDE_CAR_PRESENT_NO_PLAN"),
+            integrity_status=integrity_status,
+            source_ready=source_ready,
+            window_open=window_open,
+            missing_expired=missing_expired,
+            settlement_pending=settlement_pending,
+        ),
         "artifact_counts_are_not_gate_pass":True,
         "time_aware_progress_is_not_integrity_audit":True,
         "offline_integrity_audit_required":True,
@@ -310,12 +374,23 @@ def all_market_forward_status(
         btc_root=root,
         sidecar_root=root/"isolated-six-crypto-prospective",
     )
+    equity=_equity_status(root,as_of=checked)
+    kalshi=_kalshi_status(root,as_of=checked)
     return {
         "kind":"ALL_MARKET_FORWARD_READINESS_STATUS_NO_ORDERS",
         "checked_at_utc":checked.isoformat(),
         "btc_and_six_crypto":crypto,
-        "us_equity":_equity_status(root,as_of=checked),
-        "kalshi":_kalshi_status(root,as_of=checked),
+        "us_equity":equity,
+        "kalshi":kalshi,
+        "lane_next_actions":{
+            "six_crypto":crypto.get(
+                "sidecar_next_action",
+                "CONTINUE_UNATTENDED_FORWARD_COLLECTION",
+            ),
+            "us_equity":equity["next_action"],
+            "kalshi":kalshi["next_action"],
+        },
+        "automatic_cross_market_selection":"DISABLED",
         "network_requests":"NONE",
         "credential_access":"NONE",
         "broker_order_submission":"DISABLED",
