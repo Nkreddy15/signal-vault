@@ -162,7 +162,9 @@ class MultiMarketAlpacaPaperExecutorTests(unittest.TestCase):
         draft=MultiMarketOrderDraft(
             "k1","kalshi_event_contract","TEST",Decimal("5"),
             {
-                "ticker":"TEST","side":"yes","action":"buy","count":"5",
+                "ticker":"TEST","side":"bid","count":"5","price":"0.2500",
+                "time_in_force":"good_till_canceled",
+                "self_trade_prevention_type":"taker_at_cross",
                 "client_order_id":"k1",
             },
         )
