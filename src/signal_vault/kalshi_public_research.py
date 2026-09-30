@@ -11,7 +11,9 @@ import json
 from dataclasses import dataclass
 from typing import Callable
 from urllib.parse import urlencode, urlparse
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener
+
+from .forward_capture import _RejectRedirects
 
 PRODUCTION_PUBLIC_BASE="https://external-api.kalshi.com/trade-api/v2"
 MAX_RESPONSE_BYTES=8_000_000
@@ -21,7 +23,9 @@ ALLOWED_HOSTS=frozenset({"external-api.kalshi.com","api.elections.kalshi.com"})
 Transport=Callable[[Request,float], bytes]
 
 def _default_transport(request:Request,timeout:float) -> bytes:
-    with urlopen(request,timeout=timeout) as response:
+    with build_opener(_RejectRedirects).open(
+        request,timeout=timeout
+    ) as response:
         data=response.read(MAX_RESPONSE_BYTES+1)
     return data
 
