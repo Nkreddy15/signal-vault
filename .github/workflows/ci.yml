@@ -5,39 +5,41 @@ on:
 permissions:
   contents: read
 jobs:
-  runner:
+  tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - run: python --version
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -e '.[research,equity-research]'
-  compile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -e '.[research,equity-research]'
-      - run: python -m compileall -q src tests
-  phase50:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m pip install -e '.[research,equity-research]'
-      - env:
+          python-version: ${{ matrix.python-version }}
+      - name: Install project with research dependencies
+        run: python -m pip install -e '.[research,equity-research]'
+      - name: Compile sources
+        run: python -m compileall -q src tests
+      - name: Run offline safety tests
+        env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -p 'test_phase50*.py' -v
+        run: python -m unittest discover -s tests -v
+      - name: Verify live mode is explicitly refused
+        env:
+          PYTHONPATH: src
+          SIGNAL_VAULT_MODE: live
+        run: |
+          set +e
+          python -m signal_vault > /tmp/sv-live-refusal.txt 2>&1
+          result=$?
+          set -e
+          if [ "$result" -eq 0 ] || ! grep -Fq 'PAPER ONLY' /tmp/sv-live-refusal.txt; then
+            echo 'SECURITY REGRESSION: an explicit PAPER ONLY refusal is required' >&2
+            exit 1
+          fi
+          echo 'PASS: explicitly rejected live mode'
+      - name: Disallow live Alpaca trading host in source
+        run: |
+          if grep -R -F 'https://api.alpaca.markets' src/; then
+            echo 'SECURITY REGRESSION: unreviewed live Alpaca URL in source' >&2
+            exit 1
+          fi
