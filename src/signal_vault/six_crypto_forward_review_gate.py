@@ -23,6 +23,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Mapping
+from pathlib import Path
+import argparse
+import json
 
 from .multi_asset_simulation import HYPOTHESES, HypothesisKind
 
@@ -242,3 +245,34 @@ def assess_forward_review_gate(
         "separate_owner_authorization_still_required_for_any_PAPER_execution":True,
         "passing_does_not_establish_future_profit":True,
     }
+
+
+def main(argv:list[str]|None=None) -> int:
+    parser=argparse.ArgumentParser(
+        description="Predeclared prospective six-crypto review gate; never enables orders.")
+    parser.add_argument("--scorecard",required=True,type=Path)
+    args=parser.parse_args(argv)
+    path=args.scorecard
+    try:
+        if (path.is_symlink() or not path.is_file() or
+                not 0<path.stat().st_size<=10_000_000):
+            raise ValueError("scorecard must be a bounded regular JSON file")
+        source=json.loads(path.read_bytes())
+        result=assess_forward_review_gate(source)
+        code=0
+    except Exception as exc:
+        result={
+            "kind":"PREDECLARED_SIX_CRYPTO_FORWARD_REVIEW_GATE_NOT_TRADING_AUTHORIZATION",
+            "policy_version":POLICY_VERSION,
+            "status":"BLOCKED_INVALID_OR_INCOMPLETE_GATE_INPUT",
+            "failure_class":type(exc).__name__,
+            "paper_order_submission":"DISABLED",
+            "live_trading":"UNAVAILABLE",
+        }
+        code=2
+    print(json.dumps(result,indent=2,sort_keys=True))
+    return code
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
