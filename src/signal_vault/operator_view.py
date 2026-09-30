@@ -47,6 +47,95 @@ def _event_name(value: object) -> str:
     return value if isinstance(value, str) and re.fullmatch(r"[A-Z][A-Z_0-9]{0,63}", value) else "UNRECOGNIZED_EVENT"
 
 
+_MM_LANES = ("crypto", "us_equity", "kalshi_event_contract")
+_MM_STAGES = {
+    "draft_approved", "submission_pending", "unknown_result",
+    "broker_accepted", "partially_filled",
+    "broker_terminal_unreconciled", "reconciled",
+}
+
+
+def _multimarket_execution_snapshot(
+    con: sqlite3.Connection,
+    *,
+    max_items: int,
+) -> dict[str, object]:
+    """Sanitized read-only view of the optional shared cross-market journal."""
+    present = {
+        row[0]
+        for row in con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' "
+            "AND name IN ('mm_execution_drafts','mm_execution_states')"
+        )
+    }
+    if not present:
+        return {
+            "available": False,
+            "count": 0,
+            "unresolved": 0,
+            "by_lane": {lane: {"count": 0, "unresolved": 0} for lane in _MM_LANES},
+            "recent": [],
+        }
+    if present != {"mm_execution_drafts", "mm_execution_states"}:
+        raise OperatorSnapshotError("incomplete multi-market execution journal schema")
+
+    joined = tuple(con.execute(
+        """SELECT d.market_lane,d.instrument,s.state_json,s.updated_utc
+           FROM mm_execution_states s
+           JOIN mm_execution_drafts d USING(client_order_id)
+           ORDER BY s.updated_utc DESC"""
+    ))
+    by_lane = {lane: {"count": 0, "unresolved": 0} for lane in _MM_LANES}
+    recent = []
+    unresolved = 0
+    for index, row in enumerate(joined):
+        lane, instrument, raw_state, updated = row
+        if lane not in by_lane:
+            raise OperatorSnapshotError("unknown multi-market execution lane")
+        if (
+            not isinstance(instrument, str)
+            or not instrument.strip()
+            or len(instrument) > 160
+            or any(ch in instrument for ch in "\r\n\x00")
+        ):
+            raise OperatorSnapshotError("invalid multi-market instrument")
+        state = json.loads(raw_state)
+        if not isinstance(state, dict):
+            raise OperatorSnapshotError("invalid multi-market execution state")
+        stage = state.get("stage")
+        if stage not in _MM_STAGES:
+            raise OperatorSnapshotError("unknown multi-market execution stage")
+        provider_status = state.get("provider_status")
+        if provider_status is None:
+            safe_status = "NOT_REPORTED"
+        elif isinstance(provider_status, str):
+            safe_status = _event_name(provider_status.upper())
+        else:
+            raise OperatorSnapshotError("invalid multi-market provider status")
+        filled_qty = _number(state.get("cumulative_filled_qty"))
+        is_unresolved = stage != "reconciled"
+        by_lane[lane]["count"] += 1
+        if is_unresolved:
+            by_lane[lane]["unresolved"] += 1
+            unresolved += 1
+        if index < max_items:
+            recent.append({
+                "market_lane": lane,
+                "instrument": instrument,
+                "stage": stage,
+                "provider_status": safe_status,
+                "filled_qty": filled_qty,
+                "updated_utc": _timestamp(updated),
+            })
+    return {
+        "available": True,
+        "count": len(joined),
+        "unresolved": unresolved,
+        "by_lane": by_lane,
+        "recent": recent,
+    }
+
+
 def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> dict[str, object]:
     """Return a single consistent, sanitized snapshot via SQLite query-only mode.
 
@@ -134,6 +223,9 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
             last_mark = {"btc_usd": mark_price, "equity_usd": _number(mark["equity_usd"]),
                          "marked_utc": _timestamp(mark["marked_utc"]),
                          "source": "LAST_PERSISTED_PAPER_MARK_NOT_LIVE"}
+        multimarket_execution = _multimarket_execution_snapshot(
+            con, max_items=max_items
+        )
         con.execute("COMMIT")
         return {
             "schema_version": 1,
@@ -150,6 +242,7 @@ def read_local_paper_snapshot(db_path: str | Path, *, max_items: int = 12) -> di
             "paper_orders": {"count": order_count, "unresolved": unresolved,
                              "accounted_provider_orders": applied_count,
                              "pending_fee_audits": pending_fees, "recent": order_rows},
+            "multimarket_execution": multimarket_execution,
             "recent_events": [{"type": _event_name(row["event_type"]),
                                "at_utc": _timestamp(row["created_utc"])} for row in events],
             "disclosure": "LOCAL PAPER JOURNAL ONLY. No verified live equity or strategy returns.",
