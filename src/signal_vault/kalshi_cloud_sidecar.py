@@ -36,6 +36,35 @@ ACTIVATION_VALUE="KALSHI_PUBLIC_GET_ONLY_NO_ORDERS_V1"
 ROOT_ENV="SIGNAL_VAULT_FORWARD_ROOT"
 DEFAULT_ROOT=Path("/var/lib/signal-vault/forward")
 CHILD="isolated-kalshi-prospective"
+MAX_PUBLIC_GETS_PER_TICK=25
+
+
+class _BudgetedPublicClient:
+    def __init__(self,inner:object, *, maximum:int=MAX_PUBLIC_GETS_PER_TICK):
+        if type(maximum) is not int or maximum<=0:
+            raise ValueError("positive Kalshi public GET budget required")
+        self._inner=inner
+        self._maximum=maximum
+        self.request_count=0
+
+    def _consume(self)->None:
+        if self.request_count>=self._maximum:
+            raise RuntimeError("Kalshi public GET per-tick budget exhausted")
+        self.request_count+=1
+
+    def live_public_markets(self, **kwargs:object)->dict[str,object]:
+        self._consume()
+        method=getattr(self._inner,"live_public_markets",None)
+        if not callable(method):
+            raise TypeError("Kalshi public client lacks market discovery")
+        return method(**kwargs)
+
+    def live_public_market(self,ticker:str)->dict[str,object]:
+        self._consume()
+        method=getattr(self._inner,"live_public_market",None)
+        if not callable(method):
+            raise TypeError("Kalshi public client lacks single-market lookup")
+        return method(ticker)
 
 
 def _utc(value:datetime)->datetime:
@@ -121,7 +150,7 @@ def run_kalshi_sidecar_once(
 
     root=_root(env)
     plan_path=_plan_file(root)
-    client=client_factory()
+    client=_BudgetedPublicClient(client_factory())
 
     if plan_path is None:
         plan=build_prospective_kalshi_plan(
@@ -139,7 +168,9 @@ def run_kalshi_sidecar_once(
             planned_market_count=plan["planned_market_count"],
             minimum_distinct_events=plan["minimum_distinct_events"],
             filesystem_writes=True,
-            network_requests=int(plan["discovery_pages"]),
+            network_requests=client.request_count,
+            public_get_budget=MAX_PUBLIC_GETS_PER_TICK,
+            public_get_requests_used=client.request_count,
         )
 
     plan=_load_plan(plan_path)
@@ -167,10 +198,9 @@ def run_kalshi_sidecar_once(
         filesystem_writes=bool(
             snapshots["captured_count"] or settlements["captured_count"]
         ),
-        network_requests=(
-            snapshots["captured_count"]
-            + settlements["network_request_count"]
-        ),
+        network_requests=client.request_count,
+        public_get_budget=MAX_PUBLIC_GETS_PER_TICK,
+        public_get_requests_used=client.request_count,
     )
 
 
