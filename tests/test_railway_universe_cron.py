@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from datetime import datetime,timedelta,timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from signal_vault.railway_universe_cron import (
     KEY, SECRET, MOUNT, mounted_universe_volume,
@@ -90,7 +91,8 @@ class DedicatedUniverseRailwayAdapterTests(unittest.TestCase):
 
     def test_unsafe_volume_and_stale_run_do_not_acquire_provider_credentials(self):
         self.root.chmod(0o755)
-        result=self.once(FIRST)
+        with patch("signal_vault.railway_universe_cron.os.geteuid",return_value=1001):
+            result=self.once(FIRST)
         self.assertEqual(result["status"],"BLOCKED_NO_NEW_PROSPECTIVE_EVIDENCE")
         self.assertEqual(self.factory_count,0)
         self.root.chmod(0o700)
@@ -98,6 +100,17 @@ class DedicatedUniverseRailwayAdapterTests(unittest.TestCase):
         self.assertEqual(result["status"],"SAFE_SKIP_OUTSIDE_FRESH_CLOSED_HOUR_WINDOW")
         self.assertEqual(self.factory_count,0)
         self.assertEqual(universe_status(root=self.root)["all_segments_total_receipts"],0)
+
+
+    def test_only_real_owner_may_restrict_new_exact_mount_root(self):
+        self.root.chmod(0o755)
+        with patch("signal_vault.railway_universe_cron.os.geteuid",return_value=0):
+            out=self.once(FIRST)
+        self.assertEqual(out["status"],"HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
+        self.assertEqual(self.root.stat().st_mode&0o777,0o700)
+        self.assertEqual(out["recorded_prospective_asset_bars"],0)
+        self.assertFalse(out["old_BTC_collector_modified"])
+        self.assertEqual(self.factory_count,1)
 
 
 if __name__=="__main__":
