@@ -30,7 +30,7 @@ from .research_universe import candidate,validate_asset_dataset
 from .runtime_lock import RuntimeFileLock
 
 FOLDER="immutable-six-crypto-shadows"
-SHADOW_NAME=re.compile(r"shadow-hour-[0-9]{8}T[0-9]{4}Z\\.json\\Z")
+SHADOW_NAME=re.compile(r"shadow-hour-[0-9]{8}T[0-9]{4}Z\.json\Z")
 
 
 def _safe_folder(root:Path,*,create:bool=False) -> Path:
@@ -169,7 +169,7 @@ def audit_six_crypto_shadow_archive(*,root:Path=ROOT) -> dict[str,object]:
         receipt["segment_index"]==segment
         for receipt in chain)
     current_missing=sum(
-        name in missing and payload["segment_index"]==segment
+        name.name in missing and payload["segment_index"]==segment
         for name,_,payload in expected)
     return {
         "kind":"OFFLINE_SIX_CRYPTO_ALL_SHADOWS_SOURCE_PARITY_AUDIT",
