@@ -104,9 +104,7 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(set(raw["source_historical_batch"]["bars"]),set(CRYPTO_SIX))
         self.assertEqual(raw["previous_receipt_sha256"],
                          json.loads(paths[0].read_bytes())["receipt_sha256"])
-        self.assertEqual(raw["per_asset_observation_sha256"].keys(),
-                         status["symbols"].__iter__().__class__ if False else
-                         raw["per_asset_observation_sha256"].keys())
+        self.assertEqual(set(raw["per_asset_observation_sha256"]),set(CRYPTO_SIX))
         self.assertFalse(raw["source_historical_batch"]["bars"]["BTC/USD"][0]["prospective"])
         self.assertEqual(raw["prospective_asset_rows_in_this_receipt"],6)
 
@@ -120,7 +118,7 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(again["status"],"SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET")
         self.assertEqual(self.factory_calls,1)
         self.assertEqual(
-            self.run(FIRST+HOUR-timedelta(minutes=2))["status"],
+            self.run(FIRST+HOUR-timedelta(minutes=10))["status"],
             "SAFE_SKIP_OUTSIDE_FRESH_CLOSED_HOUR_WINDOW")
         self.assertEqual(self.factory_calls,1)
         self.assertEqual(
@@ -185,8 +183,7 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
                 self.provider=problem
                 with self.assertRaises(ValueError):
                     self.run(FIRST)
-                self.assertEqual(list((self.base/"hourly-receipts").glob("*.json")),
-                                 [] if (self.base/"hourly-receipts").exists() else [])
+                self.assertEqual(list((self.base/"hourly-receipts").glob("*.json")),[])
                 self.assertEqual(universe_status(root=self.base)[
                     "current_segment_independent_prospective_hours"],0)
         self.provider=FixtureSixCryptoProvider()
