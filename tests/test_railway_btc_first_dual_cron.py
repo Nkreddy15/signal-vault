@@ -95,6 +95,11 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(captured["sidecar_recorded_distinct_prospective_UTC_hours"],1)
         self.assertEqual(captured["sidecar_shadow_status"],
                          "NEW_IMMUTABLE_SIX_MARKET_SHADOW")
+        self.assertEqual(
+            captured["btc_evidence_before_sidecar_SHA256"],
+            captured["btc_evidence_after_sidecar_SHA256"])
+        self.assertFalse(captured["btc_evidence_changed_during_sidecar_stage"])
+        self.assertEqual(len(captured["btc_evidence_before_sidecar_SHA256"]),64)
         self.assertEqual(len(list(self.side.glob("*.sqlite3"))),0)
         self.assertEqual(self.sentinel.read_bytes(),before)
         self.assertEqual(self.six_factory_calls,2)
@@ -193,6 +198,30 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(self.sentinel.read_bytes(),before)
         self.assertEqual(self.six_factory_calls,1)
         self.assertFalse((self.side/"hourly-receipts").exists())
+
+    def test_unexpected_original_BTC_mutation_during_sidecar_is_detected_loudly(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        normal=FixtureSixCryptoProvider()
+        sentinel=self.sentinel
+        class MutatingProvider:
+            def fetch(self,**kwargs):
+                # Simulate a catastrophic sidecar bug or unexpected concurrent
+                # writer. Production sidecar code has no path to this file.
+                sentinel.write_bytes(b"UNEXPECTED BTC MUTATION")
+                return normal.fetch(**kwargs)
+        self.six_source=MutatingProvider()
+        result=self.tick(FIRST)
+        self.assertEqual(result["btc_status"],BTC_SUCCESS)
+        self.assertEqual(
+            result["sidecar_status"],"FAILED_BTC_EVIDENCE_MUTATION_GUARD")
+        self.assertTrue(result["btc_evidence_changed_during_sidecar_stage"])
+        self.assertNotEqual(
+            result["btc_evidence_before_sidecar_SHA256"],
+            result["btc_evidence_after_sidecar_SHA256"])
+        self.assertEqual(
+            result["sidecar_failure_class"],"BtcEvidenceFingerprintMismatch")
+        self.assertTrue(result["original_BTC_status_preserved"])
+        self.assertEqual(result["broker_order_submission"],"DISABLED")
 
     def test_symlinked_or_insecure_existing_sidecar_is_never_repaired_by_BTC_worker(self):
         self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
