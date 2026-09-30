@@ -42,46 +42,62 @@ FULLY_SCORED_DECISIONS=168
 
 def _verify_all_current_segment_shadows(
     root:Path,
+    chain:list[dict[str,object]],
     active:list[dict[str,object]],
 ) -> tuple[dict[str,dict[str,object]],int]:
-    """Every prospective receipt must have exact immutable pre-outcome shadow."""
+    """Verify ALL archived shadows; return current segment's pre-outcome set."""
     folder=root/FOLDER
-    prospective=active[1:]
-    if not prospective:
+    all_prospective=[r for r in chain
+                     if r["event"]=="ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR"]
+    if not all_prospective:
         if folder.exists() and any(folder.iterdir()):
-            raise ValueError("historical-only baseline must not have a shadow")
+            raise ValueError("historical-only evidence must not have a shadow")
         return {},0
     if folder.is_symlink() or not folder.is_dir() or folder.stat().st_mode&0o077:
         raise ValueError("prospective shadow folder must be private real directory")
+
+    by_segment={}
+    for receipt in chain:
+        by_segment.setdefault(receipt["segment_index"],[]).append(receipt)
     expected_names=set()
-    checked={}
-    for offset,receipt in enumerate(prospective,start=1):
-        close=_utc(datetime.fromisoformat(receipt["closed_hour_utc"]))
-        name="shadow-hour-"+close.strftime("%Y%m%dT%H%MZ")+".json"
-        expected_names.add(name)
-        path=folder/name
-        if (path.is_symlink() or not path.is_file() or
-                path.stat().st_mode&0o077 or not 0<path.stat().st_size<=2_000_000):
-            raise ValueError("missing/insecure immutable prospective shadow")
-        stored=json.loads(path.read_bytes())
-        # Recompute using ONLY chain available at this shadow's original
-        # decision time. Later outcomes are intentionally excluded here.
-        expected=_latest_payload(active[:offset+1])
-        if expected is None:
-            raise ValueError("prospective receipt did not yield a pre-outcome shadow")
-        expected["shadow_payload_sha256"]=_sha(expected)
-        if stored!=expected:
-            raise ValueError("archived pre-outcome shadow differs from source-time reconstruction")
-        if stored["latest_universe_source_receipt_SHA256"]!=receipt["receipt_sha256"]:
-            raise ValueError("shadow does not bind to exact source receipt")
-        checked[close.isoformat()]=stored
-    actual={
-        item.name for item in folder.iterdir()
-        if item.is_file() and not item.is_symlink()
-    }
+    current={}
+    active_segment=active[-1]["segment_index"]
+    current_count=0
+    for segment,records in by_segment.items():
+        if (not records or records[0]["event"]!="HISTORICAL_72H_BOOTSTRAP" or
+                any(r["event"]!="ONE_NEW_CONTIGUOUS_PROSPECTIVE_HOUR"
+                    for r in records[1:])):
+            raise ValueError("shadow audit found malformed source segment")
+        for offset,receipt in enumerate(records[1:],start=1):
+            close=_utc(datetime.fromisoformat(receipt["closed_hour_utc"]))
+            name="shadow-hour-"+close.strftime("%Y%m%dT%H%MZ")+".json"
+            expected_names.add(name)
+            path=folder/name
+            if (path.is_symlink() or not path.is_file() or
+                    path.stat().st_mode&0o077 or not 0<path.stat().st_size<=2_000_000):
+                raise ValueError("missing/insecure immutable prospective shadow")
+            stored=json.loads(path.read_bytes())
+            # Recompute using ONLY this segment's source chain available at
+            # the shadow's original decision time; never include later bars.
+            expected=_latest_payload(records[:offset+1])
+            if expected is None:
+                raise ValueError("prospective receipt did not yield pre-outcome shadow")
+            expected["shadow_payload_sha256"]=_sha(expected)
+            if stored!=expected:
+                raise ValueError("archived pre-outcome shadow differs from source-time reconstruction")
+            if stored["latest_universe_source_receipt_SHA256"]!=receipt["receipt_sha256"]:
+                raise ValueError("shadow does not bind to exact source receipt")
+            if segment==active_segment:
+                current[close.isoformat()]=stored
+                current_count+=1
+    actual=set()
+    for item in folder.iterdir():
+        if item.is_symlink() or not item.is_file():
+            raise ValueError("unexpected non-file/symlink in immutable shadow folder")
+        actual.add(item.name)
     if actual!=expected_names:
-        raise ValueError("missing or unexpected shadow files in current evidence tree")
-    return checked,len(prospective)
+        raise ValueError("missing or unexpected shadow files in evidence tree")
+    return current,current_count
 
 
 def _active_datasets(
@@ -133,7 +149,7 @@ def prospective_shadow_scorecard(
            for r in active[1:]):
         raise ValueError("current segment contains noncontiguous prospective structure")
 
-    shadows,prospective_hours=_verify_all_current_segment_shadows(base,active)
+    shadows,prospective_hours=_verify_all_current_segment_shadows(base,chain,active)
     scorable=max(0,prospective_hours-1)
     common={
         "kind":"OFFLINE_SIX_CRYPTO_PROSPECTIVE_SHADOW_SCORECARD",
