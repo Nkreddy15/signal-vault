@@ -257,7 +257,9 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
             "HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
         receipts=self.side/"hourly-receipts"
         receipts.chmod(0o755)
-        next_hour=self.tick(FIRST+HOUR)
+        with patch("signal_vault.railway_btc_first_dual_cron.os.geteuid",
+                   return_value=0):
+            next_hour=self.tick(FIRST+HOUR)
         self.assertEqual(next_hour["sidecar_stage"],"COMPLETE")
         self.assertEqual(
             next_hour["sidecar_status"],
