@@ -86,6 +86,32 @@ BTC_HEALTHY={
 }
 
 
+def _sidecar_permission_snapshot(*,sidecar_root:Path) -> dict[str,object]:
+    """Read-only minimal permission metadata for exact sidecar-owned entries."""
+    out={"process_euid":os.geteuid(),"entries":{}}
+    names=(".", ".six-crypto-source.lock", "hourly-receipts",
+           "immutable-six-crypto-shadows")
+    for name in names:
+        item=sidecar_root if name=="." else sidecar_root/name
+        entry={
+            "exists":item.exists(),
+            "symlink":item.is_symlink(),
+        }
+        if item.exists() and not item.is_symlink():
+            st=item.stat()
+            entry.update({
+                "kind":("directory" if item.is_dir() else
+                        "file" if item.is_file() else "other"),
+                "mode_octal":format(st.st_mode&0o777,"04o"),
+                "uid_matches_process":st.st_uid==os.geteuid(),
+                "readable":os.access(item,os.R_OK),
+                "writable":os.access(item,os.W_OK),
+                "executable":os.access(item,os.X_OK),
+            })
+        out["entries"][name]=entry
+    return out
+
+
 def _restrict_known_sidecar_directories(*,sidecar_root:Path) -> list[str]:
     """Repair ONLY permission bits on exact direct child dirs we created.
 
@@ -379,6 +405,12 @@ def combined_btc_first_once(
             sidecar_status="FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY",
             sidecar_failure_class=type(exc).__name__,
             original_BTC_status_preserved=True)
+        try:
+            output["sidecar_permission_snapshot"]=_sidecar_permission_snapshot(
+                sidecar_root=sidecar_root)
+        except Exception as snapshot_exc:
+            output["sidecar_permission_snapshot_failure_class"]=type(
+                snapshot_exc).__name__
         if "btc_before_sidecar" in locals():
             try:
                 btc_after_sidecar=fingerprint_btc_evidence_tree(
