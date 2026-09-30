@@ -81,7 +81,11 @@ can only load values AFTER local old-chain/clock verification.
 
 The adapter rejects LIVE/generic broker keys, the old BTC-forward
 credential variable names, PAPER order controls, a wrong volume and a
-non-root Railway UID. There is no POST, account query, paper/live trading,
+non-root Railway UID. On an actual separate root-owned Railway mount that
+initially has wider default permission bits, ONLY the exact independently
+verified new mount root may be tightened to 0700 when the running service
+is actually UID 0; preflight/status never repairs permissions and the
+existing BTC root/parents are NEVER chmod-ed. There is no POST, account query, paper/live trading,
 stock source, SIP purchase or promotion of the original BTC collector to
 this new code. Rolling it out is a SEPARATE deliberate infrastructure
 change; until then the only deployed prospective feed remains BTC.
