@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Mapping
+import re
 
 from .multimarket_execution_journal import MultiMarketOrderDraft
 
@@ -23,6 +24,7 @@ KALSHI_ORDER_PATH = "/trade-api/v2/portfolio/events/orders"
 CRYPTO_PAPER_ACK = "I_ACKNOWLEDGE_ALPACA_CRYPTO_PAPER_ORDERS_ONLY"
 EQUITY_PAPER_ACK = "I_ACKNOWLEDGE_ALPACA_EQUITY_PAPER_ORDERS_ONLY"
 KALSHI_DEMO_ACK = "I_ACKNOWLEDGE_KALSHI_DEMO_ORDERS_ONLY"
+_ALPACA_CLIENT_ORDER_ID = re.compile(r"^[A-Za-z0-9_-]{1,48}$")
 
 
 @dataclass(frozen=True)
@@ -141,8 +143,8 @@ def _base_order_fields(payload: Mapping[str, str]) -> dict[str, str]:
         raise ValueError("missing required order fields")
     if data["side"] not in {"buy", "sell"}:
         raise ValueError("unsupported order side")
-    if data["client_order_id"] == "":
-        raise ValueError("client order id required")
+    if not _ALPACA_CLIENT_ORDER_ID.fullmatch(data["client_order_id"]):
+        raise ValueError("Alpaca client order id must be lookup-safe (1-48 letters/digits/_/-)")
     return data
 
 
