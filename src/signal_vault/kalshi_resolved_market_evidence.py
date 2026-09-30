@@ -19,6 +19,7 @@ MAX_WINDOW_SECONDS=60*60*24*120
 
 
 class ResolvedMarketClient(Protocol):
+    def historical_market(self,ticker:str) -> dict[str,object]: ...
     def historical_market_candlesticks(
         self,*,ticker:str,start_ts:int,end_ts:int,period_interval:int=60,
     ) -> dict[str,object]: ...
@@ -82,6 +83,23 @@ def capture_resolved_market_evidence(
         raise ValueError("unsupported Kalshi candlestick interval")
 
     _new_private_root(output_root)
+
+    metadata=client.historical_market(ticker)
+    market=metadata.get("market") if isinstance(metadata,dict) else None
+    if not isinstance(market,dict):
+        raise ValueError("Kalshi historical market metadata missing market object")
+    if market.get("ticker")!=ticker:
+        raise ValueError("Kalshi historical market metadata ticker mismatch")
+    result=market.get("result")
+    if result not in {"yes","no"}:
+        raise ValueError("Kalshi historical market must have binary settled result")
+    if market.get("status") not in {"settled","closed"}:
+        raise ValueError("Kalshi historical market is not resolved")
+    settlement_ts=market.get("settlement_ts")
+    if not isinstance(settlement_ts,str) or not settlement_ts:
+        raise ValueError("Kalshi resolved market is missing settlement timestamp")
+    metadata_sha=_write(output_root/"market.json",metadata)
+
     candles=client.historical_market_candlesticks(
         ticker=ticker,
         start_ts=start_ts,
@@ -123,6 +141,9 @@ def capture_resolved_market_evidence(
         "start_ts":start_ts,
         "end_ts":end_ts,
         "candlestick_interval":candlestick_interval,
+        "market_metadata_sha256":metadata_sha,
+        "resolved_result":result,
+        "settlement_ts":settlement_ts,
         "candlesticks_sha256":candle_sha,
         "trade_pages":pages,
         "credentials_accessed":"NONE",
