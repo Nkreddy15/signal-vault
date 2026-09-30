@@ -50,6 +50,20 @@ def _dashboard(payload: dict[str, object]) -> bytes:
                      for item in payload["recent_events"])
     capabilities=payload["market_capabilities"]["markets"]
     readiness=payload["market_readiness"]["lanes"]
+    multimarket_execution=payload["multimarket_execution"]
+    execution_cards="".join(
+        f'<article><small>{safe(lane)}</small>'
+        f'<strong>{safe(values["unresolved"])} unresolved</strong>'
+        f'<span>Total journaled: {safe(values["count"])}</span></article>'
+        for lane,values in multimarket_execution["by_lane"].items())
+    execution_rows="".join(
+        f'<tr><td>{safe(item["market_lane"])}</td>'
+        f'<td>{safe(item["instrument"])}</td>'
+        f'<td>{safe(item["stage"])}</td>'
+        f'<td>{safe(item["provider_status"])}</td>'
+        f'<td>{safe(item["filled_qty"])}</td>'
+        f'<td>{safe(item["updated_utc"])}</td></tr>'
+        for item in multimarket_execution["recent"])
     market_cards="".join(
         f'<article><small>{safe(lane["market"])}</small>'
         f'<strong>{safe(lane["order_submission"])}</strong>'
@@ -76,7 +90,10 @@ th,td{{padding:10px;border-bottom:1px solid #3f6554;text-align:left;overflow-wra
 </style></head><body><h1>Signal Vault</h1>
 <p class="sub">Private monitoring · ALPACA PAPER ONLY · Operator status: <b>{badge}</b></p>
 <p class="warning">LOCAL LEDGER ONLY. Inventory is not a live valuation. No authenticated exchange results or profit claims are inferred by this dashboard.</p>
-<div class="cards">{cards}</div><h2>Market lanes</h2><div class="cards">{market_cards}</div><h2>Recent journal events</h2><table><tr><th>Event type</th><th>UTC timestamp</th></tr>{events}</table>
+<div class="cards">{cards}</div><h2>Market lanes</h2><div class="cards">{market_cards}</div>
+<h2>Cross-market paper/demo execution</h2><div class="cards">{execution_cards}</div>
+<table><tr><th>Lane</th><th>Instrument</th><th>Stage</th><th>Provider status</th><th>Filled qty</th><th>Updated UTC</th></tr>{execution_rows}</table>
+<h2>Recent journal events</h2><table><tr><th>Event type</th><th>UTC timestamp</th></tr>{events}</table>
 <p class="sub">Last ledger update: {safe(payload["ledger_updated_utc"])} · Read-only · Reloads each minute.</p>
 </body></html>'''
     return markup.encode("utf-8")
