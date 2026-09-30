@@ -84,6 +84,7 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(baseline["sidecar_status"],
                          "HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
         self.assertEqual(baseline["sidecar_recorded_prospective_asset_bars"],0)
+        self.assertEqual(baseline["sidecar_stage"],"COMPLETE")
         self.assertTrue(self.side.is_dir())
         self.assertEqual(self.side.stat().st_mode&0o777,0o700)
         self.assertEqual(universe_status(root=self.side)[
@@ -246,6 +247,47 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
                          "FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY")
         self.assertEqual(self.side.stat().st_mode&0o777,0o755)
         self.assertEqual(self.six_factory_calls,0)
+
+    def test_known_sidecar_child_permission_drift_is_restricted_without_touching_BTC(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        before=self.sentinel.read_bytes()
+        baseline=self.tick(FIRST)
+        self.assertEqual(
+            baseline["sidecar_status"],
+            "HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
+        receipts=self.side/"hourly-receipts"
+        receipts.chmod(0o755)
+        next_hour=self.tick(FIRST+HOUR)
+        self.assertEqual(next_hour["sidecar_stage"],"COMPLETE")
+        self.assertEqual(
+            next_hour["sidecar_status"],
+            "SIX_NEW_PROSPECTIVE_ASSET_BARS_ONE_CLOCK_HOUR")
+        self.assertEqual(receipts.stat().st_mode&0o777,0o700)
+        self.assertIn(
+            "hourly-receipts",
+            next_hour["sidecar_directory_permissions_restricted"])
+        self.assertFalse(next_hour["btc_evidence_changed_during_sidecar_stage"])
+        self.assertEqual(self.sentinel.read_bytes(),before)
+
+    def test_permission_drift_failure_reports_precise_stage_and_never_uses_provider(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        self.tick(FIRST)
+        receipts=self.side/"hourly-receipts"
+        receipts.chmod(0o755)
+        before_calls=self.six_factory_calls
+        with patch("signal_vault.railway_btc_first_dual_cron.os.geteuid",
+                   return_value=1001):
+            out=self.tick(FIRST+HOUR)
+        self.assertEqual(
+            out["sidecar_status"],
+            "FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY")
+        self.assertEqual(out["sidecar_failure_class"],"PermissionError")
+        self.assertEqual(
+            out["sidecar_stage"],
+            "SIDE_CAR_CHILD_PERMISSION_RESTRICTION")
+        self.assertEqual(self.six_factory_calls,before_calls)
+        self.assertEqual(receipts.stat().st_mode&0o777,0o755)
+        self.assertTrue(out["original_BTC_status_preserved"])
 
     def test_low_free_disk_skips_six_source_without_harming_BTC(self):
         self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
