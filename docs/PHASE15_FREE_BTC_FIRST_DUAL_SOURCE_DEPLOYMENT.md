@@ -38,6 +38,17 @@ isolation is LOGICAL (not independent disk fault tolerance); both
 sources still share the same physical 500 MB volume and outage risk.
 The all-previous-receipts SHA audit remains mandatory for both streams.
 
+**New shared-disk protection:** before ANY optional six-asset DATA GET,
+the combined cron checks filesystem free space and the complete new
+sidecar's file sizes. It reserves **128 MiB actually free for original
+BTC evidence**, requires an additional 4 MiB per prospective six-market
+tick, and caps all sidecar immutable research files at **32 MiB** total.
+If the budget is insufficient, skip ONLY the six-market DATA GET with
+`SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE`; do not delete,
+truncate, recycle, rotate or modify any original BTC/source/shadow
+record to make room. This is a deliberately bounded initial canary,
+not a limitless long-term multi-year retention architecture.
+
 ## BTC is always run FIRST, and is never masked by sidecar failure
 
 1. Verify Railway's own `RAILWAY_VOLUME_MOUNT_PATH` matches the expected
