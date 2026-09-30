@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from datetime import timedelta
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from signal_vault.crypto_universe_forward import universe_status
@@ -160,6 +161,38 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
                          "FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY")
         self.assertEqual(self.side.stat().st_mode&0o777,0o755)
         self.assertEqual(self.six_factory_calls,0)
+
+    def test_low_free_disk_skips_six_source_without_harming_BTC(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        original=self.sentinel.read_bytes()
+        # Simulate just 100 MiB free on the one existing persistent volume;
+        # the sidecar requires an EXTRA 128 MiB BTC reserve + per-tick space.
+        with patch("signal_vault.railway_btc_first_dual_cron.os.statvfs",
+                   return_value=SimpleNamespace(
+                       f_bavail=100,f_frsize=1024*1024)):
+            result=self.tick(FIRST)
+        self.assertEqual(result["btc_status"],BTC_SUCCESS)
+        self.assertEqual(result["sidecar_status"],
+                         "SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE")
+        self.assertEqual(self.six_factory_calls,0)
+        self.assertEqual(self.sentinel.read_bytes(),original)
+        self.assertFalse((self.side/"hourly-receipts").exists())
+
+    def test_large_sidecar_archive_cannot_exhaust_original_BTC_storage(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        self.side.mkdir(mode=0o700)
+        existing=self.side/"previous-safe-archive.bin"
+        with existing.open("wb") as file:
+            file.truncate(32*1024*1024)  # allocation-independent st_size gate
+        original=self.sentinel.read_bytes()
+        result=self.tick(FIRST)
+        self.assertEqual(result["btc_status"],BTC_SUCCESS)
+        self.assertEqual(result["sidecar_status"],
+                         "SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE")
+        self.assertEqual(self.six_factory_calls,0)
+        self.assertEqual(self.sentinel.read_bytes(),original)
+        self.assertEqual(existing.stat().st_size,32*1024*1024)
+
 
     def test_no_operator_approval_means_old_production_start_command_unchanged(self):
         docker=(ROOT/"Dockerfile").read_text(encoding="utf-8")
