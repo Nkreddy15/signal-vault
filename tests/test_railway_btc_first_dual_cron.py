@@ -122,6 +122,10 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(captured["sidecar_paper_order_submission"],"DISABLED")
         self.assertTrue(captured[
             "sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"])
+        self.assertEqual(captured[
+            "sidecar_review_gate_source_hours_remaining_to_169"],168)
+        self.assertEqual(captured[
+            "sidecar_review_gate_scored_outcomes_remaining_to_168"],168)
         self.assertEqual(captured["sidecar_readiness_audit_network_requests"],"NONE")
         self.assertEqual(captured["sidecar_readiness_audit_credentials_accessed"],"NONE")
         self.assertEqual(
@@ -203,6 +207,10 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(out["sidecar_paper_order_submission"],"DISABLED")
         self.assertTrue(out[
             "sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"])
+        self.assertEqual(out[
+            "sidecar_review_gate_source_hours_remaining_to_169"],168)
+        self.assertEqual(out[
+            "sidecar_review_gate_scored_outcomes_remaining_to_168"],168)
         self.assertEqual(
             out["sidecar_fully_observed_precommitted_decision_intervals"],0)
         self.assertEqual(
