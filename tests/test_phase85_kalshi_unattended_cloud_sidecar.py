@@ -27,7 +27,7 @@ class FakeClient:
         type(self).instances.append(self)
         self.market_calls=[]
         markets=[]
-        for event_index in range(10):
+        for event_index in range(11):
             for leg in range(2):
                 close=NOW+timedelta(hours=30+event_index*4+leg)
                 markets.append({
@@ -89,7 +89,8 @@ class KalshiCloudSidecarTests(unittest.TestCase):
             client_factory=FakeClient,
         )
         self.assertEqual(result["status"],"PRECOMMITTED_KALSHI_MARKET_PLAN")
-        self.assertEqual(result["planned_market_count"],20)
+        self.assertEqual(result["planned_market_count"],22)
+        self.assertEqual(result["planned_buffer_markets"],2)
         self.assertEqual(result["minimum_distinct_events"],10)
         self.assertEqual(result["credentials_accessed"],"NONE")
         self.assertEqual(result["demo_order_submission"],"DISABLED")
