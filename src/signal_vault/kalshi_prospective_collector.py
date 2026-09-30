@@ -109,7 +109,11 @@ def _private_root(root:Path)->Path:
 
 
 def _eligible_market(market:Mapping[str,object], *, planned_at:datetime)->dict[str,object]|None:
-    if market.get("status")!="open" or market.get("market_type")!="binary":
+    # Current public Market objects are YES/NO contracts but no longer
+    # guarantee a market_type field. Requiring that undocumented/removed
+    # field would reject every valid public market. MVE markets are excluded
+    # separately by mve_collection_ticker/mve_filter.
+    if market.get("status")!="open":
         return None
     if market.get("mve_collection_ticker") not in (None,""):
         return None
