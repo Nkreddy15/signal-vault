@@ -304,6 +304,54 @@ def collect_precommitted_equity_hour(
     return ProspectiveEquityHour(receipt=receipt, bars=rebuilt)
 
 
+def archive_equity_forward_session_plan(
+    plan: dict[str, object],
+    *,
+    output_root: str | Path,
+) -> Path:
+    _validate_plan(plan)
+    root = Path(output_root)
+    if (
+        root.is_symlink()
+        or not root.is_dir()
+        or root.stat().st_mode & 0o077
+    ):
+        raise ValueError("equity forward root must preexist as private 0700 directory")
+    if root.resolve() == Path("/var/lib/signal-vault/forward"):
+        raise ValueError("stock forward evidence must not share the BTC evidence root")
+    raw = (
+        json.dumps(plan, sort_keys=True, separators=(",", ":"))
+        + "\n"
+    ).encode("utf-8")
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != hashlib.sha256(raw).hexdigest():
+        raise AssertionError("unreachable digest mismatch")
+    trading_date = date.fromisoformat(str(plan["trading_date"]))
+    path = root / (
+        f"equity-forward-plan-{trading_date.strftime('%Y%m%d')}-"
+        f"{str(plan['plan_sha256'])[:16]}.json"
+    )
+    if path.exists() or path.is_symlink():
+        if (
+            path.is_symlink()
+            or not path.is_file()
+            or path.stat().st_mode & 0o077
+            or path.read_bytes() != raw
+        ):
+            raise ValueError("immutable equity forward plan collision")
+        return path
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(path, flags, 0o600)
+    with os.fdopen(fd, "wb") as handle:
+        os.fchmod(handle.fileno(), 0o600)
+        handle.write(raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return path
+
+
 def archive_prospective_equity_hour(
     item: ProspectiveEquityHour,
     *,
