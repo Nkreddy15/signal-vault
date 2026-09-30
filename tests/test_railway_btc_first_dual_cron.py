@@ -291,6 +291,26 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(receipts.stat().st_mode&0o777,0o755)
         self.assertTrue(out["original_BTC_status_preserved"])
 
+    def test_permission_failure_includes_read_only_exact_sidecar_metadata(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        self.tick(FIRST)
+        receipts=self.side/"hourly-receipts"
+        receipts.chmod(0o755)
+        before_calls=self.six_factory_calls
+        with patch("signal_vault.railway_btc_first_dual_cron.os.geteuid",
+                   return_value=1001):
+            out=self.tick(FIRST+HOUR)
+        self.assertEqual(out["sidecar_failure_class"],"PermissionError")
+        snap=out["sidecar_permission_snapshot"]
+        self.assertEqual(set(snap["entries"]),{
+            ".", ".six-crypto-source.lock", "hourly-receipts",
+            "immutable-six-crypto-shadows"})
+        self.assertEqual(snap["entries"]["hourly-receipts"]["mode_octal"],"0755")
+        self.assertEqual(snap["entries"]["."]["mode_octal"],"0700")
+        self.assertFalse(snap["entries"]["hourly-receipts"]["uid_matches_process"])
+        self.assertEqual(self.six_factory_calls,before_calls)
+        self.assertEqual(out["broker_order_submission"],"DISABLED")
+
     def test_low_free_disk_skips_six_source_without_harming_BTC(self):
         self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
         original=self.sentinel.read_bytes()
