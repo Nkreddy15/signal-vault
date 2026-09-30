@@ -22,6 +22,7 @@ from .crypto_universe_forward import (
 )
 from .multi_asset_historical import BoundedAlpacaHistoricalBatch
 from .paper_credentials import PaperCredentials
+from .six_crypto_shadow import archive_six_crypto_shadow
 from .unattended_forward_cycle import FORBIDDEN_ENV
 
 KEY="SIGNAL_VAULT_UNIVERSE_DATA_KEY_ID"
@@ -125,6 +126,28 @@ def universe_railway_once(
         result=collect_six_crypto_once(
             root=root,now=now,provider_factory=factory)
         out.update(result)
+        # Source evidence is separately and DURABLY committed first. A
+        # post-commit shadow error must not silently claim the source was
+        # never recorded or re-fetch the same closed market bar. A safe
+        # same-hour duplicate can independently retry the failed archive
+        # with ZERO additional provider requests.
+        current_hour=now.astimezone(timezone.utc).replace(
+            minute=0,second=0,microsecond=0).isoformat()
+        should_shadow=(
+            result["status"]=="SIX_NEW_PROSPECTIVE_ASSET_BARS_ONE_CLOCK_HOUR" or
+            (result["status"]=="SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET" and
+             result.get("last_verified_close_utc")==current_hour))
+        if should_shadow:
+            try:
+                receipt=archive_six_crypto_shadow(root=root)
+                out["shadow_receipt_status"]=receipt["status"]
+                out["shadow_payload_sha256"]=receipt.get("shadow_payload_sha256")
+            except Exception as shadow_exc:
+                out.update(
+                    status="SOURCE_COMMITTED_SHADOW_ARCHIVE_BLOCKED_SAFE_TO_RETRY",
+                    shadow_failure_class=type(shadow_exc).__name__,
+                    source_receipt_still_preserved=True,
+                    broker_order_submission="DISABLED")
     except Exception as exc:
         out.update(status="BLOCKED_NO_NEW_PROSPECTIVE_EVIDENCE",
                    reason_code="SIX_MARKET_VOLUME_SOURCE_OR_CHAIN_FAILED_CLOSED",
