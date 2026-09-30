@@ -361,6 +361,26 @@ def collect_due_kalshi_snapshots(
                 market.get("status")=="open"
                 and provider_close==close
             )
+            invalid_reason=(
+                None if valid else
+                "MARKET_NOT_OPEN_OR_CLOSE_TIME_CHANGED_BEFORE_FIXED_HORIZON"
+            )
+            yes_bid=None
+            yes_ask=None
+            last_price=None
+            if valid:
+                try:
+                    yes_bid=_price(market.get("yes_bid_dollars"),name="YES bid")
+                    yes_ask=_price(market.get("yes_ask_dollars"),name="YES ask")
+                    last_price=_price(market.get("last_price_dollars"),name="last price")
+                    if Decimal(yes_bid)>Decimal(yes_ask):
+                        raise ValueError("Kalshi public YES bid exceeds ask")
+                except ValueError:
+                    valid=False
+                    invalid_reason="MISSING_INVALID_OR_CROSSED_PUBLIC_QUOTE_AT_FIXED_HORIZON"
+                    yes_bid=None
+                    yes_ask=None
+                    last_price=None
             receipt={
                 "kind":SNAPSHOT_KIND,
                 "schema_version":1,
@@ -375,22 +395,10 @@ def collect_due_kalshi_snapshots(
                 "planned_close_time_utc":close.isoformat(),
                 "provider_close_time_utc":provider_close.isoformat(),
                 "decision_valid":valid,
-                "invalid_reason":(
-                    None if valid else
-                    "MARKET_NOT_OPEN_OR_CLOSE_TIME_CHANGED_BEFORE_FIXED_HORIZON"
-                ),
-                "yes_bid_dollars":(
-                    _price(market.get("yes_bid_dollars"),name="YES bid")
-                    if valid else None
-                ),
-                "yes_ask_dollars":(
-                    _price(market.get("yes_ask_dollars"),name="YES ask")
-                    if valid else None
-                ),
-                "last_price_dollars":(
-                    _price(market.get("last_price_dollars"),name="last price")
-                    if valid else None
-                ),
+                "invalid_reason":invalid_reason,
+                "yes_bid_dollars":yes_bid,
+                "yes_ask_dollars":yes_ask,
+                "last_price_dollars":last_price,
                 "outcome_direction_recorded":False,
                 "result_field_recorded":False,
                 "historical_backfill":False,
