@@ -1,3 +1,17 @@
+# SIGNAL VAULT — current cloud checkpoint (2026-09-30)
+
+**CURRENT AUTHORITATIVE STATE:** The owner explicitly approved and the existing Railway production service `btcusd-hourly-get-cron` has been configured for the reviewed **BTC-FIRST six-crypto DATA-GET-only** command `python -m signal_vault.railway_btc_first_dual_cron --once`, with the unchanged hourly UTC `:07` cron, unchanged existing 500 MB persistent volume at `/var/lib/signal-vault/forward`, and exact non-secret activation flag `SIGNAL_VAULT_SIX_CRYPTO_SIDECAR=BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1`. A fresh Railway image for main commit `0f84c41290702c40f80f9d18ea289b7c4feaa2ce` built successfully as deployment `e35d6734-6390-49c5-b7fd-fac7fd7d6213`. Python 3.11/3.12 safety CI passed. Existing credential values were not read or changed by ChatGPT.
+
+Before this activation build, the original cloud BTC-only stream had **6 verified consecutive prospective observations** and immutable research shadow receipts. The first new six-crypto sidecar tick must create a separate 72-hour historical source baseline with **ZERO** prospective hours; only the next exactly contiguous fresh hourly capture may count 6 asset-bars as **ONE** prospective UTC clock hour. The sidecar lives only under `/var/lib/signal-vault/forward/isolated-six-crypto-prospective`, uses a 32 MiB evidence cap and preserves at least 128 MiB free-space reserve for original BTC evidence. Missed sidecar hours start a NEW baseline segment instead of backfilling.
+
+**No order permission was added.** Automatic PAPER trading remains DISABLED and LIVE trading remains UNAVAILABLE. No new Railway service, volume, paid plan, broker account call, SIP feed, deposit, or order POST is authorized. The existing BTC collector always runs first; sidecar failure must not rewrite or roll back completed BTC evidence.
+
+**Immediate operational verification:** actual Railway runtime evidence from the first and second scheduled post-activation ticks must be inspected. Deployment SUCCESS alone does not prove collection. One-time verification automations were scheduled for the post-03:07 UTC baseline and post-04:07 UTC first prospective sidecar hour. Meanwhile development continues only on offline/read-only modules that cannot touch production evidence.
+
+**Phase 16 in progress:** `dual_forward_integrity.py` provides credential-free, network-free cross-stream verification of BTC status, six-crypto current segment, exact latest-hour skew, shadow/source agreement, 6 asset-bars = 1 independent hour, and 168 current-segment contiguous-hour readiness. It never creates a sidecar or repairs/modifies evidence.
+
+---
+
 # SIGNAL VAULT — durable engineering checkpoint
 
 **Checkpoint:** UNATTENDED-GET-ONLY-MAC-BUILD-2026-09-29 (3 manual original forward observations + audit/archive/scratch recovery owner-verified; NEW explicit user-approved Mac hourly GET-only worker and Keychain-backed LaunchAgent build, activation NOT YET performed on owner Mac).
