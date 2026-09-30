@@ -32,6 +32,7 @@ from .crypto_universe_forward import (
 )
 from .multi_asset_historical import BoundedAlpacaHistoricalBatch
 from .equity_cloud_sidecar import CHILD as EQUITY_BASENAME
+from .kalshi_cloud_sidecar import CHILD as KALSHI_BASENAME
 from .railway_forward_cron import (
     configured_railway_volume,railway_data_credentials,railway_once,
 )
@@ -49,7 +50,7 @@ from .six_crypto_forward_review_gate import (
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
 BASENAME="isolated-six-crypto-prospective"
-BTC_FINGERPRINT_EXCLUDED_CHILDREN=(BASENAME,EQUITY_BASENAME)
+BTC_FINGERPRINT_EXCLUDED_CHILDREN=(BASENAME,EQUITY_BASENAME,KALSHI_BASENAME)
 # Sharing the physical Free 500MB volume requires an explicit, conservative
 # headroom GUARANTEE for the original BTC stream before any six-asset GET.
 # Reserve 128 MiB of physically available space exclusively for BTC and
