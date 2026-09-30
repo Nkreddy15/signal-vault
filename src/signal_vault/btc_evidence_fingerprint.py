@@ -42,8 +42,6 @@ def restrict_btc_evidence_permissions(
             excluded_sidecar_name in ("",".","..") or
             "/" in excluded_sidecar_name or "\\" in excluded_sidecar_name):
         raise ValueError("exact single child sidecar name required")
-    if os.geteuid()!=0:
-        raise PermissionError("BTC permission restriction requires root runtime")
     excluded=base/excluded_sidecar_name
     repaired:list[dict[str,str]]=[]
     inspected=0
