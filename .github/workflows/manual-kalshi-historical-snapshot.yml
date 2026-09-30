@@ -1,0 +1,68 @@
+# MANUAL ONLY: public historical Kalshi market-catalog snapshot.
+# No credentials, no portfolio access, no order methods, no schedule.
+name: Manual Kalshi historical public snapshot
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_pages:
+        description: "Maximum historical catalog pages (1-20)"
+        type: string
+        required: true
+        default: "10"
+      series_ticker:
+        description: "Optional exact series ticker scope"
+        type: string
+        required: false
+        default: ""
+      event_ticker:
+        description: "Optional exact event ticker scope"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kalshi-historical-public-manual
+  cancel-in-progress: false
+
+jobs:
+  public-historical-get-only:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout reviewed source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install --no-cache-dir -e .
+
+      - name: Capture bounded public historical catalog
+        env:
+          MAX_PAGES: ${{ inputs.max_pages }}
+          SERIES_TICKER: ${{ inputs.series_ticker }}
+          EVENT_TICKER: ${{ inputs.event_ticker }}
+        run: |
+          set -euo pipefail
+          args=(--max-pages "$MAX_PAGES")
+          if [ -n "$SERIES_TICKER" ]; then args+=(--series-ticker "$SERIES_TICKER"); fi
+          if [ -n "$EVENT_TICKER" ]; then args+=(--event-ticker "$EVENT_TICKER"); fi
+          python -m signal_vault.kalshi_historical_snapshot "${args[@]}"
+
+      - name: Archive public historical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: kalshi-public-historical-catalog-${{ github.run_id }}
+          path: private-kalshi-historical-artifacts/**
+          if-no-files-found: error
+          retention-days: 7
