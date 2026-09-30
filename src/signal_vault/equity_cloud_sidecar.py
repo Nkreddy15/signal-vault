@@ -13,19 +13,17 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Mapping
 from zoneinfo import ZoneInfo
 
 from .equity_forward_collector import (
-    PLAN_RE if False else PLAN_KIND,
-)
-from .equity_forward_collector import (
     archive_equity_forward_session_plan,
     archive_prospective_equity_hour,
     collect_precommitted_equity_hour,
     precommit_equity_forward_session,
+    _validate_plan,
 )
 from .multi_asset_historical import BoundedAlpacaHistoricalBatch
 
@@ -92,6 +90,7 @@ def _load_plan(path: Path) -> dict[str, object]:
     value = json.loads(path.read_text())
     if not isinstance(value, dict):
         raise ValueError("stock session plan must be a JSON object")
+    _validate_plan(value)
     return value
 
 
@@ -177,8 +176,8 @@ def run_equity_sidecar_once(
     target = None
     for raw_open in plan.get("expected_core_opens_utc", []):
         opened = datetime.fromisoformat(str(raw_open)).astimezone(timezone.utc)
-        closed = opened + __import__("datetime").timedelta(hours=1)
-        if closed + __import__("datetime").timedelta(minutes=3) <= moment < closed + __import__("datetime").timedelta(minutes=30):
+        closed = opened + timedelta(hours=1)
+        if closed + timedelta(minutes=3) <= moment < closed + timedelta(minutes=30):
             if target is not None:
                 raise AssertionError("more than one stock core hour due in one run")
             target = opened
