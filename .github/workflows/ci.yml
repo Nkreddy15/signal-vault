@@ -4,6 +4,7 @@ on:
   pull_request:
 permissions:
   contents: read
+  pull-requests: write
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -41,20 +42,27 @@ jobs:
           echo $? > /tmp/tests.code
           set -e
           tail -n 250 /tmp/tests.txt || true
-      - name: Upload diagnostic outputs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: diagnostic-ci-${{ matrix.python-version }}
-          path: |
-            /tmp/install.txt
-            /tmp/install.code
-            /tmp/compile.txt
-            /tmp/compile.code
-            /tmp/tests.txt
-            /tmp/tests.code
-          if-no-files-found: warn
-          retention-days: 1
+      - name: Post diagnostic tail to PR
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          {
+            echo "### Temporary CI diagnostic (Python ${{ matrix.python-version }})"
+            echo
+            echo '~~~text'
+            echo "INSTALL_EXIT=$(cat /tmp/install.code 2>/dev/null || echo missing)"
+            tail -n 30 /tmp/install.txt 2>/dev/null || true
+            echo
+            echo "COMPILE_EXIT=$(cat /tmp/compile.code 2>/dev/null || echo missing)"
+            tail -n 30 /tmp/compile.txt 2>/dev/null || true
+            echo
+            echo "TEST_EXIT=$(cat /tmp/tests.code 2>/dev/null || echo missing)"
+            tail -n 120 /tmp/tests.txt 2>/dev/null || true
+            echo '~~~'
+          } > /tmp/diag-comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/diag-comment.md
       - name: Fail if any diagnostic stage failed
         if: always()
         shell: bash
