@@ -14,6 +14,10 @@ from urllib.request import Request, urlopen
 from signal_vault.operator_server import create_server, _authorize, build_handler
 from signal_vault.operator_view import OperatorSnapshotError, read_local_paper_snapshot
 from signal_vault.paper_store import PersistentPaperOrderStore
+from signal_vault.multimarket_execution_journal import (
+    MultiMarketExecutionJournal,
+    MultiMarketOrderDraft,
+)
 
 
 TOKEN = "sample-dev-token-not-a-real-credential-please-change"
@@ -44,6 +48,42 @@ class OperatorViewTests(unittest.TestCase):
         with sqlite3.connect(self.db) as con:
             count = con.execute("SELECT count(*) FROM events").fetchone()[0]
         self.assertEqual(count, 1)
+
+    def test_cross_market_execution_snapshot_is_sanitized_and_read_only(self):
+        with MultiMarketExecutionJournal(self.db) as journal:
+            item = MultiMarketOrderDraft(
+                client_order_id="private-mm-client-id",
+                market_lane="us_equity",
+                instrument="AAPL",
+                max_loss_usd=Decimal("10"),
+                payload={
+                    "symbol": "AAPL",
+                    "side": "buy",
+                    "type": "market",
+                    "time_in_force": "day",
+                    "client_order_id": "private-mm-client-id",
+                    "notional": "10",
+                },
+            )
+            journal.record_approved_draft(
+                item, at=datetime.now(timezone.utc)
+            )
+            journal.begin_submission(
+                item, at=datetime.now(timezone.utc)
+            )
+
+        result = read_local_paper_snapshot(self.db)
+        mm = result["multimarket_execution"]
+        self.assertTrue(mm["available"])
+        self.assertEqual(mm["count"], 1)
+        self.assertEqual(mm["unresolved"], 1)
+        self.assertEqual(mm["by_lane"]["us_equity"]["unresolved"], 1)
+        self.assertEqual(mm["recent"][0]["market_lane"], "us_equity")
+        self.assertEqual(mm["recent"][0]["instrument"], "AAPL")
+        self.assertEqual(mm["recent"][0]["stage"], "submission_pending")
+        encoded = json.dumps(result)
+        self.assertNotIn("private-mm-client-id", encoded)
+        self.assertNotIn('"notional"', encoded)
 
     def test_missing_database_fails_closed_and_never_creates_one(self):
         ghost = Path(self.tmp.name) / "missing.db"
@@ -133,6 +173,7 @@ class OperatorViewTests(unittest.TestCase):
             self.assertIn("Signal Vault", page)
             self.assertIn("LOCAL LEDGER ONLY", page)
             self.assertIn("Market lanes", page)
+            self.assertIn("Cross-market paper/demo execution", page)
             self.assertIn("crypto", page)
             self.assertIn("us_equity", page)
             self.assertIn("kalshi_event_contract", page)
