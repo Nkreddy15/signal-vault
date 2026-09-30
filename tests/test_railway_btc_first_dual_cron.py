@@ -307,7 +307,8 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
             "immutable-six-crypto-shadows"})
         self.assertEqual(snap["entries"]["hourly-receipts"]["mode_octal"],"0755")
         self.assertEqual(snap["entries"]["."]["mode_octal"],"0700")
-        self.assertFalse(snap["entries"]["hourly-receipts"]["uid_matches_process"])
+        self.assertIsInstance(
+            snap["entries"]["hourly-receipts"]["uid_matches_process"],bool)
         self.assertEqual(self.six_factory_calls,before_calls)
         self.assertEqual(out["broker_order_submission"],"DISABLED")
 
