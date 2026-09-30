@@ -20,6 +20,15 @@ MAX_BTC_BYTES=384*1024*1024
 READ_CHUNK=1024*1024
 
 
+class BtcEvidencePermissionError(PermissionError):
+    """Safe permission diagnostic containing only relative path/type/mode."""
+    def __init__(self,*,relative_path:str,kind:str,mode:int):
+        self.relative_path=relative_path
+        self.kind=kind
+        self.mode=mode
+        super().__init__(f"owner-private permission required for {kind}: {relative_path}")
+
+
 def fingerprint_btc_evidence_tree(
     root:Path,
     *,
@@ -47,7 +56,7 @@ def fingerprint_btc_evidence_tree(
         mode=item.stat().st_mode&0o777
         if item.is_dir():
             if mode&0o077:
-                raise PermissionError("BTC evidence directories must remain owner-private")
+                raise BtcEvidencePermissionError(relative_path=relative,kind="directory",mode=mode)
             directories+=1
             records.append({
                 "kind":"directory","path":relative,"mode":oct(mode),
@@ -56,7 +65,7 @@ def fingerprint_btc_evidence_tree(
         if not item.is_file():
             raise ValueError("unexpected inode in original BTC evidence tree")
         if mode&0o077:
-            raise PermissionError("BTC evidence files must remain owner-private")
+            raise BtcEvidencePermissionError(relative_path=relative,kind="file",mode=mode)
         size=item.stat().st_size
         if size<0:
             raise ValueError("invalid BTC evidence file size")

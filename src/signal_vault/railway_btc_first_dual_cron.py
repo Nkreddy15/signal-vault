@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Callable,Mapping
 
 from .cloud_forward_service import CLOUD_ROOT,cloud_status
-from .btc_evidence_fingerprint import fingerprint_btc_evidence_tree
+from .btc_evidence_fingerprint import (\n    BtcEvidencePermissionError,fingerprint_btc_evidence_tree,\n)
 from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
@@ -405,6 +405,11 @@ def combined_btc_first_once(
             sidecar_status="FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY",
             sidecar_failure_class=type(exc).__name__,
             original_BTC_status_preserved=True)
+        if isinstance(exc,BtcEvidencePermissionError):
+            output["btc_permission_failure_path"]=exc.relative_path
+            output["btc_permission_failure_kind"]=exc.kind
+            output["btc_permission_failure_mode_octal"]=format(exc.mode,"04o")
+            output["btc_permission_failure_diagnostic_only"]=True
         try:
             output["sidecar_permission_snapshot"]=_sidecar_permission_snapshot(
                 sidecar_root=sidecar_root)
