@@ -8,6 +8,8 @@ from signal_vault.multimarket_paper_router import (
     CRYPTO_PAPER_ACK,
     EQUITY_PAPER_ACK,
     KALSHI_DEMO_ACK,
+    KALSHI_DEMO_ROOT,
+    KALSHI_ORDER_PATH,
     paper_submission_authorized,
     route_paper_execution,
 )
@@ -69,12 +71,14 @@ class MultiMarketPaperRouterTests(unittest.TestCase):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 route_paper_execution(broken,risk_assessment=risk("us_equity"))
 
-    def test_kalshi_stays_demo_and_has_no_endpoint_until_signed_adapter(self):
+    def test_kalshi_routes_only_to_current_v2_demo_contract(self):
         draft = MultiMarketOrderDraft(
             "k1","kalshi_event_contract","TEST-MARKET",Decimal("5"),
             {
-                "ticker":"TEST-MARKET","side":"yes","action":"buy",
-                "count":"5","client_order_id":"k1",
+                "ticker":"TEST-MARKET","side":"bid","count":"5","price":"0.0100",
+                "time_in_force":"good_till_canceled",
+                "self_trade_prevention_type":"taker_at_cross",
+                "client_order_id":"k1",
             },
         )
         route = route_paper_execution(
@@ -82,10 +86,24 @@ class MultiMarketPaperRouterTests(unittest.TestCase):
         )
         self.assertEqual(route.provider,"kalshi")
         self.assertEqual(route.environment,"demo")
-        self.assertIsNone(route.endpoint)
-        self.assertIn("NOT_YET_IMPLEMENTED",route.adapter)
+        self.assertEqual(route.endpoint,KALSHI_DEMO_ROOT+KALSHI_ORDER_PATH)
+        self.assertEqual(route.adapter,"kalshi_v2_demo_signed_order")
         self.assertFalse(route.live_trading_available)
         self.assertTrue(paper_submission_authorized(route,KALSHI_DEMO_ACK))
+        for bad in (
+            {"side":"yes"},
+            {"price":"1.00"},
+            {"count":"100.001"},
+            {"time_in_force":"gtc"},
+        ):
+            broken=MultiMarketOrderDraft(
+                "k2","kalshi_event_contract","TEST-MARKET",Decimal("5"),
+                {**draft.payload,**bad,"client_order_id":"k2"},
+            )
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                route_paper_execution(
+                    broken,risk_assessment=risk("kalshi_event_contract")
+                )
 
     def test_risk_rejection_or_wrong_lane_blocks_before_route(self):
         draft = MultiMarketOrderDraft(

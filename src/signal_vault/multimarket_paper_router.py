@@ -17,6 +17,8 @@ from .multimarket_execution_journal import MultiMarketOrderDraft
 
 ALPACA_PAPER_ROOT = "https://paper-api.alpaca.markets"
 ALPACA_ORDER_PATH = "/v2/orders"
+KALSHI_DEMO_ROOT = "https://external-api.demo.kalshi.co"
+KALSHI_ORDER_PATH = "/trade-api/v2/portfolio/events/orders"
 
 CRYPTO_PAPER_ACK = "I_ACKNOWLEDGE_ALPACA_CRYPTO_PAPER_ORDERS_ONLY"
 EQUITY_PAPER_ACK = "I_ACKNOWLEDGE_ALPACA_EQUITY_PAPER_ORDERS_ONLY"
@@ -88,8 +90,8 @@ def route_paper_execution(
             market_lane="kalshi_event_contract",
             provider="kalshi",
             environment="demo",
-            adapter="kalshi_demo_signed_order_adapter_NOT_YET_IMPLEMENTED",
-            endpoint=None,
+            adapter="kalshi_v2_demo_signed_order",
+            endpoint=KALSHI_DEMO_ROOT + KALSHI_ORDER_PATH,
             payload=payload,
             required_acknowledgement=required,
         )
@@ -196,18 +198,30 @@ def _validate_alpaca_equity_payload(draft: MultiMarketOrderDraft) -> dict[str, s
 
 def _validate_kalshi_demo_payload(draft: MultiMarketOrderDraft) -> dict[str, str]:
     data = dict(draft.payload)
-    required = {"ticker", "side", "action", "count", "client_order_id"}
+    required = {
+        "ticker", "side", "count", "price", "time_in_force",
+        "self_trade_prevention_type", "client_order_id",
+    }
     if set(data) != required:
-        raise ValueError("Kalshi demo draft requires exact bounded payload schema")
+        raise ValueError("Kalshi V2 demo draft requires exact bounded payload schema")
     if data["ticker"] != draft.instrument:
         raise ValueError("Kalshi draft instrument mismatch")
-    if data["side"] not in {"yes", "no"}:
-        raise ValueError("Kalshi side must be yes or no")
-    if data["action"] not in {"buy", "sell"}:
-        raise ValueError("Kalshi action must be buy or sell")
+    if data["side"] not in {"bid", "ask"}:
+        raise ValueError("Kalshi V2 side must be bid or ask")
     count = _decimal(data["count"], name="Kalshi contract count")
-    if count != count.to_integral_value():
-        raise ValueError("Kalshi contract count must be an integer")
-    if count > Decimal("100"):
-        raise ValueError("Kalshi demo contract count exceeds Phase 34 bound")
+    if count > Decimal("100") or count.as_tuple().exponent < -2:
+        raise ValueError("Kalshi demo count exceeds bounded size/precision")
+    price = _decimal(data["price"], name="Kalshi price")
+    if price < Decimal("0.01") or price > Decimal("0.99"):
+        raise ValueError("Kalshi demo price must remain between 1 and 99 cents")
+    if price.as_tuple().exponent < -6:
+        raise ValueError("Kalshi price exceeds six decimal places")
+    if data["time_in_force"] not in {
+        "good_till_canceled", "immediate_or_cancel", "fill_or_kill"
+    }:
+        raise ValueError("unsupported Kalshi V2 time in force")
+    if data["self_trade_prevention_type"] not in {"taker_at_cross", "maker"}:
+        raise ValueError("unsupported Kalshi self-trade prevention type")
+    if not data["client_order_id"]:
+        raise ValueError("Kalshi client order id required")
     return data
