@@ -89,6 +89,13 @@ def build_equity_forward_shadow_pipeline(
         historical_root,
         as_of=checked_at,
     )
+    confirmation_source_sha=historical_confirmation.get(
+        "phase48_source_manifest_sha256"
+    )
+    if confirmation_source_sha != baseline["source_manifest_sha256"]:
+        raise ValueError(
+            "stock historical confirmation does not match verified warmup dataset"
+        )
     historical_datasets, historical_grid = _reload_phase48_verified_source(
         historical_root,
         baseline=baseline,
