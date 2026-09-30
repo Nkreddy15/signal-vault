@@ -14,10 +14,12 @@ import hashlib
 import json
 import re
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Mapping
 
 from .ci_historical_equities import SYMBOLS
+from .research_universe import ResearchBar
 from .equity_forward_collector import (
     PLAN_KIND,
     PLAN_VERSION,
@@ -302,3 +304,86 @@ def audit_equity_forward_archive(root: str | Path) -> dict[str, object]:
         "live_order_submission": "DISABLED",
         "live_trading": "UNAVAILABLE",
     }
+
+
+def load_current_equity_forward_segment(
+    root: str | Path,
+) -> tuple[dict[str, object], dict[str, tuple[ResearchBar, ...]], tuple[datetime, ...]]:
+    """Return only the latest clean audited segment as canonical prospective rows."""
+    audit = audit_equity_forward_archive(root)
+    session_count = int(audit["current_segment_distinct_xnys_sessions"])
+    if session_count <= 0:
+        raise ValueError("equity forward archive has no complete current segment")
+    statuses = audit["audited_xnys_sessions"]
+    if not isinstance(statuses, list) or len(statuses) < session_count:
+        raise ValueError("equity forward audit session metadata is inconsistent")
+    selected = statuses[-session_count:]
+    selected_dates = {
+        date.fromisoformat(str(item["trading_date"]))
+        for item in selected
+        if isinstance(item, Mapping) and item.get("status") == "COMPLETE"
+    }
+    if len(selected_dates) != session_count:
+        raise ValueError("equity current segment includes incomplete session")
+
+    rows: dict[str, list[ResearchBar]] = {symbol: [] for symbol in SYMBOLS}
+    grid: list[datetime] = []
+    seen_grid = set()
+    folder = Path(root)
+    for path in sorted(folder.iterdir(), key=lambda p: p.name):
+        match = RECEIPT_RE.fullmatch(path.name)
+        if not match:
+            continue
+        receipt, raw = _read_json(path)
+        _, core_open = _validate_receipt(
+            receipt,
+            expected_file_digest_prefix=match.group(2),
+            raw=raw,
+        )
+        trading_date = date.fromisoformat(str(receipt["trading_date"]))
+        if trading_date not in selected_dates:
+            continue
+        if core_open in seen_grid:
+            raise ValueError("duplicate core hour while loading current equity segment")
+        seen_grid.add(core_open)
+        grid.append(core_open)
+        bars = receipt["bars"]
+        if not isinstance(bars, Mapping):
+            raise ValueError("equity receipt bars missing during segment load")
+        for symbol in SYMBOLS:
+            obj = bars[symbol]
+            if not isinstance(obj, Mapping):
+                raise ValueError("malformed equity forward bar during segment load")
+            try:
+                bar = ResearchBar(
+                    symbol=symbol,
+                    start_utc=_stamp(obj["start_utc"]),
+                    open=Decimal(str(obj["open"])),
+                    high=Decimal(str(obj["high"])),
+                    low=Decimal(str(obj["low"])),
+                    close=Decimal(str(obj["close"])),
+                    volume=Decimal(str(obj["volume"])),
+                    feed=str(obj["feed"]),
+                    captured_utc=_stamp(obj["captured_utc"]),
+                    prospective=bool(obj["prospective"]),
+                )
+            except (KeyError, InvalidOperation, ValueError, TypeError) as exc:
+                raise ValueError("invalid numeric/provenance row in equity segment") from exc
+            if bar.prospective is not True:
+                raise ValueError("current equity segment contains non-prospective row")
+            rows[symbol].append(bar)
+
+    timeline = tuple(sorted(grid))
+    expected_hours = int(audit["current_segment_prospective_core_hours_per_asset"])
+    if len(timeline) != expected_hours:
+        raise ValueError("loaded equity current segment hour count differs from audit")
+    canonical: dict[str, tuple[ResearchBar, ...]] = {}
+    for symbol in SYMBOLS:
+        ordered = tuple(sorted(rows[symbol], key=lambda bar: bar.start_utc))
+        if (
+            len(ordered) != len(timeline)
+            or tuple(bar.start_utc for bar in ordered) != timeline
+        ):
+            raise ValueError("loaded equity symbol grid differs from audited segment")
+        canonical[symbol] = ordered
+    return audit, canonical, timeline
