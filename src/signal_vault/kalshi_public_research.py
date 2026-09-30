@@ -101,6 +101,44 @@ class KalshiPublicResearchClient:
             "limit":limit,"cursor":cursor,
         })
 
+    def historical_market_candlesticks(
+        self,*,ticker:str,start_ts:int,end_ts:int,period_interval:int=60,
+    ) -> dict[str,object]:
+        if (not isinstance(ticker,str) or not ticker or len(ticker)>128 or
+                any(ch not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for ch in ticker)):
+            raise ValueError("invalid Kalshi market ticker")
+        if (type(start_ts) is not int or type(end_ts) is not int or
+                start_ts<0 or end_ts<=start_ts):
+            raise ValueError("invalid Kalshi candlestick time bounds")
+        if period_interval not in {1,60,1440}:
+            raise ValueError("unsupported Kalshi candlestick interval")
+        return self._get(
+            f"/historical/markets/{ticker}/candlesticks",
+            {"start_ts":start_ts,"end_ts":end_ts,
+             "period_interval":period_interval},
+        )
+
+    def collect_historical_trades(
+        self,*,ticker:str|None=None,min_ts:int|None=None,max_ts:int|None=None,
+        max_pages:int=50,
+    ) -> tuple[dict[str,object],...]:
+        if type(max_pages) is not int or not 1<=max_pages<=200:
+            raise ValueError("bounded Kalshi page count required")
+        pages=[]
+        cursor=None
+        for _ in range(max_pages):
+            page=self.historical_trades(
+                ticker=ticker,min_ts=min_ts,max_ts=max_ts,
+                limit=MAX_LIMIT,cursor=cursor)
+            pages.append(page)
+            next_cursor=page.get("cursor")
+            if next_cursor in (None,""):
+                return tuple(pages)
+            if not isinstance(next_cursor,str) or len(next_cursor)>4096:
+                raise ValueError("invalid Kalshi cursor")
+            cursor=next_cursor
+        raise ValueError("Kalshi historical pagination exceeded bound")
+
     def live_public_markets(
         self,*,status:str="open",limit:int=1000,cursor:str|None=None,
     ) -> dict[str,object]:
