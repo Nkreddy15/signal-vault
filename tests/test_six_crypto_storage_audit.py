@@ -119,7 +119,8 @@ class SidecarStorageAuditTests(unittest.TestCase):
         existing=sum(p.stat().st_size for p in self.side.rglob("*") if p.is_file())
         target=SIX_MARKET_TOTAL_EVIDENCE_CAP_BYTES-(
             MAX_NEW_SIDECAR_TICK_BUDGET_BYTES//2)
-        padding.write_bytes(b"\0"*(target-existing))
+        with padding.open("wb") as stream:
+            stream.truncate(target-existing)
         padding.chmod(0o600)
         before=padding.stat().st_size
         result=sidecar_storage_audit(
