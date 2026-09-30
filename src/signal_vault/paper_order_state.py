@@ -55,6 +55,24 @@ class PaperOrderState:
             raise ValueError("only uncertain submissions may become UNKNOWN_RESULT")
         return replace(self, stage=Stage.UNKNOWN_RESULT)
 
+    def attach_uncertain_broker_identity(self, broker_order_id: str) -> "PaperOrderState":
+        """Retain a provider order ID while status/fills remain unresolved.
+
+        This does NOT convert UNKNOWN_RESULT into accepted/filled and cannot
+        introduce provider status or fill economics. It exists only so an
+        authenticated lookup can recover the exact provider order later.
+        """
+        if self.stage is not Stage.UNKNOWN_RESULT:
+            raise ValueError("provider identity attachment requires UNKNOWN_RESULT")
+        if not isinstance(broker_order_id, str) or not broker_order_id.strip():
+            raise ValueError("nonempty provider order id required")
+        if self.broker_order_id is not None and self.broker_order_id != broker_order_id:
+            raise ValueError("provider order id already bound to another value")
+        if (self.provider_status is not None or self.cumulative_filled_qty != 0
+                or self.filled_avg_price is not None):
+            raise ValueError("uncertain identity cannot fabricate provider economics")
+        return replace(self, broker_order_id=broker_order_id)
+
     def observe(self, receipt: BrokerObservation) -> "PaperOrderState":
         """Mismatched and regressing provider records cause hard errors.
 
