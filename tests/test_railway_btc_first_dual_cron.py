@@ -220,7 +220,8 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
             result["btc_evidence_after_sidecar_SHA256"])
         self.assertEqual(
             result["sidecar_failure_class"],"BtcEvidenceFingerprintMismatch")
-        self.assertTrue(result["original_BTC_status_preserved"])
+        self.assertFalse(result["original_BTC_status_preserved"])
+        self.assertIsNone(result["existing_BTC_evidence_deleted_or_reset"])
         self.assertEqual(result["broker_order_submission"],"DISABLED")
 
     def test_symlinked_or_insecure_existing_sidecar_is_never_repaired_by_BTC_worker(self):
