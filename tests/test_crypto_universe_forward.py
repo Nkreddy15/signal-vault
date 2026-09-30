@@ -62,14 +62,14 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.factory_calls+=1
         return self.provider
 
-    def run(self,now):
+    def tick(self,now):
         return collect_six_crypto_once(
             root=self.base,now=now,provider_factory=self.factory)
 
     def test_baseline_72_hours_is_zero_prospective_then_six_per_one_clock_hour(self):
         self.assertEqual(universe_status(root=self.base)["status"],
                          "NO_UNIVERSE_EVIDENCE_YET")
-        first=self.run(FIRST)
+        first=self.tick(FIRST)
         self.assertEqual(first["status"],"HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
         self.assertEqual(first["recorded_prospective_asset_bars"],0)
         self.assertEqual(first["recorded_distinct_prospective_UTC_hours"],0)
@@ -82,7 +82,7 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(early["current_segment_independent_prospective_hours"],0)
         self.assertFalse(early["ready_for_seven_day_audit"])
 
-        second=self.run(FIRST+HOUR)
+        second=self.tick(FIRST+HOUR)
         self.assertEqual(second["status"],
                          "SIX_NEW_PROSPECTIVE_ASSET_BARS_ONE_CLOCK_HOUR")
         self.assertEqual(second["recorded_prospective_asset_bars"],6)
@@ -109,26 +109,26 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(raw["prospective_asset_rows_in_this_receipt"],6)
 
     def test_duplicate_wrong_time_and_rollback_make_zero_provider_calls(self):
-        self.assertEqual(self.run(FIRST-timedelta(minutes=5))["status"],
+        self.assertEqual(self.tick(FIRST-timedelta(minutes=5))["status"],
                          "SAFE_SKIP_OUTSIDE_FRESH_CLOSED_HOUR_WINDOW")
         self.assertEqual(self.factory_calls,0)
-        self.run(FIRST)
+        self.tick(FIRST)
         self.assertEqual(self.factory_calls,1)
-        again=self.run(FIRST+timedelta(minutes=4))
+        again=self.tick(FIRST+timedelta(minutes=4))
         self.assertEqual(again["status"],"SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET")
         self.assertEqual(self.factory_calls,1)
         self.assertEqual(
-            self.run(FIRST+HOUR-timedelta(minutes=10))["status"],
+            self.tick(FIRST+HOUR-timedelta(minutes=10))["status"],
             "SAFE_SKIP_OUTSIDE_FRESH_CLOSED_HOUR_WINDOW")
         self.assertEqual(self.factory_calls,1)
         self.assertEqual(
-            self.run(FIRST-HOUR)["status"],"SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET")
+            self.tick(FIRST-HOUR)["status"],"SAFE_DUPLICATE_OR_CLOCK_ROLLBACK_NO_GET")
         self.assertEqual(self.factory_calls,1)
 
     def test_gap_bootstraps_new_zero_prospective_segment_without_backfill(self):
-        self.run(FIRST)
-        self.run(FIRST+HOUR)
-        missed=self.run(FIRST+4*HOUR)
+        self.tick(FIRST)
+        self.tick(FIRST+HOUR)
+        missed=self.tick(FIRST+4*HOUR)
         self.assertEqual(missed["event"],"HISTORICAL_72H_BOOTSTRAP")
         self.assertEqual(missed["segment_index"],2)
         self.assertEqual(missed["recorded_prospective_asset_bars"],0)
@@ -137,7 +137,7 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(state["historical_bootstrap_count"],2)
         self.assertEqual(state["current_segment_independent_prospective_hours"],0)
         self.assertEqual(self.provider.calls[-1][2]-self.provider.calls[-1][1],72*HOUR)
-        next_=self.run(FIRST+5*HOUR)
+        next_=self.tick(FIRST+5*HOUR)
         self.assertEqual(next_["recorded_prospective_asset_bars"],6)
         state=universe_status(root=self.base)
         self.assertEqual(state["all_segments_total_receipts"],4)
@@ -147,25 +147,25 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
         self.assertEqual(state["historical_bootstrap_count"],2)
 
     def test_corrupted_or_deleted_prior_receipt_prevents_credential_factory(self):
-        self.run(FIRST)
-        self.run(FIRST+HOUR)
+        self.tick(FIRST)
+        self.tick(FIRST+HOUR)
         items=sorted((self.base/"hourly-receipts").glob("*.json"))
         raw=json.loads(items[0].read_text())
         raw["source_historical_batch"]["bars"]["BTC/USD"][0]["close"]="9999999999"
         items[0].write_text(json.dumps(raw,sort_keys=True)+"\n")
         before=self.factory_calls
         with self.assertRaises(ValueError):
-            self.run(FIRST+2*HOUR)
+            self.tick(FIRST+2*HOUR)
         self.assertEqual(self.factory_calls,before)
         with self.assertRaises(ValueError):
             universe_status(root=self.base)
 
     def test_extra_receipt_symlink_and_unsafe_permissions_prevent_new_GET(self):
-        self.run(FIRST)
+        self.tick(FIRST)
         folder=self.base/"hourly-receipts"
         (folder/"unexpected.tmp").write_text("unexpected")
         with self.assertRaises(ValueError):
-            self.run(FIRST+HOUR)
+            self.tick(FIRST+HOUR)
         self.assertEqual(self.factory_calls,1)
         (folder/"unexpected.tmp").unlink()
         file=next(folder.iterdir())
@@ -182,15 +182,15 @@ class IndependentSixCryptoSourceTests(unittest.TestCase):
             with self.subTest(problem=problem.__dict__):
                 self.provider=problem
                 with self.assertRaises(ValueError):
-                    self.run(FIRST)
+                    self.tick(FIRST)
                 self.assertEqual(list((self.base/"hourly-receipts").glob("*.json")),[])
                 self.assertEqual(universe_status(root=self.base)[
                     "current_segment_independent_prospective_hours"],0)
         self.provider=FixtureSixCryptoProvider()
-        self.run(FIRST)
+        self.tick(FIRST)
         self.provider=FixtureSixCryptoProvider(missing="ETH/USD")
         with self.assertRaises(ValueError):
-            self.run(FIRST+HOUR)
+            self.tick(FIRST+HOUR)
         self.assertEqual(universe_status(root=self.base)["all_segments_total_receipts"],1)
 
     def test_same_volumepath_as_old_BTC_is_forbidden_without_read(self):
