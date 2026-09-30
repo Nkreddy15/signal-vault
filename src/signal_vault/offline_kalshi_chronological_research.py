@@ -192,9 +192,9 @@ def chronological_corpus_summary(
     }
 
 
-def evaluate_captured_kalshi_corpus(
+def load_captured_kalshi_simulations(
     corpus_root:str|Path,
-)->dict[str,object]:
+)->tuple[list[dict[str,object]],str]:
     root=Path(corpus_root)
     if root.is_symlink() or not root.is_dir():
         raise ValueError("Kalshi corpus root must be a real directory")
@@ -238,6 +238,13 @@ def evaluate_captured_kalshi_corpus(
             raise ValueError("Kalshi child manifest changed after corpus capture")
         simulations.append(simulate_resolved_market_references(child))
 
+    return simulations,hashlib.sha256(raw).hexdigest()
+
+
+def evaluate_captured_kalshi_corpus(
+    corpus_root:str|Path,
+)->dict[str,object]:
+    simulations,source_sha=load_captured_kalshi_simulations(corpus_root)
     result=chronological_corpus_summary(simulations)
-    result["source_corpus_manifest_sha256"]=hashlib.sha256(raw).hexdigest()
+    result["source_corpus_manifest_sha256"]=source_sha
     return result
