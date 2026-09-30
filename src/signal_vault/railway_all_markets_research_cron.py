@@ -168,6 +168,20 @@ def combined_all_markets_once(
         output["btc_evidence_changed_during_kalshi_stage"]=None
         output["original_BTC_status_preserved"]=None
         output["existing_BTC_evidence_deleted_or_reset"]=None
+
+    if output.get("original_BTC_status_preserved") is True:
+        try:
+            readiness=all_market_forward_status(
+                environ=env,
+                root=btc_root,
+            )
+            output["post_tick_readiness_status"]="AVAILABLE"
+            output["post_tick_readiness"]=readiness
+        except Exception as exc:
+            output["post_tick_readiness_status"]="FAILED_SAFE"
+            output["post_tick_readiness_failure_class"]=type(exc).__name__
+    else:
+        output["post_tick_readiness_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
     return output
 
 
