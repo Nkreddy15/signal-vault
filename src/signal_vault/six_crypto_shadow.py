@@ -83,12 +83,12 @@ def _latest_payload(chain:list[dict[str,object]]) -> dict[str,object]|None:
                 decision=decide_on_prior_closes(
                     dataset,config=hypothesis,has_position=held,
                     next_open_utc=close)
-                if decision.bar_closed_utc!=close.isoformat():
+                if decision.evaluated_close_utc!=close.isoformat():
                     raise ValueError("decision looked at incorrect or future close")
                 scenario["already_held" if held else "flat"]={
                     "hypothetical_action":decision.action.value,
                     "evidence_sha256":decision.evidence_sha256,
-                    "evaluated_last_completed_utc":decision.bar_closed_utc,
+                    "evaluated_last_completed_utc":decision.evaluated_close_utc,
                     "broker_order_submission":"DISABLED",
                 }
             named[hypothesis.name]=scenario
