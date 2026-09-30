@@ -1,0 +1,71 @@
+# MANUAL ONLY: long-horizon six-stock IEX historical DATA GET.
+# Splits the requested range into existing <=25-session verified XNYS chunks.
+# No orders, no SIP purchase, no Railway deployment, no schedule.
+name: Manual long-horizon six-stock IEX research
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Inclusive XNYS date; up to about 400 calendar days"
+        type: string
+        required: true
+        default: "2025-10-01"
+      end_date_exclusive:
+        description: "Exclusive XNYS date; must be fully historical"
+        type: string
+        required: true
+        default: "2026-09-30"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: long-horizon-equity-iex-manual-data-only
+  cancel-in-progress: false
+
+jobs:
+  long-horizon-iex-get-only:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout reviewed source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install stock research dependencies
+        run: python -m pip install --no-cache-dir '.[equity-research]'
+
+      - name: Plan bounded long-horizon XNYS chunks without credentials
+        env:
+          SIGNAL_VAULT_LONG_EQUITY_READ_APPROVED: LONG_HORIZON_XNYS_IEX_HISTORICAL_DATA_GET_ONLY
+          SIGNAL_VAULT_LONG_EQUITY_START_DATE: ${{ inputs.start_date }}
+          SIGNAL_VAULT_LONG_EQUITY_END_DATE_EXCLUSIVE: ${{ inputs.end_date_exclusive }}
+        run: python -m signal_vault.ci_long_equity_history --dry-run
+
+      - name: Download bounded historical IEX chunks only
+        env:
+          SIGNAL_VAULT_LONG_EQUITY_READ_APPROVED: LONG_HORIZON_XNYS_IEX_HISTORICAL_DATA_GET_ONLY
+          SIGNAL_VAULT_LONG_EQUITY_START_DATE: ${{ inputs.start_date }}
+          SIGNAL_VAULT_LONG_EQUITY_END_DATE_EXCLUSIVE: ${{ inputs.end_date_exclusive }}
+          SIGNAL_VAULT_RESEARCH_DATA_KEY_ID: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_KEY_ID }}
+          SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
+        run: python -m signal_vault.ci_long_equity_history --download-history
+
+      - name: Archive immutable long-horizon stock evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: long-horizon-6-equities-IEX-${{ github.run_id }}
+          path: private-equity-long-artifacts/**
+          if-no-files-found: error
+          retention-days: 7
