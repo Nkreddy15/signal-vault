@@ -20,6 +20,7 @@ from urllib.parse import urlsplit
 
 from .operator_view import OperatorSnapshotError, read_local_paper_snapshot
 from .market_capabilities import current_market_capabilities
+from .current_readiness import current_readiness_baseline
 
 
 def _authorize(header: str | None, token: str) -> bool:
@@ -48,13 +49,18 @@ def _dashboard(payload: dict[str, object]) -> bytes:
     events = "".join(f'<tr><td>{safe(item["type"])}</td><td>{safe(item["at_utc"])}</td></tr>'
                      for item in payload["recent_events"])
     capabilities=payload["market_capabilities"]["markets"]
+    readiness=payload["market_readiness"]["lanes"]
     market_cards="".join(
         f'<article><small>{safe(lane["market"])}</small>'
         f'<strong>{safe(lane["order_submission"])}</strong>'
         f'<span>Historical: {safe(lane["historical_research"])}</span>'
         f'<span>Prospective: {safe(lane["prospective_collection"])}</span>'
         f'<span>Paper: {safe(lane["paper_execution"])}</span>'
-        f'<span>Live: {safe(lane["live_execution"])}</span></article>'
+        f'<span>Live: {safe(lane["live_execution"])}</span>'
+        f'<span>Technical live-review ready: '
+        f'{safe(readiness[lane["market"]]["technically_ready_for_live_activation_review"])}</span>'
+        f'<span>Blockers: {safe(", ".join(readiness[lane["market"]]["technical_blockers_before_live_activation_review"]))}</span>'
+        f'</article>'
         for lane in capabilities)
     badge = "HALTED" if payload["operator_halted"] else "NOT HALTED"
     markup = f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -112,6 +118,7 @@ def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHan
             try:
                 payload = read_local_paper_snapshot(path)
                 payload["market_capabilities"] = current_market_capabilities()
+                payload["market_readiness"] = current_readiness_baseline()
             except OperatorSnapshotError:
                 return self._send(503, b"Local paper ledger unavailable or inconsistent\n",
                                   "text/plain; charset=utf-8")
