@@ -207,7 +207,7 @@ def audit_equity_forward_archive(root: str | Path) -> dict[str, object]:
                 raise ValueError("duplicate equity forward session plan")
             plans_by_date[trading_date] = plan
             plans_by_sha[plan_sha] = plan
-            receipts_by_plan[plan_sha] = {}
+            receipts_by_plan.setdefault(plan_sha, {})
             continue
         if receipt_match:
             receipt, raw = _read_json(path)
