@@ -10,7 +10,7 @@ UTC = timezone.utc
 START = datetime(2026, 1, 5, 15, tzinfo=UTC)
 
 
-def synthetic_equities(hours=180):
+def synthetic_equities(hours=150):
     grid = tuple(START + timedelta(hours=i) for i in range(hours))
     datasets = {}
     for symbol_index, symbol in enumerate(SYMBOLS):
@@ -48,8 +48,8 @@ class EquityExpandingWalkForwardTests(unittest.TestCase):
             grid=grid,
             as_of=grid[-1] + timedelta(hours=2),
             initial_train_count=90,
-            validation_count=30,
-            step_count=30,
+            validation_count=20,
+            step_count=20,
         )
         self.assertEqual(result["fold_count"], 3)
         self.assertTrue(result["historical_walk_forward_complete"])
@@ -74,10 +74,10 @@ class EquityExpandingWalkForwardTests(unittest.TestCase):
                 self.assertEqual(starts, sorted(starts))
                 self.assertEqual(
                     [fold["train_context_core_hours"] for fold in hypothesis["folds"]],
-                    [90, 120, 150],
+                    [90, 110, 130],
                 )
                 self.assertTrue(
-                    all(fold["validation_core_hours"] == 30 for fold in hypothesis["folds"])
+                    all(fold["validation_core_hours"] == 20 for fold in hypothesis["folds"])
                 )
 
     def test_future_or_misaligned_data_and_tiny_windows_fail_closed(self):
@@ -88,8 +88,8 @@ class EquityExpandingWalkForwardTests(unittest.TestCase):
                 grid=grid,
                 as_of=grid[-1] + timedelta(hours=2),
                 initial_train_count=30,
-                validation_count=30,
-                step_count=30,
+                validation_count=20,
+                step_count=20,
             )
         broken = dict(datasets)
         broken["AAPL"] = broken["AAPL"][:-1]
