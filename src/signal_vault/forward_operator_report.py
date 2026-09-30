@@ -116,19 +116,20 @@ def forward_operator_report(
             state="CAPACITY_PROJECTION_WARNING"
             response="REVIEW_CAPACITY_BEFORE_HARD_GUARD_NO_AUTOMATIC_SPEND_OR_DELETE"
             reasons.append("CAPACITY_PROJECTION")
-        if integrity_status in {
-            "BTC_ONLY_HEALTHY_WAITING_FOR_FIRST_SIX_CRYPTO_TICK",
-            "BTC_HEALTHY_SIX_CRYPTO_EMPTY_NAMESPACE",
-            "BTC_HEALTHY_SIX_CRYPTO_BASELINE_ONLY",
-        }:
-            state="HEALTHY_EARLY_COLLECTION_STAGE"
-            response="NO_MUTATION_WAIT_FOR_NEXT_SCHEDULED_EVIDENCE"
-        elif integrity_status in {
-            "BTC_AND_SIX_CRYPTO_CURRENTLY_ALIGNED",
-            "SIX_CRYPTO_168_HOUR_CONTIGUOUS_EVIDENCE_READY",
-        }:
-            state="HEALTHY_ALIGNED_FORWARD_COLLECTION"
-            response="NO_MUTATION_CONTINUE_SCHEDULED_COLLECTION"
+        if severity=="INFO":
+            if integrity_status in {
+                "BTC_ONLY_HEALTHY_WAITING_FOR_FIRST_SIX_CRYPTO_TICK",
+                "BTC_HEALTHY_SIX_CRYPTO_EMPTY_NAMESPACE",
+                "BTC_HEALTHY_SIX_CRYPTO_BASELINE_ONLY",
+            }:
+                state="HEALTHY_EARLY_COLLECTION_STAGE"
+                response="NO_MUTATION_WAIT_FOR_NEXT_SCHEDULED_EVIDENCE"
+            elif integrity_status in {
+                "BTC_AND_SIX_CRYPTO_CURRENTLY_ALIGNED",
+                "SIX_CRYPTO_168_HOUR_CONTIGUOUS_EVIDENCE_READY",
+            }:
+                state="HEALTHY_ALIGNED_FORWARD_COLLECTION"
+                response="NO_MUTATION_CONTINUE_SCHEDULED_COLLECTION"
 
     source_hours=integrity.get(
         "six_crypto_current_segment_independent_prospective_hours",0)
