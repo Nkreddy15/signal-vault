@@ -171,7 +171,8 @@ class KalshiDemoOnceExecutorTests(unittest.TestCase):
                         timestamp_ms=1,at=NOW,
                     )
                 self.assertFalse(calls)
-                self.assertEqual(journal.get_state("k1").stage,Stage.DRAFT_APPROVED)
+                with self.assertRaises(KeyError):
+                    journal.get_state("k1")
 
 
 if __name__=="__main__":
