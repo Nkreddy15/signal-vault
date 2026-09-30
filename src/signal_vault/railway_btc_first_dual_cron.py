@@ -318,7 +318,8 @@ def combined_btc_first_once(
         if output["btc_evidence_changed_during_sidecar_stage"]:
             output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
             output["sidecar_failure_class"]="BtcEvidenceFingerprintMismatch"
-            output["original_BTC_status_preserved"]=True
+            output["original_BTC_status_preserved"]=False
+            output["existing_BTC_evidence_deleted_or_reset"]=None
     except SidecarStorageBudgetExceeded as exc:
         output.update(
             sidecar_status="SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE",
@@ -347,6 +348,8 @@ def combined_btc_first_once(
                 if output["btc_evidence_changed_during_sidecar_stage"]:
                     output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
                     output["sidecar_failure_class"]="BtcEvidenceFingerprintMismatch"
+                    output["original_BTC_status_preserved"]=False
+                    output["existing_BTC_evidence_deleted_or_reset"]=None
             except Exception as fingerprint_exc:
                 output["btc_evidence_integrity_recheck_failure_class"]=type(
                     fingerprint_exc).__name__
