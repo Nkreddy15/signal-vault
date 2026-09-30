@@ -240,6 +240,7 @@ def combined_offline_status(
         out["sidecar_automatic_candidate_selection"]=review[
             "automatic_candidate_selection"]
         out["sidecar_paper_order_submission"]=review["paper_order_submission"]
+        out["sidecar_next_action"]=_review_gate_next_action(review)
         out["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
             "separate_owner_authorization_still_required_for_any_PAPER_execution"]
         out["sidecar_review_gate_source_hours_remaining_to_169"]=max(
@@ -268,6 +269,18 @@ def combined_offline_status(
             status="BLOCKED_OFFLINE_STATUS_AUDIT_FAILED",
             failure_class=type(exc).__name__)
         return out
+
+
+def _review_gate_next_action(review:Mapping[str,object]) -> str:
+    """Operational handoff only; never an order/trading authorization."""
+    if not review.get("evidence_window_complete_for_gate",False):
+        return "CONTINUE_UNATTENDED_FORWARD_COLLECTION"
+    eligible=review.get("candidates_meeting_all_review_criteria")
+    if not isinstance(eligible,list):
+        raise ValueError("review gate candidate result must be a list")
+    if eligible:
+        return "OWNER_PAPER_EXECUTION_DESIGN_REVIEW_REQUIRED_BEFORE_ANY_PAPER_ACTION"
+    return "FORWARD_SAMPLE_COMPLETE_NO_CANDIDATE_MEETS_FROZEN_REVIEW_GATE"
 
 
 def _attach_hourly_sidecar_readiness_audit(
@@ -301,6 +314,7 @@ def _attach_hourly_sidecar_readiness_audit(
     output["sidecar_automatic_candidate_selection"]=review[
         "automatic_candidate_selection"]
     output["sidecar_paper_order_submission"]=review["paper_order_submission"]
+    output["sidecar_next_action"]=_review_gate_next_action(review)
     output["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
         "separate_owner_authorization_still_required_for_any_PAPER_execution"]
     output["sidecar_review_gate_source_hours_remaining_to_169"]=max(
