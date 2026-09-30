@@ -137,6 +137,28 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(self.six_factory_calls,2)
         self.assertEqual(self.sentinel.read_bytes(),before)
 
+    def test_live_observation_complete_requires_source_and_scored_thresholds(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        self.tick(FIRST)
+        with patch(
+            "signal_vault.railway_btc_first_dual_cron.SOURCE_168_HOURS",2), patch(
+            "signal_vault.railway_btc_first_dual_cron.FULLY_SCORED_DECISIONS",2), patch(
+            "signal_vault.six_crypto_forward_scorecard.SOURCE_168_HOURS",2), patch(
+            "signal_vault.six_crypto_forward_scorecard.FULLY_SCORED_DECISIONS",2):
+            one=self.tick(FIRST+HOUR)
+            self.assertFalse(one["sidecar_observation_complete"])
+            two=self.tick(FIRST+2*HOUR)
+            self.assertTrue(two["sidecar_source_168_hour_collection_ready"])
+            self.assertFalse(two["sidecar_full_168_precommitted_decision_outcomes_ready"])
+            self.assertFalse(two["sidecar_observation_complete"])
+            three=self.tick(FIRST+3*HOUR)
+            self.assertTrue(three["sidecar_source_168_hour_collection_ready"])
+            self.assertTrue(three["sidecar_full_168_precommitted_decision_outcomes_ready"])
+            self.assertEqual(three["sidecar_source_hours_remaining_to_168"],0)
+            self.assertEqual(three["sidecar_scored_intervals_remaining_to_168"],0)
+            self.assertTrue(three["sidecar_observation_complete"])
+            self.assertEqual(three["broker_order_submission"],"DISABLED")
+
     def test_offline_status_reports_cumulative_independent_hours_without_provider_GET(self):
         self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
         self.tick(FIRST)
