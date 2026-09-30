@@ -29,6 +29,58 @@ class BtcEvidencePermissionError(PermissionError):
         super().__init__(f"owner-private permission required for {kind}: {relative_path}")
 
 
+def restrict_btc_evidence_permissions(
+    root:Path,
+    *,
+    excluded_sidecar_name:str,
+) -> list[dict[str,str]]:
+    """Restrict mode bits only on owned BTC evidence; never alter evidence bytes."""
+    base=Path(root)
+    if base.is_symlink() or not base.is_dir() or base.stat().st_mode&0o077:
+        raise ValueError("BTC evidence root must remain a real owner-private directory")
+    if (not isinstance(excluded_sidecar_name,str) or
+            excluded_sidecar_name in ("",".","..") or
+            "/" in excluded_sidecar_name or "\\" in excluded_sidecar_name):
+        raise ValueError("exact single child sidecar name required")
+    if os.geteuid()!=0:
+        raise PermissionError("BTC permission restriction requires root runtime")
+    excluded=base/excluded_sidecar_name
+    repaired:list[dict[str,str]]=[]
+    inspected=0
+    for item in sorted(base.rglob("*"),key=lambda p:p.relative_to(base).as_posix()):
+        if item==excluded or excluded in item.parents:
+            continue
+        inspected+=1
+        if inspected>30_000:
+            raise ValueError("bounded BTC permission scan limit exceeded")
+        if item.is_symlink():
+            raise ValueError("symlink forbidden in original BTC evidence tree")
+        st=item.stat()
+        if st.st_uid!=os.geteuid():
+            raise PermissionError("refusing permission repair of foreign-owned BTC evidence")
+        relative=item.relative_to(base).as_posix()
+        mode=st.st_mode&0o777
+        if item.is_dir():
+            target=0o700
+            kind="directory"
+        elif item.is_file():
+            target=0o600
+            kind="file"
+        else:
+            raise ValueError("unexpected inode in original BTC evidence tree")
+        if mode&0o077:
+            os.chmod(item,target)
+            if item.stat().st_mode&0o777!=target:
+                raise PermissionError("BTC evidence permission restriction did not persist")
+            repaired.append({
+                "path":relative,
+                "kind":kind,
+                "from_mode":format(mode,"04o"),
+                "to_mode":format(target,"04o"),
+            })
+    return repaired
+
+
 def fingerprint_btc_evidence_tree(
     root:Path,
     *,
