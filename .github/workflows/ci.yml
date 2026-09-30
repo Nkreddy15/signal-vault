@@ -15,31 +15,55 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install project with research dependencies
-        run: python -m pip install -e '.[research,equity-research]'
-      - name: Compile sources
-        run: python -m compileall -q src tests
-      - name: Run offline safety tests
-        env:
-          PYTHONPATH: src
+      - name: Diagnostic install
+        shell: bash
         run: |
           set +e
-          python -m unittest discover -s tests -v > /tmp/signal-vault-test-output.txt 2>&1
-          code=$?
+          python -m pip install -e '.[research,equity-research]' > /tmp/install.txt 2>&1
+          echo $? > /tmp/install.code
           set -e
-          cat /tmp/signal-vault-test-output.txt
-          echo "$code" > /tmp/signal-vault-test-exit-code.txt
-          exit "$code"
-      - name: Upload diagnostic test output
+          cat /tmp/install.txt
+      - name: Diagnostic compile
+        shell: bash
+        run: |
+          set +e
+          python -m compileall -q src tests > /tmp/compile.txt 2>&1
+          echo $? > /tmp/compile.code
+          set -e
+          cat /tmp/compile.txt
+      - name: Diagnostic tests
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set +e
+          python -m unittest discover -s tests -v > /tmp/tests.txt 2>&1
+          echo $? > /tmp/tests.code
+          set -e
+          tail -n 250 /tmp/tests.txt || true
+      - name: Upload diagnostic outputs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: diagnostic-test-output-${{ matrix.python-version }}
+          name: diagnostic-ci-${{ matrix.python-version }}
           path: |
-            /tmp/signal-vault-test-output.txt
-            /tmp/signal-vault-test-exit-code.txt
+            /tmp/install.txt
+            /tmp/install.code
+            /tmp/compile.txt
+            /tmp/compile.code
+            /tmp/tests.txt
+            /tmp/tests.code
           if-no-files-found: warn
           retention-days: 1
+      - name: Fail if any diagnostic stage failed
+        if: always()
+        shell: bash
+        run: |
+          code=0
+          for f in /tmp/install.code /tmp/compile.code /tmp/tests.code; do
+            if [ ! -f "$f" ] || [ "$(cat "$f")" != "0" ]; then code=1; fi
+          done
+          exit "$code"
       - name: Verify live mode is explicitly refused
         env:
           PYTHONPATH: src
