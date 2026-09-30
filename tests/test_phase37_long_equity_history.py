@@ -8,6 +8,7 @@ from signal_vault.ci_long_equity_history import (
     execute_long_equity_history,
     resolve_long_equity_plan,
 )
+from signal_vault.historical_equity_chunks import long_horizon_equity_plan
 
 NOW=datetime(2026,9,30,18,0,tzinfo=timezone.utc)
 BASE={
@@ -52,6 +53,20 @@ class LongEquityHistoryTests(unittest.TestCase):
             self.assertTrue((root/"long_horizon_manifest.json").is_file())
             self.assertEqual(result["broker_order_submission"],"DISABLED")
             self.assertEqual(result["live_trading"],"UNAVAILABLE")
+
+    def test_short_final_remainder_is_merged_or_rebalanced(self):
+        plan=long_horizon_equity_plan(
+            start_date=datetime(2026,7,1,tzinfo=timezone.utc).date(),
+            end_date_exclusive=datetime(2026,8,31,tzinfo=timezone.utc).date(),
+            as_of=NOW,
+        )
+        self.assertGreater(plan["chunk_count"],1)
+        self.assertTrue(
+            all(chunk["complete_core_hours"]>=56 for chunk in plan["chunks"])
+        )
+        self.assertLessEqual(
+            max(chunk["session_count"] for chunk in plan["chunks"]),25
+        )
 
     def test_wrong_context_or_approval_fails_before_runner(self):
         for change in (
