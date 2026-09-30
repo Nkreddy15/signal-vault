@@ -405,6 +405,11 @@ def combined_btc_first_once(
             sidecar_status="FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY",
             sidecar_failure_class=type(exc).__name__,
             original_BTC_status_preserved=True)
+        if isinstance(exc,BtcEvidencePermissionError):
+            output["btc_permission_failure_path"]=exc.relative_path
+            output["btc_permission_failure_kind"]=exc.kind
+            output["btc_permission_failure_mode_octal"]=format(exc.mode,"04o")
+            output["btc_permission_failure_diagnostic_only"]=True
         try:
             output["sidecar_permission_snapshot"]=_sidecar_permission_snapshot(
                 sidecar_root=sidecar_root)
