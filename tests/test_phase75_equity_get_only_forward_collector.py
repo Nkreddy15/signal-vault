@@ -7,6 +7,7 @@ from pathlib import Path
 
 from signal_vault.ci_historical_equities import SYMBOLS
 from signal_vault.equity_forward_collector import (
+    archive_equity_forward_session_plan,
     archive_prospective_equity_hour,
     collect_precommitted_equity_hour,
     precommit_equity_forward_session,
@@ -206,6 +207,24 @@ class EquityForwardCollectorTests(unittest.TestCase):
                 secret="paper-data-secret",
                 provider_factory=FakeProvider,
             )
+
+    def test_plan_archive_is_private_and_immutable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "equity-forward"
+            root.mkdir(mode=0o700)
+            root.chmod(0o700)
+            path = archive_equity_forward_session_plan(self.plan, output_root=root)
+            self.assertTrue(path.is_file())
+            self.assertEqual(path.stat().st_mode & 0o077, 0)
+            before = path.read_bytes()
+            self.assertEqual(
+                archive_equity_forward_session_plan(self.plan, output_root=root),
+                path,
+            )
+            self.assertEqual(path.read_bytes(), before)
+            path.write_text("tampered")
+            with self.assertRaises(ValueError):
+                archive_equity_forward_session_plan(self.plan, output_root=root)
 
     def test_archive_is_private_create_only_and_idempotent_only_for_same_bytes(self):
         item = collect_precommitted_equity_hour(
