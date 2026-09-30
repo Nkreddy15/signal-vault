@@ -318,7 +318,7 @@ def combined_btc_first_once(
             btc_before_sidecar=fingerprint_btc_evidence_tree(
                 verified,excluded_sidecar_name=BASENAME)
         except BtcEvidencePermissionError:
-            # Restrict ONLY mode bits on root-owned BTC evidence. No evidence
+            # Restrict ONLY mode bits on process-owned BTC evidence. No evidence
             # bytes, names, ownership, or dedicated sidecar bytes are changed.
             output["sidecar_stage"]="BTC_EVIDENCE_PERMISSION_RESTRICTION"
             output["btc_evidence_permission_modes_restricted"]=(
