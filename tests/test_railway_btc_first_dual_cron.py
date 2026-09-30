@@ -12,13 +12,38 @@ from unittest.mock import patch
 from signal_vault.crypto_universe_forward import universe_status
 from signal_vault.railway_btc_first_dual_cron import (
     ACTIVATION_FLAG,ACTIVATION_VALUE,BASENAME,
-    combined_btc_first_once,combined_offline_status,
+    _review_gate_next_action,combined_btc_first_once,combined_offline_status,
 )
 from test_crypto_universe_forward import FixtureSixCryptoProvider,FIRST,HOUR
 
 ROOT=Path(__file__).resolve().parents[1]
 BTC_SUCCESS="ONE_PROSPECTIVE_OBSERVATION_AND_SHADOW_ARCHIVED"
 
+
+class ReviewGateNextActionTests(unittest.TestCase):
+    def test_waiting_complete_fail_and_complete_review_handoff_are_distinct(self):
+        waiting={
+            "evidence_window_complete_for_gate":False,
+            "candidates_meeting_all_review_criteria":[],
+        }
+        self.assertEqual(
+            _review_gate_next_action(waiting),
+            "CONTINUE_UNATTENDED_FORWARD_COLLECTION")
+        complete_none={
+            "evidence_window_complete_for_gate":True,
+            "candidates_meeting_all_review_criteria":[],
+        }
+        self.assertEqual(
+            _review_gate_next_action(complete_none),
+            "FORWARD_SAMPLE_COMPLETE_NO_CANDIDATE_MEETS_FROZEN_REVIEW_GATE")
+        complete_review={
+            "evidence_window_complete_for_gate":True,
+            "candidates_meeting_all_review_criteria":[
+                "generic-ema12x26-v1-predeclared"],
+        }
+        self.assertEqual(
+            _review_gate_next_action(complete_review),
+            "OWNER_PAPER_EXECUTION_DESIGN_REVIEW_REQUIRED_BEFORE_ANY_PAPER_ACTION")
 
 class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
     def setUp(self):
@@ -120,6 +145,9 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(captured["sidecar_candidates_meeting_all_review_criteria"],[])
         self.assertEqual(captured["sidecar_automatic_candidate_selection"],"DISABLED")
         self.assertEqual(captured["sidecar_paper_order_submission"],"DISABLED")
+        self.assertEqual(
+            captured["sidecar_next_action"],
+            "CONTINUE_UNATTENDED_FORWARD_COLLECTION")
         self.assertTrue(captured[
             "sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"])
         self.assertEqual(captured[
@@ -205,6 +233,9 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertEqual(out["sidecar_candidates_meeting_all_review_criteria"],[])
         self.assertEqual(out["sidecar_automatic_candidate_selection"],"DISABLED")
         self.assertEqual(out["sidecar_paper_order_submission"],"DISABLED")
+        self.assertEqual(
+            out["sidecar_next_action"],
+            "CONTINUE_UNATTENDED_FORWARD_COLLECTION")
         self.assertTrue(out[
             "sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"])
         self.assertEqual(out[
