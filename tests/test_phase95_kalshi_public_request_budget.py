@@ -37,7 +37,7 @@ class InnerClient:
 class PlanningClient:
     def __init__(self):
         markets=[]
-        for event_index in range(10):
+        for event_index in range(11):
             for leg in range(2):
                 close=NOW+timedelta(hours=30+event_index*3+leg)
                 markets.append({
