@@ -37,6 +37,10 @@ ROOT_ENV="SIGNAL_VAULT_FORWARD_ROOT"
 DEFAULT_ROOT=Path("/var/lib/signal-vault/forward")
 CHILD="isolated-kalshi-prospective"
 MAX_PUBLIC_GETS_PER_TICK=25
+# The frozen prospective gate requires >=20 valid markets and >=90% coverage.
+# Planning 22 lets up to two markets fail prospectively while 20/22 still
+# exceeds the coverage floor. The first 20 valid markets remain the scoring set.
+CLOUD_PLANNED_MARKET_COUNT=22
 
 
 class _BudgetedPublicClient:
@@ -156,6 +160,7 @@ def run_kalshi_sidecar_once(
         plan=build_prospective_kalshi_plan(
             client=client,
             planned_at=moment,
+            market_count=CLOUD_PLANNED_MARKET_COUNT,
         )
         path=archive_prospective_kalshi_plan(
             plan,
@@ -167,6 +172,9 @@ def run_kalshi_sidecar_once(
             plan_sha256=plan["plan_sha256"],
             planned_market_count=plan["planned_market_count"],
             minimum_distinct_events=plan["minimum_distinct_events"],
+            planned_buffer_markets=(
+                int(plan["planned_market_count"])-20
+            ),
             filesystem_writes=True,
             network_requests=client.request_count,
             public_get_budget=MAX_PUBLIC_GETS_PER_TICK,
