@@ -30,7 +30,10 @@ from .multi_asset_historical import BoundedAlpacaHistoricalBatch
 from .railway_forward_cron import (
     configured_railway_volume,railway_data_credentials,railway_once,
 )
-from .six_crypto_shadow import archive_six_crypto_shadow,inspect_six_crypto_shadow
+from .six_crypto_shadow import (
+    archive_six_crypto_shadow,audit_six_crypto_shadow_archive,
+    inspect_six_crypto_shadow,
+)
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -139,7 +142,13 @@ def combined_offline_status(
         out["sidecar_latest_hour_utc"]=source["latest_hour_utc"]
         out["sidecar_ready_for_seven_day_audit"]=source["ready_for_seven_day_audit"]
         shadow=inspect_six_crypto_shadow(root=root)
+        archive=audit_six_crypto_shadow_archive(root=root)
         out["sidecar_shadow_status"]=shadow.get("status",shadow.get("kind"))
+        out["sidecar_shadow_archive_status"]=archive["status"]
+        out["sidecar_current_segment_shadow_files_verified"]=archive[
+            "current_segment_shadow_files_verified"]
+        out["sidecar_current_segment_shadow_archive_complete"]=archive[
+            "current_segment_shadow_archive_complete"]
         if source["current_segment_independent_prospective_hours"]>0:
             if shadow.get("kind")!="OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY":
                 raise ValueError("prospective six-market source lacks audited latest shadow")
@@ -148,6 +157,11 @@ def combined_offline_status(
                     shadow.get("latest_newly_observed_UTC_close")!=source["latest_hour_utc"]):
                 raise ValueError("six-market source and shadow progress disagree")
             out["sidecar_latest_shadow_SHA256"]=shadow.get("shadow_payload_sha256")
+        out["sidecar_ready_for_seven_day_audit"]=bool(
+            source["ready_for_seven_day_audit"] and
+            archive["current_segment_shadow_archive_complete"] and
+            archive["current_segment_shadow_files_verified"]==
+            source["current_segment_independent_prospective_hours"])
         out["status"]="READ_ONLY_STATUS_AVAILABLE"
         return out
     except Exception as exc:
