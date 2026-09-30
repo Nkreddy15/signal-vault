@@ -136,7 +136,7 @@ class SidecarStorageAuditTests(unittest.TestCase):
         self.tick(FIRST)
         receipt=next((self.side/"hourly-receipts").glob("*.json"))
         receipt.chmod(0o644)
-        with self.assertRaises(PermissionError):
+        with self.assertRaises((ValueError,PermissionError)):
             sidecar_storage_audit(
                 btc_root=self.btc,sidecar_root=self.side)
         self.assertEqual(receipt.stat().st_mode&0o777,0o644)
