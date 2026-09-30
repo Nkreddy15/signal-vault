@@ -31,6 +31,7 @@ from .railway_btc_first_dual_cron import (
     BTC_MINIMUM_FREE_RESERVE_BYTES,
 )
 from .railway_multimarket_research_cron import combined_multimarket_once
+from .all_market_forward_status import all_market_forward_status
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -161,11 +162,18 @@ def main(argv:list[str]|None=None)->int:
     parser=argparse.ArgumentParser(
         description="Existing-volume BTC crypto stocks Kalshi GET-only research cron"
     )
-    parser.add_argument("--once",action="store_true",required=True)
-    parser.parse_args(argv)
-    result=combined_all_markets_once(now=datetime.now(timezone.utc))
+    modes=parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--once",action="store_true")
+    modes.add_argument("--status",action="store_true")
+    parsed=parser.parse_args(argv)
+    if parsed.status:
+        result=all_market_forward_status()
+        code=0
+    else:
+        result=combined_all_markets_once(now=datetime.now(timezone.utc))
+        code=0 if result["core_status"] in BTC_HEALTHY else 2
     print(json.dumps(result,sort_keys=True,indent=2))
-    return 0 if result["core_status"] in BTC_HEALTHY else 2
+    return code
 
 
 if __name__=="__main__":
