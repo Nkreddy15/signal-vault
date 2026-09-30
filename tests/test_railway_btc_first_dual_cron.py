@@ -166,6 +166,9 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertFalse(out["sidecar_ready_for_seven_day_audit"])
         self.assertFalse(out["sidecar_source_168_hour_collection_ready"])
         self.assertFalse(out["sidecar_full_168_precommitted_decision_outcomes_ready"])
+        self.assertEqual(out["sidecar_source_hours_remaining_to_168"],167)
+        self.assertEqual(out["sidecar_scored_intervals_remaining_to_168"],168)
+        self.assertFalse(out["sidecar_observation_complete"])
         self.assertEqual(
             out["sidecar_fully_observed_precommitted_decision_intervals"],0)
         self.assertEqual(
