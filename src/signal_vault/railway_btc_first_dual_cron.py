@@ -230,6 +230,15 @@ def combined_offline_status(
             "fully_observed_precommitted_decision_intervals"]
         out["sidecar_full_168_precommitted_decision_outcomes_ready"]=score.get(
             "full_168_precommitted_decision_outcomes_ready",False)
+        source_hours=int(score["current_segment_prospective_source_hours"])
+        scored=int(score["fully_observed_precommitted_decision_intervals"])
+        out["sidecar_source_hours_remaining_to_168"]=max(
+            0,SOURCE_168_HOURS-source_hours)
+        out["sidecar_scored_intervals_remaining_to_168"]=max(
+            0,FULLY_SCORED_DECISIONS-scored)
+        out["sidecar_observation_complete"]=bool(
+            out["sidecar_source_168_hour_collection_ready"] and
+            out["sidecar_full_168_precommitted_decision_outcomes_ready"])
         # Preserve older field name as SOURCE collection milestone only.
         out["sidecar_ready_for_seven_day_audit"]=out[
             "sidecar_source_168_hour_collection_ready"]
