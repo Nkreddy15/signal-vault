@@ -232,3 +232,40 @@ See [`docs/API_PROVIDER_ASSUMPTIONS.md`](docs/API_PROVIDER_ASSUMPTIONS.md) for c
 ## Source handoff contingency (private repo only)
 
 If the ChatGPT Library-to-GitHub source transfer is unavailable, download the **latest complete checkpoint ZIP** from `/Signal Vault/` in your Library and extract it on your Mac (including `.git`). Then run `bash signal-vault/scripts/publish_private_checkpoint.sh` from the extracted parent directory, or run the script by absolute path. It verifies the existing private remote history, ensures unexpected collaborator code changes are not overwritten, asks you to type `PUBLISH`, and uses an ordinary fast-forward Git push (never force). Requires your Mac to have Git, Python 3, and GitHub authentication. This publishes CODE ONLY: no Alpaca connection, purchases, orders or deposits.
+
+## Railway owner-authorized BTC-first six-crypto forward activation (2026-09-30)
+
+The owner explicitly approved enabling the already-reviewed BTC-FIRST
+six-crypto **DATA GET only** cron on the SAME existing Railway service and
+500 MB persistent volume, with no new paid resource or broker order access.
+The Railway service-level start command, not Docker's fallback CMD, must be:
+
+`python -m signal_vault.railway_btc_first_dual_cron --once`
+
+Its unchanged native schedule is `7 * * * *` UTC and restart policy
+`NEVER`. The exact non-secret opt-in service variable is
+`SIGNAL_VAULT_SIX_CRYPTO_SIDECAR=BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1`.
+
+The original BTC capture, SQLite journal, durable pause checks, immutable
+shadow and volume mount `/var/lib/signal-vault/forward` run FIRST, with
+no reset or migration. Only after BTC reports a healthy result does the
+separate private namespace
+`/var/lib/signal-vault/forward/isolated-six-crypto-prospective` collect
+six allowlisted crypto **historical DATA GET** candles and write its own
+SHA-chained immutable source receipts. First 72h baseline is **ZERO
+prospective**, then each successful fresh consecutive tick records six
+asset-bars but just one independent clock hour. Sidecar has a bounded
+32 MiB evidence cap and reserves at least 128 MiB free for BTC; it
+never deletes BTC evidence to reclaim space.
+
+This README update is also an intentional watched-source refresh: Railway's
+prior most-recent GitHub deployments were SKIPPED because research-only
+paths were not watched, so an ordinary redeploy lacked a runnable latest
+snapshot. The existing Railway service must build a fresh main-branch
+Docker image containing the merged six-crypto modules. The explicit
+owner-approved deployment configuration supplies the dual start command;
+Docker's BTC-only CMD remains its safe, unconfigured fallback.
+All existing secret values remain untouched; DO NOT disclose them.
+
+Automatic PAPER orders remain DISABLED; LIVE trading remains UNAVAILABLE.
+This is NOT a profitable-strategy claim or a new source-provider entitlement.
