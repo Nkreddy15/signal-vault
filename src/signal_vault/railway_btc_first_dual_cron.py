@@ -41,6 +41,7 @@ from .six_crypto_shadow import (
 from .six_crypto_forward_scorecard import (
     FULLY_SCORED_DECISIONS,SOURCE_168_HOURS,prospective_shadow_scorecard,
 )
+from .six_crypto_forward_review_gate import assess_forward_review_gate
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -228,6 +229,17 @@ def combined_offline_status(
         out["sidecar_scorecard_status"]=score["status"]
         out["sidecar_fully_observed_precommitted_decision_intervals"]=score[
             "fully_observed_precommitted_decision_intervals"]
+        review=assess_forward_review_gate(score)
+        out["sidecar_review_gate_policy_version"]=review["policy_version"]
+        out["sidecar_review_gate_evidence_window_complete"]=review[
+            "evidence_window_complete_for_gate"]
+        out["sidecar_candidates_meeting_all_review_criteria"]=review[
+            "candidates_meeting_all_review_criteria"]
+        out["sidecar_automatic_candidate_selection"]=review[
+            "automatic_candidate_selection"]
+        out["sidecar_paper_order_submission"]=review["paper_order_submission"]
+        out["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
+            "separate_owner_authorization_still_required_for_any_PAPER_execution"]
         out["sidecar_full_168_precommitted_decision_outcomes_ready"]=score.get(
             "full_168_precommitted_decision_outcomes_ready",False)
         source_hours=int(score["current_segment_prospective_source_hours"])
@@ -273,6 +285,17 @@ def _attach_hourly_sidecar_readiness_audit(
         "current_segment_shadow_archive_complete"]
     output["sidecar_scorecard_status"]=score["status"]
     output["sidecar_fully_observed_precommitted_decision_intervals"]=scored
+    review=assess_forward_review_gate(score)
+    output["sidecar_review_gate_policy_version"]=review["policy_version"]
+    output["sidecar_review_gate_evidence_window_complete"]=review[
+        "evidence_window_complete_for_gate"]
+    output["sidecar_candidates_meeting_all_review_criteria"]=review[
+        "candidates_meeting_all_review_criteria"]
+    output["sidecar_automatic_candidate_selection"]=review[
+        "automatic_candidate_selection"]
+    output["sidecar_paper_order_submission"]=review["paper_order_submission"]
+    output["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
+        "separate_owner_authorization_still_required_for_any_PAPER_execution"]
     output["sidecar_source_168_hour_collection_ready"]=bool(
         score["source_168_consecutive_hour_collection_ready"] and
         archive["current_segment_shadow_archive_complete"] and
