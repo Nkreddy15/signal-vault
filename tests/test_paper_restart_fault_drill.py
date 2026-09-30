@@ -38,10 +38,12 @@ class PersistentPaperRestartFaultDrillTests(unittest.TestCase):
 
     def test_cli_redacts_internal_failure_and_remains_no_order(self):
         output=io.StringIO()
-        with patch(
-            "signal_vault.paper_restart_fault_drill.run_persistent_restart_partial_fault_drill",
-            side_effect=RuntimeError("SECRET_SENTINEL")),
-             contextlib.redirect_stdout(output):
+        with (
+            patch(
+                "signal_vault.paper_restart_fault_drill.run_persistent_restart_partial_fault_drill",
+                side_effect=RuntimeError("SECRET_SENTINEL")),
+            contextlib.redirect_stdout(output),
+        ):
             rc=main()
         self.assertEqual(rc,2)
         body=json.loads(output.getvalue())
