@@ -31,6 +31,7 @@ from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
 from .multi_asset_historical import BoundedAlpacaHistoricalBatch
+from .equity_cloud_sidecar import CHILD as EQUITY_BASENAME
 from .railway_forward_cron import (
     configured_railway_volume,railway_data_credentials,railway_once,
 )
@@ -48,6 +49,7 @@ from .six_crypto_forward_review_gate import (
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
 BASENAME="isolated-six-crypto-prospective"
+BTC_FINGERPRINT_EXCLUDED_CHILDREN=(BASENAME,EQUITY_BASENAME)
 # Sharing the physical Free 500MB volume requires an explicit, conservative
 # headroom GUARANTEE for the original BTC stream before any six-asset GET.
 # Reserve 128 MiB of physically available space exclusively for BTC and
@@ -415,17 +417,17 @@ def combined_btc_first_once(
         output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_BEFORE"
         try:
             btc_before_sidecar=fingerprint_btc_evidence_tree(
-                verified,excluded_sidecar_name=BASENAME)
+                verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN)
         except BtcEvidencePermissionError:
             # Restrict ONLY mode bits on process-owned BTC evidence. No evidence
             # bytes, names, ownership, or dedicated sidecar bytes are changed.
             output["sidecar_stage"]="BTC_EVIDENCE_PERMISSION_RESTRICTION"
             output["btc_evidence_permission_modes_restricted"]=(
                 restrict_btc_evidence_permissions(
-                    verified,excluded_sidecar_name=BASENAME))
+                    verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN))
             output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_BEFORE"
             btc_before_sidecar=fingerprint_btc_evidence_tree(
-                verified,excluded_sidecar_name=BASENAME)
+                verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN)
         output["btc_evidence_before_sidecar_SHA256"]=btc_before_sidecar[
             "tree_sha256"]
         output["btc_evidence_before_sidecar_file_count"]=btc_before_sidecar[
@@ -489,7 +491,7 @@ def combined_btc_first_once(
                     output["sidecar_shadow_failure_class"]=type(exc).__name__
         output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_AFTER"
         btc_after_sidecar=fingerprint_btc_evidence_tree(
-            verified,excluded_sidecar_name=BASENAME)
+            verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN)
         output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar[
             "tree_sha256"]
         output["btc_evidence_changed_during_sidecar_stage"]=(
@@ -511,7 +513,7 @@ def combined_btc_first_once(
             original_BTC_status_preserved=True)
         if "btc_before_sidecar" in locals():
             btc_after_sidecar=fingerprint_btc_evidence_tree(
-                verified,excluded_sidecar_name=BASENAME)
+                verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN)
             output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar["tree_sha256"]
             output["btc_evidence_changed_during_sidecar_stage"]=(
                 btc_after_sidecar["tree_sha256"]!=btc_before_sidecar["tree_sha256"])
@@ -534,7 +536,7 @@ def combined_btc_first_once(
         if "btc_before_sidecar" in locals():
             try:
                 btc_after_sidecar=fingerprint_btc_evidence_tree(
-                    verified,excluded_sidecar_name=BASENAME)
+                    verified,excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN)
                 output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar[
                     "tree_sha256"]
                 output["btc_evidence_changed_during_sidecar_stage"]=(
