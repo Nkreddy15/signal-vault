@@ -19,12 +19,14 @@ from typing import Mapping
 
 from .cloud_forward_service import CLOUD_ROOT
 from .equity_cloud_sidecar import CHILD as EQUITY_CHILD
+from .equity_forward_archive_audit import audit_equity_forward_archive
 from .equity_forward_collector import (
     CAPTURE_EARLIEST_AFTER_CLOSE,
     CAPTURE_LATEST_AFTER_CLOSE,
     _validate_plan as _validate_equity_plan,
 )
 from .kalshi_cloud_sidecar import CHILD as KALSHI_CHILD
+from .kalshi_prospective_archive_audit import audit_kalshi_prospective_archive
 from .kalshi_prospective_collector import (
     CAPTURE_WINDOW as KALSHI_CAPTURE_WINDOW,
     HORIZONS,
@@ -106,6 +108,30 @@ def _equity_status(
                 due_open+=1
             else:
                 missing_expired+=1
+    integrity_status="NOT_READY_RAW_EVIDENCE_INCOMPLETE"
+    integrity=None
+    if len(plans)>=EQUITY_TARGET_SESSIONS and len(receipts)>=EQUITY_TARGET_CORE_HOURS:
+        try:
+            integrity=audit_equity_forward_archive(root)
+            integrity_status="AVAILABLE"
+        except Exception as exc:
+            integrity_status="FAILED"
+            integrity={"failure_class":type(exc).__name__}
+    current_segment_hours=(
+        integrity.get("current_segment_prospective_core_hours_per_asset",0)
+        if isinstance(integrity,dict) and integrity_status=="AVAILABLE" else 0
+    )
+    current_segment_sessions=(
+        integrity.get("current_segment_distinct_xnys_sessions",0)
+        if isinstance(integrity,dict) and integrity_status=="AVAILABLE" else 0
+    )
+    source_ready=bool(
+        integrity_status=="AVAILABLE"
+        and isinstance(current_segment_hours,int)
+        and isinstance(current_segment_sessions,int)
+        and current_segment_hours>=EQUITY_TARGET_CORE_HOURS
+        and current_segment_sessions>=EQUITY_TARGET_SESSIONS
+    )
     return {
         "status":"EVIDENCE_PRESENT",
         "session_plan_files":len(plans),
@@ -122,6 +148,11 @@ def _equity_status(
         "raw_session_plans_remaining_to_10":max(
             0,EQUITY_TARGET_SESSIONS-len(plans)
         ),
+        "offline_integrity_audit_status":integrity_status,
+        "offline_integrity_audit":integrity,
+        "current_segment_integrity_verified_core_hours":current_segment_hours,
+        "current_segment_integrity_verified_sessions":current_segment_sessions,
+        "prospective_source_integrity_ready_for_shadow_scoring":source_ready,
         "artifact_counts_are_not_gate_pass":True,
         "time_aware_progress_is_not_integrity_audit":True,
         "offline_integrity_audit_required":True,
@@ -202,6 +233,34 @@ def _kalshi_status(
                     settlement_not_due+=1
                 else:
                     settlement_pending+=1
+    integrity_status="NOT_READY_RAW_EVIDENCE_INCOMPLETE"
+    integrity=None
+    if (
+        plans
+        and len(snapshots)>=KALSHI_TARGET_DECISION_SNAPSHOTS
+        and len(settlements)>=KALSHI_TARGET_MARKETS
+    ):
+        try:
+            integrity=audit_kalshi_prospective_archive(root)
+            integrity_status="AVAILABLE"
+        except Exception as exc:
+            integrity_status="FAILED"
+            integrity={"failure_class":type(exc).__name__}
+    valid_markets=(
+        integrity.get("valid_prospective_market_count",0)
+        if isinstance(integrity,dict) and integrity_status=="AVAILABLE" else 0
+    )
+    valid_events=(
+        integrity.get("distinct_valid_event_count",0)
+        if isinstance(integrity,dict) and integrity_status=="AVAILABLE" else 0
+    )
+    source_ready=bool(
+        integrity_status=="AVAILABLE"
+        and isinstance(valid_markets,int)
+        and isinstance(valid_events,int)
+        and valid_markets>=KALSHI_TARGET_MARKETS
+        and valid_events>=KALSHI_TARGET_DISTINCT_EVENTS
+    )
     return {
         "status":"EVIDENCE_PRESENT" if plans else "SIDE_CAR_PRESENT_NO_PLAN",
         "plan_present":bool(plans),
@@ -224,6 +283,11 @@ def _kalshi_status(
         "raw_settlement_receipts_remaining":max(
             0,KALSHI_TARGET_MARKETS-len(settlements)
         ),
+        "offline_integrity_audit_status":integrity_status,
+        "offline_integrity_audit":integrity,
+        "integrity_verified_valid_markets":valid_markets,
+        "integrity_verified_distinct_events":valid_events,
+        "prospective_source_integrity_ready_for_shadow_scoring":source_ready,
         "artifact_counts_are_not_gate_pass":True,
         "time_aware_progress_is_not_integrity_audit":True,
         "offline_integrity_audit_required":True,
