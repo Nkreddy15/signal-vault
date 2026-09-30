@@ -22,7 +22,24 @@ jobs:
       - name: Run offline safety tests
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -v
+        run: |
+          set +e
+          python -m unittest discover -s tests -v > /tmp/signal-vault-test-output.txt 2>&1
+          code=$?
+          set -e
+          cat /tmp/signal-vault-test-output.txt
+          echo "$code" > /tmp/signal-vault-test-exit-code.txt
+          exit "$code"
+      - name: Upload diagnostic test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-test-output-${{ matrix.python-version }}
+          path: |
+            /tmp/signal-vault-test-output.txt
+            /tmp/signal-vault-test-exit-code.txt
+          if-no-files-found: warn
+          retention-days: 1
       - name: Verify live mode is explicitly refused
         env:
           PYTHONPATH: src
