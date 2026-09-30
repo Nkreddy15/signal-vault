@@ -1,3 +1,17 @@
+# Signal Vault — current next steps (2026-09-30)
+
+**NO OWNER DESKTOP ACTION IS REQUIRED. Do not Fetch/Pull/run Terminal for the cloud collector.** The production Railway BTC-first six-crypto GET-only service is already configured and freshly built. The next production milestones are time-dependent scheduled evidence, not a Mac command.
+
+1. Verify the first scheduled post-activation Railway tick from actual runtime logs: original BTC must run first and remain internally valid; six-crypto must create exactly one 72h historical baseline with **0** prospective hours.
+2. Verify the next exactly contiguous hourly tick: BTC must continue; six-crypto must add 6 source asset-bars but exactly **1** distinct prospective UTC hour and create the immutable six-market offline shadow. Any missed hour resets only the sidecar's current segment via a new historical baseline; never backfill.
+3. Continue unattended hourly collection toward **168 consecutive distinct sidecar prospective UTC hours**. Historical bootstrap bars, six-asset multiplication, old BTC hours, and stock history do not count toward that 168-hour sidecar threshold.
+4. Keep automatic PAPER orders DISABLED and LIVE unavailable. Historical/synthetic strategy results do not authorize order submission. Any future PAPER order activation requires a separate explicit owner decision after forward evidence, realistic execution/friction review, account eligibility/minimums, and reconciliation design.
+5. Continue engineering offline/read-only integrity, incident recovery, evidence manifests, monitoring and failure tests while the clock-based collector accumulates data. Only interrupt the owner for a true permission/access/paid-resource/trading decision.
+
+**Current production identifiers:** Railway project `11cfaecd-9956-46a7-b94a-99a1dc4cd4c9`, environment `628e903d-c28f-42c1-bf59-9f7d91574dd0`, service `d3d04ec9-1f74-428a-a4a3-03a35bce2dd2`, fresh deployment `e35d6734-6390-49c5-b7fd-fac7fd7d6213`, source main `0f84c41290702c40f80f9d18ea289b7c4feaa2ce`. Volume remains 500 MB at `/var/lib/signal-vault/forward` and cron remains `7 * * * *` UTC.
+
+---
+
 # Signal Vault — user-approved unattended GET-only Mac activation prepared (NOT INSTALLED)
 
 **CURRENT NEXT OWNER ACTION — ONE-TIME MAC SETUP ONLY, NO MORE
