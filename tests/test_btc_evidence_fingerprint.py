@@ -5,7 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from signal_vault.btc_evidence_fingerprint import fingerprint_btc_evidence_tree
+from signal_vault.btc_evidence_fingerprint import (
+    BtcEvidencePermissionError,fingerprint_btc_evidence_tree,
+)
 
 
 class BtcEvidenceFingerprintTests(unittest.TestCase):
