@@ -35,6 +35,45 @@ from .six_crypto_shadow import archive_six_crypto_shadow
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
 BASENAME="isolated-six-crypto-prospective"
+# Sharing the physical Free 500MB volume requires an explicit, conservative
+# headroom GUARANTEE for the original BTC stream before any six-asset GET.
+# Reserve 128 MiB of physically available space exclusively for BTC and
+# cap total new six-market immutable receipts/shadows to 32 MiB. Never
+# delete/prune original BTC or new research evidence to reclaim space.
+BTC_MINIMUM_FREE_RESERVE_BYTES=128*1024*1024
+SIX_MARKET_TOTAL_EVIDENCE_CAP_BYTES=32*1024*1024
+MAX_NEW_SIDECAR_TICK_BUDGET_BYTES=4*1024*1024
+
+
+class SidecarStorageBudgetExceeded(ValueError):
+    pass
+
+
+def _sidecar_has_safe_storage_budget(
+    *,verified_btc_root:Path,sidecar_root:Path,
+) -> int:
+    if sidecar_root.is_symlink() or not sidecar_root.is_dir():
+        raise SidecarStorageBudgetExceeded("private six-market source dir unavailable")
+    stats=os.statvfs(verified_btc_root)
+    available=stats.f_bavail*stats.f_frsize
+    if available < (BTC_MINIMUM_FREE_RESERVE_BYTES+
+                    MAX_NEW_SIDECAR_TICK_BUDGET_BYTES):
+        raise SidecarStorageBudgetExceeded("original BTC storage reserve cannot be guaranteed")
+    total=0
+    inspected=0
+    for item in sidecar_root.rglob("*"):
+        inspected+=1
+        if inspected>30_000 or item.is_symlink():
+            raise SidecarStorageBudgetExceeded("unsafe or excessive six-market storage tree")
+        if item.is_file():
+            total+=item.stat().st_size
+            if total+MAX_NEW_SIDECAR_TICK_BUDGET_BYTES > SIX_MARKET_TOTAL_EVIDENCE_CAP_BYTES:
+                raise SidecarStorageBudgetExceeded("six-market storage cap reached; preserve BTC")
+        elif not item.is_dir():
+            raise SidecarStorageBudgetExceeded("unexpected six-market evidence inode")
+    return available
+
+
 BTC_HEALTHY={
     "ONE_PROSPECTIVE_OBSERVATION_AND_SHADOW_ARCHIVED",
     "HISTORY_BOOTSTRAPPED_NO_RETROSPECTIVE_SHADOW",
@@ -126,6 +165,8 @@ def combined_btc_first_once(
     try:
         root=_new_private_sidecar(
             verified_btc_root=verified,sidecar_root=sidecar_root)
+        _sidecar_has_safe_storage_budget(
+            verified_btc_root=verified,sidecar_root=root)
         factory=sidecar_provider_factory
         if factory is None:
             def factory():
@@ -162,6 +203,11 @@ def combined_btc_first_once(
                 except Exception as exc:
                     output["sidecar_status"]="SOURCE_PRESERVED_SHADOW_REQUIRES_RETRY"
                     output["sidecar_shadow_failure_class"]=type(exc).__name__
+    except SidecarStorageBudgetExceeded as exc:
+        output.update(
+            sidecar_status="SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE",
+            sidecar_failure_class=type(exc).__name__,
+            original_BTC_status_preserved=True)
     except Exception as exc:
         output.update(
             sidecar_status="FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY",
