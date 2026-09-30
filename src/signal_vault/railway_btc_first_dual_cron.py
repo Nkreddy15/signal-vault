@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Callable,Mapping
 
 from .cloud_forward_service import CLOUD_ROOT,cloud_status
+from .btc_evidence_fingerprint import fingerprint_btc_evidence_tree
 from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
@@ -248,6 +249,15 @@ def combined_btc_first_once(
         return output
 
     try:
+        # BTC has already completed its own hourly transaction. Snapshot every
+        # original BTC evidence byte NOW and compare after the sidecar stage,
+        # excluding only the dedicated six-market child namespace.
+        btc_before_sidecar=fingerprint_btc_evidence_tree(
+            verified,excluded_sidecar_name=BASENAME)
+        output["btc_evidence_before_sidecar_SHA256"]=btc_before_sidecar[
+            "tree_sha256"]
+        output["btc_evidence_before_sidecar_file_count"]=btc_before_sidecar[
+            "file_count"]
         root=_new_private_sidecar(
             verified_btc_root=verified,sidecar_root=sidecar_root)
         _sidecar_has_safe_storage_budget(
@@ -297,16 +307,52 @@ def combined_btc_first_once(
                 except Exception as exc:
                     output["sidecar_status"]="SOURCE_PRESERVED_SHADOW_REQUIRES_RETRY"
                     output["sidecar_shadow_failure_class"]=type(exc).__name__
+        btc_after_sidecar=fingerprint_btc_evidence_tree(
+            verified,excluded_sidecar_name=BASENAME)
+        output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar[
+            "tree_sha256"]
+        output["btc_evidence_changed_during_sidecar_stage"]=(
+            btc_after_sidecar["tree_sha256"]!=
+            btc_before_sidecar["tree_sha256"])
+        output["existing_BTC_evidence_deleted_or_reset"]=False
+        if output["btc_evidence_changed_during_sidecar_stage"]:
+            output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
+            output["sidecar_failure_class"]="BtcEvidenceFingerprintMismatch"
+            output["original_BTC_status_preserved"]=False
+            output["existing_BTC_evidence_deleted_or_reset"]=None
     except SidecarStorageBudgetExceeded as exc:
         output.update(
             sidecar_status="SIX_MARKET_SKIPPED_TO_PRESERVE_BTC_DISK_RESERVE",
             sidecar_failure_class=type(exc).__name__,
             original_BTC_status_preserved=True)
+        if "btc_before_sidecar" in locals():
+            btc_after_sidecar=fingerprint_btc_evidence_tree(
+                verified,excluded_sidecar_name=BASENAME)
+            output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar["tree_sha256"]
+            output["btc_evidence_changed_during_sidecar_stage"]=(
+                btc_after_sidecar["tree_sha256"]!=btc_before_sidecar["tree_sha256"])
     except Exception as exc:
         output.update(
             sidecar_status="FAILED_SAFE_OR_BLOCKED_NEW_SIDE_CAR_ONLY",
             sidecar_failure_class=type(exc).__name__,
             original_BTC_status_preserved=True)
+        if "btc_before_sidecar" in locals():
+            try:
+                btc_after_sidecar=fingerprint_btc_evidence_tree(
+                    verified,excluded_sidecar_name=BASENAME)
+                output["btc_evidence_after_sidecar_SHA256"]=btc_after_sidecar[
+                    "tree_sha256"]
+                output["btc_evidence_changed_during_sidecar_stage"]=(
+                    btc_after_sidecar["tree_sha256"]!=
+                    btc_before_sidecar["tree_sha256"])
+                if output["btc_evidence_changed_during_sidecar_stage"]:
+                    output["sidecar_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
+                    output["sidecar_failure_class"]="BtcEvidenceFingerprintMismatch"
+                    output["original_BTC_status_preserved"]=False
+                    output["existing_BTC_evidence_deleted_or_reset"]=None
+            except Exception as fingerprint_exc:
+                output["btc_evidence_integrity_recheck_failure_class"]=type(
+                    fingerprint_exc).__name__
     return output
 
 
