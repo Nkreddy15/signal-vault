@@ -104,11 +104,21 @@ class OperatorViewTests(unittest.TestCase):
                 self.assertEqual(result.headers["Cache-Control"], "no-store")
                 data = json.load(result)
             self.assertEqual(data["mode"], "ALPACA_PAPER_ONLY")
+            lanes={x["market"]:x for x in data["market_capabilities"]["markets"]}
+            self.assertEqual(set(lanes),{"crypto","us_equity","kalshi_event_contract"})
+            self.assertTrue(lanes["crypto"]["historical_research"])
+            self.assertTrue(lanes["us_equity"]["historical_research"])
+            self.assertTrue(lanes["kalshi_event_contract"]["historical_research"])
+            self.assertFalse(any(x["live_execution"] for x in lanes.values()))
             req = Request(root + "/", headers={"Authorization": auth})
             with urlopen(req, timeout=3) as result:
                 page = result.read().decode()
             self.assertIn("Signal Vault", page)
             self.assertIn("LOCAL LEDGER ONLY", page)
+            self.assertIn("Market lanes", page)
+            self.assertIn("crypto", page)
+            self.assertIn("us_equity", page)
+            self.assertIn("kalshi_event_contract", page)
             self.assertNotIn("<script", page)
             req = Request(root + "/api/status", data=b"{}", method="POST",
                           headers={"Authorization": auth})
