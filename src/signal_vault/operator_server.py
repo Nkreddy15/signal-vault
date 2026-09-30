@@ -19,6 +19,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from .operator_view import OperatorSnapshotError, read_local_paper_snapshot
+from .market_capabilities import current_market_capabilities
 
 
 def _authorize(header: str | None, token: str) -> bool:
@@ -46,6 +47,15 @@ def _dashboard(payload: dict[str, object]) -> bytes:
                     for label, value in fields)
     events = "".join(f'<tr><td>{safe(item["type"])}</td><td>{safe(item["at_utc"])}</td></tr>'
                      for item in payload["recent_events"])
+    capabilities=payload["market_capabilities"]["markets"]
+    market_cards="".join(
+        f'<article><small>{safe(lane["market"])}</small>'
+        f'<strong>{safe(lane["order_submission"])}</strong>'
+        f'<span>Historical: {safe(lane["historical_research"])}</span>'
+        f'<span>Prospective: {safe(lane["prospective_collection"])}</span>'
+        f'<span>Paper: {safe(lane["paper_execution"])}</span>'
+        f'<span>Live: {safe(lane["live_execution"])}</span></article>'
+        for lane in capabilities)
     badge = "HALTED" if payload["operator_halted"] else "NOT HALTED"
     markup = f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Signal Vault | Private paper monitor</title><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -60,7 +70,7 @@ th,td{{padding:10px;border-bottom:1px solid #3f6554;text-align:left;overflow-wra
 </style></head><body><h1>Signal Vault</h1>
 <p class="sub">Private monitoring · ALPACA PAPER ONLY · Operator status: <b>{badge}</b></p>
 <p class="warning">LOCAL LEDGER ONLY. Inventory is not a live valuation. No authenticated exchange results or profit claims are inferred by this dashboard.</p>
-<div class="cards">{cards}</div><h2>Recent journal events</h2><table><tr><th>Event type</th><th>UTC timestamp</th></tr>{events}</table>
+<div class="cards">{cards}</div><h2>Market lanes</h2><div class="cards">{market_cards}</div><h2>Recent journal events</h2><table><tr><th>Event type</th><th>UTC timestamp</th></tr>{events}</table>
 <p class="sub">Last ledger update: {safe(payload["ledger_updated_utc"])} · Read-only · Reloads each minute.</p>
 </body></html>'''
     return markup.encode("utf-8")
@@ -101,6 +111,7 @@ def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHan
                 return self._send(404, b"Not found\n", "text/plain; charset=utf-8")
             try:
                 payload = read_local_paper_snapshot(path)
+                payload["market_capabilities"] = current_market_capabilities()
             except OperatorSnapshotError:
                 return self._send(503, b"Local paper ledger unavailable or inconsistent\n",
                                   "text/plain; charset=utf-8")
