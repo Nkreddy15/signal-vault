@@ -73,8 +73,10 @@ def all_market_activation_preflight(
         if not active
     ]
 
+    root_exact=root.resolve()==CLOUD_ROOT.resolve()
     ready=(
-        crypto_exact
+        root_exact
+        and crypto_exact
         and equity_exact
         and kalshi_exact
         and (start_exact in (None,True))
@@ -84,7 +86,7 @@ def all_market_activation_preflight(
     return {
         "kind":"ALL_MARKET_EXISTING_RAILWAY_ACTIVATION_PREFLIGHT_NO_ORDERS",
         "shared_forward_root":str(root),
-        "shared_forward_root_matches_expected":root.resolve()==CLOUD_ROOT.resolve(),
+        "shared_forward_root_matches_expected":root_exact,
         "expected_start_command":EXPECTED_START_COMMAND,
         "observed_start_command":observed_start_command,
         "start_command_exact":start_exact,
