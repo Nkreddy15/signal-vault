@@ -31,24 +31,42 @@ class BtcEvidencePermissionError(PermissionError):
         super().__init__(f"owner-private permission required for {kind}: {relative_path}")
 
 
+def _excluded_children(
+    base:Path,
+    *,
+    excluded_sidecar_name:str|None=None,
+    excluded_sidecar_names:tuple[str,...]|None=None,
+) -> tuple[Path,...]:
+    if (excluded_sidecar_name is None)==(excluded_sidecar_names is None):
+        raise ValueError("provide exactly one excluded sidecar name or names tuple")
+    names=(excluded_sidecar_name,) if excluded_sidecar_name is not None else excluded_sidecar_names
+    assert names is not None
+    if (not names or len(set(names))!=len(names) or
+            any(not isinstance(name,str) or name in ("",".","..") or
+                "/" in name or "\\" in name for name in names)):
+        raise ValueError("exact direct child sidecar names required")
+    return tuple(base/name for name in names)
+
+
 def restrict_btc_evidence_permissions(
     root:Path,
     *,
-    excluded_sidecar_name:str,
+    excluded_sidecar_name:str|None=None,
+    excluded_sidecar_names:tuple[str,...]|None=None,
 ) -> list[dict[str,str]]:
     """Restrict mode bits only on owned BTC evidence; never alter evidence bytes."""
     base=Path(root)
     if base.is_symlink() or not base.is_dir() or base.stat().st_mode&0o077:
         raise ValueError("BTC evidence root must remain a real owner-private directory")
-    if (not isinstance(excluded_sidecar_name,str) or
-            excluded_sidecar_name in ("",".","..") or
-            "/" in excluded_sidecar_name or "\\" in excluded_sidecar_name):
-        raise ValueError("exact single child sidecar name required")
-    excluded=base/excluded_sidecar_name
+    excluded=_excluded_children(
+        base,
+        excluded_sidecar_name=excluded_sidecar_name,
+        excluded_sidecar_names=excluded_sidecar_names,
+    )
     repaired:list[dict[str,str]]=[]
     inspected=0
     for item in sorted(base.rglob("*"),key=lambda p:p.relative_to(base).as_posix()):
-        if item==excluded or excluded in item.parents:
+        if any(item==child or child in item.parents for child in excluded):
             continue
         inspected+=1
         if inspected>30_000:
@@ -84,23 +102,24 @@ def restrict_btc_evidence_permissions(
 def fingerprint_btc_evidence_tree(
     root:Path,
     *,
-    excluded_sidecar_name:str,
+    excluded_sidecar_name:str|None=None,
+    excluded_sidecar_names:tuple[str,...]|None=None,
 ) -> dict[str,object]:
     base=Path(root)
     if (base.is_symlink() or not base.is_dir() or
             base.stat().st_mode&0o077):
         raise ValueError("BTC evidence root must remain a real owner-private directory")
-    if (not isinstance(excluded_sidecar_name,str) or
-            excluded_sidecar_name in ("",".","..") or
-            "/" in excluded_sidecar_name or "\\" in excluded_sidecar_name):
-        raise ValueError("exact single child sidecar name required")
-    excluded=base/excluded_sidecar_name
+    excluded=_excluded_children(
+        base,
+        excluded_sidecar_name=excluded_sidecar_name,
+        excluded_sidecar_names=excluded_sidecar_names,
+    )
     records=[]
     total=0
     files=0
     directories=0
     for item in sorted(base.rglob("*"),key=lambda p:p.relative_to(base).as_posix()):
-        if item==excluded or excluded in item.parents:
+        if any(item==child or child in item.parents for child in excluded):
             continue
         if item.is_symlink():
             raise ValueError("symlink forbidden in original BTC evidence tree")
@@ -143,7 +162,9 @@ def fingerprint_btc_evidence_tree(
         "file_count":files,
         "directory_count":directories,
         "total_file_bytes":total,
-        "excluded_sidecar_child":excluded_sidecar_name,
+        "excluded_sidecar_child":(
+            excluded_sidecar_name if excluded_sidecar_name is not None else None),
+        "excluded_sidecar_children":[child.name for child in excluded],
         "network_requests":"NONE",
         "credential_access":"NONE",
         "broker_order_submission":"DISABLED",
