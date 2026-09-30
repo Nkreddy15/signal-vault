@@ -187,6 +187,25 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.assertFalse(self.side.exists())
         self.assertEqual(self.six_factory_calls,0)
 
+    def test_insecure_btc_mode_is_restricted_then_sidecar_proceeds_without_byte_change(self):
+        self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
+        original=self.sentinel.read_bytes()
+        self.sentinel.chmod(0o644)
+        result=self.tick(FIRST)
+        self.assertEqual(result["btc_status"],BTC_SUCCESS)
+        self.assertEqual(
+            result["sidecar_status"],
+            "HISTORICAL_BASELINE_ONLY_ZERO_PROSPECTIVE")
+        self.assertEqual(result["sidecar_stage"],"COMPLETE")
+        self.assertEqual(self.sentinel.read_bytes(),original)
+        self.assertEqual(self.sentinel.stat().st_mode&0o777,0o600)
+        repaired=result["btc_evidence_permission_modes_restricted"]
+        self.assertTrue(any(
+            x["path"]=="observations-auto-original.sqlite3" and
+            x["from_mode"]=="0644" and x["to_mode"]=="0600"
+            for x in repaired))
+        self.assertEqual(result["broker_order_submission"],"DISABLED")
+
     def test_bad_sidecar_six_provider_does_not_roll_back_or_mask_healthy_BTC(self):
         self.env[ACTIVATION_FLAG]=ACTIVATION_VALUE
         self.six_source=FixtureSixCryptoProvider(missing="ETH/USD")

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from signal_vault.btc_evidence_fingerprint import (
     BtcEvidencePermissionError,fingerprint_btc_evidence_tree,
+    restrict_btc_evidence_permissions,
 )
 
 
@@ -63,6 +64,29 @@ class BtcEvidenceFingerprintTests(unittest.TestCase):
         changed=fingerprint_btc_evidence_tree(
             self.root,excluded_sidecar_name=self.side.name)
         self.assertNotEqual(initial["tree_sha256"],changed["tree_sha256"])
+
+    def test_mode_only_repair_preserves_bytes_and_excludes_sidecar(self):
+        nested=self.root/"cloud-shadow-receipts"
+        self.journal.chmod(0o644)
+        nested.chmod(0o755)
+        self.side.mkdir(mode=0o755)
+        side_file=self.side/"side.json"
+        side_file.write_bytes(b"sidecar-preserve")
+        side_file.chmod(0o644)
+        before_journal=self.journal.read_bytes()
+        before_shadow=self.shadow.read_bytes()
+        repaired=restrict_btc_evidence_permissions(
+            self.root,excluded_sidecar_name=self.side.name)
+        self.assertEqual(self.journal.read_bytes(),before_journal)
+        self.assertEqual(self.shadow.read_bytes(),before_shadow)
+        self.assertEqual(self.journal.stat().st_mode&0o777,0o600)
+        self.assertEqual(nested.stat().st_mode&0o777,0o700)
+        self.assertEqual(self.side.stat().st_mode&0o777,0o755)
+        self.assertEqual(side_file.stat().st_mode&0o777,0o644)
+        self.assertEqual(side_file.read_bytes(),b"sidecar-preserve")
+        self.assertTrue(any(x["path"]=="observations.sqlite3" for x in repaired))
+        fingerprint_btc_evidence_tree(
+            self.root,excluded_sidecar_name=self.side.name)
 
     def test_symlink_insecure_permissions_and_invalid_exclusion_fail_closed(self):
         bad=self.root/"bad-link"

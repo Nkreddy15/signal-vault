@@ -23,7 +23,10 @@ from pathlib import Path
 from typing import Callable,Mapping
 
 from .cloud_forward_service import CLOUD_ROOT,cloud_status
-from .btc_evidence_fingerprint import (\n    BtcEvidencePermissionError,fingerprint_btc_evidence_tree,\n)
+from .btc_evidence_fingerprint import (
+    BtcEvidencePermissionError,fingerprint_btc_evidence_tree,
+    restrict_btc_evidence_permissions,
+)
 from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT,collect_six_crypto_once,universe_status,_safe_root,
 )
@@ -261,6 +264,7 @@ def combined_btc_first_once(
         "credential_values_in_output":False,
         "sidecar_stage":"NOT_STARTED",
         "sidecar_directory_permissions_restricted":[],
+        "btc_evidence_permission_modes_restricted":[],
     }
     try:
         verified=configured_railway_volume(
@@ -310,8 +314,19 @@ def combined_btc_first_once(
         # original BTC evidence byte NOW and compare after the sidecar stage,
         # excluding only the dedicated six-market child namespace.
         output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_BEFORE"
-        btc_before_sidecar=fingerprint_btc_evidence_tree(
-            verified,excluded_sidecar_name=BASENAME)
+        try:
+            btc_before_sidecar=fingerprint_btc_evidence_tree(
+                verified,excluded_sidecar_name=BASENAME)
+        except BtcEvidencePermissionError:
+            # Restrict ONLY mode bits on process-owned BTC evidence. No evidence
+            # bytes, names, ownership, or dedicated sidecar bytes are changed.
+            output["sidecar_stage"]="BTC_EVIDENCE_PERMISSION_RESTRICTION"
+            output["btc_evidence_permission_modes_restricted"]=(
+                restrict_btc_evidence_permissions(
+                    verified,excluded_sidecar_name=BASENAME))
+            output["sidecar_stage"]="BTC_EVIDENCE_FINGERPRINT_BEFORE"
+            btc_before_sidecar=fingerprint_btc_evidence_tree(
+                verified,excluded_sidecar_name=BASENAME)
         output["btc_evidence_before_sidecar_SHA256"]=btc_before_sidecar[
             "tree_sha256"]
         output["btc_evidence_before_sidecar_file_count"]=btc_before_sidecar[
