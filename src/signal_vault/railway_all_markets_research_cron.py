@@ -115,46 +115,59 @@ def combined_all_markets_once(
     if core["crypto_btc_status"] not in BTC_HEALTHY:
         output["kalshi_status"]="SKIPPED_BTC_NOT_HEALTHY"
         return output
-    if (
-        core.get("btc_evidence_changed_during_equity_stage") is True
-        or core.get("equity_status")=="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
-    ):
+    if core.get("btc_evidence_changed_during_equity_stage") is not False:
         output["kalshi_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
         return output
 
-    before=fingerprint_btc_evidence_tree(
-        btc_root,
-        excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
-    )
-    output["btc_evidence_before_kalshi_SHA256"]=before["tree_sha256"]
-    output.update(_kalshi_storage_budget(btc_root=btc_root))
+    before=None
+    try:
+        before=fingerprint_btc_evidence_tree(
+            btc_root,
+            excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
+        )
+        output["btc_evidence_before_kalshi_SHA256"]=before["tree_sha256"]
+        output.update(_kalshi_storage_budget(btc_root=btc_root))
 
-    kalshi_env=dict(env)
-    kalshi_env.setdefault(KALSHI_ROOT_ENV,str(btc_root))
-    kwargs={"env":kalshi_env,"now":stamp}
-    if kalshi_client_factory is not None:
-        kwargs["client_factory"]=kalshi_client_factory
-    kalshi=kalshi_runner(**kwargs)
-    if not isinstance(kalshi,dict) or not isinstance(kalshi.get("status"),str):
-        raise ValueError("Kalshi sidecar returned malformed result")
-    output["kalshi"]=kalshi
-    output["kalshi_status"]=kalshi["status"]
+        kalshi_env=dict(env)
+        kalshi_env.setdefault(KALSHI_ROOT_ENV,str(btc_root))
+        kwargs={"env":kalshi_env,"now":stamp}
+        if kalshi_client_factory is not None:
+            kwargs["client_factory"]=kalshi_client_factory
+        kalshi=kalshi_runner(**kwargs)
+        if not isinstance(kalshi,dict) or not isinstance(kalshi.get("status"),str):
+            raise ValueError("Kalshi sidecar returned malformed result")
+        output["kalshi"]=kalshi
+        output["kalshi_status"]=kalshi["status"]
+    except Exception as exc:
+        output["kalshi_status"]="FAILED_SAFE_OR_BLOCKED_KALSHI_SIDECAR_ONLY"
+        output["kalshi_failure_class"]=type(exc).__name__
 
-    after=fingerprint_btc_evidence_tree(
-        btc_root,
-        excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
-    )
-    output["btc_evidence_after_kalshi_SHA256"]=after["tree_sha256"]
-    changed=after["tree_sha256"]!=before["tree_sha256"]
-    output["btc_evidence_changed_during_kalshi_stage"]=changed
-    if changed:
-        output["kalshi_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
-        output["kalshi_failure_class"]="BtcEvidenceFingerprintMismatch"
-        output["original_BTC_status_preserved"]=False
-        output["existing_BTC_evidence_deleted_or_reset"]=None
+    if before is not None:
+        try:
+            after=fingerprint_btc_evidence_tree(
+                btc_root,
+                excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
+            )
+            output["btc_evidence_after_kalshi_SHA256"]=after["tree_sha256"]
+            changed=after["tree_sha256"]!=before["tree_sha256"]
+            output["btc_evidence_changed_during_kalshi_stage"]=changed
+            if changed:
+                output["kalshi_status"]="FAILED_BTC_EVIDENCE_MUTATION_GUARD"
+                output["kalshi_failure_class"]="BtcEvidenceFingerprintMismatch"
+                output["original_BTC_status_preserved"]=False
+                output["existing_BTC_evidence_deleted_or_reset"]=None
+            else:
+                output["original_BTC_status_preserved"]=True
+                output["existing_BTC_evidence_deleted_or_reset"]=False
+        except Exception as exc:
+            output["btc_evidence_changed_during_kalshi_stage"]=None
+            output["btc_evidence_integrity_recheck_failure_class"]=type(exc).__name__
+            output["original_BTC_status_preserved"]=None
+            output["existing_BTC_evidence_deleted_or_reset"]=None
     else:
-        output["original_BTC_status_preserved"]=True
-        output["existing_BTC_evidence_deleted_or_reset"]=False
+        output["btc_evidence_changed_during_kalshi_stage"]=None
+        output["original_BTC_status_preserved"]=None
+        output["existing_BTC_evidence_deleted_or_reset"]=None
     return output
 
 
