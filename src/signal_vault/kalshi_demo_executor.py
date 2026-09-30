@@ -173,6 +173,8 @@ class KalshiDemoOnceExecutor:
             )
             if receipt.fill_count != 0:
                 state = self._journal.mark_unknown(draft.client_order_id, at=at)
+                state = self._journal.attach_uncertain_provider_identity(
+                    draft.client_order_id, receipt.order_id, at=at)
                 return KalshiDemoSubmissionOutcome(
                     state.stage,
                     "Kalshi DEMO order immediately filled in whole or part; "
