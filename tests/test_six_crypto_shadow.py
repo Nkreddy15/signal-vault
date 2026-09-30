@@ -68,13 +68,13 @@ class VerifiedSixSymbolShadowTests(unittest.TestCase):
             versions=report["predeclared_flat_and_held_hypothetical_decisions"][sym]
             self.assertEqual(len(versions),4)
             self.assertEqual(
-                versions["cash-v1-predeclared"]["flat"]["hypothetical_action"],"HOLD")
+                versions["cash-v1-predeclared"]["flat"]["hypothetical_action"],"hold")
             self.assertEqual(
                 versions["one-allocation-passive-v1-predeclared"][
-                    "flat"]["hypothetical_action"],"BUY")
+                    "flat"]["hypothetical_action"],"buy")
             self.assertEqual(
                 versions["one-allocation-passive-v1-predeclared"][
-                    "already_held"]["hypothetical_action"],"HOLD")
+                    "already_held"]["hypothetical_action"],"hold")
             for state in versions.values():
                 for key in ("flat","already_held"):
                     self.assertEqual(len(state[key]["evidence_sha256"]),64)
