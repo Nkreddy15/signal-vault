@@ -34,6 +34,7 @@ from .six_crypto_shadow import (
     archive_six_crypto_shadow,audit_six_crypto_shadow_archive,
     inspect_six_crypto_shadow,
 )
+from .six_crypto_forward_scorecard import prospective_shadow_scorecard
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -157,11 +158,20 @@ def combined_offline_status(
                     shadow.get("latest_newly_observed_UTC_close")!=source["latest_hour_utc"]):
                 raise ValueError("six-market source and shadow progress disagree")
             out["sidecar_latest_shadow_SHA256"]=shadow.get("shadow_payload_sha256")
-        out["sidecar_ready_for_seven_day_audit"]=bool(
+        out["sidecar_source_168_hour_collection_ready"]=bool(
             source["ready_for_seven_day_audit"] and
             archive["current_segment_shadow_archive_complete"] and
             archive["current_segment_shadow_files_verified"]==
             source["current_segment_independent_prospective_hours"])
+        score=prospective_shadow_scorecard(root=root)
+        out["sidecar_scorecard_status"]=score["status"]
+        out["sidecar_fully_observed_precommitted_decision_intervals"]=score[
+            "fully_observed_precommitted_decision_intervals"]
+        out["sidecar_full_168_precommitted_decision_outcomes_ready"]=score.get(
+            "full_168_precommitted_decision_outcomes_ready",False)
+        # Preserve older field name as SOURCE collection milestone only.
+        out["sidecar_ready_for_seven_day_audit"]=out[
+            "sidecar_source_168_hour_collection_ready"]
         out["status"]="READ_ONLY_STATUS_AVAILABLE"
         return out
     except Exception as exc:
