@@ -62,6 +62,12 @@ jobs:
           SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
         run: python -m signal_vault.ci_long_equity_history --download-history
 
+      - name: Re-verify and chronologically validate long-horizon stock evidence offline
+        run: >-
+          python -m signal_vault.offline_long_equity_validation
+          --source-root private-equity-long-artifacts
+          --output private-equity-long-artifacts/offline_long_equity_validation.json
+
       - name: Archive immutable long-horizon stock evidence
         uses: actions/upload-artifact@v4
         with:
