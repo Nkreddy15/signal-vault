@@ -36,10 +36,20 @@ FORBIDDEN=FORBIDDEN_ENV+(
 
 def mounted_universe_volume(
     *,environ:Mapping[str,str],expected_root:Path=ROOT,
+    allow_owner_permission_repair:bool=False,
 ) -> Path:
     if (str(environ.get(MOUNT,""))!=str(expected_root) or
             str(environ.get("RAILWAY_RUN_UID",""))!="0"):
-        raise ValueError("a SECOND explicitly mounted and private Railway DATA volume is required")
+        raise ValueError("a SECOND explicitly mounted Railway DATA volume is required")
+    if expected_root.is_symlink() or not expected_root.is_dir():
+        raise ValueError("six-market evidence volume must be a real mounted directory")
+    if expected_root.stat().st_mode&0o077:
+        if (not allow_owner_permission_repair or os.geteuid()!=0):
+            raise PermissionError("isolated six-market volume must be owner-private")
+        # Railway initially mounts its own empty dedicated volume as root.
+        # Restrict ONLY this exact separately verified NEW mount directory.
+        # NEVER chmod the BTC volume, any parents, source or receipt files.
+        expected_root.chmod(0o700)
     return _safe_root(expected_root)
 
 
@@ -97,7 +107,8 @@ def universe_railway_once(
     }
     try:
         root=mounted_universe_volume(
-            environ=environ,expected_root=expected_root)
+            environ=environ,expected_root=expected_root,
+            allow_owner_permission_repair=True)
         if any(str(environ.get(name,"")).strip() for name in FORBIDDEN):
             raise ValueError("broker/live/BTC variables forbidden in new six-crypto source")
         if not environ.get(KEY) or not environ.get(SECRET):
