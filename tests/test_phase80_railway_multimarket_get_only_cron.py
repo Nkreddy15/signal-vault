@@ -141,6 +141,51 @@ class RailwayMultiMarketCronTests(unittest.TestCase):
         self.assertFalse(result["original_BTC_status_preserved"])
         self.assertIsNone(result["existing_BTC_evidence_deleted_or_reset"])
 
+    def test_stock_exception_isolated_when_btc_fingerprint_is_unchanged(self):
+        def failing_equity_runner(*, env, now):
+            raise RuntimeError("fixture failure")
+
+        result = combined_multimarket_once(
+            now=datetime(2026, 9, 30, 15, 7, tzinfo=UTC),
+            environ={ROOT_ENV: str(self.root)},
+            btc_root=self.root,
+            btc_crypto_runner=self.healthy_crypto,
+            equity_runner=failing_equity_runner,
+        )
+        self.assertEqual(
+            result["equity_status"],
+            "FAILED_SAFE_OR_BLOCKED_EQUITY_SIDECAR_ONLY",
+        )
+        self.assertEqual(result["equity_failure_class"], "RuntimeError")
+        self.assertFalse(result["btc_evidence_changed_during_equity_stage"])
+        self.assertTrue(result["original_BTC_status_preserved"])
+        self.assertFalse(result["existing_BTC_evidence_deleted_or_reset"])
+        self.assertEqual(result["crypto_btc_status"], "SAFE_NO_NEW_OBSERVATION")
+
+    def test_stock_mutation_then_exception_promotes_to_btc_mutation_guard(self):
+        def failing_mutating_equity_runner(*, env, now):
+            self.btc.write_bytes(b"changed-before-exception")
+            self.btc.chmod(0o600)
+            raise RuntimeError("fixture failure after mutation")
+
+        result = combined_multimarket_once(
+            now=datetime(2026, 9, 30, 15, 7, tzinfo=UTC),
+            environ={ROOT_ENV: str(self.root)},
+            btc_root=self.root,
+            btc_crypto_runner=self.healthy_crypto,
+            equity_runner=failing_mutating_equity_runner,
+        )
+        self.assertEqual(
+            result["equity_status"],
+            "FAILED_BTC_EVIDENCE_MUTATION_GUARD",
+        )
+        self.assertEqual(
+            result["equity_failure_class"],
+            "BtcEvidenceFingerprintMismatch",
+        )
+        self.assertTrue(result["btc_evidence_changed_during_equity_stage"])
+        self.assertFalse(result["original_BTC_status_preserved"])
+
     def test_unhealthy_btc_skips_stock_sidecar_entirely(self):
         called = []
 

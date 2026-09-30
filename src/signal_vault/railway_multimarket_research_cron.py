@@ -117,50 +117,66 @@ def combined_multimarket_once(
         output["equity_status"] = "SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
         return output
 
-    before = fingerprint_btc_evidence_tree(
-        btc_root,
-        excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
-    )
-    output["btc_evidence_before_equity_SHA256"] = before["tree_sha256"]
+    before = None
+    try:
+        before = fingerprint_btc_evidence_tree(
+            btc_root,
+            excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
+        )
+        output["btc_evidence_before_equity_SHA256"] = before["tree_sha256"]
 
-    stock_child_name = BTC_FINGERPRINT_EXCLUDED_CHILDREN[1]
-    budget = _stock_storage_budget(
-        btc_root=btc_root,
-        stock_child_name=stock_child_name,
-    )
-    output.update(budget)
+        stock_child_name = BTC_FINGERPRINT_EXCLUDED_CHILDREN[1]
+        budget = _stock_storage_budget(
+            btc_root=btc_root,
+            stock_child_name=stock_child_name,
+        )
+        output.update(budget)
 
-    stock_env = dict(env)
-    stock_env.setdefault(EQUITY_ROOT_ENV, str(btc_root))
-    kwargs = {
-        "env": stock_env,
-        "now": stamp,
-    }
-    if equity_provider_factory is not None:
-        kwargs["provider_factory"] = equity_provider_factory
-    equity = equity_runner(**kwargs)
-    if not isinstance(equity, dict) or not isinstance(
-        equity.get("status"), str
-    ):
-        raise ValueError("equity sidecar returned malformed result")
-    output["equity"] = equity
-    output["equity_status"] = equity["status"]
+        stock_env = dict(env)
+        stock_env.setdefault(EQUITY_ROOT_ENV, str(btc_root))
+        kwargs = {
+            "env": stock_env,
+            "now": stamp,
+        }
+        if equity_provider_factory is not None:
+            kwargs["provider_factory"] = equity_provider_factory
+        equity = equity_runner(**kwargs)
+        if not isinstance(equity, dict) or not isinstance(
+            equity.get("status"), str
+        ):
+            raise ValueError("equity sidecar returned malformed result")
+        output["equity"] = equity
+        output["equity_status"] = equity["status"]
+    except Exception as exc:
+        output["equity_status"] = "FAILED_SAFE_OR_BLOCKED_EQUITY_SIDECAR_ONLY"
+        output["equity_failure_class"] = type(exc).__name__
 
-    after = fingerprint_btc_evidence_tree(
-        btc_root,
-        excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
-    )
-    output["btc_evidence_after_equity_SHA256"] = after["tree_sha256"]
-    changed = after["tree_sha256"] != before["tree_sha256"]
-    output["btc_evidence_changed_during_equity_stage"] = changed
-    if changed:
-        output["equity_status"] = "FAILED_BTC_EVIDENCE_MUTATION_GUARD"
-        output["equity_failure_class"] = "BtcEvidenceFingerprintMismatch"
-        output["original_BTC_status_preserved"] = False
-        output["existing_BTC_evidence_deleted_or_reset"] = None
+    if before is not None:
+        try:
+            after = fingerprint_btc_evidence_tree(
+                btc_root,
+                excluded_sidecar_names=BTC_FINGERPRINT_EXCLUDED_CHILDREN,
+            )
+            output["btc_evidence_after_equity_SHA256"] = after["tree_sha256"]
+            changed = after["tree_sha256"] != before["tree_sha256"]
+            output["btc_evidence_changed_during_equity_stage"] = changed
+            if changed:
+                output["equity_status"] = "FAILED_BTC_EVIDENCE_MUTATION_GUARD"
+                output["equity_failure_class"] = "BtcEvidenceFingerprintMismatch"
+                output["original_BTC_status_preserved"] = False
+                output["existing_BTC_evidence_deleted_or_reset"] = None
+            else:
+                output["original_BTC_status_preserved"] = True
+                output["existing_BTC_evidence_deleted_or_reset"] = False
+        except Exception as exc:
+            output["btc_evidence_changed_during_equity_stage"] = None
+            output["btc_evidence_integrity_recheck_failure_class"] = type(exc).__name__
+            output["original_BTC_status_preserved"] = None
+            output["existing_BTC_evidence_deleted_or_reset"] = None
     else:
-        output["original_BTC_status_preserved"] = True
-        output["existing_BTC_evidence_deleted_or_reset"] = False
+        output["btc_evidence_changed_during_equity_stage"] = None
+        output["original_BTC_status_preserved"] = None
+        output["existing_BTC_evidence_deleted_or_reset"] = None
     return output
 
 
