@@ -169,10 +169,19 @@ def confirm_equity_untouched_candidates(
         if passed:
             confirmed.append(candidate)
 
+    source_manifest_sha=three_way.get("phase48_source_manifest_sha256")
+    if source_manifest_sha is not None and (
+        not isinstance(source_manifest_sha,str)
+        or len(source_manifest_sha)!=64
+        or any(ch not in "0123456789abcdef" for ch in source_manifest_sha)
+    ):
+        raise ValueError("invalid stock source manifest provenance")
+
     rejected=[x for x in upstream if x not in confirmed]
     return {
         "kind":"EQUITY_UNTOUCHED_TEST_CONFIRMATION_NO_ORDER",
         "policy_version":POLICY_VERSION,
+        "phase48_source_manifest_sha256":source_manifest_sha,
         "upstream_candidates":list(upstream),
         "assessments":assessments,
         "candidates_confirmed_on_untouched_test":confirmed,
