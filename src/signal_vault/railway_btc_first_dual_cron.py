@@ -41,7 +41,9 @@ from .six_crypto_shadow import (
 from .six_crypto_forward_scorecard import (
     FULLY_SCORED_DECISIONS,SOURCE_168_HOURS,prospective_shadow_scorecard,
 )
-from .six_crypto_forward_review_gate import assess_forward_review_gate
+from .six_crypto_forward_review_gate import (
+    MIN_SCORED_OUTCOMES,MIN_SOURCE_HOURS,assess_forward_review_gate,
+)
 
 ACTIVATION_FLAG="SIGNAL_VAULT_SIX_CRYPTO_SIDECAR"
 ACTIVATION_VALUE="BTC_FIRST_ISOLATED_DATA_GET_ONLY_NO_ORDERS_V1"
@@ -240,6 +242,11 @@ def combined_offline_status(
         out["sidecar_paper_order_submission"]=review["paper_order_submission"]
         out["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
             "separate_owner_authorization_still_required_for_any_PAPER_execution"]
+        out["sidecar_review_gate_source_hours_remaining_to_169"]=max(
+            0,MIN_SOURCE_HOURS-int(score["current_segment_prospective_source_hours"]))
+        out["sidecar_review_gate_scored_outcomes_remaining_to_168"]=max(
+            0,MIN_SCORED_OUTCOMES-int(score[
+                "fully_observed_precommitted_decision_intervals"]))
         out["sidecar_full_168_precommitted_decision_outcomes_ready"]=score.get(
             "full_168_precommitted_decision_outcomes_ready",False)
         source_hours=int(score["current_segment_prospective_source_hours"])
@@ -296,6 +303,10 @@ def _attach_hourly_sidecar_readiness_audit(
     output["sidecar_paper_order_submission"]=review["paper_order_submission"]
     output["sidecar_separate_owner_authorization_still_required_for_any_PAPER_execution"]=review[
         "separate_owner_authorization_still_required_for_any_PAPER_execution"]
+    output["sidecar_review_gate_source_hours_remaining_to_169"]=max(
+        0,MIN_SOURCE_HOURS-source_hours)
+    output["sidecar_review_gate_scored_outcomes_remaining_to_168"]=max(
+        0,MIN_SCORED_OUTCOMES-scored)
     output["sidecar_source_168_hour_collection_ready"]=bool(
         score["source_168_consecutive_hour_collection_ready"] and
         archive["current_segment_shadow_archive_complete"] and
