@@ -186,6 +186,7 @@ def simulate_resolved_market_references(
         "kind":"OFFLINE_KALSHI_FROZEN_REFERENCE_STRATEGY_SIMULATION",
         "ticker":scored["ticker"],
         "resolved_result":result,
+        "settlement_ts":scored["settlement_ts"],
         "source_manifest_sha256":
             hashlib.sha256(manifest_raw).hexdigest(),
         "fixed_hypotheses":[x.name for x in HYPOTHESES],
