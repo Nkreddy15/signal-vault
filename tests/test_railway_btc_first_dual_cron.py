@@ -38,6 +38,7 @@ class ExistingBtcFirstNoExtraRailwayVolumeTests(unittest.TestCase):
         self.six_factory_calls=0
         self.sentinel=self.btc/"observations-auto-original.sqlite3"
         self.sentinel.write_bytes(b"ORIGINAL BTC SOURCE PRESERVE ME")
+        self.sentinel.chmod(0o600)
 
     def fake_btc(self,*,now,environ,expected_root):
         self.calls.append((now,expected_root))
