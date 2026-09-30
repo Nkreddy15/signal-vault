@@ -57,7 +57,7 @@ def restrict_btc_evidence_permissions(
             raise ValueError("symlink forbidden in original BTC evidence tree")
         st=item.stat()
         if st.st_uid!=os.geteuid():
-            raise PermissionError("refusing permission repair of foreign-owned BTC evidence")
+            raise PermissionError("refusing permission repair of non-process-owned BTC evidence")
         relative=item.relative_to(base).as_posix()
         mode=st.st_mode&0o777
         if item.is_dir():
