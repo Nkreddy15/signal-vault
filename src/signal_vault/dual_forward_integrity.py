@@ -26,7 +26,10 @@ from .crypto_universe_forward import (
     SHARED_VOLUME_SIDECAR_ROOT, universe_status,
 )
 from .railway_btc_first_dual_cron import BASENAME
-from .six_crypto_shadow import inspect_six_crypto_shadow
+from .six_crypto_shadow import (
+    audit_six_crypto_shadow_archive,inspect_six_crypto_shadow,
+)
+from .six_crypto_forward_scorecard import prospective_shadow_scorecard
 
 HOUR=timedelta(hours=1)
 
@@ -109,9 +112,31 @@ def dual_forward_integrity_status(
 
     source=universe_status(root=sidecar_root)
     shadow=inspect_six_crypto_shadow(root=sidecar_root)
+    shadow_archive=audit_six_crypto_shadow_archive(root=sidecar_root)
+    scorecard=prospective_shadow_scorecard(root=sidecar_root)
     out["sidecar"]={
         "source":source,
         "shadow":shadow,
+        "shadow_archive":{
+            "status":shadow_archive["status"],
+            "current_segment_source_prospective_hours":
+                shadow_archive["current_segment_source_prospective_hours"],
+            "current_segment_shadow_files_verified":
+                shadow_archive["current_segment_shadow_files_verified"],
+            "current_segment_shadow_archive_complete":
+                shadow_archive["current_segment_shadow_archive_complete"],
+        },
+        "scorecard":{
+            "status":scorecard["status"],
+            "current_segment_prospective_source_hours":
+                scorecard["current_segment_prospective_source_hours"],
+            "fully_observed_precommitted_decision_intervals":
+                scorecard["fully_observed_precommitted_decision_intervals"],
+            "source_168_consecutive_hour_collection_ready":
+                scorecard.get("source_168_consecutive_hour_collection_ready",False),
+            "full_168_precommitted_decision_outcomes_ready":
+                scorecard.get("full_168_precommitted_decision_outcomes_ready",False),
+        },
         "prospective_hours":source[
             "current_segment_independent_prospective_hours"],
         "prospective_asset_bars":source[
@@ -145,8 +170,18 @@ def dual_forward_integrity_status(
     out["six_crypto_segment_index"]=source["segment_index"]
     out["six_crypto_historical_bootstrap_count"]=source[
         "historical_bootstrap_count"]
-    out["six_crypto_ready_for_168_hour_audit"]=source[
-        "ready_for_seven_day_audit"]
+    source_ready=bool(
+        source["ready_for_seven_day_audit"] and
+        shadow_archive["current_segment_shadow_archive_complete"] and
+        shadow_archive["current_segment_shadow_files_verified"]==side_hours)
+    scored_ready=bool(scorecard.get(
+        "full_168_precommitted_decision_outcomes_ready",False))
+    out["six_crypto_source_168_hour_collection_ready"]=source_ready
+    out["six_crypto_fully_scored_168_decision_outcomes_ready"]=scored_ready
+    out["six_crypto_fully_observed_precommitted_decision_intervals"]=scorecard[
+        "fully_observed_precommitted_decision_intervals"]
+    # Backward-compatible field remains the source-collection milestone.
+    out["six_crypto_ready_for_168_hour_audit"]=source_ready
 
     if btc.get("status")=="PAUSED":
         out.update(status="BTC_PAUSED_SIDE_EVIDENCE_PRESERVED",
@@ -174,11 +209,25 @@ def dual_forward_integrity_status(
         out.update(status="BLOCKED",
                    reason_code="SIX_CRYPTO_SOURCE_AND_SHADOW_COUNTS_DIVERGE")
         return out
+    if (shadow_archive["current_segment_source_prospective_hours"]!=side_hours or
+            scorecard["current_segment_prospective_source_hours"]!=side_hours):
+        out.update(status="BLOCKED",
+                   reason_code="SIX_CRYPTO_SOURCE_ARCHIVE_SCORECARD_COUNTS_DIVERGE")
+        return out
+    if not shadow_archive["current_segment_shadow_archive_complete"]:
+        out.update(
+            status="SIX_CRYPTO_SOURCE_VALID_SHADOW_ARCHIVE_INCOMPLETE",
+            reason_code="MISSING_DERIVED_PREOUTCOME_SHADOWS_KEYLESS_REPAIR_AVAILABLE")
+        return out
 
+    if scored_ready:
+        milestone_status="SIX_CRYPTO_168_PRECOMMITTED_OUTCOMES_READY"
+    elif source_ready:
+        milestone_status="SIX_CRYPTO_168_SOURCE_HOURS_READY_WAITING_ONE_MORE_OUTCOME"
+    else:
+        milestone_status="BTC_AND_SIX_CRYPTO_CURRENTLY_ALIGNED"
     out.update(
-        status=("SIX_CRYPTO_168_HOUR_CONTIGUOUS_EVIDENCE_READY"
-                if source["ready_for_seven_day_audit"]
-                else "BTC_AND_SIX_CRYPTO_CURRENTLY_ALIGNED"),
+        status=milestone_status,
         reason_code="NONE",
         six_crypto_shadow_payload_sha256=shadow.get("shadow_payload_sha256"),
         six_crypto_strategy_promoted=False,
