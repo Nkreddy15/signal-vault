@@ -1,0 +1,83 @@
+# MANUAL ONLY: long-horizon six-crypto historical DATA GET.
+# Reuses the existing bounded 14-day chunk collector (max 30 chunks / 420 days).
+# No order endpoints, no Railway mutation, no automatic schedule.
+name: Manual long-horizon six-crypto research
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_utc:
+        description: "Inclusive UTC hour, up to 420 days before end"
+        type: string
+        required: true
+        default: "2025-10-01T00:00:00Z"
+      end_utc:
+        description: "Exclusive UTC hour; must already be fully historical"
+        type: string
+        required: true
+        default: "2026-09-30T00:00:00Z"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: long-horizon-six-crypto-historical-data-only
+  cancel-in-progress: false
+
+jobs:
+  six-crypto-historical-get-only:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      SIGNAL_VAULT_RESEARCH_READ_APPROVED: HISTORICAL_CRYPTO_DATA_GET_ONLY
+      SIGNAL_VAULT_RESEARCH_SYMBOLS: "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
+      SIGNAL_VAULT_RESEARCH_START_UTC: ${{ inputs.start_utc }}
+      SIGNAL_VAULT_RESEARCH_END_UTC: ${{ inputs.end_utc }}
+    steps:
+      - name: Checkout reviewed source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install --no-cache-dir -e .
+
+      - name: Validate historical plan without secrets
+        run: |
+          python - <<'PY'
+          import json, os
+          from signal_vault.ci_historical_crypto import resolve_manual_ci_configuration
+          result=resolve_manual_ci_configuration(env=os.environ)
+          plan=result["plan"]
+          print(json.dumps({
+              "kind":plan["kind"],
+              "market":plan["market"],
+              "symbols":plan["symbols"],
+              "window_count":plan["window_count"],
+              "requests_triggered":plan["requests_triggered"],
+              "credential_access":plan["credential_access"],
+              "broker_order_submission":plan["broker_order_submission"],
+          },sort_keys=True,indent=2))
+          PY
+
+      - name: Download bounded historical crypto chunks only
+        env:
+          SIGNAL_VAULT_RESEARCH_DATA_KEY_ID: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_KEY_ID }}
+          SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
+        run: python -m signal_vault.ci_historical_crypto
+
+      - name: Archive immutable six-crypto historical evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: long-horizon-six-crypto-${{ github.run_id }}
+          path: private-historical-artifacts/**
+          if-no-files-found: error
+          retention-days: 7
