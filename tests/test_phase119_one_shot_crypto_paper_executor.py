@@ -219,6 +219,52 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 transport=uncertain,
             )
 
+    def test_refreshed_preflight_reopens_execution_window_without_auto_post(self):
+        later=NOW+timedelta(minutes=6)
+        calls=[]
+        with self.assertRaises(PermissionError):
+            execute_prepared_crypto_paper_once(
+                self.prepared,
+                dry_run(),
+                journal=self.journal,
+                paper_key="paper-key",
+                paper_secret="paper-secret",
+                acknowledgement=CRYPTO_PAPER_ACK,
+                at=later,
+                transport=lambda *_:calls.append(True),
+            )
+        self.assertEqual(calls,[])
+        capture_crypto_paper_provider_preflight(
+            self.prepared,
+            journal=self.journal,
+            reader=Reader(),
+            at=later,
+            refresh_existing=True,
+        )
+
+        def transport(payload,key,secret):
+            calls.append((dict(payload),key,secret))
+            return {
+                "client_order_id":CLIENT_ID,
+                "id":"paper-order-refreshed",
+                "status":"accepted",
+                "filled_qty":"0",
+                "filled_avg_price":None,
+            }
+
+        result=execute_prepared_crypto_paper_once(
+            self.prepared,
+            dry_run(),
+            journal=self.journal,
+            paper_key="paper-key",
+            paper_secret="paper-secret",
+            acknowledgement=CRYPTO_PAPER_ACK,
+            at=later,
+            transport=transport,
+        )
+        self.assertTrue(result["paper_post_attempted"])
+        self.assertEqual(len(calls),1)
+
     def test_receipt_mismatch_blocks_before_transport(self):
         bad=dict(self.prepared)
         bad["payload_sha256"]="0"*64
