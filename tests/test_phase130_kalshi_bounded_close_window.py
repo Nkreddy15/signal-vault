@@ -77,7 +77,7 @@ class KalshiBoundedCloseWindowDiscoveryTests(unittest.TestCase):
         self.assertEqual(client.event_calls,[])
         call=client.window_calls[0]
         self.assertGreater(call["max_close_ts"],call["min_close_ts"])
-        self.assertEqual(call["limit"],200)
+        self.assertEqual(call["limit"],1000)
         self.assertTrue(plan["sample_target_reached_before_catalog_exhaustion"])
         self.assertFalse(plan["selection_uses_price"])
         self.assertFalse(plan["selection_uses_outcome_direction"])
