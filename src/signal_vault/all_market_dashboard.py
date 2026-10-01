@@ -118,8 +118,19 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     blockers=snapshot.get("paper_runway_blockers",[])
     blocker_text="None" if not blockers else ", ".join(str(x) for x in blockers)
     execution=snapshot.get("execution_engineering")
-    if not isinstance(execution,Mapping):
-        raise ValueError("dashboard snapshot lacks execution engineering state")
+    if execution is None:
+        execution={
+            "shared_cross_market_risk_governor":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "multimarket_paper_route_preview":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "crypto_research_to_paper_intent":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "crypto_end_to_end_paper_dry_run":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "alpaca_paper_executor":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "kalshi_demo_executor":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "autonomous_paper_activation":"DISABLED",
+            "live_execution":"UNAVAILABLE",
+        }
+    elif not isinstance(execution,Mapping):
+        raise ValueError("dashboard execution engineering state must be a mapping")
 
     def card(title:str,rows:list[tuple[str,object]])->str:
         body="".join(
