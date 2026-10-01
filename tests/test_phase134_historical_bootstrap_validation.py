@@ -76,7 +76,7 @@ def analysis(*,hours=144,ema_test="1"):
     start="2026-09-25T00:00:00+00:00"
     end="2026-10-01T00:00:00+00:00"
     if hours!=144:
-        end="2026-09-30T00:00:00+00:00"
+        end="2026-09-29T00:00:00+00:00"
     scenarios={
         s:{
             "assumptions_per_instrument":{},
