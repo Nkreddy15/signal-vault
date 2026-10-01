@@ -253,6 +253,32 @@ class MultiMarketExecutionJournal:
             raise ValueError("provider preflight receipt must be an object")
         return value
 
+    def get_provider_preflight_record(
+        self,client_order_id:str,
+    ) -> tuple[dict[str,object],datetime,str]:
+        row=self.connection.execute(
+            "SELECT receipt_json,receipt_sha256,captured_utc "
+            "FROM mm_execution_preflights WHERE client_order_id=?",
+            (client_order_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError("provider preflight receipt not found")
+        raw,expected_sha,captured_raw=row
+        if hashlib.sha256(raw.encode()).hexdigest()!=expected_sha:
+            raise ValueError("provider preflight receipt hash mismatch")
+        try:
+            value=json.loads(raw)
+            captured=datetime.fromisoformat(captured_raw)
+        except (json.JSONDecodeError,ValueError) as exc:
+            raise ValueError("provider preflight record malformed") from exc
+        if (
+            not isinstance(value,dict)
+            or captured.tzinfo is None
+            or captured.utcoffset() is None
+        ):
+            raise ValueError("provider preflight record malformed")
+        return value,captured.astimezone(timezone.utc),expected_sha
+
     def has_unresolved(self) -> bool:
         return any(
             _state(row[0]).blocks_new_execution
