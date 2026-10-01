@@ -95,7 +95,11 @@ class HistoricalReportTests(unittest.TestCase):
             details=scenario["offline_report"]
             self.assertEqual(set(details["asset_quality_reviews"]),set(SYMBOLS))
             self.assertEqual(
-                len(details["one_SHARED_100_usd_portfolio_by_fixed_hypothesis"]),4)
+                len(details["one_SHARED_100_usd_portfolio_by_fixed_hypothesis"]),5)
+            self.assertIn(
+                "generic-ema12x26-confirm2-v2-predeclared",
+                details["one_SHARED_100_usd_portfolio_by_fixed_hypothesis"],
+            )
             self.assertTrue(details["estimated_not_observed_fees_and_spreads"] if
                             "estimated_not_observed_fees_and_spreads" in details else True)
             self.assertFalse(details["strategy_chosen_from_validation_or_test"])
