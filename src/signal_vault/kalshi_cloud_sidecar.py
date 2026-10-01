@@ -78,6 +78,9 @@ class _BudgetedPublicClient:
         self.supports_event_discovery=callable(
             getattr(inner,"live_public_events",None)
         )
+        self.supports_close_window_discovery=callable(
+            getattr(inner,"live_public_markets_close_window",None)
+        )
 
     def _consume(self)->None:
         if self.request_count>=self._maximum:
