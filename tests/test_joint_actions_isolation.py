@@ -31,29 +31,32 @@ class SeparateKeylessTwelveMarketActionsTests(unittest.TestCase):
         self.assertIn("python -m signal_vault.joint_historical_source",second)
         self.assertIn("retention-days: 7",second)
 
-    def test_manual_workflow_defaults_match_automatic_join_guard_exactly(self):
-        # September run 36640599885 passed its July/Aug source GET but
-        # silently skipped the mixed-market job because the dates retained
-        # obsolete defaults. Catch ANY future drift between the green Run
-        # workflow form and the actual second-job gate before deployment.
+    def test_manual_workflow_defaults_target_bootstrap_while_joint_guard_stays_frozen(self):
+        # The manual form now defaults to the six-day supervised-PAPER
+        # bootstrap. The optional twelve-market join is intentionally a
+        # separate exact-date guard using the previously reviewed Sep 14-26
+        # crypto/stock common-horizon source.
         workflow=(ROOT/".github"/"workflows"/
                   "manual-historical-crypto-research.yml").read_text(
                       encoding="utf-8")
         declared=workflow.split("\non:\n",1)[1].split("\npermissions:\n",1)[0]
         before,gate=workflow.split(
             "\n  paired-stocks-twelve-asset-offline-research:",1)
-        expected={
-            "start_utc":"2026-09-14T00:00:00Z",
-            "end_utc":"2026-09-26T00:00:00Z",
-            "symbols":"BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD",
+        bootstrap_defaults={
+            "start_utc":"2026-09-25T18:00:00Z",
+            "end_utc":"2026-10-01T18:00:00Z",
         }
-        for key,value in expected.items():
+        for key,value in bootstrap_defaults.items():
             following=declared.split("\n      "+key+":",1)[1]
-            # Top-level input headers have exactly six leading spaces;
-            # their child properties have eight, and must remain included.
             section=re.split(r"(?m)^      [a-z_]+:",following,maxsplit=1)[0]
             self.assertIn('default: "'+value+'"',section)
-            self.assertIn("inputs."+key+" == '"+value+"'",gate)
+        self.assertIn(
+            "inputs.start_utc == '2026-09-14T00:00:00Z'",gate)
+        self.assertIn(
+            "inputs.end_utc == '2026-09-26T00:00:00Z'",gate)
+        self.assertIn(
+            "inputs.symbols == 'BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD'",
+            gate)
         self.assertIn(
             '- "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"',
             declared)
