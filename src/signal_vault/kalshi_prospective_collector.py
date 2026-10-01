@@ -24,7 +24,8 @@ from .kalshi_public_research import KalshiPublicResearchClient
 from .kalshi_reference_hypotheses import POLICY_VERSION as HYPOTHESIS_POLICY
 
 PLAN_KIND="PRECOMMITTED_KALSHI_PROSPECTIVE_MARKET_PLAN_NO_ORDERS"
-PLAN_POLICY="kalshi-prospective-market-plan-v1-predeclared-20260930"
+PLAN_POLICY="kalshi-prospective-market-plan-v2-event-sample-predeclared-20261001"
+LEGACY_PLAN_POLICY="kalshi-prospective-market-plan-v1-predeclared-20260930"
 SNAPSHOT_KIND="KALSHI_PROSPECTIVE_FIXED_HORIZON_PUBLIC_SNAPSHOT_NO_ORDERS"
 
 DEFAULT_MARKET_COUNT=20
@@ -156,6 +157,9 @@ def build_prospective_kalshi_plan(
     seen=set()
     cursor=None
     pages=0
+    discovery_source="PUBLIC_MARKETS_CLOSE_WINDOW"
+    sample_target_reached=False
+    event_method=getattr(client,"live_public_events",None)
     window_method=getattr(client,"live_public_markets_close_window",None)
     min_close_ts=int((
         planned+timedelta(hours=MIN_PLAN_LEAD_HOURS)-timedelta(seconds=1)
@@ -164,22 +168,57 @@ def build_prospective_kalshi_plan(
         planned+timedelta(days=MAX_CLOSE_AHEAD_DAYS)+timedelta(seconds=1)
     ).timestamp())
     for _ in range(max_pages):
-        if callable(window_method):
+        raw_markets=[]
+        if callable(event_method):
+            discovery_source="PUBLIC_EVENTS_WITH_NESTED_MARKETS"
+            page=event_method(
+                status="open",
+                limit=200,
+                cursor=cursor,
+                with_nested_markets=True,
+                min_close_ts=min_close_ts,
+            )
+            events=page.get("events") if isinstance(page,Mapping) else None
+            if not isinstance(events,list):
+                raise ValueError("Kalshi public event discovery lacks events")
+            for event in events:
+                if not isinstance(event,Mapping):
+                    raise ValueError("malformed Kalshi public event")
+                event_ticker=event.get("event_ticker")
+                markets=event.get("markets")
+                if not isinstance(markets,list):
+                    raise ValueError("Kalshi public event lacks nested markets")
+                for raw in markets:
+                    if not isinstance(raw,Mapping):
+                        raise ValueError("malformed Kalshi public market")
+                    item=dict(raw)
+                    if item.get("event_ticker") in (None,""):
+                        item["event_ticker"]=event_ticker
+                    elif item.get("event_ticker")!=event_ticker:
+                        raise ValueError("nested Kalshi market event identity mismatch")
+                    raw_markets.append(item)
+        elif callable(window_method):
             page=window_method(
                 min_close_ts=min_close_ts,
                 max_close_ts=max_close_ts,
                 limit=1000,
                 cursor=cursor,
             )
+            markets=page.get("markets") if isinstance(page,Mapping) else None
+            if not isinstance(markets,list):
+                raise ValueError("Kalshi public market discovery lacks markets")
+            raw_markets=list(markets)
         else:
             page=client.live_public_markets(
                 status="open",limit=1000,cursor=cursor
             )
+            markets=page.get("markets") if isinstance(page,Mapping) else None
+            if not isinstance(markets,list):
+                raise ValueError("Kalshi public market discovery lacks markets")
+            raw_markets=list(markets)
+
         pages+=1
-        markets=page.get("markets") if isinstance(page,Mapping) else None
-        if not isinstance(markets,list):
-            raise ValueError("Kalshi public market discovery lacks markets")
-        for raw in markets:
+        for raw in raw_markets:
             if not isinstance(raw,Mapping):
                 raise ValueError("malformed Kalshi public market")
             item=_eligible_market(raw,planned_at=planned)
@@ -190,6 +229,12 @@ def build_prospective_kalshi_plan(
                 raise ValueError("duplicate Kalshi market across discovery pages")
             seen.add(ticker)
             candidates.append(item)
+
+        distinct_events={str(x["event_ticker"]) for x in candidates}
+        if len(candidates)>=market_count and len(distinct_events)>=MIN_DISTINCT_EVENTS:
+            sample_target_reached=True
+            break
+
         next_cursor=page.get("cursor")
         if next_cursor in (None,""):
             break
@@ -197,7 +242,7 @@ def build_prospective_kalshi_plan(
             raise ValueError("invalid Kalshi discovery cursor")
         cursor=next_cursor
     else:
-        if cursor not in (None,""):
+        if cursor not in (None,"") and not sample_target_reached:
             raise ValueError("Kalshi public discovery exceeded bounded pages")
 
     ordered=sorted(
@@ -244,7 +289,11 @@ def build_prospective_kalshi_plan(
         "planned_market_count":len(selected),
         "minimum_distinct_events":MIN_DISTINCT_EVENTS,
         "selection_rule":
-            "EARLIEST_CLOSE_THEN_EVENT_THEN_TICKER_STRUCTURAL_FIELDS_ONLY",
+            "BOUNDED_PUBLIC_SAMPLE_THEN_EARLIEST_CLOSE_EVENT_TICKER_STRUCTURAL_ONLY",
+        "discovery_source":discovery_source,
+        "sample_stop_rule":
+            "STOP_AFTER_AT_LEAST_REQUESTED_MARKETS_AND_TEN_DISTINCT_EVENTS",
+        "sample_target_reached_before_catalog_exhaustion":sample_target_reached,
         "selection_uses_price":False,
         "selection_uses_outcome_direction":False,
         "selection_uses_historical_pnl":False,
@@ -265,7 +314,7 @@ def validate_prospective_kalshi_plan(plan:Mapping[str,object])->tuple[dict[str,o
     if (
         not isinstance(plan,Mapping)
         or plan.get("kind")!=PLAN_KIND
-        or plan.get("policy_version")!=PLAN_POLICY
+        or plan.get("policy_version") not in {PLAN_POLICY,LEGACY_PLAN_POLICY}
         or plan.get("hypothesis_policy_version")!=HYPOTHESIS_POLICY
         or plan.get("selection_uses_price") is not False
         or plan.get("selection_uses_outcome_direction") is not False
