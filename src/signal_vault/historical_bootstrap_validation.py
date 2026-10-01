@@ -79,8 +79,16 @@ def _fold_metric(
     max_drawdown=Decimal("0")
     for symbol in SYMBOLS:
         by_strategy=per_asset[symbol]
-        if not isinstance(by_strategy,Mapping) or strategy not in by_strategy:
-            raise ValueError("historical strategy missing from one crypto asset")
+        if not isinstance(by_strategy,Mapping):
+            raise ValueError("historical strategy map missing from one crypto asset")
+        if strategy not in by_strategy:
+            return {
+                "aggregate_net_pnl_usd":"0",
+                "aggregate_passive_pnl_usd":"0",
+                "aggregate_fill_count":0,
+                "max_per_asset_drawdown_usd":"0",
+                "candidate_present":False,
+            }
         folds=by_strategy[strategy]
         if not isinstance(folds,Mapping) or fold not in folds:
             raise ValueError("required historical fold missing")
@@ -101,6 +109,7 @@ def _fold_metric(
             raise ValueError("historical fill count must be nonnegative integer")
         total_fills+=fills
     return {
+        "candidate_present":True,
         "aggregate_net_pnl_usd":str(total_pnl),
         "aggregate_passive_pnl_usd":str(total_passive),
         "aggregate_fill_count":total_fills,
@@ -109,6 +118,8 @@ def _fold_metric(
 
 
 def _passes(metric:Mapping[str,object])->bool:
+    if metric.get("candidate_present") is not True:
+        return False
     pnl=_decimal(metric["aggregate_net_pnl_usd"],"aggregate pnl")
     passive=_decimal(metric["aggregate_passive_pnl_usd"],"aggregate passive")
     dd=_decimal(metric["max_per_asset_drawdown_usd"],"aggregate drawdown")
