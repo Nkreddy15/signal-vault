@@ -239,6 +239,8 @@ h1{{margin:0;font-size:2rem}}p{{color:#9fb0bf}}
 article{{background:#121923;border:1px solid #263546;border-radius:14px;padding:20px}}
 article h2{{margin-top:0}}article div{{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #1f2b38}}
 article div:last-child{{border:0}}span{{color:#9fb0bf}}strong{{text-align:right;overflow-wrap:anywhere}}
+.meter{{margin:10px 0 14px}}.meter label{{display:flex;justify-content:space-between;color:#9fb0bf;font-size:.9rem}}
+.meter progress{{width:100%;height:12px;margin-top:6px}}
 .banner{{margin-top:20px;padding:16px;border:1px solid #634f27;background:#211d13;border-radius:12px}}
 footer{{margin-top:24px;color:#748595;font-size:.9rem}}
 </style></head><body>
