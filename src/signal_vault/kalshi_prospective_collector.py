@@ -24,7 +24,8 @@ from .kalshi_public_research import KalshiPublicResearchClient
 from .kalshi_reference_hypotheses import POLICY_VERSION as HYPOTHESIS_POLICY
 
 PLAN_KIND="PRECOMMITTED_KALSHI_PROSPECTIVE_MARKET_PLAN_NO_ORDERS"
-PLAN_POLICY="kalshi-prospective-market-plan-v2-event-sample-predeclared-20261001"
+PLAN_POLICY="kalshi-prospective-market-plan-v3-bounded-close-window-20261001"
+PREVIOUS_PLAN_POLICY="kalshi-prospective-market-plan-v2-event-sample-predeclared-20261001"
 LEGACY_PLAN_POLICY="kalshi-prospective-market-plan-v1-predeclared-20260930"
 SNAPSHOT_KIND="KALSHI_PROSPECTIVE_FIXED_HORIZON_PUBLIC_SNAPSHOT_NO_ORDERS"
 
@@ -171,8 +172,24 @@ def build_prospective_kalshi_plan(
     ).timestamp())
     for _ in range(max_pages):
         raw_markets=[]
-        if callable(event_method):
-            discovery_source="PUBLIC_EVENTS_WITH_NESTED_MARKETS"
+        # Prefer the market close-window endpoint because it supports BOTH
+        # min_close_ts and max_close_ts. The public events endpoint only
+        # supports a lower close bound, so using it first can spend the GET
+        # budget walking years-long contracts outside this prospective policy.
+        if callable(window_method):
+            discovery_source="PUBLIC_MARKETS_BOUNDED_CLOSE_WINDOW"
+            page=window_method(
+                min_close_ts=min_close_ts,
+                max_close_ts=max_close_ts,
+                limit=1000,
+                cursor=cursor,
+            )
+            markets=page.get("markets") if isinstance(page,Mapping) else None
+            if not isinstance(markets,list):
+                raise ValueError("Kalshi public market discovery lacks markets")
+            raw_markets=list(markets)
+        elif callable(event_method):
+            discovery_source="PUBLIC_EVENTS_WITH_NESTED_MARKETS_FALLBACK"
             page=event_method(
                 status="open",
                 limit=200,
@@ -199,17 +216,6 @@ def build_prospective_kalshi_plan(
                     elif item.get("event_ticker")!=event_ticker:
                         raise ValueError("nested Kalshi market event identity mismatch")
                     raw_markets.append(item)
-        elif callable(window_method):
-            page=window_method(
-                min_close_ts=min_close_ts,
-                max_close_ts=max_close_ts,
-                limit=1000,
-                cursor=cursor,
-            )
-            markets=page.get("markets") if isinstance(page,Mapping) else None
-            if not isinstance(markets,list):
-                raise ValueError("Kalshi public market discovery lacks markets")
-            raw_markets=list(markets)
         else:
             page=client.live_public_markets(
                 status="open",limit=1000,cursor=cursor
@@ -316,7 +322,7 @@ def validate_prospective_kalshi_plan(plan:Mapping[str,object])->tuple[dict[str,o
     if (
         not isinstance(plan,Mapping)
         or plan.get("kind")!=PLAN_KIND
-        or plan.get("policy_version") not in {PLAN_POLICY,LEGACY_PLAN_POLICY}
+        or plan.get("policy_version") not in {PLAN_POLICY,PREVIOUS_PLAN_POLICY,LEGACY_PLAN_POLICY}
         or plan.get("hypothesis_policy_version")!=HYPOTHESIS_POLICY
         or plan.get("selection_uses_price") is not False
         or plan.get("selection_uses_outcome_direction") is not False
