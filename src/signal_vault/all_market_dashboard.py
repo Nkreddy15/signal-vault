@@ -13,7 +13,10 @@ from typing import Mapping
 
 from .all_market_forward_status import all_market_forward_status
 from .paper_runway_status import paper_runway_from_forward_status
-from .research_dashboard_diagnostics import read_crypto_research_diagnostics
+from .research_dashboard_diagnostics import (
+    read_crypto_research_diagnostics,
+    read_crypto_research_diagnostics_json,
+)
 
 
 KIND="SIGNAL_VAULT_ALL_MARKET_OPERATOR_DASHBOARD_READ_ONLY"
@@ -40,7 +43,13 @@ def build_dashboard_snapshot(
     crypto=status["btc_and_six_crypto"]
     equity=status["us_equity"]
     kalshi=status["kalshi"]
-    research=read_crypto_research_diagnostics(crypto_research_receipt)
+    env={} if environ is None else environ
+    if crypto_research_receipt is not None:
+        research=read_crypto_research_diagnostics(crypto_research_receipt)
+    else:
+        research=read_crypto_research_diagnostics_json(
+            env.get("SIGNAL_VAULT_CRYPTO_RESEARCH_RECEIPT_JSON")
+        )
     return {
         "kind":KIND,
         "checked_at_utc":status["checked_at_utc"],
