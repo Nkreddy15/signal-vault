@@ -33,6 +33,32 @@ CRYPTO_BOOTSTRAP_HYPOTHESES = HYPOTHESES + (
         HypothesisKind.EMA_CONFIRM,
         "generic-ema12x26-confirm2-v2-predeclared",
     ),
+    ResearchHypothesis(
+        HypothesisKind.EMA,
+        "generic-ema24x72-v1-predeclared",
+        fast_bars=24,
+        slow_bars=72,
+    ),
+    ResearchHypothesis(
+        HypothesisKind.EMA_CONFIRM,
+        "generic-ema24x72-confirm2-v1-predeclared",
+        fast_bars=24,
+        slow_bars=72,
+    ),
+    ResearchHypothesis(
+        HypothesisKind.MOMENTUM,
+        "generic-momentum72bar150bps-v1-predeclared",
+        lookback_bars=72,
+        entry_return_bps=Decimal("150"),
+        exit_return_bps=Decimal("-150"),
+    ),
+    ResearchHypothesis(
+        HypothesisKind.MOMENTUM,
+        "generic-momentum168bar250bps-v1-predeclared",
+        lookback_bars=168,
+        entry_return_bps=Decimal("250"),
+        exit_return_bps=Decimal("-250"),
+    ),
 )
 
 # These are ILLUSTRATIVE SCENARIOS, not current provider prices, broker fees,
