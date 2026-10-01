@@ -115,7 +115,7 @@ class KalshiPublicRequestBudgetTests(unittest.TestCase):
         self.assertGreaterEqual(MAX_PUBLIC_GETS_PER_TICK,20)
         self.assertLessEqual(MAX_PUBLIC_GETS_PER_TICK,50)
 
-        self.assertEqual(MAX_DISCOVERY_PAGES,20)
+        self.assertEqual(MAX_DISCOVERY_PAGES,24)
         self.assertLess(MAX_DISCOVERY_PAGES,MAX_PUBLIC_GETS_PER_TICK)
 
 

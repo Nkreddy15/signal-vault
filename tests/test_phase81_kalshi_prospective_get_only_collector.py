@@ -172,6 +172,50 @@ class KalshiProspectiveCollectorTests(unittest.TestCase):
         self.assertEqual(plan["demo_order_submission"],"DISABLED")
         self.assertEqual(plan["live_order_submission"],"DISABLED")
 
+    def test_paginated_discovery_can_use_twenty_four_page_bound(self):
+        class TwentyFourPageClient:
+            def __init__(self):
+                self.calls=0
+
+            def live_public_markets(self, *, status="open", limit=1000, cursor=None):
+                self.calls+=1
+                index=0 if cursor is None else int(cursor)
+                markets=[]
+                # Keep early pages structurally empty, then provide enough valid
+                # active binary markets near the end of the bounded window.
+                if index>=13:
+                    event_index=index-13
+                    for leg in range(2):
+                        close=NOW+timedelta(hours=30+event_index*3+leg)
+                        markets.append({
+                            "ticker":f"TAIL-{index:02d}-{leg}",
+                            "event_ticker":f"TAILEVENT-{event_index:02d}",
+                            "market_type":"binary",
+                            "status":"active",
+                            "close_time":iso(close),
+                            "mve_collection_ticker":None,
+                            "is_provisional":False,
+                            "can_close_early":False,
+                        })
+                next_cursor="" if index==23 else str(index+1)
+                return {"markets":markets,"cursor":next_cursor}
+
+            def live_public_market(self,ticker):
+                raise AssertionError("planning must not perform per-market quote GETs")
+
+        client=TwentyFourPageClient()
+        plan=build_prospective_kalshi_plan(
+            client=client,
+            planned_at=NOW,
+            market_count=22,
+        )
+        self.assertEqual(plan["discovery_pages"],24)
+        self.assertEqual(client.calls,24)
+        self.assertEqual(plan["planned_market_count"],22)
+        self.assertGreaterEqual(
+            len({x["event_ticker"] for x in plan["markets"]}),10
+        )
+
     def test_plan_archive_is_private_create_only_and_tamper_detected(self):
         root=self.make_root()
         plan=build_prospective_kalshi_plan(
