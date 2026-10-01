@@ -16,7 +16,7 @@ def validation():
         "kind":VALIDATION_KIND,
         "symbols":["AVAX/USD","BTC/USD","ETH/USD","LINK/USD","LTC/USD","SOL/USD"],
         "historical_hours":144,
-        "walk_forward_fold_count":4,
+        "chronological_fold_count":4,
         "selected_strategy":STRATEGY,
         "strictly_chronological":True,
         "selection_used_validation_only":True,
