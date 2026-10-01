@@ -53,8 +53,18 @@ _PLAN_FAILURE_CODES={
         "DUPLICATE_MARKET_ACROSS_DISCOVERY_PAGES",
     "Kalshi public market discovery lacks markets":
         "MALFORMED_PUBLIC_MARKET_DISCOVERY",
+    "Kalshi public event discovery lacks events":
+        "MALFORMED_PUBLIC_EVENT_DISCOVERY",
+    "malformed Kalshi public event":
+        "MALFORMED_PUBLIC_EVENT_OBJECT",
+    "Kalshi public event lacks nested markets":
+        "PUBLIC_EVENT_MISSING_NESTED_MARKETS",
     "malformed Kalshi public market":
         "MALFORMED_PUBLIC_MARKET_OBJECT",
+    "nested Kalshi market event identity mismatch":
+        "NESTED_MARKET_EVENT_IDENTITY_MISMATCH",
+    "invalid Kalshi discovery cursor":
+        "INVALID_DISCOVERY_CURSOR",
 }
 
 
