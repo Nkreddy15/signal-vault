@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -10,6 +10,9 @@ from signal_vault.crypto_paper_executor_once import (
     execute_prepared_crypto_paper_once,
 )
 from signal_vault.crypto_paper_pilot_dry_run import KIND as DRY_RUN_KIND
+from signal_vault.crypto_paper_provider_preflight import (
+    capture_crypto_paper_provider_preflight,
+)
 from signal_vault.multimarket_execution_journal import (
     MultiMarketExecutionJournal,
     MultiMarketOrderDraft,
@@ -67,6 +70,34 @@ def dry_run():
     }
 
 
+
+class Reader:
+    def get_account(self):
+        return {
+            "status":"ACTIVE",
+            "trading_blocked":False,
+            "non_marginable_buying_power":"100000",
+        }
+
+    def get_btc_asset(self):
+        return {
+            "symbol":"BTC/USD",
+            "class":"crypto",
+            "status":"active",
+            "tradable":True,
+            "fractionable":True,
+            "min_order_size":"0.0001",
+            "min_trade_increment":"0.000000001",
+            "price_increment":"0.01",
+        }
+
+    def get_positions(self):
+        return ()
+
+    def get_open_orders(self):
+        return ()
+
+
 class CryptoPaperExecutorOnceTests(unittest.TestCase):
     def setUp(self):
         temp=tempfile.TemporaryDirectory()
@@ -96,6 +127,12 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
             "paper_order_submission":"DISABLED",
             "live_trading":"UNAVAILABLE",
         }
+        capture_crypto_paper_provider_preflight(
+            self.prepared,
+            journal=self.journal,
+            reader=Reader(),
+            at=NOW,
+        )
 
     def test_exact_ack_executes_one_injected_paper_post_and_records_provider_state(self):
         calls=[]
@@ -198,6 +235,43 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 transport=lambda *_:calls.append(True),
             )
         self.assertEqual(calls,[])
+
+
+    def test_missing_provider_preflight_blocks_before_transport(self):
+        with tempfile.TemporaryDirectory() as td:
+            journal=MultiMarketExecutionJournal(Path(td)/"missing.sqlite3")
+            self.addCleanup(journal.close)
+            journal.record_approved_draft(self.draft,at=NOW)
+            calls=[]
+            with self.assertRaises(KeyError):
+                execute_prepared_crypto_paper_once(
+                    self.prepared,
+                    dry_run(),
+                    journal=journal,
+                    paper_key="paper-key",
+                    paper_secret="paper-secret",
+                    acknowledgement=CRYPTO_PAPER_ACK,
+                    at=NOW,
+                    transport=lambda *_:calls.append(True),
+                )
+            self.assertEqual(calls,[])
+
+    def test_stale_provider_preflight_blocks_before_transport(self):
+        calls=[]
+        with self.assertRaises(PermissionError):
+            execute_prepared_crypto_paper_once(
+                self.prepared,
+                dry_run(),
+                journal=self.journal,
+                paper_key="paper-key",
+                paper_secret="paper-secret",
+                acknowledgement=CRYPTO_PAPER_ACK,
+                at=NOW+timedelta(minutes=6),
+                transport=lambda *_:calls.append(True),
+            )
+        self.assertEqual(calls,[])
+        with self.assertRaises(KeyError):
+            self.journal.get_state(CLIENT_ID)
 
 
 if __name__=="__main__":

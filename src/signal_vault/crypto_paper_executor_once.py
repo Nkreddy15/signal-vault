@@ -11,12 +11,13 @@ No LIVE host or LIVE execution path exists here.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Callable, Mapping
 
 from .crypto_paper_executor_draft import KIND as PREPARED_KIND
 from .crypto_paper_pilot_dry_run import KIND as DRY_RUN_KIND
+from .crypto_paper_provider_preflight import KIND as PREFLIGHT_KIND
 from .multimarket_alpaca_paper_executor import (
     MultiMarketAlpacaPaperOnceExecutor,
     _post_alpaca_paper,
@@ -26,6 +27,7 @@ from .multimarket_paper_router import CRYPTO_PAPER_ACK
 
 
 KIND="CRYPTO_ONE_SHOT_ALPACA_PAPER_EXECUTION"
+MAX_PROVIDER_PREFLIGHT_AGE=timedelta(minutes=5)
 
 
 def execute_prepared_crypto_paper_once(
@@ -104,6 +106,35 @@ def execute_prepared_crypto_paper_once(
         raise ValueError("durable approved draft does not match prepared receipt")
     if str(risk.get("proposed_max_loss_usd"))!=str(draft.max_loss_usd):
         raise ValueError("durable draft and risk receipt max-loss mismatch")
+
+    preflight,captured_at,_=journal.get_provider_preflight_record(decision_id)
+    execution_at=at.astimezone(timezone.utc)
+    age=execution_at-captured_at
+    if age<timedelta(0) or age>MAX_PROVIDER_PREFLIGHT_AGE:
+        raise PermissionError("fresh provider PAPER preflight required at execution boundary")
+    venue=preflight.get("venue_rules")
+    if (
+        preflight.get("kind")!=PREFLIGHT_KIND
+        or preflight.get("decision_id")!=decision_id
+        or preflight.get("market_lane")!="crypto"
+        or preflight.get("instrument")!="BTC/USD"
+        or preflight.get("environment")!="alpaca_paper"
+        or preflight.get("account_active") is not True
+        or preflight.get("trading_blocked") is not False
+        or preflight.get("provider_positions_count")!=0
+        or preflight.get("provider_open_orders_count")!=0
+        or preflight.get("draft_payload_sha256")!=draft.payload_sha256
+        or preflight.get("credential_values_persisted") is not False
+        or preflight.get("provider_account_id_persisted") is not False
+        or preflight.get("provider_post_attempted") is not False
+        or preflight.get("paper_order_submission")!="DISABLED"
+        or preflight.get("live_trading")!="UNAVAILABLE"
+        or not isinstance(venue,Mapping)
+        or venue.get("symbol")!="BTC/USD"
+    ):
+        raise PermissionError("valid persisted provider PAPER preflight required")
+    if Decimal(str(preflight.get("non_marginable_buying_power_usd","0")))<draft.max_loss_usd:
+        raise PermissionError("provider PAPER buying power below draft max loss")
 
     executor=MultiMarketAlpacaPaperOnceExecutor(
         paper_key=paper_key,
