@@ -101,6 +101,30 @@ class KalshiCloudSidecarTests(unittest.TestCase):
         )
         self.assertEqual(child.stat().st_mode&0o077,0)
 
+    def test_insufficient_public_universe_returns_bounded_fail_closed_diagnostic(self):
+        class TooSmallClient(FakeClient):
+            def __init__(self):
+                super().__init__()
+                keep=list(self.markets)[:8]
+                self.markets={key:self.markets[key] for key in keep}
+
+        result=run_kalshi_sidecar_once(
+            env=self.env(),
+            now=NOW,
+            client_factory=TooSmallClient,
+        )
+        self.assertEqual(result["status"],"PLANNING_BLOCKED_FAIL_CLOSED")
+        self.assertEqual(result["failure_class"],"ValueError")
+        self.assertEqual(
+            result["planning_failure_code"],
+            "INSUFFICIENT_DISTINCT_FUTURE_EVENTS",
+        )
+        self.assertFalse(result["filesystem_writes"])
+        self.assertGreaterEqual(result["network_requests"],1)
+        self.assertEqual(result["credentials_accessed"],"NONE")
+        self.assertEqual(result["demo_order_submission"],"DISABLED")
+        self.assertEqual(result["live_order_submission"],"DISABLED")
+
     def test_later_due_tick_captures_snapshot_without_order_permissions(self):
         first=run_kalshi_sidecar_once(
             env=self.env(),now=NOW,client_factory=FakeClient
