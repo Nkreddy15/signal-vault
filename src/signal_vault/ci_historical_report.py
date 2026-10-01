@@ -33,6 +33,9 @@ CRYPTO_BOOTSTRAP_HYPOTHESES = HYPOTHESES + (
         HypothesisKind.EMA_CONFIRM,
         "generic-ema12x26-confirm2-v2-predeclared",
     ),
+)
+
+CRYPTO_LONG_HORIZON_HYPOTHESES = CRYPTO_BOOTSTRAP_HYPOTHESES + (
     ResearchHypothesis(
         HypothesisKind.EMA,
         "generic-ema24x72-v1-predeclared",
@@ -204,6 +207,7 @@ def analyze_manual_history(
     scenario_models: Mapping[str, Mapping[str, str]] = SCENARIOS,
     report_reader=run_offline_report,
     archive_auditor=audit_requested_archives,
+    hypotheses: Sequence[ResearchHypothesis] = CRYPTO_BOOTSTRAP_HYPOTHESES,
 ) -> dict[str, object]:
     """Independently reconstruct all expected windows and stress assumed costs.
 
@@ -241,7 +245,7 @@ def analyze_manual_history(
             raw = report_reader(
                 archives,
                 cost_config=cost_path,
-                hypotheses=CRYPTO_BOOTSTRAP_HYPOTHESES,
+                hypotheses=tuple(hypotheses),
             )
         else:
             raw = report_reader(archives, cost_config=cost_path)
