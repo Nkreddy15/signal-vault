@@ -65,6 +65,7 @@ def _eligible_name(name:str, market:str) -> bool:
     if market=="crypto":
         return bool(
             name==ANALYSIS_FILENAME or
+            name=="historical_bootstrap_validation.json" or
             name in {"cost_assumptions-"+label+".json" for label in SCENARIOS}
             or CRYPTO_SOURCE_RE.fullmatch(name))
     if market=="us_equity":
