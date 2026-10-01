@@ -32,6 +32,7 @@ from .railway_btc_first_dual_cron import (
 )
 from .railway_multimarket_research_cron import combined_multimarket_once
 from .all_market_forward_status import all_market_forward_status
+from .paper_runway_status import paper_runway_from_forward_status
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -177,11 +178,20 @@ def combined_all_markets_once(
             )
             output["post_tick_readiness_status"]="AVAILABLE"
             output["post_tick_readiness"]=readiness
+            try:
+                runway=paper_runway_from_forward_status(readiness)
+                output["paper_runway_status"]="AVAILABLE"
+                output["paper_runway"]=runway
+            except Exception as exc:
+                output["paper_runway_status"]="FAILED_SAFE"
+                output["paper_runway_failure_class"]=type(exc).__name__
         except Exception as exc:
             output["post_tick_readiness_status"]="FAILED_SAFE"
             output["post_tick_readiness_failure_class"]=type(exc).__name__
+            output["paper_runway_status"]="SKIPPED_READINESS_UNAVAILABLE"
     else:
         output["post_tick_readiness_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
+        output["paper_runway_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
     return output
 
 
