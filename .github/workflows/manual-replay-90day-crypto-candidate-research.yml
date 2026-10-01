@@ -54,6 +54,7 @@ jobs:
         env:
           SIGNAL_VAULT_REPLAY_MODE: EXISTING_PRIVATE_HISTORY_ONLY
           SIGNAL_VAULT_REPLAY_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SIGNAL_VAULT_REPLAY_HYPOTHESIS_SET: LONG_HORIZON_90D
         run: python -m signal_vault.ci_replay_history
 
       - name: Build expanded seven-candidate long-horizon receipt
