@@ -65,19 +65,27 @@ def _multimarket_execution_snapshot(
         row[0]
         for row in con.execute(
             "SELECT name FROM sqlite_master WHERE type='table' "
-            "AND name IN ('mm_execution_drafts','mm_execution_states')"
+            "AND name IN ('mm_execution_drafts','mm_execution_states','mm_execution_preflights')"
         )
     }
+    core={"mm_execution_drafts","mm_execution_states"}
     if not present:
         return {
             "available": False,
             "count": 0,
             "unresolved": 0,
-            "by_lane": {lane: {"count": 0, "unresolved": 0} for lane in _MM_LANES},
+            "preflight_count": 0,
+            "preflight_waiting_before_submission": 0,
+            "latest_preflight_utc": None,
+            "by_lane": {
+                lane: {"count": 0, "unresolved": 0, "preflight_count": 0}
+                for lane in _MM_LANES
+            },
             "recent": [],
         }
-    if present != {"mm_execution_drafts", "mm_execution_states"}:
+    if not core.issubset(present):
         raise OperatorSnapshotError("incomplete multi-market execution journal schema")
+    has_preflights="mm_execution_preflights" in present
 
     joined = tuple(con.execute(
         """SELECT d.market_lane,d.instrument,s.state_json,s.updated_utc
@@ -85,9 +93,35 @@ def _multimarket_execution_snapshot(
            JOIN mm_execution_drafts d USING(client_order_id)
            ORDER BY s.updated_utc DESC"""
     ))
-    by_lane = {lane: {"count": 0, "unresolved": 0} for lane in _MM_LANES}
+    by_lane = {
+        lane: {"count": 0, "unresolved": 0, "preflight_count": 0}
+        for lane in _MM_LANES
+    }
     recent = []
     unresolved = 0
+    preflight_count=0
+    preflight_waiting=0
+    latest_preflight=None
+    if has_preflights:
+        preflight_rows=tuple(con.execute(
+            """SELECT d.market_lane,p.captured_utc,
+                      CASE WHEN s.client_order_id IS NULL THEN 1 ELSE 0 END
+               FROM mm_execution_preflights p
+               JOIN mm_execution_drafts d USING(client_order_id)
+               LEFT JOIN mm_execution_states s USING(client_order_id)
+               ORDER BY p.captured_utc DESC"""
+        ))
+        preflight_count=len(preflight_rows)
+        for lane,captured,waiting in preflight_rows:
+            if lane not in by_lane:
+                raise OperatorSnapshotError("unknown preflight market lane")
+            by_lane[lane]["preflight_count"]+=1
+            if waiting not in (0,1):
+                raise OperatorSnapshotError("invalid preflight submission state")
+            preflight_waiting+=waiting
+            normalized=_timestamp(captured)
+            if latest_preflight is None:
+                latest_preflight=normalized
     for index, row in enumerate(joined):
         lane, instrument, raw_state, updated = row
         if lane not in by_lane:
@@ -131,6 +165,9 @@ def _multimarket_execution_snapshot(
         "available": True,
         "count": len(joined),
         "unresolved": unresolved,
+        "preflight_count": preflight_count,
+        "preflight_waiting_before_submission": preflight_waiting,
+        "latest_preflight_utc": latest_preflight,
         "by_lane": by_lane,
         "recent": recent,
     }
