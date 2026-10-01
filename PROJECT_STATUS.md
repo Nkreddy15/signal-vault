@@ -1,3 +1,19 @@
+# CURRENT CLOUD CHECKPOINT — 2026-10-01 (authoritative over older notes below)
+
+Signal Vault production research now runs the **all-market GET-only cron** on the existing Railway service and existing 500 MB volume. Current service command is `python -m signal_vault.railway_all_markets_research_cron --once` on `7 * * * *` UTC. Six-crypto, six-equity and Kalshi research sidecars are explicitly configured; PAPER/DEMO order submission remains disabled and LIVE remains unavailable.
+
+**Latest verified production evidence before Phase 100 (2026-09-30 23:08 UTC):** original BTC collector remained healthy with 27 verified prospective observations; the current six-crypto sidecar segment held 13 independent prospective source hours and 12 fully scored precommitted outcomes, leaving 156 source hours to the frozen 169-hour review gate and 156 scored outcomes to the frozen 168-outcome gate. Stock prospective evidence had not started yet (0/10 session plans, 0/60 core-hour receipts); the next clean opportunity is a pre-open XNYS session plan, never a backfill. Kalshi had an isolated fail-safe ValueError before creating a plan.
+
+**Phase 100 production fix:** commit `dc85b02e4b7556e6a88a0a5ba8d82ff37f55ada2` is deployed successfully. Kalshi's public `status=open` query currently returns live market objects with `status="active"` and `market_type="binary"`; the collector now accepts current `active` (plus legacy `open`) while preserving the explicit binary-contract, MVE/provisional, GET-only and no-order guards. First post-deploy cron verification is still required before claiming a Kalshi plan exists.
+
+**Paper trading truth:** one supervised $15 BTC/USD Alpaca PAPER diagnostic BUY was already executed and reconciled on 2026-09-29 as documented in `docs/SUPERVISED_ONE_ORDER_PAPER_SMOKE.md`. This proves a supervised PAPER plumbing path, not an autonomous strategy. Automatic strategy-driven PAPER/DEMO trading remains disabled. Phase 101 adds `python -m signal_vault.paper_runway_status`, a read-only status that reports current forward-evidence blockers and never grants execution authority.
+
+**GitHub Actions warning:** the repository Actions runner is currently failing before meaningful project steps. A diagnostic workflow showed even a minimal checkout/setup-Python/`python --version` job fails, so red runs from Phase 50 onward must not be represented as code-test failures. Phase 49 is the last independently observed green CI checkpoint. Restore Actions/runner health separately; do not use the runner outage as permission to weaken safety gates.
+
+**Owner action:** none required for cloud collection. Continue engineering and inspect the first Phase-100 post-deploy cron. Do not ask the owner to Fetch/Pull or run hourly Terminal commands for the Railway collector.
+
+---
+
 # SIGNAL VAULT — current cloud checkpoint (2026-09-30)
 
 **CURRENT AUTHORITATIVE STATE:** The owner explicitly approved and the existing Railway service `btcusd-hourly-get-cron` is active on the reviewed **BTC-FIRST six-crypto DATA-GET-only** command `python -m signal_vault.railway_btc_first_dual_cron --once`, unchanged UTC `:07` hourly cron and unchanged single 500 MB persistent volume at `/var/lib/signal-vault/forward`. The exact non-secret sidecar flag is active. No credential values were read or changed by ChatGPT.
