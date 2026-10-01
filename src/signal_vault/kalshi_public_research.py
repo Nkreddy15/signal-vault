@@ -149,6 +149,28 @@ class KalshiPublicResearchClient:
             cursor=next_cursor
         raise ValueError("Kalshi historical pagination exceeded bound")
 
+    def live_public_events(
+        self,*,status:str="open",limit:int=200,cursor:str|None=None,
+        with_nested_markets:bool=True,min_close_ts:int|None=None,
+    ) -> dict[str,object]:
+        if status not in {"unopened","open","closed","settled"}:
+            raise ValueError("invalid Kalshi public event status")
+        if type(limit) is not int or not 1<=limit<=200:
+            raise ValueError("Kalshi event limit out of bounds")
+        if not isinstance(with_nested_markets,bool):
+            raise ValueError("Kalshi nested-market flag must be boolean")
+        if min_close_ts is not None and (
+            type(min_close_ts) is not int or min_close_ts<0
+        ):
+            raise ValueError("invalid Kalshi event min_close_ts")
+        return self._get("/events",{
+            "status":status,
+            "limit":limit,
+            "cursor":cursor,
+            "with_nested_markets":with_nested_markets,
+            "min_close_ts":min_close_ts,
+        })
+
     def live_public_market(self,ticker:str) -> dict[str,object]:
         if (not isinstance(ticker,str) or not ticker or len(ticker)>128 or
                 any(ch not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_" for ch in ticker)):
