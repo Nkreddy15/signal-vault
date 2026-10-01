@@ -143,6 +143,9 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     kalshi=lanes["kalshi"]
     blockers=snapshot.get("paper_runway_blockers",[])
     blocker_text="None" if not blockers else ", ".join(str(x) for x in blockers)
+    latest_kalshi=snapshot.get("latest_kalshi_tick",{})
+    if not isinstance(latest_kalshi,Mapping):
+        latest_kalshi={}
     execution=snapshot.get("execution_engineering")
     if execution is None:
         execution={
@@ -213,6 +216,15 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
         ],[
             ("Decision evidence",kalshi.get("decision_progress_pct",0)),
             ("Settlement evidence",kalshi.get("settlement_progress_pct",0)),
+        ]),
+        card("Latest Kalshi Tick",[
+            ("Status",latest_kalshi.get("status","NOT_RECORDED")),
+            ("Planning failure",latest_kalshi.get("planning_failure_code") or latest_kalshi.get("failure_class") or "None"),
+            ("Public GETs used",latest_kalshi.get("public_get_requests_used","n/a")),
+            ("GET budget",latest_kalshi.get("public_get_budget","n/a")),
+            ("Planned markets",latest_kalshi.get("planned_market_count","n/a")),
+            ("Snapshots captured",latest_kalshi.get("prospective_snapshots_captured","n/a")),
+            ("Settlements captured",latest_kalshi.get("settlement_receipts_captured","n/a")),
         ]),
         card("PAPER Pipeline",[
             ("Shared risk governor",execution["shared_cross_market_risk_governor"]),
