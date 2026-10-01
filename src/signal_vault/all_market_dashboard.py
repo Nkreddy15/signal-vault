@@ -18,6 +18,16 @@ from .paper_runway_status import paper_runway_from_forward_status
 KIND="SIGNAL_VAULT_ALL_MARKET_OPERATOR_DASHBOARD_READ_ONLY"
 
 
+def _pct(value:object,target:int)->int:
+    try:
+        number=int(value)
+    except (TypeError,ValueError):
+        number=0
+    if target<=0:
+        return 0
+    return max(0,min(100,round(number*100/target)))
+
+
 def build_dashboard_snapshot(
     *,
     root:Path,
@@ -45,6 +55,12 @@ def build_dashboard_snapshot(
                 "scored_outcomes_remaining":crypto.get(
                     "sidecar_review_gate_scored_outcomes_remaining_to_168"
                 ),
+                "source_progress_pct":_pct(
+                    crypto.get("sidecar_current_segment_independent_prospective_hours",0),169
+                ),
+                "score_progress_pct":_pct(
+                    crypto.get("sidecar_fully_observed_precommitted_decision_intervals",0),168
+                ),
                 "next_action":status["lane_next_actions"]["six_crypto"],
             },
             "us_equity":{
@@ -61,6 +77,10 @@ def build_dashboard_snapshot(
                 "capture_windows_open":equity.get(
                     "decision_hours_capture_window_open",0
                 ),
+                "session_progress_pct":_pct(equity.get("session_plan_files",0),10),
+                "core_hour_progress_pct":_pct(
+                    equity.get("prospective_core_hour_receipts",0),60
+                ),
                 "next_action":status["lane_next_actions"]["us_equity"],
             },
             "kalshi":{
@@ -75,6 +95,12 @@ def build_dashboard_snapshot(
                 ),
                 "settlements_remaining":kalshi.get(
                     "raw_settlement_receipts_remaining",20
+                ),
+                "decision_progress_pct":_pct(
+                    kalshi.get("prospective_decision_snapshots",0),40
+                ),
+                "settlement_progress_pct":_pct(
+                    kalshi.get("settlement_receipts",0),20
                 ),
                 "next_action":status["lane_next_actions"]["kalshi"],
             },
@@ -132,12 +158,27 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     elif not isinstance(execution,Mapping):
         raise ValueError("dashboard execution engineering state must be a mapping")
 
-    def card(title:str,rows:list[tuple[str,object]])->str:
+    def meter(label:str,value:object)->str:
+        try:
+            pct=max(0,min(100,int(value)))
+        except (TypeError,ValueError):
+            pct=0
+        return (
+            f'<section class="meter"><label>{esc(label)} <strong>{pct}%</strong></label>'
+            f'<progress max="100" value="{pct}">{pct}%</progress></section>'
+        )
+
+    def card(
+        title:str,
+        rows:list[tuple[str,object]],
+        meters:list[tuple[str,object]]|None=None,
+    )->str:
         body="".join(
             f"<div><span>{esc(k)}</span><strong>{esc(v)}</strong></div>"
             for k,v in rows
         )
-        return f"<article><h2>{esc(title)}</h2>{body}</article>"
+        progress="".join(meter(label,value) for label,value in (meters or []))
+        return f"<article><h2>{esc(title)}</h2>{progress}{body}</article>"
 
     cards="".join((
         card("Six Crypto",[
@@ -146,6 +187,9 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
             ("Hours remaining",crypto["source_hours_remaining"]),
             ("Outcomes remaining",crypto["scored_outcomes_remaining"]),
             ("Next",crypto["next_action"]),
+        ],[
+            ("Source evidence",crypto.get("source_progress_pct",0)),
+            ("Scored outcomes",crypto.get("score_progress_pct",0)),
         ]),
         card("US Equities",[
             ("Session plans",equity["session_plans"]),
@@ -154,6 +198,9 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
             ("Core hours remaining",equity["core_hour_receipts_remaining"]),
             ("Capture windows open",equity["capture_windows_open"]),
             ("Next",equity["next_action"]),
+        ],[
+            ("Session plans",equity.get("session_progress_pct",0)),
+            ("Core-hour evidence",equity.get("core_hour_progress_pct",0)),
         ]),
         card("Kalshi",[
             ("Plan present",kalshi["plan_present"]),
@@ -163,6 +210,9 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
             ("Snapshots remaining",kalshi["decision_snapshots_remaining"]),
             ("Settlements remaining",kalshi["settlements_remaining"]),
             ("Next",kalshi["next_action"]),
+        ],[
+            ("Decision evidence",kalshi.get("decision_progress_pct",0)),
+            ("Settlement evidence",kalshi.get("settlement_progress_pct",0)),
         ]),
         card("PAPER Pipeline",[
             ("Shared risk governor",execution["shared_cross_market_risk_governor"]),
