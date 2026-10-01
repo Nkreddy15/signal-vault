@@ -160,6 +160,8 @@ def build_prospective_kalshi_plan(
     discovery_source="PUBLIC_MARKETS_CLOSE_WINDOW"
     sample_target_reached=False
     event_method=getattr(client,"live_public_events",None)
+    if getattr(client,"supports_event_discovery",True) is False:
+        event_method=None
     window_method=getattr(client,"live_public_markets_close_window",None)
     min_close_ts=int((
         planned+timedelta(hours=MIN_PLAN_LEAD_HOURS)-timedelta(seconds=1)
