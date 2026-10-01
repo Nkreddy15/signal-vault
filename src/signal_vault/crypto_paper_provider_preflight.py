@@ -44,6 +44,14 @@ def capture_crypto_paper_provider_preflight(
     refresh_existing:bool=False,
 )->dict[str,object]:
     if (
+        not isinstance(at,datetime)
+        or at.tzinfo is None
+        or at.utcoffset() is None
+    ):
+        raise ValueError("timezone-aware provider preflight timestamp required")
+    captured_at=at.astimezone(timezone.utc)
+
+    if (
         not isinstance(prepared,Mapping)
         or prepared.get("kind")!=PREPARED_KIND
         or prepared.get("status")!="DURABLE_CRYPTO_PAPER_DRAFT_APPROVED_NOT_SUBMITTED"
@@ -93,7 +101,7 @@ def capture_crypto_paper_provider_preflight(
 
     receipt={
         "kind":KIND,
-        "captured_at_utc":at.astimezone(timezone.utc).isoformat(),
+        "captured_at_utc":captured_at.isoformat(),
         "decision_id":client_id,
         "market_lane":"crypto",
         "instrument":"BTC/USD",
