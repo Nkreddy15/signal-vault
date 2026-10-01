@@ -13,6 +13,7 @@ from typing import Mapping
 
 from .all_market_forward_status import all_market_forward_status
 from .paper_runway_status import paper_runway_from_forward_status
+from .research_dashboard_diagnostics import read_crypto_research_diagnostics
 
 
 KIND="SIGNAL_VAULT_ALL_MARKET_OPERATOR_DASHBOARD_READ_ONLY"
@@ -32,12 +33,14 @@ def build_dashboard_snapshot(
     *,
     root:Path,
     environ:Mapping[str,str]|None=None,
+    crypto_research_receipt:Path|None=None,
 )->dict[str,object]:
     status=all_market_forward_status(environ=environ,root=root)
     runway=paper_runway_from_forward_status(status)
     crypto=status["btc_and_six_crypto"]
     equity=status["us_equity"]
     kalshi=status["kalshi"]
+    research=read_crypto_research_diagnostics(crypto_research_receipt)
     return {
         "kind":KIND,
         "checked_at_utc":status["checked_at_utc"],
@@ -105,6 +108,7 @@ def build_dashboard_snapshot(
                 "next_action":status["lane_next_actions"]["kalshi"],
             },
         },
+        "strategy_research":research,
         "paper_runway_blockers":list(
             runway["current_forward_evidence_blockers"]
         ),
@@ -142,6 +146,12 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     equity=lanes["us_equity"]
     kalshi=lanes["kalshi"]
     blockers=snapshot.get("paper_runway_blockers",[])
+    research=snapshot.get("strategy_research",{
+        "status":"NOT_IMPORTED","candidate_family":None,"selected_strategy":None,
+        "base_friction_rows":[],
+    })
+    if not isinstance(research,Mapping):
+        raise ValueError("dashboard research diagnostics must be a mapping")
     blocker_text="None" if not blockers else ", ".join(str(x) for x in blockers)
     latest_kalshi=snapshot.get("latest_kalshi_tick",{})
     if not isinstance(latest_kalshi,Mapping):
@@ -225,6 +235,14 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
             ("Planned markets",latest_kalshi.get("planned_market_count","n/a")),
             ("Snapshots captured",latest_kalshi.get("prospective_snapshots_captured","n/a")),
             ("Settlements captured",latest_kalshi.get("settlement_receipts_captured","n/a")),
+        ]),
+        card("Strategy Research",[
+            ("Status",research.get("status","NOT_IMPORTED")),
+            ("Family",research.get("candidate_family") or "None"),
+            ("Selected / candidate",research.get("selected_strategy") or "None"),
+            ("Prospective confirmation required",research.get("new_prospective_confirmation_required",False)),
+            ("PAPER activation permitted",research.get("paper_activation_permitted",False)),
+            ("Base-friction rows",len(research.get("base_friction_rows",[]) if isinstance(research.get("base_friction_rows",[]),list) else [])),
         ]),
         card("PAPER Pipeline",[
             ("Shared risk governor",execution["shared_cross_market_risk_governor"]),
