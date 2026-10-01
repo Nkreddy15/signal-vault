@@ -65,6 +65,9 @@ class _BudgetedPublicClient:
         self._inner=inner
         self._maximum=maximum
         self.request_count=0
+        self.supports_event_discovery=callable(
+            getattr(inner,"live_public_events",None)
+        )
 
     def _consume(self)->None:
         if self.request_count>=self._maximum:
