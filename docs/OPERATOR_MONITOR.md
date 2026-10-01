@@ -60,3 +60,23 @@ persistently halt/resume PAPER operation with a different Bearer token. Neither
 should be placed directly on a public Internet listener. The owner-control
 GET endpoints use the read-only snapshot path and cannot silently create a new
 ledger if the real journal is missing.
+
+
+## All-market forward dashboard
+
+When the forward evidence root is available, start the same private monitor with:
+
+```bash
+PYTHONPATH=src python3 -m signal_vault.operator_server \
+  --db ./data/signal-vault-paper.sqlite3 \
+  --forward-root /var/lib/signal-vault/forward
+```
+
+Authenticated routes:
+- `/all-markets` — read-only HTML for six-crypto, US equities and Kalshi.
+- `/api/all-markets` — the same safe snapshot as JSON.
+
+The all-market routes read only persisted forward evidence. They make no provider
+requests, read no API credentials, and cannot submit PAPER, DEMO or LIVE orders.
+The monitor still binds only to literal `127.0.0.1`; remote/public exposure needs
+a separately reviewed authenticated TLS gateway and is not part of this phase.

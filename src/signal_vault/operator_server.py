@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 from .operator_view import OperatorSnapshotError, read_local_paper_snapshot
 from .market_capabilities import current_market_capabilities
 from .current_readiness import current_readiness_baseline
+from .all_market_dashboard import build_dashboard_snapshot, render_dashboard_html, snapshot_json
 
 
 def _authorize(header: str | None, token: str) -> bool:
@@ -99,10 +100,11 @@ th,td{{padding:10px;border-bottom:1px solid #3f6554;text-align:left;overflow-wra
     return markup.encode("utf-8")
 
 
-def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHandler]:
+def build_handler(db_path: str | Path, *, token: str, forward_root: str | Path | None = None) -> type[BaseHTTPRequestHandler]:
     if len(token) < 32 or token.strip() != token or "\x00" in token:
         raise ValueError("operator token must contain at least 32 non-space characters")
     path = Path(db_path).expanduser()
+    forward_path = Path(forward_root).expanduser() if forward_root is not None else None
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "SignalVaultLocalMonitor/1"
@@ -130,8 +132,34 @@ def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHan
             if not _authorize(self.headers.get("Authorization"), token):
                 return self._send(401, b"Authentication required\n", "text/plain; charset=utf-8", challenge=True)
             parsed = urlsplit(self.path)
-            if parsed.query or parsed.fragment or parsed.path not in ("/", "/api/status"):
+            if parsed.query or parsed.fragment or parsed.path not in ("/", "/api/status", "/all-markets", "/api/all-markets"):
                 return self._send(404, b"Not found\n", "text/plain; charset=utf-8")
+            if parsed.path in ("/all-markets", "/api/all-markets"):
+                if forward_path is None:
+                    return self._send(
+                        503,
+                        b"All-market forward root not configured\n",
+                        "text/plain; charset=utf-8",
+                    )
+                try:
+                    snapshot=build_dashboard_snapshot(root=forward_path)
+                except Exception:
+                    return self._send(
+                        503,
+                        b"All-market forward evidence unavailable or inconsistent\n",
+                        "text/plain; charset=utf-8",
+                    )
+                if parsed.path == "/api/all-markets":
+                    return self._send(
+                        200,
+                        snapshot_json(snapshot),
+                        "application/json; charset=utf-8",
+                    )
+                return self._send(
+                    200,
+                    render_dashboard_html(snapshot),
+                    "text/html; charset=utf-8",
+                )
             try:
                 payload = read_local_paper_snapshot(path)
                 payload["market_capabilities"] = current_market_capabilities()
@@ -156,7 +184,7 @@ def build_handler(db_path: str | Path, *, token: str) -> type[BaseHTTPRequestHan
 
 
 def create_server(db_path: str | Path, *, token: str, host: str = "127.0.0.1",
-                  port: int = 8766) -> ThreadingHTTPServer:
+                  port: int = 8766, forward_root: str | Path | None = None) -> ThreadingHTTPServer:
     try:
         allowed = ip_address(host).is_loopback and host == "127.0.0.1"
     except ValueError:
@@ -165,7 +193,7 @@ def create_server(db_path: str | Path, *, token: str, host: str = "127.0.0.1",
         raise ValueError("operator monitor MUST bind to literal IPv4 loopback 127.0.0.1")
     if not 0 <= port <= 65535:
         raise ValueError("invalid monitor port")
-    handler = build_handler(db_path, token=token)
+    handler = build_handler(db_path, token=token, forward_root=forward_root)
     return ThreadingHTTPServer((host, port), handler)
 
 
@@ -174,9 +202,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--db", default=os.environ.get("SIGNAL_VAULT_PAPER_DB", "./data/signal-vault-paper.sqlite3"))
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8766)
+    parser.add_argument(
+        "--forward-root",
+        default=os.environ.get("SIGNAL_VAULT_FORWARD_ROOT"),
+    )
     args = parser.parse_args(argv)
     token = os.environ.get("SIGNAL_VAULT_OPERATOR_TOKEN", "")
-    with create_server(args.db, token=token, host=args.host, port=args.port) as server:
+    with create_server(
+        args.db,
+        token=token,
+        host=args.host,
+        port=args.port,
+        forward_root=args.forward_root,
+    ) as server:
         print(f"Private PAPER monitoring available at http://127.0.0.1:{server.server_address[1]}", flush=True)
         server.serve_forever(poll_interval=0.5)
     return 0
