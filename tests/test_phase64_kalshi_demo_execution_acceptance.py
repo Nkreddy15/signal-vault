@@ -69,7 +69,6 @@ class KalshiDemoExecutionAcceptanceTests(unittest.TestCase):
 
     def test_missing_recovery_or_reconciliation_or_activity_fails(self):
         cases=(
-            ("demo_order_count",19),
             ("distinct_market_count",9),
             ("provider_reconciled_order_count",19),
             ("restart_recovery_case_count",0),
@@ -84,6 +83,14 @@ class KalshiDemoExecutionAcceptanceTests(unittest.TestCase):
                         "demo_execution_validated"
                     ]
                 )
+
+        # Keep reconciliation structurally consistent when reducing activity.
+        item=summary()
+        item["demo_order_count"]=19
+        item["provider_reconciled_order_count"]=19
+        self.assertFalse(
+            assess_kalshi_demo_execution(item)["demo_execution_validated"]
+        )
 
     def test_non_demo_or_live_host_activity_is_rejected(self):
         item=summary()
