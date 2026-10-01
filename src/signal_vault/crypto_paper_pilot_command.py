@@ -97,6 +97,10 @@ def run_crypto_paper_pilot(
     decision_id=prepared.get("decision_id")
     if not isinstance(decision_id,str) or not decision_id:
         raise ValueError("prepared decision id required")
+    if execute and acknowledgement!=CRYPTO_PAPER_ACK:
+        raise PermissionError(
+            "exact crypto PAPER acknowledgement required with execute mode"
+        )
 
     reader=reader_factory(credentials.key_id,credentials.secret_key)
     try:
@@ -134,8 +138,6 @@ def run_crypto_paper_pilot(
                 "EXPLICIT_EXECUTE_FLAG_AND_EXACT_CRYPTO_PAPER_ACK_REQUIRED_FOR_ONE_SHOT_POST",
         }
 
-    if acknowledgement!=CRYPTO_PAPER_ACK:
-        raise PermissionError("exact crypto PAPER acknowledgement required with execute mode")
     kwargs={}
     if execution_transport is not None:
         kwargs["transport"]=execution_transport
