@@ -85,6 +85,47 @@ class OperatorViewTests(unittest.TestCase):
         self.assertNotIn("private-mm-client-id", encoded)
         self.assertNotIn('"notional"', encoded)
 
+    def test_provider_preflight_status_is_sanitized_before_submission(self):
+        now=datetime.now(timezone.utc)
+        with MultiMarketExecutionJournal(self.db) as journal:
+            item=MultiMarketOrderDraft(
+                client_order_id="private-preflight-id",
+                market_lane="crypto",
+                instrument="BTC/USD",
+                max_loss_usd=Decimal("5"),
+                payload={
+                    "symbol":"BTC/USD",
+                    "side":"buy",
+                    "type":"market",
+                    "time_in_force":"gtc",
+                    "client_order_id":"private-preflight-id",
+                    "notional":"5",
+                },
+            )
+            journal.record_approved_draft(item,at=now)
+            journal.record_provider_preflight(
+                item.client_order_id,
+                {
+                    "kind":"CRYPTO_ALPACA_PAPER_PROVIDER_PREFLIGHT_PERSISTED_NOT_ORDER_AUTHORIZATION",
+                    "decision_id":item.client_order_id,
+                    "market_lane":"crypto",
+                    "instrument":"BTC/USD",
+                    "account_number":"must-not-surface",
+                    "credential_values_persisted":False,
+                },
+                at=now,
+            )
+
+        result=read_local_paper_snapshot(self.db)
+        mm=result["multimarket_execution"]
+        self.assertEqual(mm["preflight_count"],1)
+        self.assertEqual(mm["preflight_waiting_before_submission"],1)
+        self.assertEqual(mm["by_lane"]["crypto"]["preflight_count"],1)
+        self.assertIsNotNone(mm["latest_preflight_utc"])
+        encoded=json.dumps(result)
+        self.assertNotIn("private-preflight-id",encoded)
+        self.assertNotIn("must-not-surface",encoded)
+
     def test_missing_database_fails_closed_and_never_creates_one(self):
         ghost = Path(self.tmp.name) / "missing.db"
         with self.assertRaises(OperatorSnapshotError):
@@ -174,6 +215,7 @@ class OperatorViewTests(unittest.TestCase):
             self.assertIn("LOCAL LEDGER ONLY", page)
             self.assertIn("Market lanes", page)
             self.assertIn("Cross-market paper/demo execution", page)
+            self.assertIn("Provider preflights:", page)
             self.assertIn("crypto", page)
             self.assertIn("us_equity", page)
             self.assertIn("kalshi_event_contract", page)
