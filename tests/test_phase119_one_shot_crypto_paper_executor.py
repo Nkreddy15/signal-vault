@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from signal_vault.crypto_paper_executor_draft import KIND as PREPARED_KIND
+from signal_vault.crypto_paper_provider_preflight import capture_crypto_paper_provider_preflight
 from signal_vault.crypto_paper_executor_once import (
     KIND,
     execute_prepared_crypto_paper_once,
@@ -67,6 +68,33 @@ def dry_run():
     }
 
 
+class PreflightReader:
+    def get_account(self):
+        return {
+            "status":"ACTIVE",
+            "trading_blocked":False,
+            "non_marginable_buying_power":"100000",
+        }
+
+    def get_btc_asset(self):
+        return {
+            "symbol":"BTC/USD",
+            "class":"crypto",
+            "status":"active",
+            "tradable":True,
+            "fractionable":True,
+            "min_order_size":"0.0001",
+            "min_trade_increment":"0.000000001",
+            "price_increment":"0.01",
+        }
+
+    def get_positions(self):
+        return ()
+
+    def get_open_orders(self):
+        return ()
+
+
 class CryptoPaperExecutorOnceTests(unittest.TestCase):
     def setUp(self):
         temp=tempfile.TemporaryDirectory()
@@ -96,6 +124,12 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
             "paper_order_submission":"DISABLED",
             "live_trading":"UNAVAILABLE",
         }
+        self.preflight=capture_crypto_paper_provider_preflight(
+            self.prepared,
+            journal=self.journal,
+            reader=PreflightReader(),
+            at=NOW,
+        )
 
     def test_exact_ack_executes_one_injected_paper_post_and_records_provider_state(self):
         calls=[]
@@ -116,6 +150,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
             paper_key="paper-key",
             paper_secret="paper-secret",
             acknowledgement=CRYPTO_PAPER_ACK,
+            preflight=self.preflight,
             at=NOW,
             transport=transport,
         )
@@ -145,6 +180,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 paper_key="paper-key",
                 paper_secret="paper-secret",
                 acknowledgement="WRONG",
+                preflight=self.preflight,
                 at=NOW,
                 transport=transport,
             )
@@ -163,6 +199,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
             paper_key="paper-key",
             paper_secret="paper-secret",
             acknowledgement=CRYPTO_PAPER_ACK,
+            preflight=self.preflight,
             at=NOW,
             transport=uncertain,
         )
@@ -178,6 +215,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 paper_key="paper-key",
                 paper_secret="paper-secret",
                 acknowledgement=CRYPTO_PAPER_ACK,
+                preflight=self.preflight,
                 at=NOW,
                 transport=uncertain,
             )
@@ -194,6 +232,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 paper_key="paper-key",
                 paper_secret="paper-secret",
                 acknowledgement=CRYPTO_PAPER_ACK,
+                preflight=self.preflight,
                 at=NOW,
                 transport=lambda *_:calls.append(True),
             )
