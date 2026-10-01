@@ -216,6 +216,26 @@ class CryptoPaperPilotCommandTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             self.journal.get_state(CLIENT_ID)
 
+    def test_dry_run_payload_mismatch_blocks_before_provider_reads(self):
+        bad=dry_run()
+        bad["paper_preview"]=dict(bad["paper_preview"])
+        bad["paper_preview"]["route"]=dict(bad["paper_preview"]["route"])
+        bad["paper_preview"]["route"]["payload"]=dict(PAYLOAD)
+        bad["paper_preview"]["route"]["payload"]["notional"]="6"
+        with self.assertRaises(ValueError):
+            run_crypto_paper_pilot(
+                prepared=self.prepared,
+                dry_run=bad,
+                journal=self.journal,
+                credentials=self.credentials,
+                execute=False,
+                at=NOW,
+                reader_factory=Reader,
+            )
+        self.assertEqual(Reader.calls,0)
+        with self.assertRaises(KeyError):
+            self.journal.get_provider_preflight(CLIENT_ID)
+
     def test_existing_preflight_is_refreshed_instead_of_dead_ending(self):
         first=run_crypto_paper_pilot(
             prepared=self.prepared,
