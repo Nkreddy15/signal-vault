@@ -6,7 +6,7 @@ constraints must be present. Only bounded non-secret fields are persisted.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Mapping, Protocol
 
@@ -93,6 +93,7 @@ def capture_crypto_paper_provider_preflight(
 
     receipt={
         "kind":KIND,
+        "captured_at_utc":at.astimezone(timezone.utc).isoformat(),
         "decision_id":client_id,
         "market_lane":"crypto",
         "instrument":"BTC/USD",
