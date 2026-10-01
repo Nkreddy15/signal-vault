@@ -91,6 +91,22 @@ jobs:
           SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
         run: python -m signal_vault.ci_historical_report
 
+      - name: Build supervised-PAPER historical bootstrap receipt when eligible
+        run: |
+          set +e
+          python -m signal_vault.historical_bootstrap_validation \
+            private-historical-artifacts/offline_research_analysis.json \
+            --output private-historical-artifacts/historical_bootstrap_validation.json
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "Historical bootstrap validation failed closed."
+            exit 2
+          fi
+          if [ "$code" -eq 3 ]; then
+            echo "Historical research completed but did not qualify for supervised PAPER bootstrap."
+          fi
+
       - name: Explain whether this request activates the paired twelve-market job
         env:
           REQUEST_START: ${{ inputs.start_utc }}
