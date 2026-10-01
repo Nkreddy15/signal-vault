@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from signal_vault.kalshi_cloud_sidecar import CHILD as KALSHI_CHILD
+from signal_vault.dashboard_namespace import DASHBOARD_BASENAME
 from signal_vault.railway_all_markets_research_cron import (
     combined_all_markets_once,
 )
@@ -37,13 +38,11 @@ class RailwayAllMarketsCronTests(unittest.TestCase):
             "live_order_submission":"DISABLED",
         }
 
-    def test_three_explicit_research_children_are_fingerprint_exclusions(self):
-        self.assertEqual(len(BTC_FINGERPRINT_EXCLUDED_CHILDREN),3)
-        self.assertEqual(
-            BTC_FINGERPRINT_EXCLUDED_CHILDREN[2],
-            KALSHI_CHILD,
-        )
-        self.assertEqual(len(set(BTC_FINGERPRINT_EXCLUDED_CHILDREN)),3)
+    def test_explicit_research_and_dashboard_children_are_fingerprint_exclusions(self):
+        self.assertEqual(len(BTC_FINGERPRINT_EXCLUDED_CHILDREN),4)
+        self.assertIn(KALSHI_CHILD,BTC_FINGERPRINT_EXCLUDED_CHILDREN)
+        self.assertIn(DASHBOARD_BASENAME,BTC_FINGERPRINT_EXCLUDED_CHILDREN)
+        self.assertEqual(len(set(BTC_FINGERPRINT_EXCLUDED_CHILDREN)),4)
 
     def test_kalshi_child_write_does_not_change_original_btc_fingerprint(self):
         calls=[]
