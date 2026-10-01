@@ -41,6 +41,13 @@ def _load_receipt(path:Path)->dict[str,object]:
     return value
 
 
+def _existing_journal_path(path:Path)->Path:
+    item=Path(path).expanduser()
+    if item.is_symlink() or not item.is_file():
+        raise ValueError("existing execution journal regular file required")
+    return item
+
+
 def _validate_handoff_receipts(
     prepared:Mapping[str,object],
     dry_run:Mapping[str,object],
@@ -171,7 +178,8 @@ def main(argv:list[str]|None=None)->int:
     prepared=_load_receipt(Path(args.prepared))
     dry_run=_load_receipt(Path(args.dry_run))
     credentials=PaperCredentials.from_environment(os.environ)
-    with MultiMarketExecutionJournal(Path(args.journal)) as journal:
+    journal_path=_existing_journal_path(Path(args.journal))
+    with MultiMarketExecutionJournal(journal_path) as journal:
         result=run_crypto_paper_pilot(
             prepared=prepared,
             dry_run=dry_run,
