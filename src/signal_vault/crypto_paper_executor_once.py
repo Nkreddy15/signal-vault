@@ -100,18 +100,42 @@ def execute_prepared_crypto_paper_once(
 
     record=journal.get_provider_preflight_record(decision_id)
     stored_preflight=record["receipt"]
+    venue_rules=preflight.get("venue_rules")
     if (
         preflight.get("kind")!=PREFLIGHT_KIND
         or preflight.get("status")!="FRESH_PROVIDER_PREFLIGHT_PERSISTED"
         or preflight.get("decision_id")!=decision_id
         or preflight.get("market_lane")!="crypto"
+        or preflight.get("instrument")!="BTC/USD"
         or preflight.get("environment")!="alpaca_paper"
+        or preflight.get("account_active") is not True
+        or preflight.get("trading_blocked") is not False
+        or preflight.get("provider_positions_count")!=0
+        or preflight.get("provider_open_orders_count")!=0
+        or preflight.get("credential_values_persisted") is not False
+        or preflight.get("provider_account_id_persisted") is not False
         or preflight.get("provider_post_attempted") is not False
         or preflight.get("paper_order_submission")!="DISABLED"
         or preflight.get("live_trading")!="UNAVAILABLE"
+        or preflight.get("draft_payload_sha256")!=prepared.get("payload_sha256")
         or preflight.get("receipt_sha256")!=record["receipt_sha256"]
+        or not isinstance(venue_rules,Mapping)
+        or venue_rules.get("symbol")!="BTC/USD"
     ):
         raise ValueError("matching fresh provider preflight receipt required")
+    try:
+        buying_power=Decimal(str(preflight.get("non_marginable_buying_power_usd")))
+        min_order=Decimal(str(venue_rules.get("min_order_size")))
+        min_increment=Decimal(str(venue_rules.get("min_trade_increment")))
+        price_increment=Decimal(str(venue_rules.get("price_increment")))
+    except Exception as exc:
+        raise ValueError("invalid provider preflight numeric fields") from exc
+    if (
+        not buying_power.is_finite() or buying_power<0
+        or any(not x.is_finite() or x<=0
+               for x in (min_order,min_increment,price_increment))
+    ):
+        raise ValueError("invalid provider preflight numeric fields")
     comparable=dict(preflight)
     comparable.pop("status",None)
     comparable.pop("receipt_sha256",None)
