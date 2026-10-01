@@ -217,6 +217,14 @@ def combined_all_markets_once(
                 output["dashboard_snapshot_status"]="AVAILABLE"
                 output["dashboard_snapshot_file"]=dashboard_path.name
                 output["dashboard_snapshot_order_submission"]="DISABLED"
+                research=dashboard.get("strategy_research",{})
+                if isinstance(research,Mapping):
+                    output["dashboard_strategy_research_status"]=research.get("status")
+                    output["dashboard_strategy_research_family"]=research.get("candidate_family")
+                    output["dashboard_strategy_research_selected_strategy"]=research.get("selected_strategy")
+                    output["dashboard_strategy_research_paper_activation_permitted"]=(
+                        research.get("paper_activation_permitted") is True
+                    )
             except Exception as exc:
                 output["dashboard_snapshot_status"]="FAILED_SAFE"
                 output["dashboard_snapshot_failure_class"]=type(exc).__name__
