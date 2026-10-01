@@ -1,21 +1,29 @@
 {
   "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
   "checkpoint_version": 1,
-  "updated_utc": "2026-10-01T04:16:00Z",
-  "latest_completed_phase": 107,
-  "current_phase": 108,
-  "main_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
+  "updated_utc": "2026-10-01T04:46:00Z",
+  "latest_completed_phase": 115,
+  "current_phase": 116,
+  "main_sha": "876352c1f94c3fec1a354fdfbe77ff0eed1e2bbd",
   "github_ci": {
     "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
     "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase108": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase109": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase110": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase111": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase112": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase113": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase114": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase115": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
   },
   "railway": {
     "project": "signal-vault-forward-research",
     "service": "btcusd-hourly-get-cron",
-    "production_deployment_id": "3afb4430-c3fe-4071-9991-badbf37f295f",
+    "production_deployment_id": "2fb61737-79cc-4a07-a00a-b0de7a42cca7",
     "production_deployment_status": "SUCCESS",
-    "source_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
+    "source_sha": "ffd967b3aa935357a7669b190f6603c5c5ef5269",
     "cron_schedule": "7 * * * *",
     "shared_volume_mb": 500,
     "order_submission": "DISABLED"
@@ -47,15 +55,21 @@
   },
   "paper_execution": {
     "supervised_alpaca_paper_smoke": "RECONCILED",
+    "cross_market_risk_governor": "AVAILABLE",
+    "multimarket_paper_route_preview": "AVAILABLE_NO_NETWORK",
+    "crypto_research_to_paper_intent": "AVAILABLE_NO_ORDER",
+    "crypto_activation_handoff": "FROZEN_NO_EXECUTION",
+    "crypto_end_to_end_paper_dry_run": "AVAILABLE_NO_EXECUTION",
     "autonomous_strategy_paper": "DISABLED",
     "kalshi_demo_orders": "DISABLED",
     "live_trading": "UNAVAILABLE"
   },
   "next_actions": [
-    "INSPECT_FIRST_POST_PHASE107_RAILWAY_CRON",
-    "VERIFY_KALSHI_22_MARKET_PLAN_OR_NEXT_BOUNDED_BLOCKER",
+    "INSPECT_NEXT_RAILWAY_CRON_FOR_PHASE107_KALSHI_PLAN_AND_PHASE110_DASHBOARD_SNAPSHOT",
     "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION",
-    "CAPTURE_FIRST_DUE_OCTOBER_1_XNYS_CORE_HOUR_PROSPECTIVELY"
+    "CAPTURE_OCTOBER_1_XNYS_CORE_HOURS_PROSPECTIVELY",
+    "MERGE_PHASE116_IF_FULL_CI_PASSES",
+    "KEEP_AUTONOMOUS_PAPER_DISABLED_UNTIL_FROZEN_EVIDENCE_AND_OWNER_REVIEW_PASS"
   ],
   "invariants": [
     "NO_NEW_PAID_RAILWAY_RESOURCE",
@@ -63,5 +77,12 @@
     "NO_HISTORICAL_BACKFILL_AS_PROSPECTIVE",
     "NO_AUTOMATIC_PAPER_OR_LIVE_ORDER_SUBMISSION",
     "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR"
-  ]
+  ],
+  "dashboard": {
+    "phase109_all_market_html_json_monitor": "MERGED",
+    "phase110_persisted_snapshot_writer": "DEPLOYED_ON_RAILWAY",
+    "phase113_standalone_private_server": "MERGED",
+    "phase116_paper_pipeline_status_panel": "IN_CI",
+    "public_or_remote_exposure": "NOT_ENABLED"
+  }
 }
