@@ -181,7 +181,7 @@ def build_prospective_kalshi_plan(
             page=window_method(
                 min_close_ts=min_close_ts,
                 max_close_ts=max_close_ts,
-                limit=1000,
+                limit=200,
                 cursor=cursor,
             )
             markets=page.get("markets") if isinstance(page,Mapping) else None
