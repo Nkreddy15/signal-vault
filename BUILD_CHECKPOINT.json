@@ -1,67 +1,92 @@
 {
   "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
-  "checkpoint_version": 1,
-  "updated_utc": "2026-10-01T04:16:00Z",
-  "latest_completed_phase": 107,
-  "current_phase": 108,
-  "main_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
+  "checkpoint_version": 2,
+  "updated_utc": "2026-10-01T06:43:00Z",
+  "latest_completed_phase": 119,
+  "current_phase": 120,
+  "main_sha": "5a251257224a1b619f09aafb324958628301fba5",
   "github_ci": {
     "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
     "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase109": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase110": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase117": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase118": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase119": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
   },
   "railway": {
     "project": "signal-vault-forward-research",
     "service": "btcusd-hourly-get-cron",
-    "production_deployment_id": "3afb4430-c3fe-4071-9991-badbf37f295f",
+    "production_deployment_id": "ca0eca2e-1047-41d0-97a1-0742e3c31112",
     "production_deployment_status": "SUCCESS",
-    "source_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
+    "source_sha": "3d22b9a2b47fc8e1f6f1f492fecf0317fcd3005a",
+    "source_phase": 117,
     "cron_schedule": "7 * * * *",
     "shared_volume_mb": 500,
+    "dashboard_snapshot_status": "AVAILABLE_ON_LAST_VERIFIED_TICKS",
     "order_submission": "DISABLED"
   },
   "lanes": {
     "six_crypto": {
       "state": "UNATTENDED_PROSPECTIVE_COLLECTION_ACTIVE",
-      "latest_verified_source_hours": 18,
-      "latest_verified_scored_outcomes": 17,
-      "review_gate_source_hours_remaining_to_169": 151,
-      "review_gate_scored_outcomes_remaining_to_168": 151
+      "latest_verified_source_hours": 20,
+      "latest_verified_scored_outcomes": 19,
+      "review_gate_source_hours_remaining_to_169": 149,
+      "review_gate_scored_outcomes_remaining_to_168": 149,
+      "verified_at_utc": "2026-10-01T06:10:26Z"
     },
     "us_equity": {
-      "state": "FIRST_VALID_XNYS_SESSION_PLAN_PRECOMMITTED",
+      "state": "FIRST_XNYS_SESSION_PLAN_PRECOMMITTED_WAITING_FOR_DUE_CORE_HOURS",
       "latest_verified_session_plans": 1,
       "latest_verified_core_hour_receipts": 0,
       "latest_verified_planned_core_hours": 6,
       "session_plans_remaining_to_10": 9,
-      "core_hour_receipts_remaining_to_60": 60
+      "core_hour_receipts_remaining_to_60": 60,
+      "verified_at_utc": "2026-10-01T06:10:26Z"
     },
     "kalshi": {
-      "state": "PHASE107_DISCOVERY_BUDGET_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
+      "state": "PHASE117_CLOSE_WINDOW_DISCOVERY_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
       "latest_verified_plan_present": false,
-      "proven_previous_blocker": "DISCOVERY_PAGE_LIMIT_EXCEEDED_AT_10_PAGES",
-      "max_discovery_pages_now": 20,
+      "previous_blocker": "DISCOVERY_PAGE_LIMIT_EXCEEDED_AFTER_20_UNBOUNDED_OPEN_MARKET_PAGES",
+      "discovery_query": "PUBLIC_CLOSE_WINDOW_25_HOURS_TO_30_DAYS_MVE_EXCLUDED_LOCAL_ACTIVE_OPEN_VALIDATION",
+      "max_discovery_pages": 20,
       "public_get_hard_ceiling_per_tick": 25,
-      "next_required_evidence": "FIRST_POST_PHASE107_CRON_PLAN_OR_BOUNDED_FAILURE_CODE"
+      "next_required_evidence": "FIRST_POST_PHASE117_CRON_PLAN_OR_BOUNDED_FAILURE_CODE"
     }
+  },
+  "dashboard": {
+    "phase109_readonly_all_market_dashboard": "BUILT",
+    "phase110_persisted_snapshot": "PRODUCTION_VERIFIED_AVAILABLE",
+    "phase113_standalone_private_server": "BUILT",
+    "phase116_paper_pipeline_engineering_state": "BUILT",
+    "public_internet_exposure": "DISABLED"
   },
   "paper_execution": {
     "supervised_alpaca_paper_smoke": "RECONCILED",
-    "autonomous_strategy_paper": "DISABLED",
+    "phase111_shared_risk_intent_preview": "BUILT",
+    "phase112_crypto_paper_activation_handoff": "BUILT",
+    "phase114_conservative_crypto_decision_intent": "BUILT",
+    "phase115_end_to_end_dry_run": "BUILT",
+    "phase118_durable_approved_draft_handoff": "BUILT",
+    "phase119_one_shot_alpaca_paper_executor_bridge": "BUILT_NOT_ACTIVATED",
+    "autonomous_strategy_paper": "DISABLED_PENDING_REAL_FORWARD_GATE",
     "kalshi_demo_orders": "DISABLED",
     "live_trading": "UNAVAILABLE"
   },
   "next_actions": [
-    "INSPECT_FIRST_POST_PHASE107_RAILWAY_CRON",
+    "INSPECT_FIRST_POST_PHASE117_RAILWAY_CRON",
     "VERIFY_KALSHI_22_MARKET_PLAN_OR_NEXT_BOUNDED_BLOCKER",
-    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION",
-    "CAPTURE_FIRST_DUE_OCTOBER_1_XNYS_CORE_HOUR_PROSPECTIVELY"
+    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION_TO_FROZEN_GATE",
+    "CAPTURE_FIRST_DUE_OCTOBER_1_XNYS_CORE_HOUR_PROSPECTIVELY",
+    "KEEP_PHASE119_ONE_SHOT_PAPER_EXECUTOR_UNACTIVATED_UNTIL_REAL_GATE_AND_OWNER_HANDOFF"
   ],
   "invariants": [
     "NO_NEW_PAID_RAILWAY_RESOURCE",
     "PRESERVE_EXISTING_BTC_EVIDENCE",
     "NO_HISTORICAL_BACKFILL_AS_PROSPECTIVE",
     "NO_AUTOMATIC_PAPER_OR_LIVE_ORDER_SUBMISSION",
-    "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR"
+    "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR",
+    "LIVE_TRADING_UNAVAILABLE"
   ]
 }
