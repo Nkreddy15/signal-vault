@@ -14,15 +14,8 @@ ALLOWED_KINDS={
 }
 
 
-def read_crypto_research_diagnostics(path:Path|None)->dict[str,object]:
-    if path is None:
-        return {"status":"NOT_IMPORTED","candidate_family":None,"selected_strategy":None}
-    p=Path(path)
-    if (not p.exists() or p.is_symlink() or not p.is_file() or
-            p.stat().st_mode & 0o077 or not 0<p.stat().st_size<=MAX_BYTES):
-        raise ValueError("research receipt must be a private bounded regular file")
-    value=json.loads(p.read_text())
-    if not isinstance(value,Mapping) or value.get("kind") not in ALLOWED_KINDS:
+def _diagnostics_from_value(value:Mapping[str,object])->dict[str,object]:
+    if value.get("kind") not in ALLOWED_KINDS:
         raise ValueError("unsupported research receipt kind")
     if value.get("broker_order_submission")!="DISABLED" or value.get("live_trading")!="UNAVAILABLE":
         raise ValueError("research receipt safety contract mismatch")
@@ -63,3 +56,27 @@ def read_crypto_research_diagnostics(path:Path|None)->dict[str,object]:
         "new_prospective_confirmation_required":value.get("new_prospective_confirmation_required") is True,
         "base_friction_rows":rows[:24],
     }
+
+
+def read_crypto_research_diagnostics(path:Path|None)->dict[str,object]:
+    if path is None:
+        return {"status":"NOT_IMPORTED","candidate_family":None,"selected_strategy":None}
+    p=Path(path)
+    if (not p.exists() or p.is_symlink() or not p.is_file() or
+            p.stat().st_mode & 0o077 or not 0<p.stat().st_size<=MAX_BYTES):
+        raise ValueError("research receipt must be a private bounded regular file")
+    value=json.loads(p.read_text())
+    if not isinstance(value,Mapping):
+        raise ValueError("research receipt must be a JSON object")
+    return _diagnostics_from_value(value)
+
+
+def read_crypto_research_diagnostics_json(raw:str|None)->dict[str,object]:
+    if raw is None or raw=="":
+        return {"status":"NOT_IMPORTED","candidate_family":None,"selected_strategy":None}
+    if not isinstance(raw,str) or len(raw.encode("utf-8"))>MAX_BYTES:
+        raise ValueError("bounded research receipt JSON required")
+    value=json.loads(raw)
+    if not isinstance(value,Mapping):
+        raise ValueError("research receipt JSON must be an object")
+    return _diagnostics_from_value(value)
