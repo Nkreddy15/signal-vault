@@ -49,6 +49,12 @@ jobs:
           github-token: ${{ github.token }}
           path: downloaded-history
 
+      - name: Re-lock downloaded historical artifact permissions
+        run: |
+          chmod 700 downloaded-history
+          find downloaded-history -type d -exec chmod 700 {} +
+          find downloaded-history -type f -exec chmod 600 {} +
+
       - name: Run cross-sectional 90-day research review
         run: |
           set +e
