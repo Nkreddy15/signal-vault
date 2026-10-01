@@ -3,6 +3,8 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from signal_vault.kalshi_prospective_collector import MAX_DISCOVERY_PAGES
+
 from signal_vault.kalshi_cloud_sidecar import (
     ACTIVATION_ENV,
     ACTIVATION_VALUE,
@@ -112,6 +114,9 @@ class KalshiPublicRequestBudgetTests(unittest.TestCase):
         self.assertEqual(MAX_PUBLIC_GETS_PER_TICK,25)
         self.assertGreaterEqual(MAX_PUBLIC_GETS_PER_TICK,20)
         self.assertLessEqual(MAX_PUBLIC_GETS_PER_TICK,50)
+
+        self.assertEqual(MAX_DISCOVERY_PAGES,20)
+        self.assertLess(MAX_DISCOVERY_PAGES,MAX_PUBLIC_GETS_PER_TICK)
 
 
 if __name__=="__main__":
