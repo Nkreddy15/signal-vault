@@ -62,6 +62,22 @@ CRYPTO_LONG_HORIZON_HYPOTHESES = CRYPTO_BOOTSTRAP_HYPOTHESES + (
         entry_return_bps=Decimal("250"),
         exit_return_bps=Decimal("-250"),
     ),
+    ResearchHypothesis(
+        HypothesisKind.EMA_REGIME,
+        "generic-ema12x26-spread35-vol30-v1-predeclared",
+        min_ema_spread_bps=Decimal("35"),
+        volatility_lookback_bars=24,
+        min_avg_abs_return_bps=Decimal("30"),
+    ),
+    ResearchHypothesis(
+        HypothesisKind.EMA_REGIME,
+        "generic-ema24x72-spread50-vol30-v1-predeclared",
+        fast_bars=24,
+        slow_bars=72,
+        min_ema_spread_bps=Decimal("50"),
+        volatility_lookback_bars=24,
+        min_avg_abs_return_bps=Decimal("30"),
+    ),
 )
 
 # These are ILLUSTRATIVE SCENARIOS, not current provider prices, broker fees,
