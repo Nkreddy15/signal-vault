@@ -64,7 +64,7 @@ def shadow(*,buy_symbol="BTC/USD"):
 
 def account():
     return {
-        "exposure_by_lane":{"crypto":"0","us_equity":"0","kalshi":"0"},
+        "exposure_by_lane":{"crypto":"0","us_equity":"0","kalshi_event_contract":"0"},
         "open_positions":0,
         "marked_equity_usd":"100",
         "daily_anchor_equity_usd":"100",
