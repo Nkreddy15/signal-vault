@@ -32,6 +32,8 @@ from .railway_btc_first_dual_cron import (
 )
 from .railway_multimarket_research_cron import combined_multimarket_once
 from .all_market_forward_status import all_market_forward_status
+from .all_market_dashboard import build_dashboard_snapshot
+from .dashboard_snapshot_archive import archive_dashboard_snapshot
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -177,6 +179,21 @@ def combined_all_markets_once(
             )
             output["post_tick_readiness_status"]="AVAILABLE"
             output["post_tick_readiness"]=readiness
+            try:
+                dashboard=build_dashboard_snapshot(
+                    root=btc_root,
+                    environ=env,
+                )
+                dashboard_path=archive_dashboard_snapshot(
+                    dashboard,
+                    base=btc_root,
+                )
+                output["dashboard_snapshot_status"]="AVAILABLE"
+                output["dashboard_snapshot_file"]=dashboard_path.name
+                output["dashboard_snapshot_order_submission"]="DISABLED"
+            except Exception as exc:
+                output["dashboard_snapshot_status"]="FAILED_SAFE"
+                output["dashboard_snapshot_failure_class"]=type(exc).__name__
         except Exception as exc:
             output["post_tick_readiness_status"]="FAILED_SAFE"
             output["post_tick_readiness_failure_class"]=type(exc).__name__
