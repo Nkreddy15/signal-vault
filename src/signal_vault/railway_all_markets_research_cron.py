@@ -38,6 +38,31 @@ from .dashboard_snapshot_archive import archive_dashboard_snapshot
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
 
+_KALSHI_DASHBOARD_FIELDS=(
+    "status",
+    "planning_failure_code",
+    "public_get_requests_used",
+    "public_get_budget",
+    "planned_market_count",
+    "planned_buffer_markets",
+    "prospective_snapshots_captured",
+    "prospective_snapshots_missed",
+    "settlement_receipts_captured",
+    "settlements_pending",
+)
+
+
+def _kalshi_tick_for_dashboard(output:Mapping[str,object])->dict[str,object]:
+    raw=output.get("kalshi")
+    if isinstance(raw,Mapping):
+        item={key:raw.get(key) for key in _KALSHI_DASHBOARD_FIELDS if key in raw}
+        item["status"]=raw.get("status","UNKNOWN")
+        return item
+    return {
+        "status":output.get("kalshi_status","UNKNOWN"),
+        "failure_class":output.get("kalshi_failure_class"),
+    }
+
 
 def _kalshi_storage_budget(*,btc_root:Path)->dict[str,int]:
     if btc_root.is_symlink() or not btc_root.is_dir():
@@ -184,6 +209,7 @@ def combined_all_markets_once(
                     root=btc_root,
                     environ=env,
                 )
+                dashboard["latest_kalshi_tick"]=_kalshi_tick_for_dashboard(output)
                 dashboard_path=archive_dashboard_snapshot(
                     dashboard,
                     base=btc_root,
