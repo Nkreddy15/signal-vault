@@ -1,20 +1,21 @@
 {
   "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
   "checkpoint_version": 1,
-  "updated_utc": "2026-10-01T04:08:00Z",
-  "latest_completed_phase": 105,
-  "current_phase": 106,
-  "main_sha": "62df67f782caba9416ea83f1c7ca8d4ad5a5192a",
+  "updated_utc": "2026-10-01T04:16:00Z",
+  "latest_completed_phase": 107,
+  "current_phase": 108,
+  "main_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
   "github_ci": {
     "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+    "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
   },
   "railway": {
     "project": "signal-vault-forward-research",
     "service": "btcusd-hourly-get-cron",
-    "production_deployment_id": "2878e70b-0b64-41f7-8c7b-0502291c1623",
+    "production_deployment_id": "3afb4430-c3fe-4071-9991-badbf37f295f",
     "production_deployment_status": "SUCCESS",
-    "source_sha": "62df67f782caba9416ea83f1c7ca8d4ad5a5192a",
+    "source_sha": "a6ce492a8840f1101609d31a83ea07b0559219ce",
     "cron_schedule": "7 * * * *",
     "shared_volume_mb": 500,
     "order_submission": "DISABLED"
@@ -22,19 +23,26 @@
   "lanes": {
     "six_crypto": {
       "state": "UNATTENDED_PROSPECTIVE_COLLECTION_ACTIVE",
-      "latest_verified_source_hours": 17,
-      "review_gate_source_hours_remaining_to_169": 152,
-      "latest_verified_scored_outcomes_remaining_to_168": 152
+      "latest_verified_source_hours": 18,
+      "latest_verified_scored_outcomes": 17,
+      "review_gate_source_hours_remaining_to_169": 151,
+      "review_gate_scored_outcomes_remaining_to_168": 151
     },
     "us_equity": {
-      "state": "WAITING_FOR_FIRST_VALID_PREOPEN_SESSION_PLAN",
-      "latest_verified_session_plans": 0,
-      "latest_verified_core_hour_receipts": 0
+      "state": "FIRST_VALID_XNYS_SESSION_PLAN_PRECOMMITTED",
+      "latest_verified_session_plans": 1,
+      "latest_verified_core_hour_receipts": 0,
+      "latest_verified_planned_core_hours": 6,
+      "session_plans_remaining_to_10": 9,
+      "core_hour_receipts_remaining_to_60": 60
     },
     "kalshi": {
-      "state": "PHASE105_DIAGNOSTIC_DEPLOYED_FIRST_PLAN_NOT_YET_CREATED",
+      "state": "PHASE107_DISCOVERY_BUDGET_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
       "latest_verified_plan_present": false,
-      "next_required_evidence": "FIRST_POST_PHASE105_CRON_PLANNING_FAILURE_CODE_OR_PLAN"
+      "proven_previous_blocker": "DISCOVERY_PAGE_LIMIT_EXCEEDED_AT_10_PAGES",
+      "max_discovery_pages_now": 20,
+      "public_get_hard_ceiling_per_tick": 25,
+      "next_required_evidence": "FIRST_POST_PHASE107_CRON_PLAN_OR_BOUNDED_FAILURE_CODE"
     }
   },
   "paper_execution": {
@@ -44,10 +52,10 @@
     "live_trading": "UNAVAILABLE"
   },
   "next_actions": [
-    "INSPECT_FIRST_POST_PHASE105_RAILWAY_CRON",
-    "VERIFY_OCTOBER_1_XNYS_SESSION_PLAN_CREATION",
-    "USE_KALSHI_PLANNING_FAILURE_CODE_TO_FIX_ONLY_PROVEN_STRUCTURAL_BLOCKER",
-    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION"
+    "INSPECT_FIRST_POST_PHASE107_RAILWAY_CRON",
+    "VERIFY_KALSHI_22_MARKET_PLAN_OR_NEXT_BOUNDED_BLOCKER",
+    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION",
+    "CAPTURE_FIRST_DUE_OCTOBER_1_XNYS_CORE_HOUR_PROSPECTIVELY"
   ],
   "invariants": [
     "NO_NEW_PAID_RAILWAY_RESOURCE",
