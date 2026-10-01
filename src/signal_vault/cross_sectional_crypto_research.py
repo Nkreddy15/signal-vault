@@ -22,7 +22,7 @@ class CrossSectionalConfig:
     lookback_bars:int=72
     top_n:int=2
     min_strength_bps:Decimal=Decimal("150")
-    rebalance_hour_utc:int=0
+    rebalance_interval_bars:int=24
     bankroll_usd:Decimal=Decimal("100")
     per_asset_target_usd:Decimal=Decimal("15")
     fee_bps:Decimal=Decimal("25")
@@ -34,8 +34,9 @@ class CrossSectionalConfig:
             raise ValueError("bounded lookback required")
         if not 1<=self.top_n<=2:
             raise ValueError("top_n must be one or two")
-        if not 0<=self.rebalance_hour_utc<=23:
-            raise ValueError("valid UTC rebalance hour required")
+        if (type(self.rebalance_interval_bars) is not int or
+                not 24<=self.rebalance_interval_bars<=24*14):
+            raise ValueError("bounded rebalance interval required")
         for v in (
             self.min_strength_bps,self.bankroll_usd,self.per_asset_target_usd,
             self.fee_bps,self.full_spread_bps,self.slippage_bps,
@@ -105,7 +106,7 @@ def simulate_cross_sectional_strength(
 
     for i in range(evaluation_start_index,evaluation_end_index):
         stamp=rows[SYMBOLS[0]][i].start_utc.astimezone(timezone.utc)
-        if stamp.hour==config.rebalance_hour_utc:
+        if (i-evaluation_start_index)%config.rebalance_interval_bars==0:
             scored=[]
             for s in SYMBOLS:
                 now=rows[s][i-1].close
@@ -150,7 +151,10 @@ def simulate_cross_sectional_strength(
     )
     return {
         "kind":"OFFLINE_CROSS_SECTIONAL_STRENGTH_RESEARCH_NO_ORDERS",
-        "strategy":"cross-sectional-top2-72h-150bps-daily-v1-predeclared",
+        "strategy":(
+            f"cross-sectional-top{config.top_n}-{config.lookback_bars}h-"
+            f"{config.min_strength_bps}bps-every{config.rebalance_interval_bars}h"
+        ),
         "net_marked_pnl_usd":str(final_equity-config.bankroll_usd),
         "passive_equal_weight_marked_pnl_usd":str(passive_final-config.bankroll_usd),
         "fill_count":len(fills),
