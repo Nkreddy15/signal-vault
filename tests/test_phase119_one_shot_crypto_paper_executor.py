@@ -166,7 +166,7 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
             at=NOW,
             transport=uncertain,
         )
-        self.assertEqual(result["stage"],"UNKNOWN_RESULT")
+        self.assertEqual(result["stage"],"unknown_result")
         self.assertTrue(result["blind_retry_forbidden"])
         self.assertTrue(self.journal.has_unresolved())
 
