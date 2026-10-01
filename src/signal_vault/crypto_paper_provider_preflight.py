@@ -41,6 +41,7 @@ def capture_crypto_paper_provider_preflight(
     journal:MultiMarketExecutionJournal,
     reader:CryptoPaperPreflightReader,
     at:datetime,
+    refresh_existing:bool=False,
 )->dict[str,object]:
     if (
         not isinstance(prepared,Mapping)
@@ -122,10 +123,16 @@ def capture_crypto_paper_provider_preflight(
         "live_trading":"UNAVAILABLE",
         "preflight_is_not_order_authorization":True,
     }
-    sha=journal.record_provider_preflight(client_id,receipt,at=at)
+    if refresh_existing:
+        sha=journal.refresh_provider_preflight(client_id,receipt,at=at)
+        status="FRESH_PROVIDER_PREFLIGHT_REFRESHED"
+    else:
+        sha=journal.record_provider_preflight(client_id,receipt,at=at)
+        status="FRESH_PROVIDER_PREFLIGHT_PERSISTED"
     return {
         **receipt,
-        "status":"FRESH_PROVIDER_PREFLIGHT_PERSISTED",
+        "status":status,
         "receipt_sha256":sha,
+        "refresh_existing":refresh_existing,
         "next_action":"REVALIDATE_PREFLIGHT_AT_ONE_SHOT_PAPER_EXECUTOR_BOUNDARY",
     }
