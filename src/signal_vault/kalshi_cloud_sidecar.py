@@ -42,6 +42,21 @@ MAX_PUBLIC_GETS_PER_TICK=25
 # exceeds the coverage floor. The first 20 valid markets remain the scoring set.
 CLOUD_PLANNED_MARKET_COUNT=22
 
+_PLAN_FAILURE_CODES={
+    "Kalshi discovery lacks ten distinct future events":
+        "INSUFFICIENT_DISTINCT_FUTURE_EVENTS",
+    "Kalshi discovery lacks requested prospective market count":
+        "INSUFFICIENT_ELIGIBLE_FUTURE_MARKETS",
+    "Kalshi public discovery exceeded bounded pages":
+        "DISCOVERY_PAGE_LIMIT_EXCEEDED",
+    "duplicate Kalshi market across discovery pages":
+        "DUPLICATE_MARKET_ACROSS_DISCOVERY_PAGES",
+    "Kalshi public market discovery lacks markets":
+        "MALFORMED_PUBLIC_MARKET_DISCOVERY",
+    "malformed Kalshi public market":
+        "MALFORMED_PUBLIC_MARKET_OBJECT",
+}
+
 
 class _BudgetedPublicClient:
     def __init__(self,inner:object, *, maximum:int=MAX_PUBLIC_GETS_PER_TICK):
@@ -157,11 +172,25 @@ def run_kalshi_sidecar_once(
     client=_BudgetedPublicClient(client_factory())
 
     if plan_path is None:
-        plan=build_prospective_kalshi_plan(
-            client=client,
-            planned_at=moment,
-            market_count=CLOUD_PLANNED_MARKET_COUNT,
-        )
+        try:
+            plan=build_prospective_kalshi_plan(
+                client=client,
+                planned_at=moment,
+                market_count=CLOUD_PLANNED_MARKET_COUNT,
+            )
+        except ValueError as exc:
+            message=str(exc)
+            return _result(
+                "PLANNING_BLOCKED_FAIL_CLOSED",
+                failure_class="ValueError",
+                planning_failure_code=_PLAN_FAILURE_CODES.get(
+                    message,"OTHER_STRUCTURAL_PLAN_VALIDATION_FAILURE"
+                ),
+                filesystem_writes=False,
+                network_requests=client.request_count,
+                public_get_budget=MAX_PUBLIC_GETS_PER_TICK,
+                public_get_requests_used=client.request_count,
+            )
         path=archive_prospective_kalshi_plan(
             plan,
             output_root=root,
