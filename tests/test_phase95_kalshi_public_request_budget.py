@@ -110,6 +110,37 @@ class KalshiPublicRequestBudgetTests(unittest.TestCase):
         self.assertEqual(result["demo_order_submission"],"DISABLED")
         self.assertEqual(result["live_order_submission"],"DISABLED")
 
+    def test_event_discovery_consumes_same_hard_public_get_budget(self):
+        class EventInner:
+            def __init__(self):
+                self.calls=0
+
+            def live_public_events(self,**kwargs):
+                self.calls+=1
+                return {"events":[],"cursor":""}
+
+        inner=EventInner()
+        client=_BudgetedPublicClient(inner,maximum=1)
+        self.assertTrue(client.supports_event_discovery)
+        result=client.live_public_events(
+            status="open",
+            limit=200,
+            cursor=None,
+            with_nested_markets=True,
+            min_close_ts=1,
+        )
+        self.assertEqual(result,{"events":[],"cursor":""})
+        self.assertEqual(client.request_count,1)
+        self.assertEqual(inner.calls,1)
+        with self.assertRaises(RuntimeError):
+            client.live_public_events(
+                status="open",
+                limit=200,
+                cursor=None,
+                with_nested_markets=True,
+                min_close_ts=1,
+            )
+
     def test_budget_constant_is_bounded_for_hourly_cloud_collection(self):
         self.assertEqual(MAX_PUBLIC_GETS_PER_TICK,25)
         self.assertGreaterEqual(MAX_PUBLIC_GETS_PER_TICK,20)
