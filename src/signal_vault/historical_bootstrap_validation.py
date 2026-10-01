@@ -21,7 +21,11 @@ from typing import Mapping
 INPUT_KIND="HISTORICAL_MULTIASSET_SHA_BOUND_THREE_COST_SCENARIOS_NO_ORDERS"
 OUTPUT_KIND="CRYPTO_HISTORICAL_BOOTSTRAP_VALIDATION_RECEIPT"
 BLOCKED_KIND="CRYPTO_HISTORICAL_BOOTSTRAP_VALIDATION_BLOCKED"
-ACTIVE=("generic-ema12x26-v1-predeclared","generic-momentum24bar50bps-v1-predeclared")
+ACTIVE=(
+    "generic-ema12x26-v1-predeclared",
+    "generic-ema12x26-confirm2-v2-predeclared",
+    "generic-momentum24bar50bps-v1-predeclared",
+)
 SCENARIOS=(
     "illustrative_low_friction",
     "illustrative_base_friction",
