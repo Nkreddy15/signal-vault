@@ -238,14 +238,24 @@ class RailwayAllMarketsCronTests(unittest.TestCase):
         target=self.root/"outside"
         target.mkdir(mode=0o700)
         (self.root/KALSHI_CHILD).symlink_to(target,target_is_directory=True)
-        with self.assertRaises(ValueError):
-            combined_all_markets_once(
-                now=datetime(2026,9,30,22,7,tzinfo=UTC),
-                environ={},
-                btc_root=self.root,
-                core_runner=self.healthy_core,
-                kalshi_runner=lambda **kwargs:{"status":"SHOULD_NOT_RUN"},
-            )
+        called=[]
+        def should_not_run(**kwargs):
+            called.append(True)
+            return {"status":"SHOULD_NOT_RUN"}
+
+        result=combined_all_markets_once(
+            now=datetime(2026,9,30,22,7,tzinfo=UTC),
+            environ={},
+            btc_root=self.root,
+            core_runner=self.healthy_core,
+            kalshi_runner=should_not_run,
+        )
+        self.assertEqual(
+            result["kalshi_status"],
+            "FAILED_SAFE_OR_BLOCKED_KALSHI_SIDECAR_ONLY",
+        )
+        self.assertEqual(result["kalshi_failure_class"],"ValueError")
+        self.assertEqual(called,[])
 
 
 if __name__=="__main__":
