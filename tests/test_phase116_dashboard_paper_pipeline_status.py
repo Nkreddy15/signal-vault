@@ -80,6 +80,55 @@ class DashboardPaperPipelineStatusTests(unittest.TestCase):
         self.assertEqual(item["paper_order_submission"],"DISABLED")
         self.assertEqual(item["live_order_submission"],"DISABLED")
 
+    def test_older_persisted_snapshot_renders_with_fail_safe_pipeline_defaults(self):
+        old={
+            "kind":"SIGNAL_VAULT_ALL_MARKET_OPERATOR_DASHBOARD_READ_ONLY",
+            "checked_at_utc":"2026-10-01T04:10:28+00:00",
+            "lanes":{
+                "six_crypto":{
+                    "prospective_source_hours":18,
+                    "fully_scored_outcomes":17,
+                    "source_hours_remaining":151,
+                    "scored_outcomes_remaining":151,
+                    "next_action":"CONTINUE_UNATTENDED_FORWARD_COLLECTION",
+                },
+                "us_equity":{
+                    "session_plans":1,
+                    "core_hour_receipts":0,
+                    "session_plans_remaining":9,
+                    "core_hour_receipts_remaining":60,
+                    "capture_windows_open":0,
+                    "next_action":"CONTINUE_UNATTENDED_STOCK_FORWARD_COLLECTION",
+                },
+                "kalshi":{
+                    "plan_present":False,
+                    "planned_markets":None,
+                    "decision_snapshots":0,
+                    "settlements":0,
+                    "decision_snapshots_remaining":40,
+                    "settlements_remaining":20,
+                    "next_action":"PRECOMMIT_PUBLIC_KALSHI_PROSPECTIVE_PLAN_GET_ONLY",
+                },
+            },
+            "paper_runway_blockers":[
+                "SIX_CRYPTO_FROZEN_FORWARD_REVIEW_WINDOW_INCOMPLETE"
+            ],
+            "all_forward_stages_complete":False,
+            "paper_order_submission":"DISABLED",
+            "demo_order_submission":"DISABLED",
+            "live_order_submission":"DISABLED",
+            "live_trading":"UNAVAILABLE",
+            "network_requests":"NONE",
+            "credential_access":"NONE",
+        }
+        html=render_dashboard_html(old).decode()
+        self.assertIn("PAPER Pipeline",html)
+        self.assertIn("NOT_RECORDED_IN_THIS_SNAPSHOT",html)
+        self.assertIn("Autonomous activation</span><strong>DISABLED",html)
+        self.assertIn("LIVE</span><strong>UNAVAILABLE",html)
+        self.assertNotIn("<button",html.lower())
+        self.assertNotIn("<form",html.lower())
+
     def test_html_shows_pipeline_as_status_not_execution_controls(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td)
