@@ -102,6 +102,18 @@ def run_crypto_paper_pilot(
             "exact crypto PAPER acknowledgement required with execute mode"
         )
 
+    draft=journal.get_approved_draft(decision_id)
+    preview=dry_run.get("paper_preview")
+    route=preview.get("route") if isinstance(preview,Mapping) else None
+    if (
+        draft.market_lane!="crypto"
+        or draft.instrument!="BTC/USD"
+        or draft.payload_sha256!=prepared.get("payload_sha256")
+        or not isinstance(route,Mapping)
+        or route.get("payload")!=dict(draft.payload)
+    ):
+        raise ValueError("dry-run route and durable approved draft must match")
+
     reader=reader_factory(credentials.key_id,credentials.secret_key)
     try:
         journal.get_provider_preflight_record(decision_id)
