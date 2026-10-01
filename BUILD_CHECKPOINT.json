@@ -1,10 +1,10 @@
 {
   "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
   "checkpoint_version": 2,
-  "updated_utc": "2026-10-01T06:43:00Z",
-  "latest_completed_phase": 119,
-  "current_phase": 120,
-  "main_sha": "5a251257224a1b619f09aafb324958628301fba5",
+  "updated_utc": "2026-10-01T09:50:00Z",
+  "latest_completed_phase": 127,
+  "current_phase": 128,
+  "main_sha": "07a09e4d3f05aff216497e51f25848de38205306",
   "github_ci": {
     "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
     "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
@@ -13,28 +13,34 @@
     "phase110": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
     "phase117": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
     "phase118": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase119": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+    "phase119": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase122": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase123": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase124": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase125": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase126": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase127": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
   },
   "railway": {
     "project": "signal-vault-forward-research",
     "service": "btcusd-hourly-get-cron",
-    "production_deployment_id": "ca0eca2e-1047-41d0-97a1-0742e3c31112",
+    "production_deployment_id": "5778f044-b5bc-42bc-a664-a53345ed6508",
     "production_deployment_status": "SUCCESS",
-    "source_sha": "3d22b9a2b47fc8e1f6f1f492fecf0317fcd3005a",
-    "source_phase": 117,
+    "source_sha": "eca669bc270589a5f51fb4fa3ebe3a402e4a6fc6",
+    "source_phase": 126,
     "cron_schedule": "7 * * * *",
     "shared_volume_mb": 500,
-    "dashboard_snapshot_status": "AVAILABLE_ON_LAST_VERIFIED_TICKS",
+    "dashboard_snapshot_status": "AVAILABLE_ON_LAST_VERIFIED_TICK",
     "order_submission": "DISABLED"
   },
   "lanes": {
     "six_crypto": {
       "state": "UNATTENDED_PROSPECTIVE_COLLECTION_ACTIVE",
-      "latest_verified_source_hours": 20,
-      "latest_verified_scored_outcomes": 19,
-      "review_gate_source_hours_remaining_to_169": 149,
-      "review_gate_scored_outcomes_remaining_to_168": 149,
-      "verified_at_utc": "2026-10-01T06:10:26Z"
+      "latest_verified_source_hours": 23,
+      "latest_verified_scored_outcomes": 22,
+      "review_gate_source_hours_remaining_to_169": 146,
+      "review_gate_scored_outcomes_remaining_to_168": 146,
+      "verified_at_utc": "2026-10-01T09:09:27Z"
     },
     "us_equity": {
       "state": "FIRST_XNYS_SESSION_PLAN_PRECOMMITTED_WAITING_FOR_DUE_CORE_HOURS",
@@ -43,16 +49,17 @@
       "latest_verified_planned_core_hours": 6,
       "session_plans_remaining_to_10": 9,
       "core_hour_receipts_remaining_to_60": 60,
-      "verified_at_utc": "2026-10-01T06:10:26Z"
+      "verified_at_utc": "2026-10-01T09:09:27Z"
     },
     "kalshi": {
-      "state": "PHASE117_CLOSE_WINDOW_DISCOVERY_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
+      "state": "PHASE126_EVENT_LEVEL_DISCOVERY_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
       "latest_verified_plan_present": false,
-      "previous_blocker": "DISCOVERY_PAGE_LIMIT_EXCEEDED_AFTER_20_UNBOUNDED_OPEN_MARKET_PAGES",
-      "discovery_query": "PUBLIC_CLOSE_WINDOW_25_HOURS_TO_30_DAYS_MVE_EXCLUDED_LOCAL_ACTIVE_OPEN_VALIDATION",
-      "max_discovery_pages": 20,
-      "public_get_hard_ceiling_per_tick": 25,
-      "next_required_evidence": "FIRST_POST_PHASE117_CRON_PLAN_OR_BOUNDED_FAILURE_CODE"
+      "last_verified_blocker": "DISCOVERY_PAGE_LIMIT_EXCEEDED_ON_PRE_PHASE126_MARKET_DISCOVERY",
+      "discovery_source_now": "PUBLIC_EVENTS_WITH_NESTED_MARKETS",
+      "planned_sample_target_markets": 22,
+      "minimum_distinct_events": 10,
+      "max_public_gets_per_tick": 25,
+      "next_required_evidence": "FIRST_POST_PHASE126_CRON_PLAN_OR_BOUNDED_FAILURE_CODE"
     }
   },
   "dashboard": {
@@ -60,6 +67,7 @@
     "phase110_persisted_snapshot": "PRODUCTION_VERIFIED_AVAILABLE",
     "phase113_standalone_private_server": "BUILT",
     "phase116_paper_pipeline_engineering_state": "BUILT",
+    "phase124_provider_preflight_status": "BUILT",
     "public_internet_exposure": "DISABLED"
   },
   "paper_execution": {
@@ -69,17 +77,21 @@
     "phase114_conservative_crypto_decision_intent": "BUILT",
     "phase115_end_to_end_dry_run": "BUILT",
     "phase118_durable_approved_draft_handoff": "BUILT",
-    "phase119_one_shot_alpaca_paper_executor_bridge": "BUILT_NOT_ACTIVATED",
+    "phase119_one_shot_alpaca_paper_executor_bridge": "BUILT_NOT_AUTOMATIC",
+    "phase121_provider_preflight": "BUILT",
+    "phase122_fresh_preflight_execution_boundary": "BUILT",
+    "phase125_refreshable_preflight_history": "BUILT",
+    "phase127_preflight_first_pilot_command": "BUILT_NOT_ACTIVATED",
     "autonomous_strategy_paper": "DISABLED_PENDING_REAL_FORWARD_GATE",
     "kalshi_demo_orders": "DISABLED",
     "live_trading": "UNAVAILABLE"
   },
   "next_actions": [
-    "INSPECT_FIRST_POST_PHASE117_RAILWAY_CRON",
-    "VERIFY_KALSHI_22_MARKET_PLAN_OR_NEXT_BOUNDED_BLOCKER",
+    "INSPECT_FIRST_POST_PHASE126_RAILWAY_CRON",
+    "VERIFY_KALSHI_22_MARKET_EVENT_LEVEL_PLAN_OR_NEXT_BOUNDED_BLOCKER",
     "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION_TO_FROZEN_GATE",
     "CAPTURE_FIRST_DUE_OCTOBER_1_XNYS_CORE_HOUR_PROSPECTIVELY",
-    "KEEP_PHASE119_ONE_SHOT_PAPER_EXECUTOR_UNACTIVATED_UNTIL_REAL_GATE_AND_OWNER_HANDOFF"
+    "KEEP_PHASE127_PAPER_PILOT_COMMAND_PREFLIGHT_ONLY_UNTIL_REAL_GATE_AND_EXPLICIT_OWNER_EXECUTION"
   ],
   "invariants": [
     "NO_NEW_PAID_RAILWAY_RESOURCE",
@@ -87,6 +99,7 @@
     "NO_HISTORICAL_BACKFILL_AS_PROSPECTIVE",
     "NO_AUTOMATIC_PAPER_OR_LIVE_ORDER_SUBMISSION",
     "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR",
+    "PAPER_PREFLIGHT_MUST_BE_FRESH_AT_EXECUTION_BOUNDARY",
     "LIVE_TRADING_UNAVAILABLE"
   ]
 }
