@@ -164,6 +164,8 @@ def build_prospective_kalshi_plan(
     if getattr(client,"supports_event_discovery",True) is False:
         event_method=None
     window_method=getattr(client,"live_public_markets_close_window",None)
+    if getattr(client,"supports_close_window_discovery",True) is False:
+        window_method=None
     min_close_ts=int((
         planned+timedelta(hours=MIN_PLAN_LEAD_HOURS)-timedelta(seconds=1)
     ).timestamp())
@@ -181,7 +183,7 @@ def build_prospective_kalshi_plan(
             page=window_method(
                 min_close_ts=min_close_ts,
                 max_close_ts=max_close_ts,
-                limit=200,
+                limit=1000,
                 cursor=cursor,
             )
             markets=page.get("markets") if isinstance(page,Mapping) else None
@@ -189,7 +191,7 @@ def build_prospective_kalshi_plan(
                 raise ValueError("Kalshi public market discovery lacks markets")
             raw_markets=list(markets)
         elif callable(event_method):
-            discovery_source="PUBLIC_EVENTS_WITH_NESTED_MARKETS_FALLBACK"
+            discovery_source="PUBLIC_EVENTS_WITH_NESTED_MARKETS"
             page=event_method(
                 status="open",
                 limit=200,
