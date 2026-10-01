@@ -11,7 +11,7 @@ on:
         description: "Successful MANUAL historical-data workflow run in this private repo"
         type: string
         required: true
-        default: "36632386959"
+        default: "36918820231"
 
 permissions:
   contents: read
@@ -58,12 +58,26 @@ jobs:
           SIGNAL_VAULT_REPLAY_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
         run: python -m signal_vault.ci_replay_history
 
-      - name: Upload v2 report and immutable source mapping only (7-day retention)
+      - name: Build supervised-PAPER bootstrap receipt from replayed six-day history
+        run: |
+          set +e
+          python -m signal_vault.historical_bootstrap_validation             private-v2-replay/offline_research_analysis.json             --output private-v2-replay/historical_bootstrap_validation.json
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            exit 2
+          fi
+          if [ "$code" -eq 3 ]; then
+            echo "Replay completed but did not qualify for supervised PAPER bootstrap."
+          fi
+
+      - name: Upload v2 report, source mapping, and bootstrap receipt (7-day retention)
         uses: actions/upload-artifact@v4
         with:
           name: bounded-crypto-v2-offline-replay-${{ github.run_id }}
           path: |
             private-v2-replay/offline_research_analysis.json
             private-v2-replay/replay_manifest.json
+            private-v2-replay/historical_bootstrap_validation.json
           if-no-files-found: error
           retention-days: 7
