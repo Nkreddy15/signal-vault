@@ -18,11 +18,22 @@ from typing import Mapping, Sequence
 
 from .ci_historical_crypto import OUTPUT, resolve_manual_ci_configuration
 from .multi_asset_historical import HistoricalDataBatch
+from .multi_asset_simulation import (
+    HYPOTHESES,
+    HypothesisKind,
+    ResearchHypothesis,
+)
 from .multi_asset_research_cli import run_offline_report
 from .offline_multimarket_pipeline import read_historical_archive
 
 ANALYSIS_FILENAME = "offline_research_analysis.json"
 MAX_WINDOWS = 30
+CRYPTO_BOOTSTRAP_HYPOTHESES = HYPOTHESES + (
+    ResearchHypothesis(
+        HypothesisKind.EMA_CONFIRM,
+        "generic-ema12x26-confirm2-v2-predeclared",
+    ),
+)
 
 # These are ILLUSTRATIVE SCENARIOS, not current provider prices, broker fees,
 # forecasts or recommended trading choices. A separate fee/quote audit is
@@ -200,7 +211,14 @@ def analyze_manual_history(
         data = (json.dumps(costs, sort_keys=True, separators=(",", ":"))
                 + "\n").encode("utf-8")
         _safe_write_once(cost_path, data)
-        raw = report_reader(archives, cost_config=cost_path)
+        if report_reader is run_offline_report:
+            raw = report_reader(
+                archives,
+                cost_config=cost_path,
+                hypotheses=CRYPTO_BOOTSTRAP_HYPOTHESES,
+            )
+        else:
+            raw = report_reader(archives, cost_config=cost_path)
         scenarios[label] = {
             "assumptions_per_instrument": costs,
             "estimated_not_observed_fees_and_spreads": True,

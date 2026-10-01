@@ -22,7 +22,7 @@ from typing import Mapping, Sequence
 from .multi_asset_historical import (
     BoundedAlpacaHistoricalBatch, MAX_SYMBOLS, archive_historical_batch,
 )
-from .multi_asset_simulation import ExplicitRoundTripCosts
+from .multi_asset_simulation import ExplicitRoundTripCosts, ResearchHypothesis
 from .offline_multimarket_pipeline import (
     combine_historical_archives, describe_multi_asset_research,
     read_historical_archive,
@@ -209,6 +209,7 @@ def run_offline_report(
     *,
     cost_config: Path,
     equity_calendar: Path | None=None,
+    hypotheses: Sequence[ResearchHypothesis] | None=None,
 ) -> dict[str,object]:
     """No network, no credentials, no order/API imports."""
     if not archive_paths or len(archive_paths)>90:
@@ -232,10 +233,13 @@ def run_offline_report(
     cutoff=max(aware(x.downloaded_utc) for x in parts)
     combined,reviews=combine_historical_archives(
         parts,as_of=cutoff,equity_calendars=cal)
+    kwargs={}
+    if hypotheses is not None:
+        kwargs["hypotheses"]=tuple(hypotheses)
     result=describe_multi_asset_research(
         combined,as_of=cutoff,costs=configured_costs(
             cost_config,symbols=symbols),
-        equity_calendars=cal)
+        equity_calendars=cal,**kwargs)
     result["historical_archive_count"]=len(parts)
     result["per_symbol_quality_reviews"]=reviews
     result["network_requests"]="NONE"

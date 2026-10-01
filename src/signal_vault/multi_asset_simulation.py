@@ -36,6 +36,7 @@ class HypothesisKind(str, Enum):
     CASH = "cash"
     PASSIVE = "one_allocation_buy_and_hold"
     EMA = "closed_bar_ema_cross"
+    EMA_CONFIRM = "closed_bar_ema_cross_two_state_confirmation"
     MOMENTUM = "closed_bar_lookback_momentum"
 
 
@@ -65,7 +66,8 @@ class ResearchHypothesis:
 
     @property
     def warmup_bars(self) -> int:
-        return max(self.slow_bars + 2,
+        ema_warmup = self.slow_bars + (3 if self.kind == HypothesisKind.EMA_CONFIRM else 2)
+        return max(ema_warmup,
                    self.lookback_bars + 1 if self.kind == HypothesisKind.MOMENTUM else 2)
 
 
@@ -152,15 +154,25 @@ def decide_on_prior_closes(
         pass
     elif config.kind == HypothesisKind.PASSIVE:
         action=Action.HOLD if has_position else Action.BUY
-    elif config.kind == HypothesisKind.EMA:
+    elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
         if len(rows)>=config.slow_bars+2:
             fast_before,fast_now=_ema_pair(rows,config.fast_bars)
             slow_before,slow_now=_ema_pair(rows,config.slow_bars)
             if has_position and fast_before >= slow_before and fast_now < slow_now:
                 action=Action.SELL
-            elif (not has_position and fast_before <= slow_before and
-                  fast_now > slow_now):
-                action=Action.BUY
+            elif config.kind == HypothesisKind.EMA:
+                if (not has_position and fast_before <= slow_before and
+                        fast_now > slow_now):
+                    action=Action.BUY
+            elif len(rows)>=config.slow_bars+3 and not has_position:
+                fast_two_before,fast_before_confirm=_ema_pair(
+                    rows[:-1],config.fast_bars)
+                slow_two_before,slow_before_confirm=_ema_pair(
+                    rows[:-1],config.slow_bars)
+                if (fast_two_before <= slow_two_before and
+                        fast_before_confirm > slow_before_confirm and
+                        fast_now > slow_now):
+                    action=Action.BUY
     elif config.kind == HypothesisKind.MOMENTUM:
         if len(rows) >= config.lookback_bars+1:
             prior=rows[-1-config.lookback_bars].close
@@ -217,7 +229,7 @@ def precompute_closed_bar_decisions(
     # seed and Decimal recurrence are identical to _ema_pair(known, period).
     fast: list[Decimal] = []
     slow: list[Decimal] = []
-    if config.kind == HypothesisKind.EMA:
+    if config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
         fast_alpha = Decimal("2") / Decimal(config.fast_bars + 1)
         slow_alpha = Decimal("2") / Decimal(config.slow_bars + 1)
         fast = [seq[0].close]
@@ -236,11 +248,24 @@ def precompute_closed_bar_decisions(
         flat_action, held_action = Action.HOLD, Action.HOLD
         if config.kind == HypothesisKind.PASSIVE:
             flat_action = Action.BUY
-        elif config.kind == HypothesisKind.EMA and i >= config.slow_bars + 2:
-            if fast[i-2] <= slow[i-2] and fast[i-1] > slow[i-1]:
-                flat_action = Action.BUY
-            if fast[i-2] >= slow[i-2] and fast[i-1] < slow[i-1]:
-                held_action = Action.SELL
+        elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
+            if i >= config.slow_bars + 2:
+                if (
+                    config.kind == HypothesisKind.EMA
+                    and fast[i-2] <= slow[i-2]
+                    and fast[i-1] > slow[i-1]
+                ):
+                    flat_action = Action.BUY
+                elif (
+                    config.kind == HypothesisKind.EMA_CONFIRM
+                    and i >= config.slow_bars + 3
+                    and fast[i-3] <= slow[i-3]
+                    and fast[i-2] > slow[i-2]
+                    and fast[i-1] > slow[i-1]
+                ):
+                    flat_action = Action.BUY
+                if fast[i-2] >= slow[i-2] and fast[i-1] < slow[i-1]:
+                    held_action = Action.SELL
         elif config.kind == HypothesisKind.MOMENTUM and i >= config.lookback_bars + 1:
             change = (
                 prior.close / seq[i-1-config.lookback_bars].close -
