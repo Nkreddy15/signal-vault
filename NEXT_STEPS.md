@@ -1,3 +1,17 @@
+# CURRENT NEXT ACTIONS — 2026-10-01
+
+1. Verify the **first scheduled Railway tick after Phase 100**. Require original BTC evidence to remain healthy and unchanged outside the sidecars.
+2. Confirm six-crypto advances from the last verified 13 source hours / 12 scored outcomes. Preserve the frozen 169-source-hour / 168-scored-outcome review gate; historical data cannot substitute for prospective hours.
+3. Confirm Kalshi now creates exactly one immutable 22-market prospective plan (>=10 distinct events) under the current public `active`/binary schema. If it still fails, inspect only the isolated Kalshi failure class and preserve BTC/crypto evidence.
+4. Let the stock sidecar create the next valid XNYS **pre-open** plan and then collect only precommitted complete core hours. Never backfill a missed session. Frozen source target remains 10 sessions / 60 core-hour receipts before integrity/shadow scoring.
+5. Use `python -m signal_vault.paper_runway_status` only as a read-only blocker summary. It does not track or authorize execution.
+6. Treat the prior supervised $15 Alpaca PAPER diagnostic as completed plumbing validation only. Do **not** start autonomous PAPER/DEMO orders until a lane's frozen strategy evidence gates and separate execution-validation/owner-authorization gates are satisfied.
+7. Repair GitHub Actions runner health separately. Current runner failures occur before meaningful project steps; do not confuse them with test assertions and do not lower test/safety requirements.
+
+**No owner desktop action is required for current Railway collection. PAPER/DEMO automatic submission remains DISABLED; LIVE remains UNAVAILABLE.**
+
+---
+
 # Signal Vault — current next steps (2026-09-30)
 
 **NO OWNER DESKTOP ACTION IS REQUIRED. Do not Fetch/Pull/run Terminal for the cloud collector.** Production is on Railway. Continue engineering and evidence inspection autonomously; interrupt the owner only for a genuine permission/access/paid-resource/trading decision.
