@@ -158,6 +158,40 @@ class MultiMarketExecutionJournal:
             raise ValueError("execution state identity mismatch")
         return state
 
+    def get_approved_draft(self,client_order_id:str) -> MultiMarketOrderDraft:
+        row=self.connection.execute(
+            "SELECT market_lane,instrument,max_loss_usd,payload_json,"
+            "payload_sha256,status FROM mm_execution_drafts "
+            "WHERE client_order_id=?",
+            (client_order_id,),
+        ).fetchone()
+        if row is None:
+            raise KeyError("approved execution draft not found")
+        lane,instrument,max_loss_raw,payload_raw,payload_sha,status=row
+        if status!="DRAFT_APPROVED":
+            raise PermissionError("execution draft is not approved")
+        try:
+            payload=json.loads(payload_raw)
+            max_loss=Decimal(max_loss_raw)
+        except Exception as exc:
+            raise ValueError("malformed stored execution draft") from exc
+        if (
+            not isinstance(payload,dict)
+            or any(not isinstance(k,str) or not isinstance(v,str)
+                    for k,v in payload.items())
+        ):
+            raise ValueError("stored execution payload must be string-only")
+        draft=MultiMarketOrderDraft(
+            client_order_id=client_order_id,
+            market_lane=lane,
+            instrument=instrument,
+            max_loss_usd=max_loss,
+            payload=payload,
+        )
+        if draft.payload_sha256!=payload_sha:
+            raise ValueError("stored execution draft payload hash mismatch")
+        return draft
+
     def has_unresolved(self) -> bool:
         return any(
             _state(row[0]).blocks_new_execution
