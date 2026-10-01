@@ -29,7 +29,7 @@ class Phase148DashboardResearchVerificationTests(unittest.TestCase):
         }
         archive.return_value=Path("dashboard.json")
         core=lambda **kwargs:{
-            "crypto_btc_status":"VERIFIED",
+            "crypto_btc_status":"SAFE_NO_NEW_OBSERVATION",
             "equity_status":"EVIDENCE_PRESENT",
             "btc_evidence_changed_during_equity_stage":False,
         }
