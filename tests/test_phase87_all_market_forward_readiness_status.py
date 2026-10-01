@@ -78,15 +78,10 @@ class AllMarketForwardStatusTests(unittest.TestCase):
             receipt=child/f"equity-forward-20261001T{hour%24:02d}00Z-{hour:016x}.json"
             receipt.write_text("{}")
             receipt.chmod(0o600)
-        result=_equity_status(self.root)
-        self.assertEqual(result["session_plan_files"],10)
-        self.assertEqual(result["prospective_core_hour_receipts"],60)
-        self.assertEqual(result["raw_core_hour_receipts_remaining_to_60"],0)
-        self.assertEqual(result["raw_session_plans_remaining_to_10"],0)
-        self.assertTrue(result["artifact_counts_are_not_gate_pass"])
-        self.assertTrue(result["offline_integrity_audit_required"])
-        self.assertEqual(result["paper_order_submission"],"DISABLED")
-        self.assertEqual(result["live_order_submission"],"DISABLED")
+        # Malformed raw artifacts must fail closed rather than be counted as
+        # readiness evidence merely because enough filenames exist.
+        with self.assertRaises(ValueError):
+            _equity_status(self.root)
 
     def test_kalshi_plan_and_artifact_progress_are_reported_conservatively(self):
         child=self.root/KALSHI_CHILD

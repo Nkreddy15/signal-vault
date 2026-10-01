@@ -117,7 +117,7 @@ class KalshiProspectiveShadowGateTests(unittest.TestCase):
         item["planned_market_count"]=21
         item["valid_prospective_market_count"]=19
         item["missed_or_invalid_market_count"]=2
-        item["capture_coverage_fraction"]=str(19/21)
+        item["capture_coverage_fraction"]="0.9047619047619047619047619048"
         cases.append(item)
 
         item=summary()

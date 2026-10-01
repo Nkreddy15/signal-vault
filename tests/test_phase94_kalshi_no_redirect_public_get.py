@@ -36,7 +36,7 @@ class KalshiNoRedirectTransportTests(unittest.TestCase):
 
     def test_redirect_handler_explicitly_refuses_redirect_request(self):
         handler=_RejectRedirects()
-        self.assertIsNone(
+        with self.assertRaises(ValueError):
             handler.redirect_request(
                 Request("https://external-api.kalshi.com/trade-api/v2/markets"),
                 None,
@@ -45,7 +45,6 @@ class KalshiNoRedirectTransportTests(unittest.TestCase):
                 {},
                 "https://example.com/redirected",
             )
-        )
 
 
 if __name__=="__main__":
