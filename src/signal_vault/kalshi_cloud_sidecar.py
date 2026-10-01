@@ -78,6 +78,24 @@ class _BudgetedPublicClient:
             raise TypeError("Kalshi public client lacks market discovery")
         return method(**kwargs)
 
+    def live_public_markets_close_window(self, **kwargs:object)->dict[str,object]:
+        method=getattr(self._inner,"live_public_markets_close_window",None)
+        if callable(method):
+            self._consume()
+            return method(**kwargs)
+        # Backward-compatible fallback for deterministic test doubles and
+        # older injected research clients. Production uses the bounded
+        # close-window method on KalshiPublicResearchClient.
+        self._consume()
+        fallback=getattr(self._inner,"live_public_markets",None)
+        if not callable(fallback):
+            raise TypeError("Kalshi public client lacks market discovery")
+        return fallback(
+            status="open",
+            limit=kwargs.get("limit",1000),
+            cursor=kwargs.get("cursor"),
+        )
+
     def live_public_market(self,ticker:str)->dict[str,object]:
         self._consume()
         method=getattr(self._inner,"live_public_market",None)

@@ -156,8 +156,25 @@ def build_prospective_kalshi_plan(
     seen=set()
     cursor=None
     pages=0
+    window_method=getattr(client,"live_public_markets_close_window",None)
+    min_close_ts=int((
+        planned+timedelta(hours=MIN_PLAN_LEAD_HOURS)-timedelta(seconds=1)
+    ).timestamp())
+    max_close_ts=int((
+        planned+timedelta(days=MAX_CLOSE_AHEAD_DAYS)+timedelta(seconds=1)
+    ).timestamp())
     for _ in range(max_pages):
-        page=client.live_public_markets(status="open",limit=1000,cursor=cursor)
+        if callable(window_method):
+            page=window_method(
+                min_close_ts=min_close_ts,
+                max_close_ts=max_close_ts,
+                limit=1000,
+                cursor=cursor,
+            )
+        else:
+            page=client.live_public_markets(
+                status="open",limit=1000,cursor=cursor
+            )
         pages+=1
         markets=page.get("markets") if isinstance(page,Mapping) else None
         if not isinstance(markets,list):

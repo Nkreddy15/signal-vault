@@ -166,6 +166,28 @@ class KalshiPublicResearchClient:
             "status":status,"limit":limit,"cursor":cursor,"mve_filter":"exclude",
         })
 
+    def live_public_markets_close_window(
+        self,*,min_close_ts:int,max_close_ts:int,
+        limit:int=1000,cursor:str|None=None,
+    ) -> dict[str,object]:
+        if (
+            type(min_close_ts) is not int or type(max_close_ts) is not int
+            or min_close_ts<0 or max_close_ts<=min_close_ts
+        ):
+            raise ValueError("invalid Kalshi live close-time window")
+        if type(limit) is not int or not 1<=limit<=MAX_LIMIT:
+            raise ValueError("Kalshi market limit out of bounds")
+        # Kalshi's current API documents close-time filters for an empty
+        # status filter. We still validate object status locally before
+        # admitting any market to the prospective plan.
+        return self._get("/markets",{
+            "limit":limit,
+            "cursor":cursor,
+            "min_close_ts":min_close_ts,
+            "max_close_ts":max_close_ts,
+            "mve_filter":"exclude",
+        })
+
 def research_safety_receipt() -> dict[str,object]:
     return {
         "kind":"KALSHI_PUBLIC_HISTORICAL_RESEARCH_ADAPTER",
