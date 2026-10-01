@@ -37,6 +37,7 @@ class HypothesisKind(str, Enum):
     PASSIVE = "one_allocation_buy_and_hold"
     EMA = "closed_bar_ema_cross"
     EMA_CONFIRM = "closed_bar_ema_cross_two_state_confirmation"
+    EMA_REGIME = "closed_bar_ema_trend_with_spread_and_volatility_gate"
     MOMENTUM = "closed_bar_lookback_momentum"
 
 
@@ -49,6 +50,9 @@ class ResearchHypothesis:
     lookback_bars: int = 24
     entry_return_bps: Decimal = Decimal("50")
     exit_return_bps: Decimal = Decimal("-50")
+    min_ema_spread_bps: Decimal = Decimal("0")
+    volatility_lookback_bars: int = 24
+    min_avg_abs_return_bps: Decimal = Decimal("0")
 
     def __post_init__(self) -> None:
         if (not isinstance(self.name,str) or not self.name.strip()
@@ -58,17 +62,32 @@ class ResearchHypothesis:
             raise ValueError("invalid EMA windows")
         if type(self.lookback_bars) is not int or not 2 <= self.lookback_bars <= 300:
             raise ValueError("invalid lookback bar count")
-        for value in (self.entry_return_bps, self.exit_return_bps):
+        for value in (
+            self.entry_return_bps, self.exit_return_bps,
+            self.min_ema_spread_bps, self.min_avg_abs_return_bps,
+        ):
             if type(value) is not Decimal or not value.is_finite():
-                raise ValueError("invalid momentum threshold")
+                raise ValueError("invalid research threshold")
         if self.entry_return_bps < 0 or self.exit_return_bps > 0:
             raise ValueError("momentum entry/exit signs invalid")
+        if self.min_ema_spread_bps < 0 or self.min_avg_abs_return_bps < 0:
+            raise ValueError("regime thresholds cannot be negative")
+        if (type(self.volatility_lookback_bars) is not int or
+                not 2 <= self.volatility_lookback_bars <= 300):
+            raise ValueError("invalid volatility lookback")
 
     @property
     def warmup_bars(self) -> int:
         ema_warmup = self.slow_bars + (3 if self.kind == HypothesisKind.EMA_CONFIRM else 2)
-        return max(ema_warmup,
-                   self.lookback_bars + 1 if self.kind == HypothesisKind.MOMENTUM else 2)
+        regime_warmup = (
+            max(self.slow_bars + 2, self.volatility_lookback_bars + 1)
+            if self.kind == HypothesisKind.EMA_REGIME else 2
+        )
+        return max(
+            ema_warmup,
+            regime_warmup,
+            self.lookback_bars + 1 if self.kind == HypothesisKind.MOMENTUM else 2,
+        )
 
 
 HYPOTHESES: tuple[ResearchHypothesis, ...] = (
@@ -154,7 +173,7 @@ def decide_on_prior_closes(
         pass
     elif config.kind == HypothesisKind.PASSIVE:
         action=Action.HOLD if has_position else Action.BUY
-    elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
+    elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM,HypothesisKind.EMA_REGIME}:
         if len(rows)>=config.slow_bars+2:
             fast_before,fast_now=_ema_pair(rows,config.fast_bars)
             slow_before,slow_now=_ema_pair(rows,config.slow_bars)
@@ -164,6 +183,19 @@ def decide_on_prior_closes(
                 if (not has_position and fast_before <= slow_before and
                         fast_now > slow_now):
                     action=Action.BUY
+            elif config.kind == HypothesisKind.EMA_REGIME and not has_position:
+                if len(rows) >= max(config.slow_bars+2, config.volatility_lookback_bars+1):
+                    spread=(fast_now/slow_now-Decimal("1"))*Decimal("10000")
+                    recent=rows[-(config.volatility_lookback_bars+1):]
+                    moves=[
+                        abs((recent[i].close/recent[i-1].close-Decimal("1"))*Decimal("10000"))
+                        for i in range(1,len(recent))
+                    ]
+                    avg_abs=sum(moves,Decimal("0"))/Decimal(len(moves))
+                    if (fast_now > slow_now and
+                            spread >= config.min_ema_spread_bps and
+                            avg_abs >= config.min_avg_abs_return_bps):
+                        action=Action.BUY
             elif len(rows)>=config.slow_bars+3 and not has_position:
                 fast_two_before,fast_before_confirm=_ema_pair(
                     rows[:-1],config.fast_bars)
@@ -229,7 +261,7 @@ def precompute_closed_bar_decisions(
     # seed and Decimal recurrence are identical to _ema_pair(known, period).
     fast: list[Decimal] = []
     slow: list[Decimal] = []
-    if config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
+    if config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM,HypothesisKind.EMA_REGIME}:
         fast_alpha = Decimal("2") / Decimal(config.fast_bars + 1)
         slow_alpha = Decimal("2") / Decimal(config.slow_bars + 1)
         fast = [seq[0].close]
@@ -248,7 +280,7 @@ def precompute_closed_bar_decisions(
         flat_action, held_action = Action.HOLD, Action.HOLD
         if config.kind == HypothesisKind.PASSIVE:
             flat_action = Action.BUY
-        elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM}:
+        elif config.kind in {HypothesisKind.EMA,HypothesisKind.EMA_CONFIRM,HypothesisKind.EMA_REGIME}:
             if i >= config.slow_bars + 2:
                 if (
                     config.kind == HypothesisKind.EMA
@@ -256,6 +288,19 @@ def precompute_closed_bar_decisions(
                     and fast[i-1] > slow[i-1]
                 ):
                     flat_action = Action.BUY
+                elif config.kind == HypothesisKind.EMA_REGIME:
+                    if i >= max(config.slow_bars+2, config.volatility_lookback_bars+1):
+                        spread=(fast[i-1]/slow[i-1]-Decimal("1"))*Decimal("10000")
+                        first=i-1-config.volatility_lookback_bars
+                        moves=[
+                            abs((seq[j].close/seq[j-1].close-Decimal("1"))*Decimal("10000"))
+                            for j in range(first+1,i)
+                        ]
+                        avg_abs=sum(moves,Decimal("0"))/Decimal(len(moves))
+                        if (fast[i-1] > slow[i-1] and
+                                spread >= config.min_ema_spread_bps and
+                                avg_abs >= config.min_avg_abs_return_bps):
+                            flat_action = Action.BUY
                 elif (
                     config.kind == HypothesisKind.EMA_CONFIRM
                     and i >= config.slow_bars + 3
