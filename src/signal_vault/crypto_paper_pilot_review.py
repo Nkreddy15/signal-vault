@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Mapping
 
+from .multi_asset_simulation import HYPOTHESES, HypothesisKind
+
 KIND="CRYPTO_AUTONOMOUS_PAPER_PILOT_REVIEW_NOT_ACTIVATION"
 POLICY_VERSION="crypto-autonomous-paper-pilot-review-v1-frozen-20261001"
 ENGINEERING_KIND="CRYPTO_PAPER_PILOT_ENGINEERING_EVIDENCE"
@@ -45,10 +47,15 @@ def assess_crypto_paper_pilot_review(
     ):
         raise ValueError("invalid six-crypto forward review receipt")
     eligible=forward_review.get("candidates_meeting_all_review_criteria")
+    active_candidates={
+        h.name for h in HYPOTHESES
+        if h.kind in (HypothesisKind.EMA,HypothesisKind.MOMENTUM)
+    }
     if (
         not isinstance(eligible,list)
         or any(not isinstance(x,str) or not x for x in eligible)
         or len(set(eligible))!=len(eligible)
+        or any(x not in active_candidates for x in eligible)
     ):
         raise ValueError("invalid eligible crypto candidate list")
 
@@ -57,6 +64,7 @@ def assess_crypto_paper_pilot_review(
         or engineering.get("kind")!=ENGINEERING_KIND
         or engineering.get("environment")!="alpaca_paper"
         or engineering.get("live_host_requests")!=0
+        or engineering.get("paper_order_submission")!="DISABLED"
         or engineering.get("live_order_submission")!="DISABLED"
     ):
         raise ValueError("invalid crypto paper engineering evidence")
