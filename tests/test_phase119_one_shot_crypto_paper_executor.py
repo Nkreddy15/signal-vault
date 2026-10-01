@@ -1,6 +1,6 @@
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 
@@ -219,6 +219,44 @@ class CryptoPaperExecutorOnceTests(unittest.TestCase):
                 at=NOW,
                 transport=uncertain,
             )
+
+    def test_preflight_older_than_five_minutes_blocks_before_transport(self):
+        calls=[]
+        with self.assertRaises(PermissionError):
+            execute_prepared_crypto_paper_once(
+                self.prepared,
+                dry_run(),
+                journal=self.journal,
+                paper_key="paper-key",
+                paper_secret="paper-secret",
+                acknowledgement=CRYPTO_PAPER_ACK,
+                preflight=self.preflight,
+                at=NOW+timedelta(minutes=6),
+                transport=lambda *_:calls.append(True),
+            )
+        self.assertEqual(calls,[])
+        with self.assertRaises(KeyError):
+            self.journal.get_state(CLIENT_ID)
+
+    def test_tampered_preflight_blocks_before_transport(self):
+        bad=dict(self.preflight)
+        bad["provider_open_orders_count"]=1
+        calls=[]
+        with self.assertRaises(ValueError):
+            execute_prepared_crypto_paper_once(
+                self.prepared,
+                dry_run(),
+                journal=self.journal,
+                paper_key="paper-key",
+                paper_secret="paper-secret",
+                acknowledgement=CRYPTO_PAPER_ACK,
+                preflight=bad,
+                at=NOW,
+                transport=lambda *_:calls.append(True),
+            )
+        self.assertEqual(calls,[])
+        with self.assertRaises(KeyError):
+            self.journal.get_state(CLIENT_ID)
 
     def test_receipt_mismatch_blocks_before_transport(self):
         bad=dict(self.prepared)
