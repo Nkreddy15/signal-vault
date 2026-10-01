@@ -65,6 +65,9 @@ class _BudgetedPublicClient:
         self._inner=inner
         self._maximum=maximum
         self.request_count=0
+        self.supports_event_discovery=callable(
+            getattr(inner,"live_public_events",None)
+        )
 
     def _consume(self)->None:
         if self.request_count>=self._maximum:
@@ -95,6 +98,13 @@ class _BudgetedPublicClient:
             limit=kwargs.get("limit",1000),
             cursor=kwargs.get("cursor"),
         )
+
+    def live_public_events(self, **kwargs:object)->dict[str,object]:
+        self._consume()
+        method=getattr(self._inner,"live_public_events",None)
+        if not callable(method):
+            raise TypeError("Kalshi public client lacks event discovery")
+        return method(**kwargs)
 
     def live_public_market(self,ticker:str)->dict[str,object]:
         self._consume()
