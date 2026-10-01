@@ -22,6 +22,7 @@ def engineering(**overrides):
         "kind":ENGINEERING_KIND,
         "environment":"alpaca_paper",
         "live_host_requests":0,
+        "paper_order_submission":"DISABLED",
         "live_order_submission":"DISABLED",
         "supervised_paper_smoke_reconciled":True,
         "paper_host_only_verified":True,
@@ -102,7 +103,7 @@ class CryptoPaperPilotReviewTests(unittest.TestCase):
         bad["live_host_requests"]=1
         with self.assertRaises(ValueError):
             assess_crypto_paper_pilot_review(
-                forward(complete=True,eligible=["x"]),
+                forward(complete=True,eligible=["generic-ema12x26-v1-predeclared"]),
                 bad,
             )
 
