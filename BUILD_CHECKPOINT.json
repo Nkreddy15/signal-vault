@@ -1,0 +1,59 @@
+{
+  "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
+  "checkpoint_version": 1,
+  "updated_utc": "2026-10-01T04:08:00Z",
+  "latest_completed_phase": 105,
+  "current_phase": 106,
+  "main_sha": "62df67f782caba9416ea83f1c7ca8d4ad5a5192a",
+  "github_ci": {
+    "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
+    "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+  },
+  "railway": {
+    "project": "signal-vault-forward-research",
+    "service": "btcusd-hourly-get-cron",
+    "production_deployment_id": "2878e70b-0b64-41f7-8c7b-0502291c1623",
+    "production_deployment_status": "SUCCESS",
+    "source_sha": "62df67f782caba9416ea83f1c7ca8d4ad5a5192a",
+    "cron_schedule": "7 * * * *",
+    "shared_volume_mb": 500,
+    "order_submission": "DISABLED"
+  },
+  "lanes": {
+    "six_crypto": {
+      "state": "UNATTENDED_PROSPECTIVE_COLLECTION_ACTIVE",
+      "latest_verified_source_hours": 17,
+      "review_gate_source_hours_remaining_to_169": 152,
+      "latest_verified_scored_outcomes_remaining_to_168": 152
+    },
+    "us_equity": {
+      "state": "WAITING_FOR_FIRST_VALID_PREOPEN_SESSION_PLAN",
+      "latest_verified_session_plans": 0,
+      "latest_verified_core_hour_receipts": 0
+    },
+    "kalshi": {
+      "state": "PHASE105_DIAGNOSTIC_DEPLOYED_FIRST_PLAN_NOT_YET_CREATED",
+      "latest_verified_plan_present": false,
+      "next_required_evidence": "FIRST_POST_PHASE105_CRON_PLANNING_FAILURE_CODE_OR_PLAN"
+    }
+  },
+  "paper_execution": {
+    "supervised_alpaca_paper_smoke": "RECONCILED",
+    "autonomous_strategy_paper": "DISABLED",
+    "kalshi_demo_orders": "DISABLED",
+    "live_trading": "UNAVAILABLE"
+  },
+  "next_actions": [
+    "INSPECT_FIRST_POST_PHASE105_RAILWAY_CRON",
+    "VERIFY_OCTOBER_1_XNYS_SESSION_PLAN_CREATION",
+    "USE_KALSHI_PLANNING_FAILURE_CODE_TO_FIX_ONLY_PROVEN_STRUCTURAL_BLOCKER",
+    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION"
+  ],
+  "invariants": [
+    "NO_NEW_PAID_RAILWAY_RESOURCE",
+    "PRESERVE_EXISTING_BTC_EVIDENCE",
+    "NO_HISTORICAL_BACKFILL_AS_PROSPECTIVE",
+    "NO_AUTOMATIC_PAPER_OR_LIVE_ORDER_SUBMISSION",
+    "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR"
+  ]
+}
