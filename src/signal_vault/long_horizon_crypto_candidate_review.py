@@ -25,6 +25,10 @@ CANDIDATES=(
     "generic-ema12x26-v1-predeclared",
     "generic-ema12x26-confirm2-v2-predeclared",
     "generic-momentum24bar50bps-v1-predeclared",
+    "generic-ema24x72-v1-predeclared",
+    "generic-ema24x72-confirm2-v1-predeclared",
+    "generic-momentum72bar150bps-v1-predeclared",
+    "generic-momentum168bar250bps-v1-predeclared",
 )
 SCENARIOS=(
     "illustrative_low_friction",
