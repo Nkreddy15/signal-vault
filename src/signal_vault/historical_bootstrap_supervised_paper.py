@@ -62,7 +62,7 @@ def assess_historical_bootstrap_validation(
     }
     symbols=validation.get("symbols")
     historical_hours=validation.get("historical_hours")
-    folds=validation.get("walk_forward_fold_count")
+    folds=validation.get("chronological_fold_count")
     scenario_passes=validation.get("cost_stress_passes")
 
     if tuple(sorted(symbols or ()))!=REQUIRED_SYMBOLS:
@@ -70,7 +70,7 @@ def assess_historical_bootstrap_validation(
     if type(historical_hours) is not int or not 120<=historical_hours<=168:
         raise ValueError("bootstrap requires 5-7 closed historical days")
     if type(folds) is not int or folds<3:
-        raise ValueError("at least three chronological walk-forward folds required")
+        raise ValueError("at least three chronological folds required")
     if strategy not in active:
         raise ValueError("one predeclared active strategy required")
     if (
@@ -109,7 +109,7 @@ def assess_historical_bootstrap_validation(
         "policy_version":POLICY_VERSION,
         "selected_strategy":strategy,
         "historical_hours":historical_hours,
-        "walk_forward_fold_count":folds,
+        "chronological_fold_count":folds,
         "validation_receipt_sha256":_sha(
             validation.get("receipt_sha256"),"validation receipt"
         ),
