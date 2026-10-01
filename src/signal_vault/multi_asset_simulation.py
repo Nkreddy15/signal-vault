@@ -75,10 +75,6 @@ HYPOTHESES: tuple[ResearchHypothesis, ...] = (
     ResearchHypothesis(HypothesisKind.CASH, "cash-v1-predeclared"),
     ResearchHypothesis(HypothesisKind.PASSIVE, "one-allocation-passive-v1-predeclared"),
     ResearchHypothesis(HypothesisKind.EMA, "generic-ema12x26-v1-predeclared"),
-    ResearchHypothesis(
-        HypothesisKind.EMA_CONFIRM,
-        "generic-ema12x26-confirm2-v2-predeclared",
-    ),
     ResearchHypothesis(HypothesisKind.MOMENTUM, "generic-momentum24bar50bps-v1-predeclared"),
 )
 
