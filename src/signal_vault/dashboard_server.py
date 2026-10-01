@@ -115,7 +115,7 @@ def create_server(
         allowed=False
     if not allowed:
         raise ValueError("dashboard server MUST bind to literal IPv4 loopback 127.0.0.1")
-    if not 1024<=port<=65535:
+    if port!=0 and not 1024<=port<=65535:
         raise ValueError("dashboard port outside unprivileged range")
     return ThreadingHTTPServer(
         (host,port),
