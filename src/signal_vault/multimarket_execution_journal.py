@@ -109,6 +109,15 @@ class MultiMarketExecutionJournal:
           captured_utc TEXT NOT NULL,
           FOREIGN KEY(client_order_id) REFERENCES mm_execution_drafts(client_order_id)
         );
+        CREATE TABLE IF NOT EXISTS mm_execution_preflight_history(
+          seq INTEGER PRIMARY KEY AUTOINCREMENT,
+          client_order_id TEXT NOT NULL,
+          receipt_json TEXT NOT NULL,
+          receipt_sha256 TEXT NOT NULL,
+          captured_utc TEXT NOT NULL,
+          archived_utc TEXT NOT NULL,
+          FOREIGN KEY(client_order_id) REFERENCES mm_execution_drafts(client_order_id)
+        );
         CREATE TABLE IF NOT EXISTS mm_execution_events(
           seq INTEGER PRIMARY KEY AUTOINCREMENT,
           client_order_id TEXT NOT NULL,
@@ -227,6 +236,71 @@ class MultiMarketExecutionJournal:
                 "INSERT INTO mm_execution_events(client_order_id,event_type,details_json,created_utc) VALUES (?,?,?,?)",
                 (client_order_id,"PROVIDER_PREFLIGHT_VERIFIED",
                  json.dumps({"receipt_sha256":sha},sort_keys=True),stamp),
+            )
+            self.connection.execute("COMMIT")
+        except BaseException:
+            self.connection.execute("ROLLBACK")
+            raise
+        return sha
+
+    def refresh_provider_preflight(
+        self,client_order_id:str,receipt:Mapping[str,object],*,at:datetime,
+    ) -> str:
+        stamp=self._stamp(at)
+        if not isinstance(receipt,Mapping):
+            raise ValueError("provider preflight receipt mapping required")
+        draft=self.get_approved_draft(client_order_id)
+        if draft.client_order_id!=client_order_id:
+            raise ValueError("provider preflight draft identity mismatch")
+        if self.connection.execute(
+            "SELECT 1 FROM mm_execution_states WHERE client_order_id=?",
+            (client_order_id,),
+        ).fetchone():
+            raise PermissionError("provider preflight cannot refresh after submission starts")
+        current=self.connection.execute(
+            "SELECT receipt_json,receipt_sha256,captured_utc "
+            "FROM mm_execution_preflights WHERE client_order_id=?",
+            (client_order_id,),
+        ).fetchone()
+        if current is None:
+            raise KeyError("provider preflight receipt not found for refresh")
+        old_raw,old_sha,old_captured=current
+        if hashlib.sha256(old_raw.encode()).hexdigest()!=old_sha:
+            raise ValueError("existing provider preflight receipt hash mismatch")
+        raw=json.dumps(dict(receipt),sort_keys=True,separators=(",",":"))
+        if len(raw.encode())>64*1024:
+            raise ValueError("provider preflight receipt unexpectedly large")
+        sha=hashlib.sha256(raw.encode()).hexdigest()
+        self.connection.execute("BEGIN IMMEDIATE")
+        try:
+            self.connection.execute(
+                "INSERT INTO mm_execution_preflight_history"
+                "(client_order_id,receipt_json,receipt_sha256,captured_utc,archived_utc) "
+                "VALUES (?,?,?,?,?)",
+                (client_order_id,old_raw,old_sha,old_captured,stamp),
+            )
+            self.connection.execute(
+                "UPDATE mm_execution_preflights "
+                "SET receipt_json=?,receipt_sha256=?,captured_utc=? "
+                "WHERE client_order_id=?",
+                (raw,sha,stamp,client_order_id),
+            )
+            self.connection.execute(
+                "INSERT INTO mm_execution_events"
+                "(client_order_id,event_type,details_json,created_utc) "
+                "VALUES (?,?,?,?)",
+                (
+                    client_order_id,
+                    "PROVIDER_PREFLIGHT_REFRESHED",
+                    json.dumps(
+                        {
+                            "previous_receipt_sha256":old_sha,
+                            "receipt_sha256":sha,
+                        },
+                        sort_keys=True,
+                    ),
+                    stamp,
+                ),
             )
             self.connection.execute("COMMIT")
         except BaseException:

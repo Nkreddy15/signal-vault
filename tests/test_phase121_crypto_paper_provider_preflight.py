@@ -171,5 +171,51 @@ class CryptoPaperProviderPreflightTests(unittest.TestCase):
             )
 
 
+    def test_explicit_refresh_replaces_current_receipt_and_archives_previous(self):
+        first=capture_crypto_paper_provider_preflight(
+            self.prepared,journal=self.journal,reader=Reader(),at=NOW
+        )
+        refreshed=capture_crypto_paper_provider_preflight(
+            self.prepared,
+            journal=self.journal,
+            reader=Reader(),
+            at=NOW.replace(minute=55),
+            refresh_existing=True,
+        )
+        self.assertEqual(refreshed["status"],"FRESH_PROVIDER_PREFLIGHT_REFRESHED")
+        self.assertTrue(refreshed["refresh_existing"])
+        self.assertNotEqual(first["receipt_sha256"],refreshed["receipt_sha256"])
+        current,captured,current_sha=self.journal.get_provider_preflight_record(CLIENT_ID)
+        self.assertEqual(current_sha,refreshed["receipt_sha256"])
+        self.assertEqual(captured,NOW.replace(minute=55))
+        history=self.journal.connection.execute(
+            "SELECT receipt_sha256,captured_utc FROM mm_execution_preflight_history "
+            "WHERE client_order_id=?",
+            (CLIENT_ID,),
+        ).fetchall()
+        self.assertEqual(len(history),1)
+        self.assertEqual(history[0][0],first["receipt_sha256"])
+
+    def test_refresh_after_submission_started_fails_closed(self):
+        capture_crypto_paper_provider_preflight(
+            self.prepared,journal=self.journal,reader=Reader(),at=NOW
+        )
+        self.journal.begin_submission(self.draft,at=NOW)
+        with self.assertRaises(PermissionError):
+            capture_crypto_paper_provider_preflight(
+                self.prepared,
+                journal=self.journal,
+                reader=Reader(),
+                at=NOW.replace(minute=55),
+                refresh_existing=True,
+            )
+        history=self.journal.connection.execute(
+            "SELECT count(*) FROM mm_execution_preflight_history "
+            "WHERE client_order_id=?",
+            (CLIENT_ID,),
+        ).fetchone()[0]
+        self.assertEqual(history,0)
+
+
 if __name__=="__main__":
     unittest.main()
