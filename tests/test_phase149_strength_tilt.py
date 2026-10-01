@@ -19,7 +19,7 @@ class Phase149StrengthTiltTests(unittest.TestCase):
     def test_invalid_exposure_or_non_tilt_fails_closed(self):
         with self.assertRaises(ValueError):
             StrengthTiltConfig(
-                top_target_usd=Decimal("9"),other_target_usd=Decimal("3")
+                top_target_usd=Decimal("9"),other_target_usd=Decimal("2")
             )
         with self.assertRaises(ValueError):
             StrengthTiltConfig(
