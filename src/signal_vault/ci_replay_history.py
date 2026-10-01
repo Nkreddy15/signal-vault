@@ -17,7 +17,8 @@ from pathlib import Path
 from typing import Callable, Mapping
 
 from .ci_historical_report import (
-    ANALYSIS_FILENAME, SCENARIOS, analyze_manual_history, audit_requested_archives,
+    ANALYSIS_FILENAME, CRYPTO_LONG_HORIZON_HYPOTHESES, SCENARIOS,
+    analyze_manual_history, audit_requested_archives,
 )
 from .multi_asset_research_cli import aware, historical_plan
 from .research_universe import AssetClass
@@ -222,7 +223,22 @@ def main() -> int:
                 env.get("SIGNAL_VAULT_REPLAY_MODE")!="EXISTING_PRIVATE_HISTORY_ONLY"):
             raise PermissionError("explicit private main-only replay required")
         run_id=int(env.get("SIGNAL_VAULT_REPLAY_SOURCE_RUN_ID",""))
-        value=reanalyze_existing_history(source_run_id=run_id)
+        hypothesis_set=env.get("SIGNAL_VAULT_REPLAY_HYPOTHESIS_SET","BOOTSTRAP")
+        if hypothesis_set=="BOOTSTRAP":
+            report_builder=analyze_manual_history
+        elif hypothesis_set=="LONG_HORIZON_90D":
+            def report_builder(*,folder,plan):
+                return analyze_manual_history(
+                    folder=folder,
+                    plan=plan,
+                    hypotheses=CRYPTO_LONG_HORIZON_HYPOTHESES,
+                )
+        else:
+            raise ValueError("unknown replay hypothesis set")
+        value=reanalyze_existing_history(
+            source_run_id=run_id,
+            report_builder=report_builder,
+        )
         print(json.dumps(value,indent=2,sort_keys=True))
         return 0
     except Exception as exc:
