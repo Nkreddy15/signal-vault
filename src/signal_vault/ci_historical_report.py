@@ -35,6 +35,35 @@ CRYPTO_BOOTSTRAP_HYPOTHESES = HYPOTHESES + (
     ),
 )
 
+CRYPTO_LONG_HORIZON_HYPOTHESES = CRYPTO_BOOTSTRAP_HYPOTHESES + (
+    ResearchHypothesis(
+        HypothesisKind.EMA,
+        "generic-ema24x72-v1-predeclared",
+        fast_bars=24,
+        slow_bars=72,
+    ),
+    ResearchHypothesis(
+        HypothesisKind.EMA_CONFIRM,
+        "generic-ema24x72-confirm2-v1-predeclared",
+        fast_bars=24,
+        slow_bars=72,
+    ),
+    ResearchHypothesis(
+        HypothesisKind.MOMENTUM,
+        "generic-momentum72bar150bps-v1-predeclared",
+        lookback_bars=72,
+        entry_return_bps=Decimal("150"),
+        exit_return_bps=Decimal("-150"),
+    ),
+    ResearchHypothesis(
+        HypothesisKind.MOMENTUM,
+        "generic-momentum168bar250bps-v1-predeclared",
+        lookback_bars=168,
+        entry_return_bps=Decimal("250"),
+        exit_return_bps=Decimal("-250"),
+    ),
+)
+
 # These are ILLUSTRATIVE SCENARIOS, not current provider prices, broker fees,
 # forecasts or recommended trading choices. A separate fee/quote audit is
 # mandatory before any decision involving actual execution.
@@ -178,6 +207,7 @@ def analyze_manual_history(
     scenario_models: Mapping[str, Mapping[str, str]] = SCENARIOS,
     report_reader=run_offline_report,
     archive_auditor=audit_requested_archives,
+    hypotheses: Sequence[ResearchHypothesis] = CRYPTO_BOOTSTRAP_HYPOTHESES,
 ) -> dict[str, object]:
     """Independently reconstruct all expected windows and stress assumed costs.
 
@@ -215,7 +245,7 @@ def analyze_manual_history(
             raw = report_reader(
                 archives,
                 cost_config=cost_path,
-                hypotheses=CRYPTO_BOOTSTRAP_HYPOTHESES,
+                hypotheses=tuple(hypotheses),
             )
         else:
             raw = report_reader(archives, cost_config=cost_path)
