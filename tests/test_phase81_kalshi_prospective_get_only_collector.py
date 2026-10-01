@@ -127,6 +127,51 @@ class KalshiProspectiveCollectorTests(unittest.TestCase):
         self.assertEqual(normal["live_order_submission"],"DISABLED")
         validate_prospective_kalshi_plan(normal)
 
+
+    def test_paginated_discovery_can_continue_beyond_ten_pages_within_bound(self):
+        class ElevenPageClient:
+            def __init__(self):
+                self.calls=0
+
+            def live_public_markets(self, *, status="open", limit=1000, cursor=None):
+                self.calls+=1
+                index=0 if cursor is None else int(cursor)
+                markets=[]
+                for leg in range(2):
+                    event_index=index
+                    close=NOW+timedelta(hours=30+event_index*3+leg)
+                    markets.append({
+                        "ticker":f"PAGE-{index:02d}-{leg}",
+                        "event_ticker":f"PAGEEVENT-{index:02d}",
+                        "market_type":"binary",
+                        "status":"active",
+                        "close_time":iso(close),
+                        "mve_collection_ticker":None,
+                        "is_provisional":False,
+                        "can_close_early":False,
+                    })
+                next_cursor="" if index==10 else str(index+1)
+                return {"markets":markets,"cursor":next_cursor}
+
+            def live_public_market(self,ticker):
+                raise AssertionError("planning must not perform per-market quote GETs")
+
+        client=ElevenPageClient()
+        plan=build_prospective_kalshi_plan(
+            client=client,
+            planned_at=NOW,
+            market_count=22,
+        )
+        self.assertEqual(plan["discovery_pages"],11)
+        self.assertEqual(client.calls,11)
+        self.assertEqual(plan["planned_market_count"],22)
+        self.assertGreaterEqual(
+            len({x["event_ticker"] for x in plan["markets"]}),10
+        )
+        self.assertEqual(plan["network_methods"],["GET"])
+        self.assertEqual(plan["demo_order_submission"],"DISABLED")
+        self.assertEqual(plan["live_order_submission"],"DISABLED")
+
     def test_plan_archive_is_private_create_only_and_tamper_detected(self):
         root=self.make_root()
         plan=build_prospective_kalshi_plan(
