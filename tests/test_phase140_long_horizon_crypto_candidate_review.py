@@ -2,6 +2,7 @@ import unittest
 
 from signal_vault.long_horizon_crypto_candidate_review import (
     BLOCKED_KIND,
+    CANDIDATES,
     OUTPUT_KIND,
     build_long_horizon_candidate_review,
 )
@@ -30,7 +31,7 @@ def offline_report(*,winner=EMA,test_pnl="2",second_winner=False):
     per={}
     for sym in SYMBOLS:
         per[sym]={}
-        for strat in (EMA,CONF,MOM):
+        for strat in CANDIDATES:
             good=strat==winner or (second_winner and strat==CONF)
             per[sym][strat]={
                 "development":fold("2","1",2,"1") if good else fold("-1","0",2,"1"),
