@@ -1,0 +1,114 @@
+# MANUAL ONLY: 90-day historical crypto DATA GET for candidate research.
+# Ends before the later six-day confirmation window. No PAPER/LIVE orders.
+name: Manual 90-day crypto candidate research (historical only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_utc:
+        description: "Inclusive UTC start; exact 90-day research window"
+        type: string
+        required: true
+        default: "2026-06-27T18:00:00Z"
+      end_utc:
+        description: "Exclusive UTC end; immediately before six-day confirmation"
+        type: string
+        required: true
+        default: "2026-09-25T18:00:00Z"
+      symbols:
+        description: "Frozen six-crypto research universe"
+        type: choice
+        options:
+          - "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
+        default: "BTC/USD ETH/USD SOL/USD LTC/USD LINK/USD AVAX/USD"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: historical-crypto-90day-candidate-research
+  cancel-in-progress: false
+
+jobs:
+  long-horizon-candidate-research:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Checkout reviewed default-branch research code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install source-only project
+        run: python -m pip install --no-cache-dir .
+
+      - name: Verify exact 90-day pre-confirmation plan before secrets
+        env:
+          SV_START_UTC: ${{ inputs.start_utc }}
+          SV_END_UTC: ${{ inputs.end_utc }}
+          SV_SYMBOLS: ${{ inputs.symbols }}
+        run: |
+          python - <<'PY'
+          import os
+          from signal_vault.multi_asset_research_cli import historical_plan,aware
+          from signal_vault.research_universe import AssetClass
+          start=aware(os.environ["SV_START_UTC"])
+          end=aware(os.environ["SV_END_UTC"])
+          if int((end-start).total_seconds()//3600) != 2160:
+              raise SystemExit("exact 90-day historical research window required")
+          if end.isoformat() != "2026-09-25T18:00:00+00:00":
+              raise SystemExit("research window must end before six-day confirmation")
+          plan=historical_plan(
+              symbols=os.environ["SV_SYMBOLS"].split(),
+              start=start,end=end,market=AssetClass.CRYPTO)
+          print(plan)
+          PY
+
+      - name: Authenticated HISTORICAL DATA GET only
+        env:
+          SIGNAL_VAULT_RESEARCH_READ_APPROVED: HISTORICAL_CRYPTO_DATA_GET_ONLY
+          SIGNAL_VAULT_RESEARCH_START_UTC: ${{ inputs.start_utc }}
+          SIGNAL_VAULT_RESEARCH_END_UTC: ${{ inputs.end_utc }}
+          SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
+          SIGNAL_VAULT_RESEARCH_DATA_KEY_ID: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_KEY_ID }}
+          SIGNAL_VAULT_RESEARCH_DATA_SECRET: ${{ secrets.SIGNAL_VAULT_RESEARCH_DATA_SECRET }}
+        run: python -m signal_vault.ci_historical_crypto
+
+      - name: Offline SHA audit and three fixed cost scenarios
+        env:
+          SIGNAL_VAULT_RESEARCH_READ_APPROVED: HISTORICAL_CRYPTO_DATA_GET_ONLY
+          SIGNAL_VAULT_RESEARCH_START_UTC: ${{ inputs.start_utc }}
+          SIGNAL_VAULT_RESEARCH_END_UTC: ${{ inputs.end_utc }}
+          SIGNAL_VAULT_RESEARCH_SYMBOLS: ${{ inputs.symbols }}
+        run: python -m signal_vault.ci_historical_report
+
+      - name: Build 90-day candidate research receipt
+        run: |
+          set +e
+          python -m signal_vault.long_horizon_crypto_candidate_review             private-historical-artifacts/offline_research_analysis.json             --output private-historical-artifacts/long_horizon_candidate_review.json
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            exit 2
+          fi
+          if [ "$code" -eq 3 ]; then
+            echo "90-day research completed but no candidate qualified."
+          fi
+
+      - name: Archive immutable research evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: crypto-90day-candidate-research-${{ github.run_id }}
+          path: private-historical-artifacts/*.json
+          if-no-files-found: error
+          retention-days: 7
