@@ -21,14 +21,15 @@ def bars(values):
         opened=start+timedelta(hours=i)
         out.append(ResearchBar(
             symbol="BTC/USD",
-            feed="test",
             start_utc=opened,
-            closed_utc=opened+timedelta(hours=1),
             open=Decimal(str(value)),
             high=Decimal(str(value)),
             low=Decimal(str(value)),
             close=Decimal(str(value)),
             volume=Decimal("1"),
+            feed="test",
+            captured_utc=opened+timedelta(hours=1),
+            prospective=False,
         ))
     return tuple(out)
 
