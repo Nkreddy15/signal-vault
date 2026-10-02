@@ -26,7 +26,7 @@ from .research_universe import ResearchBar,candidate,validate_asset_dataset
 
 MODEL_WARMUP_CHILD="model-warmup"
 TARGET_CORE_HOURS=60
-MAX_WARMUP_FILE_BYTES=2_000_000
+MAX_WARMUP_FILE_BYTES=1_000_000
 
 
 def _utc(value:datetime)->datetime:
