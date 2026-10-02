@@ -385,7 +385,6 @@ def allocate_opportunities(
         raise ValueError("current notional exposure already exceeds allocator cap")
 
     for item in eligible:
-        position = limits.position_notional_usd
         identity = (item.market, item.instrument)
 
         if identity in occupied:
@@ -394,25 +393,57 @@ def allocate_opportunities(
         if projected_open_positions >= limits.max_positions:
             rejected.append(RejectedOpportunity(item, "MAX_POSITION_COUNT"))
             continue
-        if total + position > limits.max_total_exposure_usd:
-            rejected.append(RejectedOpportunity(item, "TOTAL_EXPOSURE_CAP"))
-            continue
-        if market_exposure[item.market] + position > market_caps[item.market]:
-            rejected.append(RejectedOpportunity(item, "MARKET_EXPOSURE_CAP"))
-            continue
         count = group_counts.get(item.correlation_group, 0)
         if count >= limits.max_positions_per_correlation_group:
             rejected.append(RejectedOpportunity(item, "CORRELATION_GROUP_CAP"))
             continue
 
-        # The common risk kernel works in maximum-loss dollars, while allocator
-        # concentration limits above work in gross notional dollars.
-        reserved_max_loss = position * item.max_loss_return
+        # Position size is capped by BOTH notional concentration and maximum-loss
+        # risk. This matters especially for binary event contracts where the
+        # premium can be lost entirely. A $15 normal stake therefore becomes
+        # $10 when the shared single-position max-loss cap is $10.
         lane = _MARKET_TO_RISK_LANE[item.market]
         risk_by_lane = {
             _MARKET_TO_RISK_LANE[market]: value
             for market, value in risk_exposure.items()
         }
+        shared = limits.shared_risk_limits
+        current_risk_total = sum(risk_exposure.values(), Decimal("0"))
+        remaining_notional_total = limits.max_total_exposure_usd - total
+        remaining_notional_market = (
+            market_caps[item.market] - market_exposure[item.market]
+        )
+        remaining_single_risk_notional = (
+            shared.max_single_new_risk_usd / item.max_loss_return
+        )
+        remaining_total_risk_notional = (
+            (shared.max_total_exposure_usd - current_risk_total)
+            / item.max_loss_return
+        )
+        remaining_lane_risk_notional = (
+            (
+                shared.cap_for(lane)
+                - risk_exposure[item.market]
+            )
+            / item.max_loss_return
+        )
+        position = min(
+            limits.position_notional_usd,
+            remaining_notional_total,
+            remaining_notional_market,
+            remaining_single_risk_notional,
+            remaining_total_risk_notional,
+            remaining_lane_risk_notional,
+        )
+        if position <= 0:
+            rejected.append(
+                RejectedOpportunity(item, "NO_SHARED_RISK_OR_NOTIONAL_CAPACITY")
+            )
+            continue
+
+        # The common risk kernel works in maximum-loss dollars, while allocator
+        # concentration limits above work in gross notional dollars.
+        reserved_max_loss = position * item.max_loss_return
         risk_receipt = assess_new_risk(
             lane=lane,
             proposed_max_loss_usd=reserved_max_loss,
