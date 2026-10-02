@@ -1,0 +1,42 @@
+name: Experimental BTC PAPER readiness (GET-only)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experimental-btc-paper-readiness
+  cancel-in-progress: true
+
+jobs:
+  readiness:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+      ALPACA_PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --no-cache-dir .
+      - name: Build GET-only readiness report
+        run: |
+          python -m signal_vault.experimental_paper_readiness \
+            --output experimental-paper-readiness.json
+      - name: Archive readiness receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experimental-paper-readiness-${{ github.run_id }}
+          path: experimental-paper-readiness.json
+          if-no-files-found: warn
+          retention-days: 2
