@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from signal_vault.opportunity_engine import (
+    AllocationPortfolioState,
     AllocatorLimits,
     Direction,
     Market,
@@ -177,6 +178,88 @@ class Phase162OpportunityEngineTests(unittest.TestCase):
         self.assertLessEqual(
             decision.market_exposure_usd[Market.CRYPTO],
             Decimal("30"),
+        )
+
+    def test_existing_instrument_cannot_be_selected_twice(self):
+        candidate = _opportunity(
+            "btc-again",
+            market=Market.CRYPTO,
+            instrument="BTC/USD",
+            direction=Direction.LONG,
+            gross="0.03",
+            group="crypto-beta",
+        )
+        portfolio = AllocationPortfolioState(
+            notional_exposure_usd={Market.CRYPTO: Decimal("15")},
+            risk_exposure_usd={Market.CRYPTO: Decimal("1")},
+            open_positions=1,
+            open_instruments=frozenset({(Market.CRYPTO, "BTC/USD")}),
+            marked_equity_usd=Decimal("100"),
+            daily_anchor_equity_usd=Decimal("100"),
+            peak_equity_usd=Decimal("100"),
+        )
+        decision = allocate_opportunities(
+            (candidate,),
+            as_of=NOW,
+            portfolio=portfolio,
+        )
+        self.assertEqual(len(decision.selected), 0)
+        self.assertEqual(
+            decision.rejected[0].reason,
+            "DUPLICATE_INSTRUMENT_EXPOSURE",
+        )
+
+    def test_existing_drawdown_routes_through_shared_risk_governor(self):
+        candidate = _opportunity(
+            "nvda-risk",
+            market=Market.US_EQUITY,
+            instrument="NVDA",
+            direction=Direction.LONG,
+            gross="0.03",
+            group="growth",
+        )
+        portfolio = AllocationPortfolioState(
+            notional_exposure_usd={},
+            risk_exposure_usd={},
+            open_positions=0,
+            open_instruments=frozenset(),
+            marked_equity_usd=Decimal("89"),
+            daily_anchor_equity_usd=Decimal("100"),
+            peak_equity_usd=Decimal("100"),
+        )
+        decision = allocate_opportunities(
+            (candidate,),
+            as_of=NOW,
+            portfolio=portfolio,
+        )
+        self.assertEqual(len(decision.selected), 0)
+        self.assertEqual(
+            decision.rejected[0].reason,
+            "SHARED_RISK_GOVERNOR_REJECTED",
+        )
+        self.assertIn(
+            "PERSISTENT_PEAK_DRAWDOWN_HALT",
+            decision.rejected[0].details,
+        )
+
+    def test_selected_item_contains_non_authorizing_shared_risk_receipt(self):
+        candidate = _opportunity(
+            "spy-risk-receipt",
+            market=Market.US_EQUITY,
+            instrument="SPY",
+            direction=Direction.LONG,
+            gross="0.03",
+            group="index",
+        )
+        decision = allocate_opportunities((candidate,), as_of=NOW)
+        self.assertEqual(len(decision.selected), 1)
+        selected = decision.selected[0]
+        self.assertEqual(selected.reserved_max_loss_usd, Decimal("0.75"))
+        self.assertTrue(selected.shared_risk_receipt["risk_admissible"])
+        self.assertTrue(
+            selected.shared_risk_receipt[
+                "assessment_is_not_trading_authorization"
+            ]
         )
 
     def test_stale_opportunity_is_rejected(self):
