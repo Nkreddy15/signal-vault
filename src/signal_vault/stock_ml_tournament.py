@@ -128,12 +128,12 @@ def _build_rows(datasets, timeline):
             / frame.volume.rolling(24).std()
         )
 
-        # Existing conservative collector keeps six complete core-hour buckets
-        # per ordinary full XNYS session. Encode intraday location without ever
-        # fabricating overnight bars. Early closes simply end the actual grid.
-        bucket = np.arange(n) % 6
-        frame["session_bucket_sin"] = np.sin(2 * np.pi * bucket / 6.0)
-        frame["session_bucket_cos"] = np.cos(2 * np.pi * bucket / 6.0)
+        # Encode actual observed UTC clock time rather than assuming six bars
+        # per session; this remains correct across early closes and never
+        # fabricates missing overnight/weekend buckets.
+        hour = frame["ts"].dt.hour + frame["ts"].dt.minute / 60.0
+        frame["session_bucket_sin"] = np.sin(2 * np.pi * hour / 24.0)
+        frame["session_bucket_cos"] = np.cos(2 * np.pi * hour / 24.0)
         frames[symbol] = frame
 
     for index in range(n):
