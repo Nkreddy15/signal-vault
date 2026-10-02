@@ -30,6 +30,33 @@ class SignalVaultPaperExecutionV1(IStrategy):
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
 
+    @property
+    def protections(self):
+        """Fail-safe PAPER protections around a deliberately active harness."""
+        return [
+            {
+                "method": "CooldownPeriod",
+                "stop_duration_candles": 3,
+            },
+            {
+                "method": "StoplossGuard",
+                "lookback_period_candles": 72,
+                "trade_limit": 3,
+                "stop_duration_candles": 12,
+                "required_profit": 0.0,
+                "only_per_pair": False,
+                "only_per_side": False,
+            },
+            {
+                "method": "MaxDrawdown",
+                "lookback_period_candles": 288,
+                "trade_limit": 6,
+                "stop_duration_candles": 24,
+                "max_allowed_drawdown": 0.05,
+                "calculation_mode": "equity",
+            },
+        ]
+
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
         close = dataframe["close"]
         dataframe["sv_ema_5"] = close.ewm(span=5, adjust=False).mean()
