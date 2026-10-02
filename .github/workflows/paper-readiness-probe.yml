@@ -1,0 +1,98 @@
+name: PAPER readiness probe (GET-only, no orders)
+
+on:
+  push:
+    branches:
+      - paper-readiness-probe
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paper-readiness-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+      ALPACA_PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project
+        run: python -m pip install --no-cache-dir .
+
+      - name: Read-only PAPER account readiness
+        run: |
+          python - <<'PY' > paper-account-readiness.json
+          import json, os
+          from signal_vault.paper_credentials import PaperCredentials
+          from signal_vault.alpaca_paper import PaperAlpacaReadClient
+          out={
+            "kind":"PAPER_ACCOUNT_READINESS_PROBE_GET_ONLY",
+            "paper_order_submission":"DISABLED",
+            "live_trading":"UNAVAILABLE",
+          }
+          try:
+              creds=PaperCredentials.from_environment(os.environ)
+              ready=PaperAlpacaReadClient(creds.key_id,creds.secret_key).readiness()
+              out.update({
+                  "status":"AVAILABLE",
+                  "ready":ready.ready,
+                  "reasons":list(ready.reasons),
+                  "logical_cap_usd":str(ready.logical_cap_usd),
+              })
+          except Exception as exc:
+              out.update({
+                  "status":"FAILED_SAFE",
+                  "failure_class":type(exc).__name__,
+                  "ready":False,
+              })
+          print(json.dumps(out,sort_keys=True,indent=2))
+          PY
+          cat paper-account-readiness.json
+
+      - name: Dry-run EMA current signal
+        run: |
+          set +e
+          python -m signal_vault.experimental_paper_sandbox \
+            --strategy generic-ema12x26-v1-predeclared \
+            --receipt paper-ema-readiness.json
+          echo $? > paper-ema-exit-code.txt
+          set -e
+          if [ -f paper-ema-readiness.json ]; then cat paper-ema-readiness.json; fi
+
+      - name: Dry-run momentum current signal
+        run: |
+          set +e
+          python -m signal_vault.experimental_paper_sandbox \
+            --strategy generic-momentum24bar50bps-v1-predeclared \
+            --receipt paper-momentum-readiness.json
+          echo $? > paper-momentum-exit-code.txt
+          set -e
+          if [ -f paper-momentum-readiness.json ]; then cat paper-momentum-readiness.json; fi
+
+      - name: Archive GET-only readiness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-readiness-probe-${{ github.run_id }}
+          path: |
+            paper-account-readiness.json
+            paper-ema-readiness.json
+            paper-momentum-readiness.json
+            paper-ema-exit-code.txt
+            paper-momentum-exit-code.txt
+          if-no-files-found: warn
+          retention-days: 2
