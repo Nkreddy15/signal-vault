@@ -34,7 +34,7 @@ class _NoRedirects(HTTPRedirectHandler):
 
 
 def _get_paper_json(path: str, key: str, secret: str) -> object:
-    fixed = path in ("/v2/account", "/v2/assets/BTC%2FUSD", "/v2/positions", "/v2/orders?status=open")
+    fixed = path in ("/v2/account", "/v2/assets/BTCUSD", "/v2/positions", "/v2/orders?status=open")
     lookup = re.fullmatch(r"/v2/orders:by_client_order_id\?client_order_id=[a-zA-Z0-9_-]{1,48}", path)
     fills = re.fullmatch(r"/v2/account/activities/FILL\?order_id=[0-9a-fA-F-]{36}", path)
     fees = re.fullmatch(r"/v2/account/activities/(?:CFEE|FEE)\?order_id=[0-9a-fA-F-]{36}", path)
@@ -60,6 +60,24 @@ def _get_paper_json(path: str, key: str, secret: str) -> object:
     return result
 
 
+class PaperReadStageError(RuntimeError):
+    """Sanitized PAPER GET failure with stage and optional HTTP status only."""
+    def __init__(self, stage: str, failure_class: str, http_status: int | None = None):
+        super().__init__(f"{stage}:{failure_class}")
+        self.stage = stage
+        self.failure_class = failure_class
+        self.http_status = http_status
+
+
+def _paper_read_stage(stage: str, fn):
+    try:
+        return fn()
+    except HTTPError as exc:
+        raise PaperReadStageError(stage, "HTTPError", exc.code) from None
+    except Exception as exc:
+        raise PaperReadStageError(stage, type(exc).__name__, None) from None
+
+
 class PaperAlpacaReadClient:
     """Read-only and hardcoded to the PAPER host, no transfer/order endpoints."""
     def __init__(self, paper_key: str, paper_secret: str,
@@ -76,7 +94,7 @@ class PaperAlpacaReadClient:
         return value
 
     def get_btc_asset(self) -> Mapping[str, object]:
-        value = self._transport("/v2/assets/BTC%2FUSD", self._paper_key, self._paper_secret)
+        value = self._transport("/v2/assets/BTCUSD", self._paper_key, self._paper_secret)
         if (not isinstance(value, Mapping) or value.get("symbol") != "BTC/USD" or
             value.get("class") != "crypto" or value.get("status") != "active" or
             value.get("tradable") is not True or value.get("fractionable") is not True):
@@ -146,14 +164,14 @@ class PaperAlpacaReadClient:
 
     def readiness(self) -> "PaperReadiness":
         """Read-only gate: never use default simulated broker balance as our $100 cap."""
-        account = self.get_account()
-        asset = self.get_btc_asset()
+        account = _paper_read_stage("paper_account", self.get_account)
+        asset = _paper_read_stage("btc_asset", self.get_btc_asset)
         try:
-            CryptoVenueRules.from_asset(asset)
-        except ValueError as exc:
-            raise ValueError("provider BTC/USD trading constraints unavailable") from exc
-        positions = self.get_positions()
-        open_orders = self.get_open_orders()
+            _paper_read_stage("btc_venue_rules", lambda: CryptoVenueRules.from_asset(asset))
+        except PaperReadStageError:
+            raise
+        positions = _paper_read_stage("paper_positions", self.get_positions)
+        open_orders = _paper_read_stage("paper_open_orders", self.get_open_orders)
         problems: list[str] = []
         if str(account.get("status", "")).upper() != "ACTIVE":
             problems.append("paper account not active")
