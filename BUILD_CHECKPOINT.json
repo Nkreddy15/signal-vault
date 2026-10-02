@@ -1,107 +1,88 @@
 {
   "kind": "SIGNAL_VAULT_DURABLE_BUILD_CHECKPOINT",
-  "checkpoint_version": 2,
-  "updated_utc": "2026-10-01T18:12:31Z",
-  "latest_completed_phase": 132,
-  "current_phase": 133,
-  "main_sha": "9b3bad99cf8e2c50c85a4349a6dd167e8a21df38",
-  "github_ci": {
-    "phase104": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase105": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase107": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase109": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase110": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase117": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase118": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase119": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase122": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase123": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase124": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase125": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase126": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase127": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase129": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase130": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase131": "PASS_PY311_PY312_FULL_SAFETY_SUITE",
-    "phase132": "PASS_PY311_PY312_FULL_SAFETY_SUITE"
+  "checkpoint_version": 3,
+  "updated_utc": "2026-10-02T04:08:00Z",
+  "latest_completed_phase": 160,
+  "current_phase": 161,
+  "main_sha": "92834c7ba71167b0304fbd578e2cefd0e1a15c77",
+  "github_actions": {
+    "status": "PLATFORM_OR_RUNNER_BLOCKED_BEFORE_STEPS",
+    "last_full_green_phase": 152,
+    "note": "Recent jobs fail before any steps are created/executed; do not interpret as a code-test failure.",
+    "ci_trigger_deduplication_phase159": "MERGED"
   },
   "railway": {
     "project": "signal-vault-forward-research",
     "service": "btcusd-hourly-get-cron",
-    "production_deployment_id": "b121714f-f295-47e2-a31f-d21b2aa7d317",
+    "production_deployment_id": "f446653c-2aaf-4c82-975e-93f20644e452",
     "production_deployment_status": "SUCCESS",
-    "source_sha": "9b3bad99cf8e2c50c85a4349a6dd167e8a21df38",
-    "source_phase": 132,
+    "source_sha": "4b5bb3c2b462e62f3f7cdc82018dc0a28c97f00d",
+    "source_phase": 153,
     "cron_schedule": "7 * * * *",
     "shared_volume_mb": 500,
-    "dashboard_snapshot_status": "AVAILABLE_ON_LAST_VERIFIED_TICK",
-    "order_submission": "DISABLED"
+    "new_paid_resource_created": false,
+    "order_submission": "DISABLED",
+    "live_trading": "UNAVAILABLE"
   },
   "lanes": {
     "six_crypto": {
       "state": "UNATTENDED_PROSPECTIVE_COLLECTION_ACTIVE",
-      "latest_verified_source_hours": 31,
-      "latest_verified_scored_outcomes": 30,
-      "review_gate_source_hours_remaining_to_169": 138,
-      "review_gate_scored_outcomes_remaining_to_168": 138,
-      "verified_at_utc": "2026-10-01T17:08:29Z"
+      "latest_verified_source_hours": 41,
+      "latest_verified_scored_outcomes": 40,
+      "source_hours_remaining_to_168": 127,
+      "scored_intervals_remaining_to_168": 128,
+      "latest_verified_at_utc": "2026-10-02T03:10:28Z",
+      "latest_shadow_archive_complete": true,
+      "post_phase153_current_action_visibility": "AWAITING_FIRST_POST_FIX_CRON_VERIFICATION"
     },
     "us_equity": {
-      "state": "FIRST_XNYS_SESSION_PROSPECTIVE_COLLECTION_ACTIVE",
-      "latest_verified_session_plans": 1,
-      "latest_verified_core_hour_receipts": 3,
-      "latest_verified_planned_core_hours": 6,
-      "session_plans_remaining_to_10": 9,
-      "core_hour_receipts_remaining_to_60": 57,
-      "verified_at_utc": "2026-10-01T17:08:29Z"
+      "state": "PROSPECTIVE_COLLECTION_ACTIVE",
+      "latest_verified_core_hour_receipts": 6,
+      "core_hour_receipts_remaining_to_60": 54,
+      "latest_verified_at_utc": "2026-10-02T03:10:28Z"
     },
     "kalshi": {
-      "state": "PHASE130_BOUNDED_CLOSE_WINDOW_DISCOVERY_DEPLOYED_AWAITING_FIRST_POST_DEPLOY_CRON",
-      "latest_verified_plan_present": false,
-      "last_verified_runtime_status": "PLANNING_BLOCKED_FAIL_CLOSED",
-      "last_verified_runtime_failure_code": "OTHER_STRUCTURAL_PLAN_VALIDATION_FAILURE",
-      "last_verified_public_get_requests_used": 18,
-      "discovery_source_now": "PUBLIC_MARKETS_BOUNDED_CLOSE_WINDOW",
-      "planned_sample_target_markets": 22,
-      "minimum_distinct_events": 10,
-      "max_public_gets_per_tick": 25,
-      "phase129_precise_failure_codes": "BUILT",
-      "phase130_bounded_close_window": "BUILT_AND_DEPLOYED",
-      "next_required_evidence": "FIRST_POST_PHASE130_OR_PHASE132_CRON_PLAN_OR_PRECISE_BOUNDED_FAILURE_CODE"
+      "state": "PLAN_PRESENT_PROSPECTIVE_CAPTURE_NOT_STARTED",
+      "planned_market_count": 22,
+      "prospective_snapshots_captured": 0,
+      "settlement_receipts_captured": 0,
+      "latest_verified_at_utc": "2026-10-02T03:10:28Z"
     }
   },
-  "dashboard": {
-    "phase109_readonly_all_market_dashboard": "BUILT",
-    "phase110_persisted_snapshot": "PRODUCTION_VERIFIED_AVAILABLE",
-    "phase113_standalone_private_server": "BUILT",
-    "phase116_paper_pipeline_engineering_state": "BUILT",
-    "phase124_provider_preflight_status": "BUILT",
-    "phase131_operator_progress_meters": "BUILT_AND_DEPLOYED",
-    "phase132_latest_kalshi_tick_diagnostics": "BUILT_AND_DEPLOYED",
-    "public_internet_exposure": "DISABLED"
+  "strategy_research": {
+    "phase149_strength_tilt": "BLOCKED_NO_STRENGTH_TILT_CANDIDATE",
+    "phase150_regime_gated_strength_tilt": "MERGED_REPLAY_NOT_YET_COMPLETED",
+    "historical_holdout_reuse_policy": "DESCRIPTIVE_ONLY_NOT_PRISTINE",
+    "automatic_strategy_ranking": "DISABLED"
   },
-  "paper_execution": {
-    "supervised_alpaca_paper_smoke": "RECONCILED",
-    "phase111_shared_risk_intent_preview": "BUILT",
-    "phase112_crypto_paper_activation_handoff": "BUILT",
-    "phase114_conservative_crypto_decision_intent": "BUILT",
-    "phase115_end_to_end_dry_run": "BUILT",
-    "phase118_durable_approved_draft_handoff": "BUILT",
-    "phase119_one_shot_alpaca_paper_executor_bridge": "BUILT_NOT_AUTOMATIC",
-    "phase121_provider_preflight": "BUILT",
-    "phase122_fresh_preflight_execution_boundary": "BUILT",
-    "phase125_refreshable_preflight_history": "BUILT",
-    "phase127_preflight_first_pilot_command": "BUILT_NOT_ACTIVATED",
-    "autonomous_strategy_paper": "DISABLED_PENDING_REAL_FORWARD_GATE",
-    "kalshi_demo_orders": "DISABLED",
+  "experimental_paper": {
+    "phase152_sandbox": "MERGED",
+    "max_notional_usd": "10",
+    "strategy_validated": false,
+    "independent_prospective_gate_passed": false,
+    "phase154_durable_receipt_and_journal": "MERGED",
+    "phase155_read_only_reconciliation": "MERGED",
+    "local_fallback_scripts": "MERGED",
+    "get_only_readiness_report": "MERGED",
+    "local_combined_readiness": "MERGED",
+    "execute_from_fresh_readiness": "MERGED",
+    "exact_acknowledgement": "I_ACKNOWLEDGE_ALPACA_CRYPTO_PAPER_ORDERS_ONLY",
+    "automatic_paper_activation": "DISABLED",
     "live_trading": "UNAVAILABLE"
   },
+  "manual_owner_path_when_ready": [
+    "git pull origin main",
+    "bash scripts/run_experimental_paper_sandbox.sh all dry-run",
+    "If readiness selects exactly one BUY strategy and PAPER account is ready: bash scripts/execute_ready_experimental_paper.sh <fresh-readiness-receipt.json>",
+    "Type the exact PAPER acknowledgement only at the execution prompt.",
+    "After any POST attempt, reconcile using scripts/reconcile_experimental_paper_sandbox.sh with the archived/local receipt and journal before any new execution."
+  ],
   "next_actions": [
-    "INSPECT_FIRST_POST_PHASE130_OR_PHASE132_RAILWAY_CRON",
-    "VERIFY_KALSHI_22_MARKET_BOUNDED_CLOSE_WINDOW_PLAN_OR_PRECISE_BLOCKER",
-    "CONTINUE_SIX_CRYPTO_PROSPECTIVE_COLLECTION_TO_FROZEN_GATE",
-    "CONTINUE_XNYS_CORE_HOUR_PROSPECTIVE_COLLECTION",
-    "KEEP_PHASE127_PAPER_PILOT_COMMAND_PREFLIGHT_ONLY_UNTIL_REAL_GATE_AND_EXPLICIT_OWNER_EXECUTION"
+    "VERIFY_FIRST_POST_PHASE153_RAILWAY_CRON_EXPOSES_CURRENT_BTC_ACTIONS",
+    "RUN_PHASE150_REGIME_GATED_REPLAY_WHEN_GITHUB_ACTIONS_RUNNERS_RECOVER",
+    "USE_LOCAL_GET_ONLY_READINESS_PATH_FOR_FIRST_EXPERIMENTAL_PAPER_IF OWNER CHOOSES",
+    "KEEP_ONE_SHOT_DUPLICATE_AND_RECONCILIATION_GATES",
+    "CONTINUE_ALL_MARKET_PROSPECTIVE_COLLECTION"
   ],
   "invariants": [
     "NO_NEW_PAID_RAILWAY_RESOURCE",
@@ -110,6 +91,7 @@
     "NO_AUTOMATIC_PAPER_OR_LIVE_ORDER_SUBMISSION",
     "ONE_SHARED_CROSS_MARKET_RISK_GOVERNOR",
     "PAPER_PREFLIGHT_MUST_BE_FRESH_AT_EXECUTION_BOUNDARY",
+    "BLIND_RETRY_FORBIDDEN",
     "LIVE_TRADING_UNAVAILABLE"
   ]
 }
