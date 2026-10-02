@@ -134,6 +134,13 @@ def _require_risk_receipt(
     additive=receipt.get("kind")=="CROSS_MARKET_RISK_ASSESSMENT_NOT_ORDER_AUTHORIZATION"
     if not (base and additive):
         raise PermissionError("matching admissible cross-market risk receipt required")
+    try:
+        authorized_max_loss=Decimal(str(receipt["proposed_max_loss_usd"]))
+    except (KeyError,InvalidOperation,TypeError,ValueError) as exc:
+        raise PermissionError("risk receipt missing bounded proposed loss") from exc
+    if (not authorized_max_loss.is_finite() or authorized_max_loss<=0 or
+            draft.max_loss_usd>authorized_max_loss):
+        raise PermissionError("draft risk exceeds matching risk receipt")
 
 
 def _decimal(raw: str, *, name: str) -> Decimal:
