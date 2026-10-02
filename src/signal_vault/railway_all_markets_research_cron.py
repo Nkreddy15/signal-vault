@@ -34,6 +34,7 @@ from .railway_multimarket_research_cron import combined_multimarket_once
 from .all_market_forward_status import all_market_forward_status
 from .all_market_dashboard import build_dashboard_snapshot
 from .dashboard_snapshot_archive import archive_dashboard_snapshot
+from .six_crypto_shadow import inspect_six_crypto_shadow
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -225,6 +226,30 @@ def combined_all_markets_once(
                     output["dashboard_strategy_research_paper_activation_permitted"]=(
                         research.get("paper_activation_permitted") is True
                     )
+                try:
+                    shadow=inspect_six_crypto_shadow(root=btc_root)
+                    if shadow.get("kind")=="OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY":
+                        decisions=shadow.get("predeclared_flat_and_held_hypothetical_decisions",{})
+                        btc=decisions.get("BTC/USD",{}) if isinstance(decisions,Mapping) else {}
+                        if isinstance(btc,Mapping):
+                            actions={}
+                            for name,item in btc.items():
+                                flat=item.get("flat") if isinstance(item,Mapping) else None
+                                action=flat.get("hypothetical_action") if isinstance(flat,Mapping) else None
+                                if isinstance(name,str) and action in ("buy","hold","sell"):
+                                    actions[name]=action
+                            output["current_btc_shadow_status"]="AVAILABLE"
+                            output["current_btc_shadow_close_utc"]=shadow.get("latest_newly_observed_UTC_close")
+                            output["current_btc_flat_actions"]=actions
+                            output["current_btc_shadow_payload_sha256"]=shadow.get("shadow_payload_sha256")
+                            output["current_btc_actions_are_order_authority"]=False
+                        else:
+                            output["current_btc_shadow_status"]="FAILED_SAFE"
+                    else:
+                        output["current_btc_shadow_status"]="NO_GENUINE_PROSPECTIVE_SHADOW"
+                except Exception as exc:
+                    output["current_btc_shadow_status"]="FAILED_SAFE"
+                    output["current_btc_shadow_failure_class"]=type(exc).__name__
             except Exception as exc:
                 output["dashboard_snapshot_status"]="FAILED_SAFE"
                 output["dashboard_snapshot_failure_class"]=type(exc).__name__
