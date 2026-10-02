@@ -128,6 +128,21 @@ class MultiMarketPaperRouterTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             route_paper_execution(draft,risk_assessment=risk("crypto"))
 
+    def test_draft_cannot_exceed_risk_receipt_amount(self):
+        draft = MultiMarketOrderDraft(
+            "risk-too-large","crypto","BTC/USD",Decimal("6"),
+            {
+                "symbol":"BTC/USD","side":"buy","type":"market",
+                "time_in_force":"gtc","notional":"6",
+                "client_order_id":"risk-too-large",
+            },
+        )
+        with self.assertRaises(PermissionError):
+            route_paper_execution(
+                draft,
+                risk_assessment=risk("crypto"),
+            )
+
     def test_wrong_ack_never_becomes_authorized(self):
         draft = MultiMarketOrderDraft(
             "c2","crypto","ETH/USD",Decimal("5"),
