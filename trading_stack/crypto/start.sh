@@ -7,43 +7,39 @@ set -euo pipefail
 : "${FREQTRADE__API_SERVER__WS_TOKEN:?FreqUI websocket token required}"
 
 PERSIST_DIR="${PERSIST_DIR:-/freqtrade/data}"
-mkdir -p "$PERSIST_DIR/marketdata" /freqtrade/user_data/strategies
+mkdir -p "$PERSIST_DIR" /freqtrade/user_data/strategies
+
+# Fail closed: this image is an experimental PAPER/dry-run adapter only.
+case "${FREQTRADE__DRY_RUN:-true}" in
+  false|False|FALSE|0|no|No|NO)
+    echo "Refusing to start: Signal Vault Freqtrade adapter is PAPER/dry-run only." >&2
+    exit 2
+    ;;
+esac
+
+if [[ -n "${FREQTRADE__EXCHANGE__KEY:-}" || -n "${FREQTRADE__EXCHANGE__SECRET:-}" ]]; then
+  echo "Refusing to start: exchange credentials are not accepted by this PAPER-only adapter." >&2
+  exit 2
+fi
 
 python - <<'PY'
-import pathlib
-import urllib.request
-url = "https://raw.githubusercontent.com/freqtrade/freqtrade-strategies/f3340ce11f5bdf62f598522e64d1f5638eaa13f5/user_data/strategies/Strategy001.py"
-dst = pathlib.Path("/freqtrade/user_data/strategies/Strategy001.py")
-if not dst.exists():
-    urllib.request.urlretrieve(url, dst)
+import json
+from pathlib import Path
+
+cfg = json.loads(Path("/freqtrade/user_data/config.json").read_text())
+if cfg.get("dry_run") is not True:
+    raise SystemExit("Refusing to start: config.json must keep dry_run=true")
+exchange = cfg.get("exchange") or {}
+if exchange.get("key") or exchange.get("secret"):
+    raise SystemExit("Refusing to start: PAPER-only config must not contain exchange credentials")
 PY
-
-if [[ ! -f "$PERSIST_DIR/bootstrap-v1.done" ]]; then
-  echo "Downloading 30 days of Kraken spot data for the configured six-pair universe..."
-  freqtrade download-data \
-    --config /freqtrade/user_data/config.json \
-    --datadir "$PERSIST_DIR/marketdata" \
-    --days 30 \
-    --timeframes 5m
-
-  echo "Running one bootstrap backtest before dry-run..."
-  set +e
-  freqtrade backtesting \
-    --config /freqtrade/user_data/config.json \
-    --datadir "$PERSIST_DIR/marketdata" \
-    --strategy Strategy001 \
-    --export trades \
-    --export-filename "$PERSIST_DIR/bootstrap-backtest.json" \
-    > "$PERSIST_DIR/bootstrap-backtest.log" 2>&1
-  code=$?
-  set -e
-  echo "$code" > "$PERSIST_DIR/bootstrap-backtest-exit-code.txt"
-  touch "$PERSIST_DIR/bootstrap-v1.done"
-fi
 
 DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/tradesv3.sqlite}"
 
+echo "Starting Signal Vault experimental PAPER strategy: hourly EMA 12x26, six-pair universe."
+echo "This is paper execution evidence collection, not a validated-profitability claim."
+
 exec freqtrade trade \
   --config /freqtrade/user_data/config.json \
-  --strategy Strategy001 \
+  --strategy SignalVaultPaperEMA12x26V1 \
   --db-url "$DB_URL"
