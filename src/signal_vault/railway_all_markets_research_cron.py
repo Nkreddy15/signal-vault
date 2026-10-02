@@ -38,7 +38,13 @@ from .dashboard_snapshot_archive import archive_dashboard_snapshot
 from .six_crypto_shadow import inspect_six_crypto_shadow
 from .current_compact_crypto_snapshot import current_compact_crypto_snapshot
 from .current_compact_stock_snapshot import current_compact_stock_snapshot
-from .equity_cloud_sidecar import CHILD as EQUITY_CHILD
+from .equity_cloud_sidecar import (
+    CHILD as EQUITY_CHILD,
+    KEY_ENV as EQUITY_KEY_ENV,
+    SECRET_ENV as EQUITY_SECRET_ENV,
+)
+from .equity_forward_archive_audit import load_current_equity_forward_segment
+from .equity_model_warmup import collect_stock_model_warmup
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -150,6 +156,31 @@ def combined_all_markets_once(
     if core.get("btc_evidence_changed_during_equity_stage") is not False:
         output["kalshi_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
         return output
+
+    try:
+        stock_root=btc_root/EQUITY_CHILD
+        if stock_root.exists():
+            _,_,stock_grid=load_current_equity_forward_segment(stock_root)
+            warmup=collect_stock_model_warmup(
+                stock_root=stock_root,
+                first_forward_open=stock_grid[0],
+                as_of=stamp,
+                key=str(env.get(EQUITY_KEY_ENV,"")),
+                secret=str(env.get(EQUITY_SECRET_ENV,"")),
+            )
+            output["stock_model_warmup_status"]=warmup.get("status")
+            output["stock_model_warmup_core_hours"]=warmup.get(
+                "warmup_core_hours_per_asset"
+            )
+            output["stock_model_warmup_network_requests"]=warmup.get(
+                "network_requests",0
+            )
+            output["stock_model_warmup_counts_as_prospective"]=False
+        else:
+            output["stock_model_warmup_status"]="NOT_STARTED"
+    except Exception as exc:
+        output["stock_model_warmup_status"]="FAILED_SAFE"
+        output["stock_model_warmup_failure_class"]=type(exc).__name__
 
     before=None
     try:
