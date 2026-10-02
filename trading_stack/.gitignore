@@ -1,0 +1,4 @@
+.env
+.caffeinate.pid
+*.log
+runtime/
