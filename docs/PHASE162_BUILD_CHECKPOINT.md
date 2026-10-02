@@ -240,6 +240,38 @@ silently hiding them.
 No autonomous entry/exit cycle has been observed yet, so execution behavior is
 running but not yet fully evidenced by completed trades.
 
+## Personalized interactive control room — 2026-10-02
+
+The unified dashboard has been rebuilt as the actual product interface rather
+than a static/debug view.
+
+Implemented:
+- personalized Signal Vault identity with large `NIKHIL REDDY` hero watermark,
+  "Nikhil Reddy // Control Room", mountain/space visual treatment, animated
+  starfield, aurora motion, glass panels and fluid hover/slide transitions;
+- real KPI hierarchy for crypto P&L/exposure, stock equity/P&L, completed trades
+  and U.S. market state;
+- clickable crypto position cards and clickable trade-history rows;
+- a real slide-over trade inspector with Overview / Chart / Execution / History
+  tabs;
+- a local read-only `/api/candles` proxy backed by Freqtrade
+  `pair_candles` for the live 5-minute strategy timeframe;
+- a custom SVG candlestick renderer that uses only returned market data and
+  explicitly refuses to fabricate candles if the engine returns none;
+- chart annotations for BUY entry, current/exit price, +0.40% ROI reference,
+  -2% stop-loss reference and SELL marker after a trade closes;
+- trade detail fields for entry/current/target/stop, stake, return, signal tag,
+  strategy-specific signal explanation, risk/reward, open/close time and exit
+  reason;
+- closed/open/all activity filters, system health, safety configuration, stock
+  orders and non-managed Alpaca PAPER positions;
+- dashboard inspection remains read-only and exposes no force-entry,
+  force-exit or live-money control.
+
+The +0.40% value is displayed as an ROI reference because the active strategy
+may exit earlier on a strategy exit signal. It is not mislabeled as a guaranteed
+take-profit order.
+
 ## GitHub Actions issue
 
 Current PR-triggered Actions runs are failing before any step records/logs are
