@@ -112,8 +112,15 @@ def _frames(datasets) -> dict[str, pd.DataFrame]:
         six = frame.groupby(group).agg({"close": "last"})
         six["sma50"] = six.close.rolling(50).mean()
         six["sma200"] = six.close.rolling(200).mean()
-        frame["six_sma50"] = np.repeat(six.sma50.to_numpy(), 6)[: len(frame)]
-        frame["six_sma200"] = np.repeat(six.sma200.to_numpy(), 6)[: len(frame)]
+        # A 6h bucket's final close is unavailable during its first five
+        # source hours. Shift one completed bucket before forward-expanding.
+        available = six[["sma50", "sma200"]].shift(1)
+        frame["six_sma50"] = np.repeat(
+            available.sma50.to_numpy(), 6
+        )[: len(frame)]
+        frame["six_sma200"] = np.repeat(
+            available.sma200.to_numpy(), 6
+        )[: len(frame)]
         frames[symbol] = frame
     return frames
 
