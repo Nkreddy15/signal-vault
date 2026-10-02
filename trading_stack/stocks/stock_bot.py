@@ -27,11 +27,40 @@ class SignalVaultStockPaperExecutionV1(Strategy):
         "top_n": 2,
         "logical_budget_usd": Decimal(os.environ.get("STOCK_LOGICAL_BUDGET_USD", "100")),
         "cash_buffer_ratio": Decimal("0.10"),
+        "daily_buy_submission_cap": int(os.environ.get("STOCK_DAILY_BUY_CAP", "16")),
+        "min_order_notional_usd": Decimal("2"),
     }
 
     def initialize(self):
         self.sleeptime = "15M"
         self.minutes_before_closing = 10
+        self.vars.order_budget_date = None
+        self.vars.buy_submissions_today = 0
+
+    def _reset_daily_order_budget(self):
+        today = self.get_datetime().date()
+        if self.vars.order_budget_date != today:
+            self.vars.order_budget_date = today
+            self.vars.buy_submissions_today = 0
+
+    def _submit_managed_order(self, symbol, qty, side):
+        if qty <= 0:
+            return False
+
+        if side == "buy":
+            cap = int(self.parameters["daily_buy_submission_cap"])
+            if self.vars.buy_submissions_today >= cap:
+                self.log_message(
+                    f"PAPER safety: daily buy submission cap reached ({cap}); "
+                    f"skipping new buy for {symbol}."
+                )
+                return False
+
+        self.submit_order(self.create_order(symbol, qty, side))
+
+        if side == "buy":
+            self.vars.buy_submissions_today += 1
+        return True
 
     def _score_symbol(self, symbol):
         intraday = self.get_historical_prices(
@@ -94,6 +123,8 @@ class SignalVaultStockPaperExecutionV1(Strategy):
         }
 
     def on_trading_iteration(self):
+        self._reset_daily_order_budget()
+
         budget = Decimal(self.parameters["logical_budget_usd"])
         if budget <= 0 or budget > Decimal("100"):
             raise ValueError("logical stock paper budget must be within (0, 100]")
@@ -114,7 +145,8 @@ class SignalVaultStockPaperExecutionV1(Strategy):
         self.log_message(
             "PAPER stock scores="
             + str([(r["symbol"], r["score"], r["reasons"]) for r in scored])
-            + f"; selected={winner_symbols}"
+            + f"; selected={winner_symbols}; "
+            + f"buy_submissions_today={self.vars.buy_submissions_today}"
         )
 
         universe = list(self.parameters["universe"])
@@ -123,7 +155,7 @@ class SignalVaultStockPaperExecutionV1(Strategy):
             if position is not None and symbol not in winner_symbols:
                 qty = abs(float(position.quantity))
                 if qty > 0:
-                    self.submit_order(self.create_order(symbol, qty, "sell"))
+                    self._submit_managed_order(symbol, qty, "sell")
 
         if not winners:
             self.log_message("No positive multi-signal stock setup; remaining in cash.")
@@ -131,6 +163,7 @@ class SignalVaultStockPaperExecutionV1(Strategy):
 
         investable = budget * (Decimal("1") - Decimal(self.parameters["cash_buffer_ratio"]))
         target_value = investable / Decimal(len(winners))
+        min_notional = Decimal(self.parameters["min_order_notional_usd"])
 
         for row in winners:
             symbol = row["symbol"]
@@ -146,10 +179,11 @@ class SignalVaultStockPaperExecutionV1(Strategy):
             current_qty = float(position.quantity) if position is not None else 0.0
             diff = round(target_qty - current_qty, 4)
 
-            if abs(diff) * float(price) < 1.0:
+            if Decimal(str(abs(diff))) * price < min_notional:
                 continue
+
             side = "buy" if diff > 0 else "sell"
-            self.submit_order(self.create_order(symbol, abs(diff), side))
+            self._submit_managed_order(symbol, abs(diff), side)
 
 
 def main():
