@@ -10,6 +10,14 @@ on:
       - "tests/test_phase162_ml_candidate_tournament.py"
       - ".github/workflows/phase162-ml-candidate-tournament.yml"
       - "pyproject.toml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/signal_vault/ml_candidate_tournament.py"
+      - "tests/test_phase162_ml_candidate_tournament.py"
+      - ".github/workflows/phase162-ml-candidate-tournament.yml"
+      - "pyproject.toml"
 
 permissions:
   contents: read
