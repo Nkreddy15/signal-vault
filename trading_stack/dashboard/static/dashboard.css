@@ -65,3 +65,105 @@ footer{text-align:center;color:#35506b;font-size:7px;letter-spacing:.17em;margin
 .read-only-note{margin-top:10px;border:1px solid rgba(255,177,79,.17);background:rgba(255,177,79,.045);color:#b69264;border-radius:8px;padding:9px;font-size:7px;line-height:1.5}
 @media(max-width:1180px){.app-shell{grid-template-columns:72px 1fr}.side-brand-copy,.side-nav a span,.side-quote{display:none}.side-nav a{justify-content:center}.kpi-grid{grid-template-columns:repeat(3,1fr)}.trade-card-grid{grid-template-columns:1fr}.status-strip{grid-template-columns:repeat(2,1fr)}.status-button{display:none}.primary-grid,.activity-grid,.lower-grid{grid-template-columns:1fr}.watermark-name{font-size:64px;left:18%}}
 @media(max-width:720px){.app-shell{display:block}.sidebar{display:none}.main{padding:0 10px 30px}.hero{margin:0 -10px;padding:18px}.hero-right{display:none}.hero-brand h1{font-size:23px}.watermark-name{font-size:42px;left:18%;top:18px}.kpi-grid{grid-template-columns:repeat(2,1fr)}.status-strip{grid-template-columns:1fr 1fr}.detail-grid,.detail-grid.two-col{grid-template-columns:1fr 1fr}.trade-inspector{width:100vw}.candle-chart{height:330px}.health-grid{grid-template-columns:1fr}.risk-card{align-items:flex-start;flex-direction:column}}
+
+/* BMW_VISUAL_PARITY_V2 */
+:root{
+  --panel:rgba(5,17,30,.93);
+  --panel-2:rgba(7,24,43,.91);
+  --line:rgba(32,158,236,.42);
+  --line-bright:rgba(35,202,255,.82);
+  --shadow:0 22px 70px rgba(0,0,0,.58),0 0 26px rgba(21,126,211,.045);
+}
+body{
+  background:
+    radial-gradient(circle at 78% -12%,rgba(21,112,216,.31),transparent 34%),
+    radial-gradient(circle at 20% -10%,rgba(24,188,255,.14),transparent 27%),
+    linear-gradient(180deg,#020814 0%,#020915 53%,#01050a 100%);
+}
+.app-shell{grid-template-columns:146px minmax(0,1fr)}
+.sidebar{
+  padding:20px 12px;
+  background:
+    radial-gradient(circle at 30% 12%,rgba(20,116,195,.14),transparent 22%),
+    linear-gradient(180deg,rgba(3,13,25,.98),rgba(2,8,16,.94));
+  border-right:1px solid rgba(37,167,245,.24);
+  box-shadow:10px 0 45px rgba(0,0,0,.22);
+}
+.side-brand{padding:7px 8px 30px}
+.gem-logo{width:42px;height:42px;box-shadow:0 0 34px rgba(42,216,255,.32)}
+.side-brand-copy strong{font-size:14px}.side-brand-copy small{font-size:8px}
+.side-nav{gap:9px}.side-nav a{font-size:12px;padding:13px 11px}.nav-icon{font-size:16px;width:22px}
+.side-quote{font-size:10px;line-height:1.72;color:#7995b3;padding-bottom:10px}
+.main{padding:0 14px 34px}
+.hero{
+  min-height:178px;margin:0 -14px 12px;padding:24px 30px;
+  border-bottom:1px solid rgba(36,174,255,.33);
+  box-shadow:inset 0 -28px 70px rgba(2,11,21,.55);
+}
+.hero:before{background:linear-gradient(90deg,rgba(0,6,13,.74) 0%,rgba(2,10,19,.15) 44%,rgba(2,8,15,.42) 100%)}
+.hero-art{
+  background-image:url('/static/hero-art.svg');
+  background-repeat:no-repeat;background-size:cover;background-position:center;
+  opacity:1;
+}
+.hero-art>*{display:none}
+.watermark-name{
+  left:25%;top:0;font-size:104px;line-height:1;font-weight:950;letter-spacing:.015em;
+  -webkit-text-stroke:1px rgba(125,205,255,.22);
+  color:rgba(115,190,245,.025);
+  text-shadow:0 0 55px rgba(43,149,230,.09);
+}
+.hero-logo{width:52px;height:52px;border-radius:9px;box-shadow:0 0 38px rgba(42,216,255,.34)}
+.hero-brand{gap:18px}.hero-brand h1{font-size:38px;letter-spacing:.12em;text-shadow:0 0 20px rgba(255,255,255,.03)}
+.hero-brand p{font-size:10px;color:#9ab7d0;letter-spacing:.21em}
+.hero-mantra{font-size:10px;line-height:1.8;color:#cee7f7}.identity strong{font-size:12px}.identity small{font-size:8px}.identity-avatar{width:38px;height:38px}
+.status-strip{gap:9px;margin-bottom:11px}.status-cell,.status-button{
+  min-height:74px;border-color:rgba(36,160,235,.34);border-radius:11px;
+  background:linear-gradient(180deg,rgba(7,23,39,.90),rgba(3,13,23,.91));
+  box-shadow:0 10px 30px rgba(0,0,0,.25),inset 0 1px 0 rgba(120,213,255,.035);
+}
+.status-kicker{font-size:8px}.status-cell strong{font-size:12px}.status-cell small{font-size:9px}
+.status-button{font-size:11px;border-color:rgba(42,216,255,.58);box-shadow:0 0 24px rgba(42,216,255,.055)}
+.kpi-grid{gap:10px}
+.kpi-card,.panel{
+  background:
+    linear-gradient(145deg,rgba(11,33,54,.96),rgba(3,14,25,.96) 72%);
+  border-color:rgba(35,160,235,.46);
+  box-shadow:0 18px 56px rgba(0,0,0,.48),0 0 0 1px rgba(25,117,191,.05),inset 0 1px 0 rgba(135,220,255,.035);
+}
+.kpi-card:before,.panel:before{height:1px;opacity:.9;background:linear-gradient(90deg,rgba(42,216,255,.12),rgba(42,216,255,.78),rgba(42,216,255,.12))}
+.kpi-card{min-height:128px;padding:16px;border-radius:13px}
+.kpi-title{font-size:12px;color:#adc1d3;font-weight:560}.kpi-number{font-size:29px;margin-top:12px}.kpi-foot{font-size:10px;margin-top:7px;color:#7f98b0}
+.kpi-icon{width:32px;height:32px;font-size:15px;border-color:rgba(54,178,255,.42);background:rgba(20,118,202,.19);box-shadow:0 0 18px rgba(42,216,255,.08)}
+.ring{width:58px;height:58px;right:13px;bottom:12px;box-shadow:0 0 22px rgba(42,216,255,.16)}.ring span{font-size:10px}
+.microchart{height:34px;bottom:12px}
+.primary-grid{grid-template-columns:1.55fr .9fr;gap:10px;margin-top:10px}.panel{padding:16px;border-radius:13px}
+.panel-header{margin-bottom:13px}.panel-header h2{font-size:18px;letter-spacing:-.01em}.panel-header p{font-size:10px;color:#829bb3}
+.round-icon{width:42px;height:42px;font-size:18px;box-shadow:0 0 28px rgba(42,216,255,.22)}
+.status-chip,.danger-chip,.mini-badge{font-size:9px;padding:6px 10px}
+.engine-meta{gap:22px;margin-bottom:13px;padding:10px 11px;border:1px solid rgba(42,153,219,.08);background:rgba(1,8,16,.36)}
+.engine-meta small{font-size:8px}.engine-meta strong{font-size:11px;margin-top:2px;display:block}
+.trade-card-grid{gap:10px}.trade-card{border-color:rgba(39,163,241,.36);border-radius:11px;padding:14px;background:linear-gradient(155deg,rgba(11,35,58,.94),rgba(3,14,25,.94));box-shadow:inset 0 1px 0 rgba(95,206,255,.025)}
+.trade-card:hover,.trade-card:focus-visible{transform:translateY(-4px) scale(1.005);border-color:rgba(42,216,255,.86);box-shadow:0 0 0 1px rgba(42,216,255,.18),0 20px 46px rgba(0,0,0,.48),0 0 30px rgba(42,216,255,.13)}
+.coin-badge{width:36px;height:36px;font-size:15px}.trade-symbol{font-size:15px}.trade-side{font-size:10px}.signal-tag{font-size:8px;padding:5px 7px}
+.trade-metrics{gap:10px 14px;margin-top:14px}.metric-label{font-size:8px}.metric-value{font-size:12px;margin-top:4px}.trade-mini{height:34px;margin-top:10px}
+.view-trade{font-size:10px;padding:8px 10px;margin-top:10px;border-color:rgba(42,216,255,.50);background:linear-gradient(180deg,rgba(20,129,210,.14),rgba(4,24,39,.14))}
+.account-list{gap:9px 18px;padding:11px}.account-line{font-size:10px}.stock-subpanel,.other-position-panel{padding:11px;margin-top:10px;border-color:rgba(41,154,224,.22)}
+.subpanel-title{font-size:11px}.empty{font-size:10px;padding:25px 8px}.other-position-panel summary{font-size:10px}.other-row{font-size:10px}
+.activity-grid{gap:10px;margin-top:10px}.segment,.tab,.tf{font-size:9px;padding:6px 10px}
+.table-scroll{max-height:360px}table{font-size:10px}th{font-size:8px;padding:9px 8px;background:#081725}td{padding:10px 8px}
+.performance-chart-wrap{height:270px}.chart-current{font-size:10px}
+.lower-grid{gap:10px;margin-top:10px}.health-grid{gap:9px}.health-item{font-size:10px;padding:9px 10px}.safety-line{font-size:9px}.safety-panel summary{font-size:9px}
+footer{font-size:8px;margin-top:18px}
+.trade-inspector{width:min(820px,94vw);padding:22px;border-left:1px solid rgba(42,216,255,.62);box-shadow:-44px 0 110px rgba(0,0,0,.72),-8px 0 42px rgba(42,216,255,.10)}
+.inspector-title h2{font-size:21px}.inspector-title p{font-size:10px}.tabs{margin:18px 0 14px}.tab{font-size:10px;padding:10px}
+.detail-hero{padding:16px}.detail-hero small,.detail-pnl small{font-size:8px}.detail-hero h3{font-size:27px}.detail-hero p{font-size:11px}.detail-pnl strong{font-size:29px}.detail-pnl span{font-size:11px}
+.detail-grid{gap:9px;margin-top:11px}.detail-item{padding:11px}.detail-item span{font-size:8px}.detail-item strong{font-size:11px;margin-top:5px}
+.explanation-card,.risk-card{padding:12px;margin-top:11px}.explanation-card>span,.risk-card span{font-size:8px}.explanation-card strong{font-size:11px}.explanation-card p{font-size:10px}
+.risk-lines p{font-size:9px}.chart-toolbar strong{font-size:14px}.long-label{font-size:9px}.chart-state{font-size:9px}.chart-legend{font-size:9px}.timeline-event strong{font-size:11px}.timeline-event span{font-size:9px}.read-only-note{font-size:9px;padding:11px}
+.candle-chart{height:450px}
+@media(max-width:1180px){
+  .watermark-name{font-size:78px;left:19%}
+  .hero-brand h1{font-size:32px}
+  .kpi-card{min-height:120px}
+}
