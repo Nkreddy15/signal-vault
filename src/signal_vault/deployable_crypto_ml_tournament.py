@@ -36,7 +36,10 @@ from .multi_horizon_ml_tournament import (
 )
 
 HORIZON = 48
-MAX_FEATURE_LOOKBACK_HOURS = 72
+# vol_72h is built from 72 one-hour RETURNS, which requires 73 closes.
+# The existing collector's 72-hour bootstrap therefore becomes inference-ready
+# only after the first new contiguous prospective closed hour arrives.
+MAX_FEATURE_LOOKBACK_HOURS = 73
 DEPLOYABLE_FEATURES = tuple(
     feature for feature in FEATURES if feature != "ret_168h"
 )
@@ -160,7 +163,8 @@ def build_deployable_screen(folder: Path) -> dict[str, object]:
         "horizon_hours": HORIZON,
         "feature_names": list(DEPLOYABLE_FEATURES),
         "maximum_feature_lookback_hours": MAX_FEATURE_LOOKBACK_HOURS,
-        "compatible_with_existing_72h_forward_bootstrap": True,
+        "minimum_closed_bars_for_full_feature_vector": 73,
+        "compatible_with_existing_72h_forward_bootstrap_after_first_prospective_hour": True,
         "purged_chronological_boundaries": True,
         "validation_only_threshold_selection": True,
         "holdout_is_descriptive_not_model_selection": True,
