@@ -47,6 +47,7 @@ if [[ -z "$ALPACA_API_KEY" || -z "$ALPACA_API_SECRET" ]]; then
 fi
 
 FREQTRADE__API_SERVER__USERNAME="${FREQTRADE__API_SERVER__USERNAME:-nikhil}"
+STOCK_DAILY_BUY_CAP="${STOCK_DAILY_BUY_CAP:-16}"
 
 if [[ -z "${FREQTRADE__API_SERVER__PASSWORD:-}" ]]; then
   FREQTRADE__API_SERVER__PASSWORD="$(python3 - <<'PY'
@@ -76,6 +77,7 @@ ALPACA_API_KEY=$ALPACA_API_KEY
 ALPACA_API_SECRET=$ALPACA_API_SECRET
 ALPACA_IS_PAPER=true
 STOCK_LOGICAL_BUDGET_USD=100
+STOCK_DAILY_BUY_CAP=$STOCK_DAILY_BUY_CAP
 FREQTRADE__API_SERVER__USERNAME=$FREQTRADE__API_SERVER__USERNAME
 FREQTRADE__API_SERVER__PASSWORD=$FREQTRADE__API_SERVER__PASSWORD
 FREQTRADE__API_SERVER__JWT_SECRET_KEY=$FREQTRADE__API_SERVER__JWT_SECRET_KEY
@@ -86,11 +88,12 @@ chmod 600 "$ENV_FILE"
 docker compose --env-file "$ENV_FILE" up -d --build
 
 echo
-echo "Open-source PAPER stack started."
-echo "Crypto dashboard: http://127.0.0.1:8080"
-echo "FreqUI username: $FREQTRADE__API_SERVER__USERNAME"
-echo "FreqUI password: $FREQTRADE__API_SERVER__PASSWORD"
-echo "Stocks: Alpaca PAPER dashboard shows stock orders/positions/P&L."
+echo "Signal Vault PAPER stack started."
+echo "Unified dashboard: http://127.0.0.1:8090"
+echo "Crypto FreqUI:     http://127.0.0.1:8080"
+echo "FreqUI username:   $FREQTRADE__API_SERVER__USERNAME"
+echo "FreqUI password:   $FREQTRADE__API_SERVER__PASSWORD"
+echo "Stocks also remain visible in Alpaca PAPER."
 echo
 echo "Check containers with:"
 echo "  cd $ROOT && docker compose ps"
