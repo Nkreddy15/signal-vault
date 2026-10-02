@@ -30,6 +30,27 @@ services:
       ALPACA_API_SECRET: ${ALPACA_API_SECRET}
       ALPACA_IS_PAPER: "true"
       STOCK_LOGICAL_BUDGET_USD: "100"
+      STOCK_DAILY_BUY_CAP: "16"
+
+  dashboard:
+    build:
+      context: ./dashboard
+    container_name: signal-vault-paper-dashboard
+    restart: unless-stopped
+    depends_on:
+      - crypto
+      - stocks
+    env_file:
+      - .env
+    environment:
+      ALPACA_API_KEY: ${ALPACA_API_KEY}
+      ALPACA_API_SECRET: ${ALPACA_API_SECRET}
+      FREQTRADE_API_BASE: http://crypto:8080/api/v1
+      FREQTRADE__API_SERVER__USERNAME: ${FREQTRADE__API_SERVER__USERNAME}
+      FREQTRADE__API_SERVER__PASSWORD: ${FREQTRADE__API_SERVER__PASSWORD}
+      STOCK_DAILY_BUY_CAP: "16"
+    ports:
+      - "127.0.0.1:8090:8090"
 
 volumes:
   crypto_data:
