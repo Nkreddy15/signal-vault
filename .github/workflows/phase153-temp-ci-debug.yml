@@ -1,0 +1,37 @@
+name: Phase 153 temporary CI diagnostic
+
+on:
+  push:
+    branches:
+      - phase153-fix-btc-shadow-namespace
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --no-cache-dir '.[research]'
+      - name: Capture full unittest output
+        run: |
+          set +e
+          python -m unittest discover -s tests -v > phase153-ci-debug.txt 2>&1
+          code=$?
+          echo "$code" > phase153-ci-exit-code.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase153-ci-debug-${{ github.run_id }}
+          path: |
+            phase153-ci-debug.txt
+            phase153-ci-exit-code.txt
+          if-no-files-found: error
+          retention-days: 1
