@@ -56,15 +56,15 @@
             <div><strong>Nikhil Reddy // Control Room</strong><small>DISCIPLINE · EXECUTION · FREEDOM</small></div>
           </div>
         </div>
-      </header>
 
-      <section class="status-strip reveal">
-        <div class="status-cell"><span class="status-kicker">MODE</span><strong class="danger">● PAPER ONLY</strong><small>Simulation mode</small></div>
-        <div class="status-cell"><span class="status-kicker">UPDATED</span><strong id="updatedAt">Connecting…</strong><small>10 second refresh</small></div>
-        <div class="status-cell"><span class="status-kicker">CRYPTO ENGINE</span><strong id="cryptoTopStatus"><i class="light good"></i> Checking</strong><small id="cryptoTopMeta">Kraken · Dry Run</small></div>
-        <div class="status-cell"><span class="status-kicker">STOCK BROKER</span><strong id="stockTopStatus"><i class="light good"></i> Checking</strong><small>Alpaca PAPER</small></div>
-        <a class="status-button" href="http://127.0.0.1:8080/dashboard" target="_blank" rel="noreferrer">Open FreqUI ↗</a>
-      </section>
+        <section class="status-strip">
+          <div class="status-cell"><span class="status-kicker">MODE</span><strong class="danger">● PAPER ONLY</strong><small>Simulation mode</small></div>
+          <div class="status-cell"><span class="status-kicker">UPDATED</span><strong id="updatedAt">Connecting…</strong><small>10 second refresh</small></div>
+          <div class="status-cell"><span class="status-kicker">CRYPTO ENGINE</span><strong id="cryptoTopStatus"><i class="light good"></i> Checking</strong><small id="cryptoTopMeta">Kraken · Dry Run</small></div>
+          <div class="status-cell"><span class="status-kicker">STOCK BROKER</span><strong id="stockTopStatus"><i class="light good"></i> Checking</strong><small>Alpaca PAPER</small></div>
+          <a class="status-button" href="http://127.0.0.1:8080/dashboard" target="_blank" rel="noreferrer">Open FreqUI ↗</a>
+        </section>
+      </header>
 
       <section class="kpi-grid reveal">
         <article class="kpi-card">
@@ -115,15 +115,21 @@
             <div class="panel-title-wrap"><div class="round-icon bars">▥</div><div><h2>Stocks / Alpaca PAPER</h2><p>Paper trading account via Alpaca</p></div></div>
             <span id="stockStatusChip" class="status-chip"><i class="light good"></i> ACTIVE</span>
           </div>
-          <div id="stockAccount" class="account-list"></div>
-          <div class="stock-subpanel">
-            <div class="subpanel-title">Managed Stock Positions</div>
-            <div id="managedStockPositions"></div>
+          <div class="stock-body">
+            <div class="stock-account-column">
+              <div id="stockAccount" class="account-list"></div>
+            </div>
+            <div class="stock-position-column">
+              <div class="stock-subpanel">
+                <div class="subpanel-title">Managed Stock Positions</div>
+                <div id="managedStockPositions"></div>
+              </div>
+              <details class="other-position-panel">
+                <summary>Other Alpaca PAPER Positions <span id="otherPositionCount">0</span></summary>
+                <div id="otherPositions"></div>
+              </details>
+            </div>
           </div>
-          <details class="other-position-panel">
-            <summary>Other Alpaca PAPER Positions <span id="otherPositionCount">0</span></summary>
-            <div id="otherPositions"></div>
-          </details>
         </article>
       </section>
 
