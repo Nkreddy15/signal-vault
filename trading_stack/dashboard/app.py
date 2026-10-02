@@ -59,6 +59,7 @@ def snapshot():
     crypto_health, crypto_health_err = _freq("health")
     crypto_config, crypto_config_err = _freq("show_config")
     crypto_profit, crypto_profit_err = _freq("profit")
+    crypto_open_trades, crypto_open_trades_err = _freq("status")
     crypto_trades, crypto_trades_err = _freq("trades", {"limit": 100})
 
     account, account_err = _alpaca("account")
@@ -97,10 +98,24 @@ def snapshot():
                 )
 
     trade_list = []
+    seen_trade_ids = set()
+
+    open_trade_list = crypto_open_trades if isinstance(crypto_open_trades, list) else []
+    historical_trade_list = []
     if isinstance(crypto_trades, dict):
-        trade_list = crypto_trades.get("trades") or []
+        historical_trade_list = crypto_trades.get("trades") or []
     elif isinstance(crypto_trades, list):
-        trade_list = crypto_trades
+        historical_trade_list = crypto_trades
+
+    for trade in list(open_trade_list) + list(historical_trade_list):
+        if not isinstance(trade, dict):
+            continue
+        trade_id = trade.get("trade_id") or trade.get("id")
+        dedupe_key = str(trade_id) if trade_id is not None else repr(sorted(trade.items()))
+        if dedupe_key in seen_trade_ids:
+            continue
+        seen_trade_ids.add(dedupe_key)
+        trade_list.append(trade)
 
     crypto_state = None
     if isinstance(crypto_config, dict):
@@ -130,7 +145,13 @@ def snapshot():
         "recent_trades": trade_list[:50],
         "errors": [
             err for err in
-            [crypto_health_err, crypto_config_err, crypto_profit_err, crypto_trades_err]
+            [
+                crypto_health_err,
+                crypto_config_err,
+                crypto_profit_err,
+                crypto_open_trades_err,
+                crypto_trades_err,
+            ]
             if err
         ],
     }
