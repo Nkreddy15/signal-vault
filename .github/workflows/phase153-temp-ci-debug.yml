@@ -11,21 +11,18 @@ permissions:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install --no-cache-dir '.[research]'
-      - name: Capture full unittest output
+      - name: Capture focused test with system Python only
         run: |
           set +e
-          python -m unittest discover -s tests -v > phase153-ci-debug.txt 2>&1
+          PYTHONPATH=src python -m unittest tests.test_phase153_shadow_namespace -v > phase153-ci-debug.txt 2>&1
           code=$?
           echo "$code" > phase153-ci-exit-code.txt
+          cat phase153-ci-debug.txt
           exit 0
       - uses: actions/upload-artifact@v4
         with:
