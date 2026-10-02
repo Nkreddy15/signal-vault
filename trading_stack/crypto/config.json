@@ -69,14 +69,14 @@
     "username": "OVERRIDDEN_BY_ENV",
     "password": "OVERRIDDEN_BY_ENV"
   },
-  "bot_name": "open-source-crypto-paper",
+  "bot_name": "signal-vault-paper-exec-v1",
   "initial_state": "running",
   "force_entry_enable": false,
-  "db_url": "sqlite:////freqtrade/data/tradesv3.sqlite",
+  "db_url": "sqlite:////freqtrade/data/signal-vault-execution-paper-v1.sqlite",
   "internals": {
     "process_throttle_secs": 5,
     "heartbeat_interval": 60
   },
-  "strategy": "Strategy001",
+  "strategy": "SignalVaultPaperExecutionV1",
   "strategy_path": "/freqtrade/user_data/strategies"
 }
