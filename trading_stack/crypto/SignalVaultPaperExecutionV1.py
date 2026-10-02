@@ -1,11 +1,11 @@
-"""High-activity PAPER execution harness for Signal Vault.
+"""Multi-signal PAPER execution harness for Signal Vault.
 
-Purpose: exercise the full local paper-trading pipeline (signals -> simulated
-orders -> positions -> exits -> P&L -> persistence -> dashboard) frequently
-enough to validate plumbing. This is deliberately NOT the researched hourly
-strategy and MUST NOT be interpreted as evidence of profitability.
+This is an execution/observation harness, not a profitability claim. It runs
+several independent long-only setup families on 5-minute bars so the local
+paper stack can demonstrate entries, exits, persistence, P&L and risk behavior
+without waiting for one rare crossover condition.
 
-PAPER/dry-run only. Long-only spot. Six-pair universe comes from config.json.
+PAPER/dry-run only.
 """
 
 from __future__ import annotations
@@ -21,11 +21,9 @@ class SignalVaultPaperExecutionV1(IStrategy):
     timeframe = "5m"
     can_short = False
     process_only_new_candles = True
-    startup_candle_count = 30
+    startup_candle_count = 50
 
-    # Execution-harness exits: take small simulated wins, cut plumbing-test
-    # losses quickly, and also exit when the short trend turns down.
-    minimal_roi = {"0": 0.003}
+    minimal_roi = {"0": 0.004}
     stoploss = -0.02
     trailing_stop = False
     use_exit_signal = True
@@ -33,45 +31,80 @@ class SignalVaultPaperExecutionV1(IStrategy):
     ignore_roi_if_entry_signal = False
 
     def populate_indicators(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        dataframe["sv_exec_ema_fast_5"] = dataframe["close"].ewm(
-            span=5, adjust=False
-        ).mean()
-        dataframe["sv_exec_ema_slow_13"] = dataframe["close"].ewm(
-            span=13, adjust=False
-        ).mean()
+        close = dataframe["close"]
+        dataframe["sv_ema_5"] = close.ewm(span=5, adjust=False).mean()
+        dataframe["sv_ema_13"] = close.ewm(span=13, adjust=False).mean()
+        dataframe["sv_ema_34"] = close.ewm(span=34, adjust=False).mean()
+        dataframe["sv_roc_3"] = close.pct_change(3)
+        dataframe["sv_roc_12"] = close.pct_change(12)
+        dataframe["sv_mean_20"] = close.rolling(20).mean()
+        dataframe["sv_std_20"] = close.rolling(20).std()
+        dataframe["sv_z_20"] = (
+            (close - dataframe["sv_mean_20"]) /
+            dataframe["sv_std_20"].replace(0, float("nan"))
+        )
+        dataframe["sv_prior_high_20"] = dataframe["high"].rolling(20).max().shift(1)
+        dataframe["sv_vol_mean_20"] = dataframe["volume"].rolling(20).mean()
         return dataframe
 
     def populate_entry_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        fast = dataframe["sv_exec_ema_fast_5"]
-        slow = dataframe["sv_exec_ema_slow_13"]
+        fast = dataframe["sv_ema_5"]
+        slow = dataframe["sv_ema_13"]
+        long = dataframe["sv_ema_34"]
+        close = dataframe["close"]
+        volume_ok = dataframe["volume"] > 0
 
-        # State-based entry rather than exact crossover so the harness does not
-        # sit idle simply because it started after a crossover already happened.
-        dataframe.loc[
-            (
-                (fast > slow)
-                & (dataframe["close"] >= fast)
-                & (dataframe["close"] > dataframe["close"].shift(1))
-                & (dataframe["volume"] > 0)
-            ),
-            ["enter_long", "enter_tag"],
-        ] = (1, "paper_exec_positive_5m_state")
+        trend = (
+            (fast > slow)
+            & (slow > long)
+            & (close > fast)
+            & (dataframe["sv_roc_3"] > 0)
+            & volume_ok
+        )
 
+        momentum = (
+            (fast > slow)
+            & (dataframe["sv_roc_3"] > 0.003)
+            & (dataframe["sv_roc_12"] > 0)
+            & volume_ok
+        )
+
+        breakout = (
+            (close > dataframe["sv_prior_high_20"])
+            & (dataframe["volume"] >= dataframe["sv_vol_mean_20"])
+            & volume_ok
+        )
+
+        mean_reversion_bounce = (
+            (dataframe["sv_z_20"] < -1.25)
+            & (close > close.shift(1))
+            & (fast > fast.shift(1))
+            & volume_ok
+        )
+
+        any_setup = trend | momentum | breakout | mean_reversion_bounce
+        dataframe.loc[any_setup, "enter_long"] = 1
+        dataframe.loc[trend, "enter_tag"] = "trend"
+        dataframe.loc[momentum, "enter_tag"] = "momentum"
+        dataframe.loc[breakout, "enter_tag"] = "breakout"
+        dataframe.loc[mean_reversion_bounce, "enter_tag"] = "mean_reversion_bounce"
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        fast = dataframe["sv_exec_ema_fast_5"]
-        slow = dataframe["sv_exec_ema_slow_13"]
+        fast = dataframe["sv_ema_5"]
+        slow = dataframe["sv_ema_13"]
+        close = dataframe["close"]
 
-        dataframe.loc[
-            (
-                (
-                    (fast < slow)
-                    | (dataframe["close"] < fast)
-                )
-                & (dataframe["volume"] > 0)
-            ),
-            ["exit_long", "exit_tag"],
-        ] = (1, "paper_exec_state_exit")
+        trend_failure = (fast < slow) & (close < fast)
+        downside_momentum = dataframe["sv_roc_3"] < -0.004
+        stretched_reversion = dataframe["sv_z_20"] > 1.5
 
+        exit_setup = (
+            (trend_failure | downside_momentum | stretched_reversion)
+            & (dataframe["volume"] > 0)
+        )
+        dataframe.loc[exit_setup, "exit_long"] = 1
+        dataframe.loc[trend_failure, "exit_tag"] = "trend_failure"
+        dataframe.loc[downside_momentum, "exit_tag"] = "downside_momentum"
+        dataframe.loc[stretched_reversion, "exit_tag"] = "reversion_exit"
         return dataframe
