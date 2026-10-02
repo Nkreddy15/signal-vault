@@ -45,6 +45,7 @@ from .equity_cloud_sidecar import (
 )
 from .equity_forward_archive_audit import load_current_equity_forward_segment
 from .equity_model_warmup import collect_stock_model_warmup
+from .current_portfolio_brain import build_current_portfolio_brain
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -311,6 +312,17 @@ def combined_all_markets_once(
                 except Exception as exc:
                     output["current_compact_stock_model_status"]="FAILED_SAFE"
                     output["current_compact_stock_model_failure_class"]=type(exc).__name__
+                try:
+                    brain=build_current_portfolio_brain(
+                        root=btc_root,
+                        as_of=stamp,
+                    )
+                    output["current_portfolio_brain_status"]="AVAILABLE"
+                    output["current_portfolio_brain"]=brain
+                    output["current_portfolio_brain_order_submission"]="DISABLED"
+                except Exception as exc:
+                    output["current_portfolio_brain_status"]="FAILED_SAFE"
+                    output["current_portfolio_brain_failure_class"]=type(exc).__name__
             except Exception as exc:
                 output["dashboard_snapshot_status"]="FAILED_SAFE"
                 output["dashboard_snapshot_failure_class"]=type(exc).__name__
