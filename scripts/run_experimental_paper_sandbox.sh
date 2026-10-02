@@ -79,8 +79,12 @@ if [[ "$MODE" == "execute" ]]; then
     exit 1
   }
   run_one "$STRATEGY"
-  echo "Journal: $JOURNAL"
-  echo "Do not run another execute until this journal is reconciled."
+  if [[ -f "$JOURNAL" ]]; then
+    echo "Journal: $JOURNAL"
+    echo "Do not run another execute until this journal is reconciled."
+  else
+    echo "No execution journal was created because no PAPER submission occurred."
+  fi
 elif [[ "$STRATEGY" == "all" ]]; then
   run_one "generic-ema12x26-v1-predeclared"
   run_one "generic-momentum24bar50bps-v1-predeclared"
