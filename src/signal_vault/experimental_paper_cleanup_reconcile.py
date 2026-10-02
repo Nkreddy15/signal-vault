@@ -107,6 +107,8 @@ def reconcile_cleanup(
             row for row in positions
             if str(row.get("symbol","")).replace("/","")=="BTCUSD"
         ]
+        if len(btc_rows)!=len(positions):
+            raise ValueError("unexpected non-BTC PAPER position during cleanup reconciliation")
         btc_qty=sum(
             (_positive(row.get("qty"),"remaining BTC quantity") for row in btc_rows),
             Decimal("0"),
