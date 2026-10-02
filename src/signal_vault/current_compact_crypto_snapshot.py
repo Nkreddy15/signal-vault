@@ -5,11 +5,17 @@ snapshot. It has no network client and no order path.
 """
 from __future__ import annotations
 
+import argparse
+import json
 from datetime import datetime,timezone
 from pathlib import Path
 
 from .crypto_forward_compact_models import compact_crypto_ensemble_snapshot
-from .crypto_universe_forward import _audit_chain,_safe_root
+from .crypto_universe_forward import (
+    SHARED_VOLUME_SIDECAR_ROOT,
+    _audit_chain,
+    _safe_root,
+)
 from .six_crypto_forward_scorecard import _active_datasets
 
 
@@ -62,3 +68,31 @@ def current_compact_crypto_snapshot(*,root:Path)->dict[str,object]:
         "network_requests":"NONE",
         "order_submission":"DISABLED",
     }
+
+
+def main(argv:list[str]|None=None)->int:
+    parser=argparse.ArgumentParser(
+        description="Offline current compact crypto ML research snapshot"
+    )
+    parser.add_argument(
+        "--root",type=Path,default=SHARED_VOLUME_SIDECAR_ROOT
+    )
+    args=parser.parse_args(argv)
+    try:
+        result=current_compact_crypto_snapshot(root=args.root)
+        code=0
+    except Exception as exc:
+        result={
+            "kind":"PHASE162_CURRENT_COMPACT_CRYPTO_RESEARCH_SNAPSHOT",
+            "status":"FAILED_SAFE",
+            "failure_class":type(exc).__name__,
+            "network_requests":"NONE",
+            "order_submission":"DISABLED",
+        }
+        code=2
+    print(json.dumps(result,indent=2,sort_keys=True))
+    return code
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
