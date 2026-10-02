@@ -83,6 +83,9 @@ class Opportunity:
     evidence_id: str
     correlation_group: str
     paper_executable: bool = False
+    component_models: tuple[str, ...] = ()
+    component_evidence_ids: tuple[str, ...] = ()
+    ensemble_consensus: Decimal = Decimal("1")
 
     def __post_init__(self) -> None:
         if not isinstance(self.market, Market) or not isinstance(self.direction, Direction):
@@ -120,6 +123,23 @@ class Opportunity:
             raise ValueError("correlation group required")
         if type(self.paper_executable) is not bool:
             raise ValueError("paper_executable must be boolean")
+        if any(
+            not isinstance(name, str) or not name.strip() or len(name) > 160
+            for name in self.component_models
+        ):
+            raise ValueError("invalid component model identity")
+        if len(self.component_models) != len(set(self.component_models)):
+            raise ValueError("component models must be unique")
+        if any(
+            not isinstance(evidence, str) or not evidence.strip() or len(evidence) > 256
+            for evidence in self.component_evidence_ids
+        ):
+            raise ValueError("invalid component evidence id")
+        if len(self.component_evidence_ids) != len(set(self.component_evidence_ids)):
+            raise ValueError("component evidence ids must be unique")
+        consensus = _decimal(self.ensemble_consensus, name="ensemble_consensus")
+        if not Decimal("0") <= consensus <= Decimal("1"):
+            raise ValueError("ensemble consensus must be within [0,1]")
 
     @property
     def expected_net_return(self) -> Decimal:
