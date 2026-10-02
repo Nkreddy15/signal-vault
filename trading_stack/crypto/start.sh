@@ -9,16 +9,15 @@ set -euo pipefail
 PERSIST_DIR="${PERSIST_DIR:-/freqtrade/data}"
 mkdir -p "$PERSIST_DIR" /freqtrade/user_data/strategies
 
-# Fail closed: this image is an experimental PAPER/dry-run adapter only.
 case "${FREQTRADE__DRY_RUN:-true}" in
   false|False|FALSE|0|no|No|NO)
-    echo "Refusing to start: Signal Vault Freqtrade adapter is PAPER/dry-run only." >&2
+    echo "Refusing to start: Signal Vault execution harness is PAPER/dry-run only." >&2
     exit 2
     ;;
 esac
 
 if [[ -n "${FREQTRADE__EXCHANGE__KEY:-}" || -n "${FREQTRADE__EXCHANGE__SECRET:-}" ]]; then
-  echo "Refusing to start: exchange credentials are not accepted by this PAPER-only adapter." >&2
+  echo "Refusing to start: exchange credentials are not accepted by this PAPER-only harness." >&2
   exit 2
 fi
 
@@ -34,12 +33,12 @@ if exchange.get("key") or exchange.get("secret"):
     raise SystemExit("Refusing to start: PAPER-only config must not contain exchange credentials")
 PY
 
-DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/signal-vault-paper-v1.sqlite}"
+DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/signal-vault-execution-paper-v1.sqlite}"
 
-echo "Starting Signal Vault experimental PAPER strategy: hourly EMA 12x26, six-pair universe."
-echo "This is paper execution evidence collection, not a validated-profitability claim."
+echo "Starting Signal Vault high-activity PAPER execution harness: 5m, six-pair universe."
+echo "Purpose: validate simulated entries/exits/P&L plumbing. Not a profitability claim."
 
 exec freqtrade trade \
   --config /freqtrade/user_data/config.json \
-  --strategy SignalVaultPaperEMA12x26V1 \
+  --strategy SignalVaultPaperExecutionV1 \
   --db-url "$DB_URL"
