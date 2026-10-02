@@ -34,7 +34,7 @@ if exchange.get("key") or exchange.get("secret"):
     raise SystemExit("Refusing to start: PAPER-only config must not contain exchange credentials")
 PY
 
-DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/tradesv3.sqlite}"
+DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/signal-vault-paper-v1.sqlite}"
 
 echo "Starting Signal Vault experimental PAPER strategy: hourly EMA 12x26, six-pair universe."
 echo "This is paper execution evidence collection, not a validated-profitability claim."
