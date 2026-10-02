@@ -68,6 +68,7 @@ class PlannedExecutionIntent:
     direction: Direction
     route_id: str
     notional_usd: Decimal
+    reserved_max_loss_usd: Decimal
     candidate_id: str
     evidence_id: str
     generated_utc: datetime
@@ -101,6 +102,7 @@ def _intent_id(
         "evidence_id": item.evidence_id,
         "route_id": route.route_id,
         "notional_usd": str(selected.allocated_notional_usd),
+        "reserved_max_loss_usd": str(selected.reserved_max_loss_usd),
         "expected_net_return": str(item.expected_net_return),
     }
     digest = hashlib.sha256(
@@ -164,6 +166,7 @@ def build_multimarket_plan(
                 direction=item.direction,
                 route_id=route.route_id,
                 notional_usd=selected.allocated_notional_usd,
+                reserved_max_loss_usd=selected.reserved_max_loss_usd,
                 candidate_id=item.candidate_id,
                 evidence_id=item.evidence_id,
                 generated_utc=allocation.as_of_utc,
