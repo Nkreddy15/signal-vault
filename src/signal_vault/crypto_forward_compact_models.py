@@ -268,7 +268,7 @@ def latest_feature_vectors(
 
         returns_72 = [
             closes[index] / closes[index - 1] - 1.0
-            for index in range(len(closes) - 71, len(closes))
+            for index in range(len(closes) - 72, len(closes))
         ]
         returns_24 = returns_72[-24:]
         volume_window = volumes[-24:]
