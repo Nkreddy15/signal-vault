@@ -86,8 +86,22 @@ if [[ "$MODE" == "execute" ]]; then
     echo "No execution journal was created because no PAPER submission occurred."
   fi
 elif [[ "$STRATEGY" == "all" ]]; then
-  run_one "generic-ema12x26-v1-predeclared"
-  run_one "generic-momentum24bar50bps-v1-predeclared"
+  READINESS="$OUT/paper-readiness-$STAMP.json"
+  echo
+  echo "=== GET-only combined PAPER readiness ==="
+  PYTHONPATH="$ROOT/src" "$PYTHON" -m signal_vault.experimental_paper_readiness \
+    --output "$READINESS"
+  echo "Readiness receipt: $READINESS"
+  PYTHONPATH="$ROOT/src" "$PYTHON" - "$READINESS" <<'PY'
+import json,sys
+p=sys.argv[1]
+with open(p,encoding="utf-8") as fh:
+    x=json.load(fh)
+print("Status:",x.get("status"))
+print("Selected strategy:",x.get("selected_strategy_for_operator_review") or "NONE")
+print("PAPER account ready:",x.get("paper_account_ready"))
+print("Order authority:",x.get("actions_are_order_authority"))
+PY
 else
   run_one "$STRATEGY"
 fi
