@@ -19,6 +19,7 @@ from typing import Mapping, Sequence
 
 from .opportunity_engine import (
     AllocationDecision,
+    AllocationPortfolioState,
     AllocatorLimits,
     Direction,
     Market,
@@ -32,6 +33,7 @@ class PaperRoute:
     market: Market
     route_id: str
     verified_for_paper: bool
+    supported_directions: tuple[Direction, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.market, Market):
@@ -40,6 +42,22 @@ class PaperRoute:
             raise ValueError("invalid route id")
         if type(self.verified_for_paper) is not bool:
             raise ValueError("verified_for_paper must be boolean")
+        if any(not isinstance(direction, Direction) for direction in self.supported_directions):
+            raise ValueError("route directions must use normalized Direction values")
+        if len(self.supported_directions) != len(set(self.supported_directions)):
+            raise ValueError("route directions must be unique")
+
+    def allows_direction(self, direction: Direction) -> bool:
+        if not isinstance(direction, Direction):
+            return False
+        if self.supported_directions:
+            return direction in self.supported_directions
+        # Conservative defaults: current crypto/stock PAPER lanes are long-entry
+        # lanes unless an instrument-specific shortability preflight explicitly
+        # supplies SHORT. Kalshi DEMO supports YES and NO contracts.
+        if self.market is Market.EVENT_CONTRACT:
+            return direction in (Direction.YES, Direction.NO)
+        return direction is Direction.LONG
 
 
 @dataclass(frozen=True)
@@ -99,6 +117,7 @@ def build_multimarket_plan(
     limits: AllocatorLimits = AllocatorLimits(),
     routes: Sequence[PaperRoute] = (),
     mode: str = "research",
+    portfolio: AllocationPortfolioState | None = None,
 ) -> MultiMarketPlan:
     """Build one shared research/PAPER plan across every enabled market lane."""
     if mode not in ("research", "paper"):
@@ -115,6 +134,7 @@ def build_multimarket_plan(
         as_of=as_of,
         limits=limits,
         mode=mode,
+        portfolio=portfolio,
     )
     intents: list[PlannedExecutionIntent] = []
     unrouteable: list[str] = []
@@ -126,6 +146,9 @@ def build_multimarket_plan(
             unrouteable.append(item.candidate_id)
             continue
         if mode == "paper" and not route.verified_for_paper:
+            unrouteable.append(item.candidate_id)
+            continue
+        if not route.allows_direction(item.direction):
             unrouteable.append(item.candidate_id)
             continue
 
