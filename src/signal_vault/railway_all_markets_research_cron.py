@@ -35,6 +35,7 @@ from .all_market_forward_status import all_market_forward_status
 from .all_market_dashboard import build_dashboard_snapshot
 from .dashboard_snapshot_archive import archive_dashboard_snapshot
 from .six_crypto_shadow import inspect_six_crypto_shadow
+from .crypto_universe_forward import SHARED_VOLUME_SIDECAR_ROOT
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -227,7 +228,12 @@ def combined_all_markets_once(
                         research.get("paper_activation_permitted") is True
                     )
                 try:
-                    shadow=inspect_six_crypto_shadow(root=btc_root)
+                    shadow_root=(
+                        btc_root/"isolated-six-crypto-prospective"
+                        if btc_root!=SHARED_VOLUME_SIDECAR_ROOT.parent
+                        else SHARED_VOLUME_SIDECAR_ROOT
+                    )
+                    shadow=inspect_six_crypto_shadow(root=shadow_root)
                     if shadow.get("kind")=="OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY":
                         decisions=shadow.get("predeclared_flat_and_held_hypothetical_decisions",{})
                         btc=decisions.get("BTC/USD",{}) if isinstance(decisions,Mapping) else {}
