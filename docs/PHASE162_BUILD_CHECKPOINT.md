@@ -192,6 +192,31 @@ Existing repository components already provide:
 Phase 162's new common planner feeds normalized candidates toward this layer but
 does not bypass provider preflight, reconciliation or market-specific risk.
 
+## Local PAPER execution / operator stack hardening
+
+The local open-source execution stack is now synchronized into Phase 162 rather
+than living on a separate competing branch:
+
+- Freqtrade crypto PAPER harness runs the six-pair 5-minute execution lane.
+- Crypto protections now include:
+  - 3-candle pair cooldown,
+  - global stoploss-streak guard,
+  - 5% equity-mode MaxDrawdown lock after enough closed-trade evidence.
+- Lumibot Alpaca PAPER stock harness runs the 12-symbol 15-minute lane.
+- Stock safety keeps the $100 logical budget / $90 investable cap and now limits
+  new buy submissions to 16/day while still allowing risk-reducing sells.
+- A unified read-only dashboard is wired into Docker Compose at
+  `http://127.0.0.1:8090`.
+  - reads Freqtrade health/profit/trades,
+  - reads Alpaca PAPER account/positions/orders,
+  - filters stock detail to the managed universe,
+  - exposes no order-writing endpoint.
+- FreqUI remains separately available at `http://127.0.0.1:8080`.
+- The macOS installer and status helper now start/check the unified dashboard.
+
+This operator layer is evidence plumbing only. It does not upgrade any research
+candidate or imply positive expectancy.
+
 ## GitHub Actions issue
 
 Current PR-triggered Actions runs are failing before any step records/logs are
@@ -212,7 +237,7 @@ verified historical artifacts or through the local DATA-only pipeline.
 5. Feed surviving crypto + stock + event candidates into one opportunity cycle.
 6. Run the shared portfolio in PAPER/DEMO with full strategy attribution,
    reconciliation and recovery evidence.
-7. Only after evidence exists, build the useful performance/operator UI.
+7. Use the existing unified PAPER operator UI to inspect attributed execution evidence while research gates continue.
 
 ## Authorization state
 
