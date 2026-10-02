@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signal Vault // Nikhil Reddy Control Room</title>
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <canvas id="starfield" aria-hidden="true"></canvas>
+  <div class="aurora aurora-a" aria-hidden="true"></div>
+  <div class="aurora aurora-b" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="gem-logo"><span></span></div>
+        <div class="side-brand-copy"><strong>SV</strong><small>CONTROL</small></div>
+      </div>
+      <nav class="side-nav">
+        <a class="active" href="#dashboard"><span class="nav-icon">⌂</span><span>Dashboard</span></a>
+        <a href="#crypto"><span class="nav-icon">₿</span><span>Crypto Engine</span></a>
+        <a href="#stocks"><span class="nav-icon">⌁</span><span>Stock Trading</span></a>
+        <a href="#performance"><span class="nav-icon">╱</span><span>Performance</span></a>
+        <a href="#system"><span class="nav-icon">◈</span><span>System</span></a>
+      </nav>
+      <div class="side-quote">
+        <span>“A calm mind compounds faster than a lucky trade.”</span>
+        <small>— Nikhil Reddy</small>
+      </div>
+    </aside>
+
+    <main class="main" id="dashboard">
+      <header class="hero reveal">
+        <div class="hero-art" aria-hidden="true">
+          <div class="moon"></div>
+          <svg class="mountains" viewBox="0 0 1200 220" preserveAspectRatio="none">
+            <path d="M0 210 L90 138 L156 186 L245 92 L330 175 L450 48 L536 146 L642 72 L720 165 L835 85 L945 180 L1080 58 L1200 150 L1200 220 L0 220Z" fill="rgba(18,72,115,.32)"/>
+            <path d="M0 220 L150 170 L275 205 L420 118 L525 195 L690 138 L790 214 L920 132 L1040 198 L1200 144 L1200 220Z" fill="rgba(7,26,44,.78)"/>
+          </svg>
+          <div class="sentinel"></div>
+        </div>
+        <div class="watermark-name">NIKHIL REDDY</div>
+        <div class="hero-brand">
+          <div class="hero-logo"><span></span></div>
+          <div>
+            <h1>SIGNAL <em>VAULT</em></h1>
+            <p>BUILT IN SILENCE. PROVEN IN DATA.</p>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-mantra">PRESSURE CREATES CLARITY.<br>NO NOISE. JUST EXECUTION.</div>
+          <div class="identity">
+            <div class="identity-avatar">NR</div>
+            <div><strong>Nikhil Reddy // Control Room</strong><small>DISCIPLINE · EXECUTION · FREEDOM</small></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="status-strip reveal">
+        <div class="status-cell"><span class="status-kicker">MODE</span><strong class="danger">● PAPER ONLY</strong><small>Simulation mode</small></div>
+        <div class="status-cell"><span class="status-kicker">UPDATED</span><strong id="updatedAt">Connecting…</strong><small>10 second refresh</small></div>
+        <div class="status-cell"><span class="status-kicker">CRYPTO ENGINE</span><strong id="cryptoTopStatus"><i class="light good"></i> Checking</strong><small id="cryptoTopMeta">Kraken · Dry Run</small></div>
+        <div class="status-cell"><span class="status-kicker">STOCK BROKER</span><strong id="stockTopStatus"><i class="light good"></i> Checking</strong><small>Alpaca PAPER</small></div>
+        <a class="status-button" href="http://127.0.0.1:8080/dashboard" target="_blank" rel="noreferrer">Open FreqUI ↗</a>
+      </section>
+
+      <section class="kpi-grid reveal">
+        <article class="kpi-card">
+          <span class="kpi-icon">₿</span><div class="kpi-title">Crypto Open P&amp;L</div>
+          <div id="cryptoPnl" class="kpi-number">—</div><div id="cryptoPnlPct" class="kpi-foot">—</div>
+          <svg class="microchart" viewBox="0 0 160 34"><polyline id="kpiPnlLine" points="0,20 160,20"/></svg>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-icon">◎</span><div class="kpi-title">Crypto Exposure</div>
+          <div id="cryptoExposure" class="kpi-number">—</div><div id="cryptoSlots" class="kpi-foot">—</div>
+          <div class="ring"><span id="cryptoRingText">0%</span></div>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-icon">▥</span><div class="kpi-title">Stock Equity (PAPER)</div>
+          <div id="stockEquity" class="kpi-number">—</div><div id="stockCash" class="kpi-foot">Available —</div>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-icon">↗</span><div class="kpi-title">Managed Stock P&amp;L</div>
+          <div id="stockPnl" class="kpi-number">—</div><div id="stockPnlSub" class="kpi-foot">No open positions</div>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-icon">▤</span><div class="kpi-title">Completed Crypto Trades</div>
+          <div id="closedTrades" class="kpi-number">—</div><div id="closedTradesSub" class="kpi-foot">—</div>
+        </article>
+        <article class="kpi-card">
+          <span class="kpi-icon">◉</span><div class="kpi-title">U.S. Market State</div>
+          <div id="marketState" class="kpi-number">—</div><div id="marketNext" class="kpi-foot">Checking clock</div>
+        </article>
+      </section>
+
+      <section class="primary-grid reveal">
+        <article class="panel crypto-panel" id="crypto">
+          <div class="panel-header">
+            <div class="panel-title-wrap"><div class="round-icon">₿</div><div><h2>Crypto Trading Engine</h2><p id="cryptoSubtitle">Automated crypto trading (PAPER)</p></div></div>
+            <span id="cryptoStatusChip" class="status-chip"><i class="light good"></i> RUNNING</span>
+          </div>
+          <div class="engine-meta">
+            <div><small>Exchange</small><strong id="metaExchange">—</strong></div>
+            <div><small>Mode</small><strong id="metaMode">—</strong></div>
+            <div><small>Strategy</small><strong id="metaStrategy">—</strong></div>
+            <div><small>Timeframe</small><strong id="metaTimeframe">—</strong></div>
+          </div>
+          <div id="cryptoCards" class="trade-card-grid"></div>
+        </article>
+
+        <article class="panel stock-panel" id="stocks">
+          <div class="panel-header">
+            <div class="panel-title-wrap"><div class="round-icon bars">▥</div><div><h2>Stocks / Alpaca PAPER</h2><p>Paper trading account via Alpaca</p></div></div>
+            <span id="stockStatusChip" class="status-chip"><i class="light good"></i> ACTIVE</span>
+          </div>
+          <div id="stockAccount" class="account-list"></div>
+          <div class="stock-subpanel">
+            <div class="subpanel-title">Managed Stock Positions</div>
+            <div id="managedStockPositions"></div>
+          </div>
+          <details class="other-position-panel">
+            <summary>Other Alpaca PAPER Positions <span id="otherPositionCount">0</span></summary>
+            <div id="otherPositions"></div>
+          </details>
+        </article>
+      </section>
+
+      <section class="activity-grid reveal" id="performance">
+        <article class="panel">
+          <div class="panel-header compact">
+            <div><h2>Crypto Trade Activity</h2><p>Live and recent trades from the crypto engine</p></div>
+            <div class="segmented"><button class="segment active" data-filter="open">Open Trades <span id="openCount">0</span></button><button class="segment" data-filter="closed">Closed Trades <span id="closedCount">0</span></button><button class="segment" data-filter="all">View All</button></div>
+          </div>
+          <div id="cryptoTradeTable" class="table-scroll"></div>
+        </article>
+        <article class="panel performance-panel">
+          <div class="panel-header compact"><div><h2>Crypto Performance</h2><p>Open P&amp;L over time (current session)</p></div><span class="mini-badge">LIVE</span></div>
+          <div class="performance-chart-wrap">
+            <svg id="performanceChart" class="performance-chart" viewBox="0 0 520 220" preserveAspectRatio="none"></svg>
+            <span id="performanceNow" class="chart-current">—</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="lower-grid reveal" id="system">
+        <article class="panel">
+          <div class="panel-header compact"><div><h2>Stock Orders</h2><p>Recent managed-universe orders (Alpaca PAPER)</p></div></div>
+          <div id="stockOrders" class="table-scroll"></div>
+        </article>
+        <article class="panel safety-panel">
+          <div class="panel-header compact"><div><h2>System Health &amp; Safety</h2></div><span class="danger-chip">● LIVE TRADING DISABLED</span></div>
+          <div id="healthGrid" class="health-grid"></div>
+          <details><summary>Safety configuration</summary><div id="safetyConfig"></div></details>
+          <div id="runtimeErrors"></div>
+        </article>
+      </section>
+
+      <footer>NIKHIL'S TRADING VIEW · SIGNAL VAULT · PAPER PROOF BEFORE CAPITAL</footer>
+    </main>
+  </div>
+
+  <div id="tradeModal" class="trade-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="trade-inspector" role="dialog" aria-modal="true" aria-labelledby="tradeModalTitle">
+      <button class="modal-close" data-close-modal aria-label="Close trade inspector">×</button>
+      <header class="inspector-header">
+        <div class="inspector-title"><div id="modalCoin" class="coin-badge">₿</div><div><h2 id="tradeModalTitle">Trade Detail</h2><p>Full analysis and execution evidence</p></div></div>
+        <span id="modalStatus" class="status-chip"><i class="light good"></i> OPEN</span>
+      </header>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="chart">Chart</button>
+        <button class="tab" data-tab="execution">Execution</button>
+        <button class="tab" data-tab="history">History</button>
+      </div>
+
+      <div class="tab-panel active" data-panel="overview">
+        <div class="detail-hero">
+          <div><small>POSITION</small><h3 id="detailPair">—</h3><p id="detailSide">—</p></div>
+          <div class="detail-pnl"><small>OPEN P&amp;L</small><strong id="detailPnl">—</strong><span id="detailPnlPct">—</span></div>
+        </div>
+        <div id="overviewMetrics" class="detail-grid"></div>
+        <div class="explanation-card"><span>EXECUTION REASON</span><strong id="signalTag">—</strong><p id="signalReason">—</p></div>
+        <div class="risk-card"><div><span>RISK / REWARD</span><strong id="riskReward">—</strong></div><div class="risk-lines"><p><i class="green-dot"></i> ROI target <b id="riskTarget">—</b></p><p><i class="blue-dot"></i> Entry <b id="riskEntry">—</b></p><p><i class="red-dot"></i> Stop <b id="riskStop">—</b></p></div></div>
+      </div>
+
+      <div class="tab-panel" data-panel="chart">
+        <div class="chart-toolbar"><div><strong id="chartPair">—</strong><span id="chartSide" class="long-label">Long</span></div><div class="tf-group"><button class="tf active" data-tf="5m">5m live</button></div></div>
+        <div id="candleState" class="chart-state">Loading live candles…</div>
+        <svg id="candleChart" class="candle-chart" viewBox="0 0 900 430" preserveAspectRatio="none"></svg>
+        <div class="chart-legend"><span><i class="green-dot"></i> Entry / target</span><span><i class="blue-dot"></i> Current</span><span><i class="red-dot"></i> Stop / exit</span></div>
+      </div>
+
+      <div class="tab-panel" data-panel="execution">
+        <div id="executionMetrics" class="detail-grid two-col"></div>
+        <div class="explanation-card"><span>EXIT LOGIC</span><p id="exitLogic">—</p></div>
+        <div class="read-only-note">Read-only inspector. It does not expose force-entry, force-exit, or live-money controls.</div>
+      </div>
+
+      <div class="tab-panel" data-panel="history">
+        <div id="historyTimeline" class="timeline"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
