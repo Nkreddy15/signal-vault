@@ -60,4 +60,19 @@ jobs:
           if [ "$SV_EXECUTE" = "true" ]; then
             args+=(--execute --acknowledgement "$SV_ACK")
           fi
+          args+=(--receipt paper-sandbox-receipt.json)
+          if [ "$SV_EXECUTE" = "true" ]; then
+            args+=(--journal paper-sandbox-journal.sqlite3)
+          fi
           python -m signal_vault.experimental_paper_sandbox "${args[@]}"
+
+      - name: Archive sandbox receipt and durable journal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experimental-btc-paper-${{ github.run_id }}
+          path: |
+            paper-sandbox-receipt.json
+            paper-sandbox-journal.sqlite3
+          if-no-files-found: warn
+          retention-days: 7

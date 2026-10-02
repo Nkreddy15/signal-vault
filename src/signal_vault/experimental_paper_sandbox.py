@@ -13,7 +13,6 @@ import argparse
 import hashlib
 import json
 import os
-import tempfile
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -72,6 +71,7 @@ def run_once(
     bars_factory=AlpacaAuthenticatedCryptoBars,
     reader_factory=PaperAlpacaReadClient,
     executor_factory=MultiMarketAlpacaPaperOnceExecutor,
+    journal_path:Path|None=None,
 )->dict[str,object]:
     if strategy_name not in ALLOWED_STRATEGIES:
         raise ValueError("strategy must be one fixed predeclared BTC hypothesis")
@@ -178,21 +178,26 @@ def run_once(
             "paper_order_submission":"DISABLED",
         }
 
-    with tempfile.TemporaryDirectory() as td:
-        path=Path(td)/"experimental-paper.sqlite3"
-        with MultiMarketExecutionJournal(path) as journal:
-            journal.record_approved_draft(draft,at=now)
-            executor=executor_factory(
-                paper_key=credentials.key_id,
-                paper_secret=credentials.secret_key,
-                journal=journal,
-            )
-            outcome=executor.submit_once(
-                draft,
-                risk_assessment=risk,
-                acknowledgement=acknowledgement,
-                at=now,
-            )
+    if journal_path is None:
+        raise ValueError("durable journal path required for execute mode")
+    path=Path(journal_path)
+    if path.is_symlink() or path.exists():
+        raise ValueError("execute journal must be a new regular path")
+    if not path.parent.is_dir() or path.parent.is_symlink():
+        raise ValueError("execute journal parent must be a real directory")
+    with MultiMarketExecutionJournal(path) as journal:
+        journal.record_approved_draft(draft,at=now)
+        executor=executor_factory(
+            paper_key=credentials.key_id,
+            paper_secret=credentials.secret_key,
+            journal=journal,
+        )
+        outcome=executor.submit_once(
+            draft,
+            risk_assessment=risk,
+            acknowledgement=acknowledgement,
+            at=now,
+        )
     return {
         **common,
         "status":"EXPERIMENTAL_ONE_SHOT_PAPER_EXECUTOR_INVOKED",
@@ -207,11 +212,24 @@ def run_once(
     }
 
 
+def _write_receipt(path:Path,result:dict[str,object])->None:
+    target=Path(path)
+    if target.is_symlink() or target.exists():
+        raise ValueError("receipt path must be create-only")
+    raw=(json.dumps(result,sort_keys=True,indent=2)+"\\n").encode()
+    fd=os.open(target,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+    with os.fdopen(fd,"wb") as fh:
+        os.fchmod(fh.fileno(),0o600)
+        fh.write(raw);fh.flush();os.fsync(fh.fileno())
+
+
 def main(argv:list[str]|None=None)->int:
     parser=argparse.ArgumentParser()
     parser.add_argument("--strategy",required=True,choices=sorted(ALLOWED_STRATEGIES))
     parser.add_argument("--execute",action="store_true")
     parser.add_argument("--acknowledgement",default="")
+    parser.add_argument("--journal",type=Path)
+    parser.add_argument("--receipt",type=Path,required=True)
     args=parser.parse_args(argv)
     creds=PaperCredentials.from_environment(os.environ)
     result=run_once(
@@ -220,7 +238,9 @@ def main(argv:list[str]|None=None)->int:
         acknowledgement=args.acknowledgement,
         execute=args.execute,
         now=datetime.now(timezone.utc),
+        journal_path=args.journal,
     )
+    _write_receipt(args.receipt,result)
     print(json.dumps(result,sort_keys=True,indent=2))
     return 0
 
