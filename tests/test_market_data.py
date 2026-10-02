@@ -182,8 +182,7 @@ class AuthenticatedHistoricalBarsTests(unittest.TestCase):
         self.assertTrue(seen[0][0].startswith(CRYPTO_BARS_ENDPOINT + "?"))
         self.assertEqual(seen[0][1:], ("paper-key","paper-secret"))
 
-    def test_legacy_unauthenticated_default_now_fails_closed(self):
-        from signal_vault.market_data import AlpacaPublicCryptoBars
-        now = datetime(2026, 9, 29, 0, 0, tzinfo=timezone.utc)
-        with self.assertRaisesRegex(ValueError, "authenticated"):
-            AlpacaPublicCryptoBars().fetch(start=now-timedelta(hours=1),end=now,as_of=now)
+    def test_public_historical_reader_rejects_non_alpaca_url_without_network(self):
+        from signal_vault.market_data import _read_public_json
+        with self.assertRaisesRegex(ValueError, "outside allowlist"):
+            _read_public_json("https://example.com/crypto/bars")

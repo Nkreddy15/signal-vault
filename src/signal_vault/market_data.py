@@ -150,18 +150,35 @@ def load_csv(path: str | Path, *, as_of: datetime, min_count: int = 1) -> tuple[
 
 
 def _read_public_json(url: str) -> Mapping[str, object]:
-    # Current Alpaca crypto historical-data docs require API authentication.
-    # This function remains only as the default for injected/offline research
-    # tests and must not silently attempt an unauthenticated production read.
-    raise ValueError("authenticated Alpaca crypto historical data client required")
+    """Credential-free GET for Alpaca historical crypto bars only.
+
+    Alpaca currently documents historical crypto data as not requiring API
+    authentication. Keep the host/path hard-allowlisted and never attach broker
+    credentials to this request.
+    """
+    if not url.startswith(CRYPTO_BARS_ENDPOINT + "?"):
+        raise ValueError("historical crypto URL outside allowlist")
+    request = Request(url, method="GET", headers={
+        "Accept": "application/json",
+        "User-Agent": "SignalVault/0.5",
+    })
+    def read_once() -> bytes:
+        with urlopen(request, timeout=12) as response:
+            return response.read(4_000_001)
+    raw = retry_read(read_once)
+    if len(raw) > 4_000_000:
+        raise ValueError("historical crypto response exceeds size limit")
+    value = json.loads(raw)
+    if not isinstance(value, Mapping):
+        raise ValueError("unexpected historical crypto response")
+    return value
 
 
 class AlpacaPublicCryptoBars:
-    """Offline/injected research adapter retained for deterministic tests.
+    """Read-only historical crypto adapter for Alpaca's fixed public endpoint.
 
-    Current provider documentation requires authentication, so the default
-    transport deliberately fails. Production paper runtime must use
-    `AlpacaAuthenticatedCryptoBars` below.
+    Historical crypto bars are credential-free per current provider docs. This
+    adapter cannot reach account/trading/order endpoints.
     """
 
     def __init__(self, fetch_json: Callable[[str], Mapping[str, object]] = _read_public_json,

@@ -19,7 +19,7 @@ from pathlib import Path
 
 from .alpaca_paper import PaperAlpacaReadClient
 from .cross_market_risk import assess_new_risk
-from .market_data import AlpacaAuthenticatedCryptoBars
+from .market_data import AlpacaPublicCryptoBars
 from .multi_asset_simulation import HYPOTHESES, HypothesisKind, decide_on_prior_closes
 from .multimarket_alpaca_paper_executor import MultiMarketAlpacaPaperOnceExecutor
 from .multimarket_execution_journal import MultiMarketExecutionJournal, MultiMarketOrderDraft
@@ -68,7 +68,7 @@ def run_once(
     acknowledgement:str="",
     execute:bool=False,
     now:datetime,
-    bars_factory=AlpacaAuthenticatedCryptoBars,
+    bars_factory=AlpacaPublicCryptoBars,
     reader_factory=PaperAlpacaReadClient,
     executor_factory=MultiMarketAlpacaPaperOnceExecutor,
     journal_path:Path|None=None,
@@ -80,7 +80,7 @@ def run_once(
 
     end=_closed_hour(now)
     start=end-timedelta(hours=72)
-    bars_client=bars_factory(credentials.key_id,credentials.secret_key)
+    bars_client=bars_factory()
     bars=bars_client.fetch(start=start,end=end,as_of=now.astimezone(timezone.utc))
     rows=_research_rows(bars,captured=now.astimezone(timezone.utc))
     cfg=ALLOWED_STRATEGIES[strategy_name]

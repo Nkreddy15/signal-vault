@@ -16,9 +16,10 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Callable, Mapping
+from urllib.error import HTTPError
 
-from .alpaca_paper import PaperAlpacaReadClient
-from .market_data import AlpacaAuthenticatedCryptoBars
+from .alpaca_paper import PaperAlpacaReadClient, PaperReadStageError
+from .market_data import AlpacaPublicCryptoBars
 from .multi_asset_simulation import HYPOTHESES, HypothesisKind, decide_on_prior_closes
 from .paper_credentials import PaperCredentials
 from .research_universe import ResearchBar
@@ -68,7 +69,7 @@ def build_readiness_report(
     *,
     credentials:PaperCredentials,
     now:datetime,
-    bars_factory:Callable[...,object]=AlpacaAuthenticatedCryptoBars,
+    bars_factory:Callable[...,object]=AlpacaPublicCryptoBars,
     reader_factory:Callable[...,object]=PaperAlpacaReadClient,
 )->dict[str,object]:
     if not isinstance(credentials,PaperCredentials):
@@ -80,8 +81,13 @@ def build_readiness_report(
     reader=reader_factory(credentials.key_id,credentials.secret_key)
     account=reader.readiness()
 
-    bars_client=bars_factory(credentials.key_id,credentials.secret_key)
-    bars=bars_client.fetch(start=start,end=end,as_of=captured)
+    try:
+        bars_client=bars_factory()
+        bars=bars_client.fetch(start=start,end=end,as_of=captured)
+    except HTTPError as exc:
+        raise ReadinessProbeError("market_data", "HTTPError", exc.code) from None
+    except Exception as exc:
+        raise ReadinessProbeError("market_data", type(exc).__name__, None) from None
     rows=_to_research_rows(bars,captured=captured)
     if len(rows)!=72:
         raise ValueError("exact 72 closed BTC hourly bars required")
@@ -141,6 +147,15 @@ def build_readiness_report(
     }
 
 
+class ReadinessProbeError(RuntimeError):
+    """Sanitized GET-only readiness failure."""
+    def __init__(self, stage:str, failure_class:str, http_status:int|None=None):
+        super().__init__(f"{stage}:{failure_class}")
+        self.stage=stage
+        self.failure_class=failure_class
+        self.http_status=http_status
+
+
 def _write_once(path:Path,value:Mapping[str,object])->None:
     p=Path(path)
     if p.is_symlink() or p.exists():
@@ -168,16 +183,22 @@ def main(argv:list[str]|None=None)->int:
         )
         code=0
     except Exception as exc:
+        stage=getattr(exc,"stage","unknown")
+        failure_class=getattr(exc,"failure_class",type(exc).__name__)
+        http_status=getattr(exc,"http_status",None)
         result={
             "kind":KIND,
             "status":"FAIL_CLOSED",
-            "failure_class":type(exc).__name__,
+            "failure_stage":stage,
+            "failure_class":failure_class,
             "actions_are_order_authority":False,
             "automatic_paper_activation":"DISABLED",
             "paper_order_submission":"DISABLED",
             "live_order_submission":"UNAVAILABLE",
             "live_trading":"UNAVAILABLE",
         }
+        if isinstance(http_status,int):
+            result["http_status"]=http_status
         code=2
     _write_once(args.output,result)
     print(json.dumps(result,sort_keys=True,indent=2))
