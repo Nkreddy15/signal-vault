@@ -15,9 +15,11 @@
     "SOL/USD"
   ],
   "horizon_hours": 48,
-  "maximum_feature_lookback_hours": 72,
+  "maximum_feature_lookback_hours": 73,
   "compatible_with_existing_forward_collector_bootstrap_hours": 72,
-  "removed_from_broader_profile": ["ret_168h"],
+  "removed_from_broader_profile": [
+    "ret_168h"
+  ],
   "validation_supported_candidates": {
     "random_forest_v1_threshold_0.015": {
       "validation_base": {
@@ -92,6 +94,7 @@
     "secondary_forward_shadow_candidate": "extra_trees_v1_threshold_0.0125",
     "why_primary": "The 72h-compatible Random Forest profile was positive in the pre-holdout validation window and remained positive under low, base and high friction on the descriptive holdout. It is directly compatible with the existing 72h six-crypto forward bootstrap.",
     "limitations": [
+      "The feature profile includes vol_72h, which requires 72 hourly returns / 73 closes. The existing 72h bootstrap becomes inference-ready after one new contiguous closed hour.",
       "Both validation-supported deployable candidates were long-only in this historical period.",
       "Neither candidate beat the passive equal-weight comparator in absolute base-friction holdout P&L.",
       "The evidence is retrospective and does not establish future alpha.",
@@ -102,5 +105,7 @@
   "automatic_paper_promotion": false,
   "paper_order_submission_authorized": false,
   "short_execution_authorized": false,
-  "live_trading": "UNAVAILABLE"
+  "live_trading": "UNAVAILABLE",
+  "minimum_closed_bars_for_full_feature_vector": 73,
+  "forward_inference_ready_after_first_new_contiguous_closed_hour": true
 }
