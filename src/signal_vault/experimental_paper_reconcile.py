@@ -9,6 +9,7 @@ import argparse
 import json
 import os
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Mapping
 
@@ -16,6 +17,7 @@ from .alpaca_paper import PaperAlpacaReadClient
 from .experimental_paper_sandbox import KIND as SOURCE_KIND
 from .multimarket_alpaca_reconciliation import reconcile_alpaca_paper_order_lookup
 from .multimarket_execution_journal import MultiMarketExecutionJournal
+from .paper_order_state import Stage
 from .paper_credentials import PaperCredentials
 
 KIND="EXPERIMENTAL_BTC_PAPER_READ_ONLY_RECONCILIATION"
@@ -41,6 +43,16 @@ def _write_once(path:Path,value:Mapping[str,object])->None:
     with os.fdopen(fd,"wb") as fh:
         os.fchmod(fh.fileno(),0o600)
         fh.write(raw);fh.flush();os.fsync(fh.fileno())
+
+
+def _nonnegative_decimal(raw:object, name:str)->Decimal:
+    try:
+        value=Decimal(str(raw))
+    except (InvalidOperation,TypeError,ValueError) as exc:
+        raise ValueError("invalid "+name) from exc
+    if not value.is_finite() or value<0:
+        raise ValueError("invalid "+name)
+    return value
 
 
 def reconcile_experimental_paper(
@@ -91,10 +103,45 @@ def reconcile_experimental_paper(
         positions=reader.get_positions()
         open_orders=reader.get_open_orders()
 
-    btc_positions=[
-        p for p in positions
-        if str(p.get("symbol","")).replace("/","")=="BTCUSD"
-    ]
+        if str(account.get("status","")).upper()!="ACTIVE":
+            raise ValueError("PAPER account not active during reconciliation")
+        if account.get("trading_blocked") is not False:
+            raise ValueError("PAPER account trading unexpectedly blocked during reconciliation")
+        try:
+            equity=Decimal(str(account.get("equity")))
+        except Exception as exc:
+            raise ValueError("invalid PAPER account equity") from exc
+        if not equity.is_finite() or equity<0:
+            raise ValueError("invalid PAPER account equity")
+
+        btc_positions=[
+            row for row in positions
+            if str(row.get("symbol","")).replace("/","")=="BTCUSD"
+        ]
+        if len(btc_positions)!=len(positions):
+            raise ValueError("unexpected non-BTC PAPER position during reconciliation")
+
+        btc_qty=sum(
+            (_nonnegative_decimal(row.get("qty"),"BTC position quantity")
+             for row in btc_positions),
+            Decimal("0"),
+        )
+
+        state=outcome.state
+        if state.stage is Stage.BROKER_TERMINAL_UNRECONCILED:
+            expected_qty=state.cumulative_filled_qty
+            if btc_qty!=expected_qty:
+                raise ValueError("PAPER BTC position does not reconcile to provider cumulative fill")
+            if open_orders:
+                raise ValueError("terminal PAPER order unexpectedly leaves open orders")
+            state=journal.confirm_reconciled(
+                client_id,
+                at=at,
+                provider_cash_verified=True,
+                provider_position_verified=True,
+                provider_order_verified=True,
+            )
+
     return {
         "kind":KIND,
         "source_kind":SOURCE_KIND,
@@ -104,19 +151,18 @@ def reconcile_experimental_paper(
         "paper_account_status":str(account.get("status","")),
         "paper_account_trading_blocked":account.get("trading_blocked"),
         "btc_position_rows":len(btc_positions),
+        "btc_position_qty":str(btc_qty),
         "open_order_count":len(open_orders),
+        "journal_stage":state.stage.value,
+        "journal_reconciled":state.stage is Stage.RECONCILED,
         "network_action":"ALPACA_PAPER_GET_ONLY",
         "order_submission":"DISABLED",
         "blind_retry":"FORBIDDEN",
         "live_trading":"UNAVAILABLE",
         "next_action":(
-            "FULL_ACCOUNT_RECONCILIATION_REQUIRED_BEFORE_ANOTHER_EXECUTION"
-            if outcome.full_account_reconciliation_still_required
-            else
-            "KEEP_BLOCKED_IF_PROVIDER_RESULT_REMAINS_UNRESOLVED"
-            if outcome.new_execution_blocked
-            else
-            "NO_ADDITIONAL_EXECUTION_AUTHORITY_GRANTED"
+            "PAPER_POSITION_RECONCILED_CONTINUE_OBSERVATION"
+            if state.stage is Stage.RECONCILED
+            else "KEEP_BLOCKED_IF_PROVIDER_RESULT_REMAINS_UNRESOLVED"
         ),
     }
 
