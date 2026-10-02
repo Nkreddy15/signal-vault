@@ -217,6 +217,29 @@ than living on a separate competing branch:
 This operator layer is evidence plumbing only. It does not upgrade any research
 candidate or imply positive expectancy.
 
+## Verified local runtime — 2026-10-02
+
+Owner-run macOS evidence now confirms the local PAPER stack actually starts
+end-to-end:
+
+- Docker reports crypto, stocks, and dashboard containers all UP.
+- Unified dashboard health returns `PAPER_ONLY / ok`.
+- Freqtrade API returns pong.
+- Freqtrade resolves `SignalVaultPaperExecutionV1`, Kraken, the six-pair
+  whitelist, all three configured protections, and enters `RUNNING`.
+- Freqtrade explicitly reports dry-run mode and simulated trades.
+- Lumibot 4.6.1 initializes `SignalVaultStockPaperExecutionV1` against Alpaca
+  PAPER and waits for the next regular market session.
+- Broker telemetry sees two existing account positions, while the original
+  dashboard filtered them because they were outside the managed stock universe.
+
+The dashboard was subsequently hardened to derive/display Freqtrade runtime
+state and to surface non-managed Alpaca PAPER positions separately rather than
+silently hiding them.
+
+No autonomous entry/exit cycle has been observed yet, so execution behavior is
+running but not yet fully evidenced by completed trades.
+
 ## GitHub Actions issue
 
 Current PR-triggered Actions runs are failing before any step records/logs are
