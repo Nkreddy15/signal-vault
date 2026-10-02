@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import html
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Mapping
 
 from .all_market_forward_status import all_market_forward_status
 from .paper_runway_status import paper_runway_from_forward_status
+from .current_portfolio_brain import build_current_portfolio_brain
 from .research_dashboard_diagnostics import (
     read_crypto_research_diagnostics,
     read_crypto_research_diagnostics_json,
@@ -50,6 +52,19 @@ def build_dashboard_snapshot(
         research=read_crypto_research_diagnostics_json(
             env.get("SIGNAL_VAULT_CRYPTO_RESEARCH_RECEIPT_JSON")
         )
+    try:
+        brain=build_current_portfolio_brain(
+            root=root,
+            as_of=datetime.fromisoformat(str(status["checked_at_utc"])),
+        )
+    except Exception as exc:
+        brain={
+            "kind":"PHASE162_CURRENT_MULTIMARKET_RESEARCH_BRAIN_NO_ORDER",
+            "status":"FAILED_SAFE",
+            "failure_class":type(exc).__name__,
+            "automatic_order_submission":"DISABLED",
+            "live_trading":"UNAVAILABLE",
+        }
     return {
         "kind":KIND,
         "checked_at_utc":status["checked_at_utc"],
@@ -118,6 +133,7 @@ def build_dashboard_snapshot(
             },
         },
         "strategy_research":research,
+        "portfolio_brain":brain,
         "paper_runway_blockers":list(
             runway["current_forward_evidence_blockers"]
         ),
@@ -125,6 +141,8 @@ def build_dashboard_snapshot(
             runway["all_market_forward_source_and_review_stages_complete"],
         "execution_engineering":{
             "shared_cross_market_risk_governor":"AVAILABLE",
+            "cross_market_model_ensemble":"AVAILABLE_RESEARCH_ONLY",
+            "shared_portfolio_brain":"AVAILABLE_RESEARCH_ONLY",
             "multimarket_paper_route_preview":"AVAILABLE_NO_NETWORK",
             "crypto_research_to_paper_intent":"AVAILABLE_NO_ORDER",
             "crypto_end_to_end_paper_dry_run":"AVAILABLE_NO_EXECUTION",
@@ -162,6 +180,25 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     if not isinstance(research,Mapping):
         raise ValueError("dashboard research diagnostics must be a mapping")
     blocker_text="None" if not blockers else ", ".join(str(x) for x in blockers)
+    brain=snapshot.get("portfolio_brain",{})
+    if not isinstance(brain,Mapping):
+        brain={}
+    decision=brain.get("decision_cycle",{})
+    if not isinstance(decision,Mapping):
+        decision={}
+    selected=decision.get("selected",[])
+    if not isinstance(selected,list):
+        selected=[]
+    selected_lines=[]
+    for item in selected[:6]:
+        if not isinstance(item,Mapping):
+            continue
+        models=item.get("component_models",[])
+        selected_lines.append(
+            f"{item.get('market','?')} · {item.get('instrument','?')} · "
+            f"{item.get('direction','?')} · edge {item.get('expected_net_return','?')} · "
+            f"{','.join(str(x) for x in models) if isinstance(models,list) else models}"
+        )
     latest_kalshi=snapshot.get("latest_kalshi_tick",{})
     if not isinstance(latest_kalshi,Mapping):
         latest_kalshi={}
@@ -169,6 +206,8 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
     if execution is None:
         execution={
             "shared_cross_market_risk_governor":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "cross_market_model_ensemble":"NOT_RECORDED_IN_THIS_SNAPSHOT",
+            "shared_portfolio_brain":"NOT_RECORDED_IN_THIS_SNAPSHOT",
             "multimarket_paper_route_preview":"NOT_RECORDED_IN_THIS_SNAPSHOT",
             "crypto_research_to_paper_intent":"NOT_RECORDED_IN_THIS_SNAPSHOT",
             "crypto_end_to_end_paper_dry_run":"NOT_RECORDED_IN_THIS_SNAPSHOT",
@@ -253,8 +292,18 @@ def render_dashboard_html(snapshot:Mapping[str,object])->bytes:
             ("PAPER activation permitted",research.get("paper_activation_permitted",False)),
             ("Base-friction rows",len(research.get("base_friction_rows",[]) if isinstance(research.get("base_friction_rows",[]),list) else [])),
         ]),
+        card("Portfolio Brain",[
+            ("Status",brain.get("status","AVAILABLE") if brain else "NOT_AVAILABLE"),
+            ("Input model signals",brain.get("input_model_signal_count",0)),
+            ("Selected opportunities",decision.get("selected_opportunity_count",0)),
+            ("Selected lanes",", ".join(str(x) for x in brain.get("selected_market_lanes",[]) if x) or "None"),
+            ("Top opportunities"," | ".join(selected_lines) if selected_lines else "No qualifying consensus opportunity right now"),
+            ("Order submission",brain.get("automatic_order_submission","DISABLED")),
+        ]),
         card("PAPER Pipeline",[
             ("Shared risk governor",execution["shared_cross_market_risk_governor"]),
+            ("Model ensemble",execution["cross_market_model_ensemble"]),
+            ("Portfolio brain",execution["shared_portfolio_brain"]),
             ("Route preview",execution["multimarket_paper_route_preview"]),
             ("Crypto decision intent",execution["crypto_research_to_paper_intent"]),
             ("Crypto dry run",execution["crypto_end_to_end_paper_dry_run"]),
