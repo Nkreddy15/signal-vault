@@ -167,3 +167,19 @@ footer{font-size:8px;margin-top:18px}
   .hero-brand h1{font-size:32px}
   .kpi-card{min-height:120px}
 }
+
+/* APPROVED_MOCKUP_ATMOSPHERE */
+.hero::after{
+  content:"NIKHIL'S TRADING VIEW";
+  position:absolute;right:13%;top:69px;z-index:1;
+  color:rgba(166,221,255,.58);font-size:10px;letter-spacing:.28em;
+  text-transform:uppercase;text-shadow:0 0 18px rgba(42,216,255,.14);
+}
+.sidebar:after{
+  content:"";position:absolute;inset:38% 0 0;pointer-events:none;opacity:.18;
+  background:
+    linear-gradient(160deg,transparent 0 33%,rgba(23,96,153,.38) 33.5% 34.5%,transparent 35% 47%,rgba(24,112,175,.31) 47.5% 48.5%,transparent 49%),
+    radial-gradient(circle at 45% 67%,rgba(36,177,255,.13),transparent 28%);
+  mask-image:linear-gradient(to bottom,transparent,black 18%,black 86%,transparent);
+}
+.panel:hover{border-color:rgba(42,190,255,.54);box-shadow:0 20px 64px rgba(0,0,0,.52),0 0 30px rgba(42,216,255,.055),inset 0 1px 0 rgba(142,220,255,.04)}
