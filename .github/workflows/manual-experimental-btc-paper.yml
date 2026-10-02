@@ -1,0 +1,63 @@
+name: Experimental supervised BTC PAPER sandbox
+
+on:
+  workflow_dispatch:
+    inputs:
+      strategy:
+        description: "Fixed predeclared experimental strategy"
+        type: choice
+        options:
+          - generic-ema12x26-v1-predeclared
+          - generic-momentum24bar50bps-v1-predeclared
+        default: generic-ema12x26-v1-predeclared
+        required: true
+      execute:
+        description: "Actually attempt one Alpaca PAPER order if current signal is BUY"
+        type: boolean
+        default: false
+        required: true
+      acknowledgement:
+        description: "Required only for execute=true: exact crypto PAPER acknowledgement"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: experimental-supervised-btc-paper
+  cancel-in-progress: false
+
+jobs:
+  sandbox:
+    if: github.repository == 'Nkreddy15/signal-vault' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    steps:
+      - name: Checkout reviewed default branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install project
+        run: python -m pip install --no-cache-dir .
+      - name: Run experimental PAPER sandbox
+        env:
+          ALPACA_PAPER_KEY_ID: ${{ secrets.ALPACA_PAPER_KEY_ID }}
+          ALPACA_PAPER_SECRET_KEY: ${{ secrets.ALPACA_PAPER_SECRET_KEY }}
+          SV_STRATEGY: ${{ inputs.strategy }}
+          SV_EXECUTE: ${{ inputs.execute }}
+          SV_ACK: ${{ inputs.acknowledgement }}
+        run: |
+          args=(--strategy "$SV_STRATEGY")
+          if [ "$SV_EXECUTE" = "true" ]; then
+            args+=(--execute --acknowledgement "$SV_ACK")
+          fi
+          python -m signal_vault.experimental_paper_sandbox "${args[@]}"
