@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 320">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#020814"/>
+    <stop offset=".48" stop-color="#06172a"/>
+    <stop offset="1" stop-color="#020913"/>
+  </linearGradient>
+  <linearGradient id="ridge1" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#113c66"/>
+    <stop offset="1" stop-color="#04111f"/>
+  </linearGradient>
+  <linearGradient id="ridge2" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#082746"/>
+    <stop offset="1" stop-color="#020913"/>
+  </linearGradient>
+  <radialGradient id="planet" cx=".45" cy=".35" r=".65">
+    <stop offset="0" stop-color="#9fdcff" stop-opacity=".16"/>
+    <stop offset=".55" stop-color="#257bd0" stop-opacity=".07"/>
+    <stop offset="1" stop-color="#0c315b" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="8"/></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+</defs>
+<rect width="1800" height="320" fill="url(#sky)"/>
+<g opacity=".72">
+  <circle cx="1315" cy="-40" r="235" fill="url(#planet)" stroke="#5dbfff" stroke-opacity=".22" stroke-width="2"/>
+  <circle cx="1315" cy="-40" r="252" fill="none" stroke="#5dbfff" stroke-opacity=".06" stroke-width="18" filter="url(#glow)"/>
+</g>
+<g fill="#8fdcff">
+  <circle cx="82" cy="52" r="1" opacity=".48"/><circle cx="156" cy="96" r="1.4" opacity=".32"/>
+  <circle cx="304" cy="48" r="1.1" opacity=".5"/><circle cx="520" cy="78" r=".8" opacity=".35"/>
+  <circle cx="690" cy="34" r="1.2" opacity=".42"/><circle cx="760" cy="104" r=".9" opacity=".3"/>
+  <circle cx="1020" cy="56" r=".9" opacity=".42"/><circle cx="1155" cy="88" r="1.3" opacity=".36"/>
+  <circle cx="1515" cy="44" r="1.2" opacity=".5"/><circle cx="1680" cy="96" r=".9" opacity=".34"/>
+</g>
+<path d="M0 280 L120 205 L220 250 L345 142 L420 220 L570 78 L655 188 L770 118 L860 230 L1020 122 L1125 216 L1260 86 L1360 204 L1515 128 L1620 220 L1800 132 L1800 320 L0 320Z" fill="url(#ridge1)" opacity=".72"/>
+<path d="M0 320 L180 248 L320 292 L455 205 L590 284 L735 188 L875 292 L1030 224 L1190 300 L1335 196 L1510 284 L1650 205 L1800 266 L1800 320Z" fill="url(#ridge2)" opacity=".96"/>
+<path d="M0 318 C240 276 410 294 620 266 C830 238 1040 300 1280 256 C1510 214 1630 254 1800 224 L1800 320 L0 320Z" fill="#01050a" opacity=".92"/>
+<g transform="translate(1060 146)" opacity=".88">
+  <path d="M0 80 L22 20 L38 0 L55 20 L78 80 Z" fill="#01060c"/>
+  <path d="M19 28 L10 55 L30 47 Z" fill="#061321"/><path d="M57 28 L70 55 L48 47 Z" fill="#061321"/>
+  <circle cx="38" cy="9" r="5" fill="#061321"/>
+</g>
+<!-- abstract guardian / wolf silhouette -->
+<g transform="translate(1510 48)" opacity=".34">
+  <path d="M48 22 L18 0 L28 48 L2 70 L34 72 L42 112 L63 82 L84 112 L92 72 L124 70 L98 48 L108 0 L78 22 L63 12 Z" fill="#071b2c" stroke="#2e83bd" stroke-opacity=".28"/>
+  <path d="M42 56 L54 48 L63 60 L72 48 L84 56 L77 73 L63 82 L49 73 Z" fill="#0a243b"/>
+  <circle cx="50" cy="58" r="2.4" fill="#5fd5ff" opacity=".62"/><circle cx="76" cy="58" r="2.4" fill="#5fd5ff" opacity=".62"/>
+</g>
+<path d="M0 302 C280 286 510 310 770 286 C1010 264 1290 306 1800 270" fill="none" stroke="#2ed7ff" stroke-opacity=".08" stroke-width="2" filter="url(#soft)"/>
+</svg>
