@@ -32,6 +32,13 @@ SOURCE={
 class Reader:
     qty="0.000175497"
     def __init__(self,*args,**kwargs): pass
+    def get_account(self):
+        return {
+            "equity":"100000",
+            "status":"ACTIVE",
+            "trading_blocked":False,
+            "non_marginable_buying_power":"100000",
+        }
     def get_positions(self):
         return ({
             "symbol":"BTCUSD","side":"long","qty":self.qty,
