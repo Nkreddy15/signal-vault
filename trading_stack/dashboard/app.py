@@ -57,6 +57,7 @@ def healthz():
 @app.get("/api/snapshot")
 def snapshot():
     crypto_health, crypto_health_err = _freq("health")
+    crypto_config, crypto_config_err = _freq("show_config")
     crypto_profit, crypto_profit_err = _freq("profit")
     crypto_trades, crypto_trades_err = _freq("trades", {"limit": 100})
 
@@ -67,19 +68,18 @@ def snapshot():
     )
 
     safe_positions = []
+    other_positions = []
+    position_fields = [
+        "symbol", "asset_class", "qty", "market_value", "avg_entry_price",
+        "current_price", "unrealized_pl", "unrealized_plpc", "change_today",
+    ]
     if isinstance(positions, list):
         for position in positions:
+            projected = _pick(position, position_fields)
             if position.get("symbol") in STOCK_UNIVERSE:
-                safe_positions.append(
-                    _pick(
-                        position,
-                        [
-                            "symbol", "qty", "market_value", "avg_entry_price",
-                            "current_price", "unrealized_pl",
-                            "unrealized_plpc", "change_today",
-                        ],
-                    )
-                )
+                safe_positions.append(projected)
+            else:
+                other_positions.append(projected)
 
     safe_orders = []
     if isinstance(orders, list):
@@ -102,8 +102,23 @@ def snapshot():
     elif isinstance(crypto_trades, list):
         trade_list = crypto_trades
 
+    crypto_state = None
+    if isinstance(crypto_config, dict):
+        crypto_state = (
+            crypto_config.get("state")
+            or crypto_config.get("bot_state")
+            or crypto_config.get("initial_state")
+        )
+    if not crypto_state and isinstance(crypto_health, dict) and not crypto_health_err:
+        crypto_state = "RUNNING"
+
     crypto_summary = {
         "health": crypto_health,
+        "config": _pick(
+            crypto_config,
+            ["state", "runmode", "strategy", "timeframe", "exchange", "dry_run"],
+        ),
+        "bot_state": crypto_state or "UNREACHABLE",
         "profit": _pick(
             crypto_profit,
             [
@@ -115,7 +130,7 @@ def snapshot():
         "recent_trades": trade_list[:50],
         "errors": [
             err for err in
-            [crypto_health_err, crypto_profit_err, crypto_trades_err]
+            [crypto_health_err, crypto_config_err, crypto_profit_err, crypto_trades_err]
             if err
         ],
     }
@@ -129,6 +144,8 @@ def snapshot():
             ],
         ),
         "positions": safe_positions,
+        "other_positions": other_positions,
+        "other_positions_count": len(other_positions),
         "recent_orders": safe_orders[:50],
         "errors": [
             err for err in [account_err, positions_err, orders_err] if err
@@ -191,7 +208,8 @@ INDEX_HTML = r"""<!doctype html>
 
   <div class="grid">
     <section class="card"><h2>Crypto trades</h2><div id="cryptoTrades"></div></section>
-    <section class="card"><h2>Stock positions</h2><div id="stockPositions"></div></section>
+    <section class="card"><h2>Managed stock positions</h2><div id="stockPositions"></div></section>
+    <section class="card"><h2>Other Alpaca PAPER positions</h2><div id="otherPositions"></div></section>
     <section class="card"><h2>Stock orders</h2><div id="stockOrders"></div></section>
   </div>
 </main>
@@ -211,7 +229,7 @@ async function refresh() {
     const r = await fetch('/api/snapshot', {cache:'no-store'});
     const d = await r.json();
     document.getElementById('stamp').textContent = 'Updated ' + d.generated_at;
-    document.getElementById('crypto').innerHTML = kv({...d.crypto.profit, bot_state:d.crypto.health?.state || d.crypto.health?.status || 'unknown'}) +
+    document.getElementById('crypto').innerHTML = kv({...d.crypto.profit, bot_state:d.crypto.bot_state, ...d.crypto.config}) +
       (d.crypto.errors.length ? '<pre class="error">'+d.crypto.errors.join('\n')+'</pre>' : '');
     document.getElementById('stocks').innerHTML = kv(d.stocks.account) +
       (d.stocks.errors.length ? '<pre class="error">'+d.stocks.errors.join('\n')+'</pre>' : '');
@@ -220,7 +238,10 @@ async function refresh() {
       d.crypto.recent_trades, ['trade_id','pair','is_open','open_rate','close_rate','profit_abs','profit_ratio','enter_tag','exit_reason']
     );
     document.getElementById('stockPositions').innerHTML = table(
-      d.stocks.positions, ['symbol','qty','market_value','avg_entry_price','current_price','unrealized_pl','unrealized_plpc']
+      d.stocks.positions, ['symbol','asset_class','qty','market_value','avg_entry_price','current_price','unrealized_pl','unrealized_plpc']
+    );
+    document.getElementById('otherPositions').innerHTML = table(
+      d.stocks.other_positions, ['symbol','asset_class','qty','market_value','avg_entry_price','current_price','unrealized_pl','unrealized_plpc']
     );
     document.getElementById('stockOrders').innerHTML = table(
       d.stocks.recent_orders, ['symbol','side','qty','notional','type','status','filled_qty','filled_avg_price','created_at']
