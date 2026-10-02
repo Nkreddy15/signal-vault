@@ -37,7 +37,7 @@ VALIDATION_FRAC = 0.20
 # Fixed before seeing model results. These are research sensitivity inputs,
 # not claims about current provider fees/spreads.
 ROUND_TRIP_COST_BPS = {
-    "illustrative_low_friction": 44.0,   # 2*(15 fee + 1 half-spread + 6 slippage-ish)
+    "illustrative_low_friction": 42.0,   # 2*15 fee + 2 spread + 2*5 slippage
     "illustrative_base_friction": 74.0,  # 2*(25 fee + 2 half-spread + 10 slippage)
     "illustrative_high_friction": 132.0, # 2*(40 fee + 6 half-spread + 20 slippage)
 }
@@ -203,8 +203,13 @@ def _split(rows: Sequence[Observation]):
     train_cut = indices[int(n * TRAIN_FRAC)]
     val_cut = indices[int(n * (TRAIN_FRAC + VALIDATION_FRAC))]
 
-    train = tuple(row for row in rows if row.time_index < train_cut)
-    validation = tuple(row for row in rows if train_cut <= row.time_index < val_cut)
+    # Purge the boundary label hour so train labels never consume validation
+    # prices and validation labels never consume the descriptive test window.
+    train = tuple(row for row in rows if row.time_index < train_cut - 1)
+    validation = tuple(
+        row for row in rows
+        if train_cut <= row.time_index < val_cut - 1
+    )
     test = tuple(row for row in rows if row.time_index >= val_cut)
     if not train or not validation or not test:
         raise ValueError("chronological split produced an empty fold")
@@ -388,6 +393,7 @@ def build_tournament(folder: Path) -> dict[str, object]:
         "feature_lookback_hours": LOOKBACK,
         "observation_count": len(observations),
         "chronological_split": {
+            "boundary_label_hours_purged": True,
             "train_rows": len(train),
             "validation_rows": len(validation),
             "untouched_test_rows": len(test),
