@@ -36,6 +36,7 @@ from .all_market_forward_status import all_market_forward_status
 from .all_market_dashboard import build_dashboard_snapshot
 from .dashboard_snapshot_archive import archive_dashboard_snapshot
 from .six_crypto_shadow import inspect_six_crypto_shadow
+from .current_compact_crypto_snapshot import current_compact_crypto_snapshot
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -253,6 +254,16 @@ def combined_all_markets_once(
                 except Exception as exc:
                     output["current_btc_shadow_status"]="FAILED_SAFE"
                     output["current_btc_shadow_failure_class"]=type(exc).__name__
+                try:
+                    compact=current_compact_crypto_snapshot(
+                        root=btc_root/SIX_CRYPTO_BASENAME,
+                    )
+                    output["current_compact_crypto_model_status"]=compact.get("status")
+                    output["current_compact_crypto_model_snapshot"]=compact
+                    output["current_compact_crypto_model_order_submission"]="DISABLED"
+                except Exception as exc:
+                    output["current_compact_crypto_model_status"]="FAILED_SAFE"
+                    output["current_compact_crypto_model_failure_class"]=type(exc).__name__
             except Exception as exc:
                 output["dashboard_snapshot_status"]="FAILED_SAFE"
                 output["dashboard_snapshot_failure_class"]=type(exc).__name__
