@@ -20,6 +20,7 @@ from typing import Mapping
 
 from .ci_historical_equities import SYMBOLS
 from .research_universe import ResearchBar
+from .equity_model_warmup import MODEL_WARMUP_CHILD
 from .equity_forward_collector import (
     PLAN_KIND,
     PLAN_VERSION,
@@ -192,6 +193,14 @@ def audit_equity_forward_archive(root: str | Path) -> dict[str, object]:
     receipt_count = 0
 
     for path in items:
+        if path.name == MODEL_WARMUP_CHILD:
+            if (
+                path.is_symlink()
+                or not path.is_dir()
+                or path.stat().st_mode & 0o077
+            ):
+                raise ValueError("reserved stock model warmup child is unsafe")
+            continue
         plan_match = PLAN_RE.fullmatch(path.name)
         receipt_match = RECEIPT_RE.fullmatch(path.name)
         if plan_match:
