@@ -124,3 +124,52 @@ def assess_new_risk(
         "live_order_submission":"UNAVAILABLE",
         "assessment_is_not_trading_authorization":True,
     }
+
+
+def assess_position_reduction(
+    *,
+    lane:MarketLane,
+    current_lane_exposure_usd:Decimal,
+    proposed_reduction_usd:Decimal,
+    open_positions:int,
+    operator_halted:bool,
+)->dict[str,object]:
+    """Assess a risk-reducing close; never authorize an order.
+
+    This is intentionally separate from assess_new_risk so a SELL that reduces
+    an existing position is never modeled as additive exposure.
+    """
+    if lane not in LANES:
+        raise ValueError("unregistered market lane")
+    for value,name in (
+        (current_lane_exposure_usd,"current lane exposure"),
+        (proposed_reduction_usd,"proposed reduction"),
+    ):
+        if type(value) is not Decimal or not value.is_finite() or value<=0:
+            raise ValueError("positive finite "+name+" required")
+    if proposed_reduction_usd>current_lane_exposure_usd:
+        raise ValueError("position reduction cannot exceed current lane exposure")
+    if type(open_positions) is not int or open_positions<1:
+        raise ValueError("position reduction requires an existing open position")
+
+    reasons=[]
+    if operator_halted:
+        reasons.append("OPERATOR_HALTED")
+    projected=current_lane_exposure_usd-proposed_reduction_usd
+    if projected<0:
+        reasons.append("NEGATIVE_PROJECTED_EXPOSURE")
+    admissible=not reasons
+    return {
+        "kind":"CROSS_MARKET_POSITION_REDUCTION_ASSESSMENT_NOT_ORDER_AUTHORIZATION",
+        "lane":lane,
+        "risk_admissible":admissible,
+        "rejection_reasons":reasons,
+        "current_lane_exposure_usd":str(current_lane_exposure_usd),
+        "proposed_reduction_usd":str(proposed_reduction_usd),
+        "projected_lane_exposure_usd":str(projected),
+        "position_reduction_only":True,
+        "automatic_order_submission":"DISABLED",
+        "paper_order_submission":"DISABLED",
+        "live_order_submission":"UNAVAILABLE",
+        "assessment_is_not_trading_authorization":True,
+    }

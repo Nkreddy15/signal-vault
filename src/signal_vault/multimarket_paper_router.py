@@ -115,14 +115,24 @@ def _require_risk_receipt(
     draft: MultiMarketOrderDraft,
     receipt: Mapping[str, object],
 ) -> None:
-    if (
-        receipt.get("kind")
-        != "CROSS_MARKET_RISK_ASSESSMENT_NOT_ORDER_AUTHORIZATION"
-        or receipt.get("lane") != draft.market_lane
-        or receipt.get("risk_admissible") is not True
-        or receipt.get("assessment_is_not_trading_authorization") is not True
-        or receipt.get("automatic_order_submission") != "DISABLED"
-    ):
+    side=draft.payload.get("side")
+    base=(
+        receipt.get("lane")==draft.market_lane
+        and receipt.get("risk_admissible") is True
+        and receipt.get("assessment_is_not_trading_authorization") is True
+        and receipt.get("automatic_order_submission")=="DISABLED"
+    )
+    if side=="sell":
+        reduction=(
+            receipt.get("kind")
+            =="CROSS_MARKET_POSITION_REDUCTION_ASSESSMENT_NOT_ORDER_AUTHORIZATION"
+            and receipt.get("position_reduction_only") is True
+        )
+        if not (base and reduction):
+            raise PermissionError("matching admissible position-reduction risk receipt required")
+        return
+    additive=receipt.get("kind")=="CROSS_MARKET_RISK_ASSESSMENT_NOT_ORDER_AUTHORIZATION"
+    if not (base and additive):
         raise PermissionError("matching admissible cross-market risk receipt required")
 
 
