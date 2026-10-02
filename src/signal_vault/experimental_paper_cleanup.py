@@ -122,6 +122,11 @@ def cleanup_once(
         raise PermissionError("exact crypto PAPER acknowledgement required")
     expected_qty,reviewed_value=_reviewed_position(source_inventory)
     client=reader_factory(credentials.key_id,credentials.secret_key)
+    account=client.get_account()
+    if str(account.get("status","")).upper()!="ACTIVE":
+        raise PermissionError("Alpaca PAPER account is not active")
+    if account.get("trading_blocked") is not False:
+        raise PermissionError("Alpaca PAPER account trading is not confirmed unblocked")
     _,qty,market_value,current_price=_fresh_position(client,expected_qty)
     asset=client.get_btc_asset()
     rules=CryptoVenueRules.from_asset(asset)
@@ -174,6 +179,8 @@ def cleanup_once(
         "fresh_current_price_usd":str(current_price),
         "cleanup_value_cap_usd":str(MAX_CLEANUP_MARKET_VALUE_USD),
         "client_order_id":client_id,
+        "paper_account_active":True,
+        "paper_account_trading_blocked":False,
         "risk_assessment":risk,
         "cleanup_only":True,
         "new_position_entry":"FORBIDDEN",
