@@ -1,0 +1,35 @@
+services:
+  crypto:
+    build:
+      context: ./crypto
+    container_name: open-source-crypto-paper
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      FREQTRADE__API_SERVER__USERNAME: ${FREQTRADE__API_SERVER__USERNAME}
+      FREQTRADE__API_SERVER__PASSWORD: ${FREQTRADE__API_SERVER__PASSWORD}
+      FREQTRADE__API_SERVER__JWT_SECRET_KEY: ${FREQTRADE__API_SERVER__JWT_SECRET_KEY}
+      FREQTRADE__API_SERVER__WS_TOKEN: ${FREQTRADE__API_SERVER__WS_TOKEN}
+      PERSIST_DIR: /freqtrade/data
+      FREQTRADE_DB_URL: sqlite:////freqtrade/data/tradesv3.sqlite
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - crypto_data:/freqtrade/data
+
+  stocks:
+    build:
+      context: ./stocks
+    container_name: open-source-stocks-paper
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ALPACA_API_KEY: ${ALPACA_API_KEY}
+      ALPACA_API_SECRET: ${ALPACA_API_SECRET}
+      ALPACA_IS_PAPER: "true"
+      STOCK_LOGICAL_BUDGET_USD: "100"
+
+volumes:
+  crypto_data:
