@@ -185,6 +185,8 @@ def _std(values:Sequence[float])->float:
 
 def latest_stock_feature_vectors(
     datasets:Mapping[str,Sequence[ResearchBar]],
+    *,
+    allow_historical_warmup:bool=False,
 )->tuple[dict[str,tuple[float,...]],datetime]:
     if set(datasets)!=set(SYMBOLS):
         raise ValueError("exact six-stock universe required")
@@ -198,11 +200,26 @@ def latest_stock_feature_vectors(
         if any(
             not isinstance(row,ResearchBar)
             or row.symbol!=symbol
-            or row.prospective is not True
             or row.feed!="alpaca_equity_iex|adjustment=all"
             for row in rows
         ):
-            raise ValueError("stock feature input lacks verified prospective provenance")
+            raise ValueError("stock feature input lacks verified IEX provenance")
+        flags=tuple(row.prospective for row in rows)
+        if allow_historical_warmup:
+            if any(type(flag) is not bool for flag in flags):
+                raise ValueError("stock warmup provenance flag must be boolean")
+            first_prospective=next(
+                (idx for idx,flag in enumerate(flags) if flag),
+                len(flags),
+            )
+            if any(flags[:first_prospective]) or any(
+                not flag for flag in flags[first_prospective:]
+            ):
+                raise ValueError("stock warmup must be historical prefix then prospective suffix")
+            if first_prospective==len(flags):
+                raise ValueError("stock model snapshot needs at least one prospective row")
+        elif any(flag is not True for flag in flags):
+            raise ValueError("stock feature input must be fully prospective")
         starts=tuple(row.start_utc for row in rows)
         if reference is None:
             reference=starts
@@ -288,11 +305,15 @@ def build_stock_cross_source_signals(
     datasets:Mapping[str,Sequence[ResearchBar]],
     *,
     captured_utc:datetime,
+    allow_historical_warmup:bool=False,
 )->tuple[ModelSignal,...]:
     if captured_utc.tzinfo is None or captured_utc.utcoffset() is None:
         raise ValueError("timezone-aware stock inference timestamp required")
     captured=captured_utc.astimezone(timezone.utc)
-    vectors,feature_close=latest_stock_feature_vectors(datasets)
+    vectors,feature_close=latest_stock_feature_vectors(
+        datasets,
+        allow_historical_warmup=allow_historical_warmup,
+    )
     expiry=captured+timedelta(hours=1)
     output=[]
     for model in FROZEN_STOCK_MODELS:
@@ -331,9 +352,12 @@ def stock_cross_source_ensemble_snapshot(
     datasets:Mapping[str,Sequence[ResearchBar]],
     *,
     captured_utc:datetime,
+    allow_historical_warmup:bool=False,
 )->dict[str,object]:
     signals=build_stock_cross_source_signals(
-        datasets,captured_utc=captured_utc
+        datasets,
+        captured_utc=captured_utc,
+        allow_historical_warmup=allow_historical_warmup,
     )
     ensemble=build_ensemble_opportunities(
         signals,
@@ -345,7 +369,9 @@ def stock_cross_source_ensemble_snapshot(
     return {
         "kind":"PHASE162_STOCK_CROSS_SOURCE_ENSEMBLE_NO_ORDER",
         "source_model_training_data_provenance_verified":False,
-        "forward_evidence_provenance":"verified Alpaca IEX prospective core hours",
+        "forward_evidence_provenance":"verified Alpaca IEX core hours",
+        "historical_feature_warmup_used":allow_historical_warmup,
+        "historical_feature_warmup_counts_as_prospective":False,
         "model_signal_count":len(signals),
         "opportunity_count":len(ensemble.opportunities),
         "opportunities":[{
