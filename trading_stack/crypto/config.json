@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "max_open_trades": 4,
+  "stake_currency": "USD",
+  "stake_amount": 15,
+  "tradable_balance_ratio": 0.95,
+  "fiat_display_currency": "USD",
+  "available_capital": 100,
+  "dry_run": true,
+  "dry_run_wallet": 100,
+  "cancel_open_orders_on_exit": true,
+  "trading_mode": "spot",
+  "margin_mode": "",
+  "exchange": {
+    "name": "kraken",
+    "key": "",
+    "secret": "",
+    "ccxt_config": {
+      "enableRateLimit": true
+    },
+    "ccxt_async_config": {
+      "enableRateLimit": true
+    },
+    "pair_whitelist": [
+      "BTC/USD",
+      "ETH/USD",
+      "SOL/USD",
+      "XRP/USD",
+      "DOGE/USD",
+      "ADA/USD"
+    ],
+    "pair_blacklist": []
+  },
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ],
+  "entry_pricing": {
+    "price_side": "same",
+    "use_order_book": true,
+    "order_book_top": 1,
+    "price_last_balance": 0,
+    "check_depth_of_market": {
+      "enabled": false,
+      "bids_to_ask_delta": 1
+    }
+  },
+  "exit_pricing": {
+    "price_side": "same",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "unfilledtimeout": {
+    "entry": 10,
+    "exit": 10,
+    "exit_timeout_count": 0,
+    "unit": "minutes"
+  },
+  "api_server": {
+    "enabled": true,
+    "listen_ip_address": "0.0.0.0",
+    "listen_port": 8080,
+    "verbosity": "error",
+    "enable_openapi": false,
+    "jwt_secret_key": "OVERRIDDEN_BY_ENV",
+    "ws_token": "OVERRIDDEN_BY_ENV",
+    "CORS_origins": [],
+    "username": "OVERRIDDEN_BY_ENV",
+    "password": "OVERRIDDEN_BY_ENV"
+  },
+  "bot_name": "open-source-crypto-paper",
+  "initial_state": "running",
+  "force_entry_enable": false,
+  "db_url": "sqlite:////freqtrade/data/tradesv3.sqlite",
+  "internals": {
+    "process_throttle_secs": 5,
+    "heartbeat_interval": 60
+  },
+  "strategy": "Strategy001",
+  "strategy_path": "/freqtrade/user_data/strategies"
+}
