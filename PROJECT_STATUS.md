@@ -1,3 +1,32 @@
+# CURRENT BUILD CHECKPOINT — 2026-10-02 04:08 UTC
+
+**Recovery rule:** read `BUILD_CHECKPOINT.json` first. It is authoritative over older notes below.
+
+Signal Vault is now through **Phase 160** on `main` before this checkpoint refresh. The accelerated experimental PAPER path is built: a $10-max BTC PAPER sandbox, durable execution journal + JSON receipt, read-only reconciliation, local fallback scripts, one-pass GET-only readiness for both fixed BTC strategies, and an execute-from-readiness helper. The readiness receipt is **not** order authority; the sandbox re-fetches fresh BTC data and rechecks PAPER account, duplicate, and shared-risk state before any POST. The exact owner acknowledgement remains required. LIVE trading remains unavailable.
+
+**GitHub Actions:** recent jobs are failing before any workflow steps start. The last fully green safety run was Phase 152. This is recorded as an Actions runner/platform availability problem, not as a passing or failing code-test result. Phase 159 reduced duplicate CI usage by keeping the unchanged full safety suite on PRs to main and pushes to main only.
+
+**Latest verified Railway evidence (2026-10-02 03:10 UTC):** six-crypto has **41 genuine source hours / 40 scored precommitted intervals**, with 127 source hours and 128 scored intervals remaining to the long prospective gate. US equities have **6/60** core-hour receipts. Kalshi has a **22-market** plan but still 0 prospective snapshots and 0 settlement receipts. Phase 153 fixed the BTC-shadow reader to the exact six-crypto sidecar namespace; the first post-fix cron output still needs verification before claiming the current BTC BUY/HOLD actions are visible.
+
+**Fast experimental PAPER path:** because GitHub Actions cannot currently start jobs, the practical fallback is local and owner-invoked:
+
+```bash
+git pull origin main
+bash scripts/run_experimental_paper_sandbox.sh all dry-run
+```
+
+That command securely prompts for separate Alpaca PAPER credentials only if they are not already present in the shell and writes a GET-only readiness receipt. If it reports exactly one current BUY and the PAPER account is ready, use:
+
+```bash
+bash scripts/execute_ready_experimental_paper.sh <fresh-readiness-receipt.json>
+```
+
+The helper refuses stale/ambiguous receipts and then invokes the sandbox, which rechecks everything and requires `I_ACKNOWLEDGE_ALPACA_CRYPTO_PAPER_ORDERS_ONLY` before at most one $10 PAPER POST attempt. After any POST attempt, reconcile the durable receipt+journal before any further execution.
+
+No new Railway service/volume, paid resource, LIVE endpoint, automatic PAPER activation, or blind retry was added.
+
+---
+
 # CURRENT CLOUD CHECKPOINT — 2026-10-01 (authoritative over older notes below)
 
 **Recovery rule:** read `BUILD_CHECKPOINT.json` first after any retry, new chat, or interrupted run. It is the machine-readable authority for current phase, main SHA, CI, Railway deployment, lane blockers, and next actions.
