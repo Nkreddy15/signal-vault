@@ -26,6 +26,7 @@ from .kalshi_cloud_sidecar import (
     run_kalshi_sidecar_once,
 )
 from .railway_btc_first_dual_cron import (
+    BASENAME as SIX_CRYPTO_BASENAME,
     BTC_FINGERPRINT_EXCLUDED_CHILDREN,
     BTC_HEALTHY,
     BTC_MINIMUM_FREE_RESERVE_BYTES,
@@ -227,7 +228,9 @@ def combined_all_markets_once(
                         research.get("paper_activation_permitted") is True
                     )
                 try:
-                    shadow=inspect_six_crypto_shadow(root=btc_root)
+                    shadow=inspect_six_crypto_shadow(
+                        root=btc_root/SIX_CRYPTO_BASENAME,
+                    )
                     if shadow.get("kind")=="OFFLINE_SIX_CRYPTO_SHA_CHAINED_SHADOW_ONLY":
                         decisions=shadow.get("predeclared_flat_and_held_hypothetical_decisions",{})
                         btc=decisions.get("BTC/USD",{}) if isinstance(decisions,Mapping) else {}
