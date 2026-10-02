@@ -1,10 +1,11 @@
 import unittest
 from dataclasses import replace
+from urllib.error import HTTPError
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from signal_vault.alpaca_paper import (PaperAlpacaReadClient, PAPER_ROOT,
-                                        build_non_executable_draft)
+from signal_vault.alpaca_paper import (PaperAlpacaReadClient, PaperReadStageError,
+                                        PAPER_ROOT, build_non_executable_draft)
 from signal_vault.domain import TradeIntent, Side, PortfolioSnapshot
 
 NOW = datetime(2026, 9, 28, 21, 0, tzinfo=timezone.utc)
@@ -33,7 +34,7 @@ class PaperReadBoundaryTests(unittest.TestCase):
             calls.append(path)
             if path == "/v2/account":
                 return {"equity": "100000"}
-            if path == "/v2/assets/BTC%2FUSD":
+            if path == "/v2/assets/BTCUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
                         "tradable": True, "fractionable": True,
                         "min_order_size": "0.00015", "min_trade_increment": "0.00001",
@@ -118,7 +119,7 @@ class PaperReadinessTests(unittest.TestCase):
             if path == "/v2/account":
                 return {"equity": "100000", "status": "ACTIVE", "trading_blocked": False,
                         "non_marginable_buying_power": "100000"}
-            if path == "/v2/assets/BTC%2FUSD":
+            if path == "/v2/assets/BTCUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
                         "tradable": True, "fractionable": True,
                         "min_order_size": "0.00015", "min_trade_increment": "0.00001",
@@ -129,12 +130,28 @@ class PaperReadinessTests(unittest.TestCase):
         self.assertTrue(result.ready)
         self.assertEqual(result.logical_cap_usd, Decimal("100"))
 
+    def test_readiness_sanitizes_http_stage_without_response_body(self):
+        def mock(path, key, secret):
+            if path == "/v2/account":
+                return {"equity": "100000", "status": "ACTIVE", "trading_blocked": False,
+                        "non_marginable_buying_power": "100000"}
+            if path == "/v2/assets/BTCUSD":
+                raise HTTPError("https://paper-api.alpaca.markets/v2/assets/BTCUSD",
+                                401, "Unauthorized", None, None)
+            return []
+        with self.assertRaises(PaperReadStageError) as ctx:
+            PaperAlpacaReadClient("mock-paper", "mock-secret", transport=mock).readiness()
+        self.assertEqual(ctx.exception.stage, "btc_asset")
+        self.assertEqual(ctx.exception.failure_class, "HTTPError")
+        self.assertEqual(ctx.exception.http_status, 401)
+        self.assertNotIn("Unauthorized", str(ctx.exception))
+
     def test_existing_positions_fail_readiness_without_canceling_anything(self):
         def mock(path, key, secret):
             if path == "/v2/account":
                 return {"equity": "100000", "status": "ACTIVE", "trading_blocked": False,
                         "non_marginable_buying_power": "100000"}
-            if path == "/v2/assets/BTC%2FUSD":
+            if path == "/v2/assets/BTCUSD":
                 return {"symbol": "BTC/USD", "class": "crypto", "status": "active",
                         "tradable": True, "fractionable": True,
                         "min_order_size": "0.00015", "min_trade_increment": "0.00001",
