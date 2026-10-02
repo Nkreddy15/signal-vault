@@ -28,7 +28,24 @@ if [[ -z "${ALPACA_PAPER_KEY_ID:-}" ]]; then
   read -r -s -p "Alpaca PAPER key ID: " ALPACA_PAPER_KEY_ID; echo; export ALPACA_PAPER_KEY_ID
 fi
 if [[ -z "${ALPACA_PAPER_SECRET_KEY:-}" ]]; then
-  read -r -s -p "Alpaca PAPER secret key: " ALPACA_PAPER_SECRET_KEY; echo; export ALPACA_PAPER_SECRET_KEY
+  read -r -s -p "Alpaca PAPER secret key: " ALPACA_PAPER_SECRET_KEY; echo
+fi
+
+export ALPACA_PAPER_KEY_ID ALPACA_PAPER_SECRET_KEY
+
+if ! PYTHONPATH="$ROOT/src" "$PYTHON" - <<'PY'
+import os
+from signal_vault.paper_credentials import PaperCredentials
+try:
+    PaperCredentials.from_environment(os.environ)
+except Exception:
+    raise SystemExit(2)
+print("PAPER credential handoff: OK")
+PY
+then
+  unset ALPACA_PAPER_KEY_ID ALPACA_PAPER_SECRET_KEY
+  echo "PAPER credentials were not available to the Python process. Re-run and enter both PAPER values." >&2
+  exit 1
 fi
 
 OUTDIR="$ROOT/.data/experimental-paper-local"
