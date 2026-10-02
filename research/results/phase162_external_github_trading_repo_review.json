@@ -1,0 +1,32 @@
+{
+  "kind":"PHASE162_EXTERNAL_GITHUB_TRADING_REPO_REVIEW",
+  "repository":"Tesan-Ai/trading-platform",
+  "reviewed_commit":"45700f7bc960174b304561f1fc1026d9964086bf",
+  "public_repository":true,
+  "license_file_found_at_repository_root":false,
+  "implementation_code_copied":false,
+  "useful_material_adopted":[
+    "public OHLCV files for exploratory, explicitly unverified-provenance stock research",
+    "high-level architectural ideas only: paper-only execution separation, observability, multi-strategy research"
+  ],
+  "strategy_evidence_review":{
+    "multi_strategy_leaderboard":{
+      "momentum_breakout_v1":{"status":"RESEARCH_ONLY","closed_trades":1},
+      "bull_day_trade_v1":{"status":"RESEARCH_ONLY","closed_trades":8},
+      "opening_range_vwap_momentum_v1":{"status":"RESEARCH_ONLY","closed_trades":0},
+      "daily_trend_v1":{"status":"RESEARCH_ONLY","closed_trades":0}
+    },
+    "orb_pullback_continuation_v1":{
+      "baseline":{"status":"RESEARCH_ONLY","closed_trades":4},
+      "all_symbols_filter_driven":{"status":"RESEARCH_ONLY","closed_trades":7}
+    }
+  },
+  "decision":{
+    "blind_strategy_import":false,
+    "reason":"The repository's committed strategy reports are research-only and several have zero or very small trade samples. A large profit factor on four or seven trades is not enough evidence to import the strategy as an autonomous Signal Vault decision rule.",
+    "chosen_path":"Use the public market data only for exploratory model development, then require cross-source forward behavior on Signal Vault's own verified Alpaca-IEX evidence."
+  },
+  "broker_order_submission":"DISABLED",
+  "paper_activation_permitted":false,
+  "live_trading":"UNAVAILABLE"
+}
