@@ -35,7 +35,7 @@ def _utc(value:datetime)->datetime:
     return value.astimezone(timezone.utc)
 
 
-def _folder(stock_root:Path)->Path:
+def _folder(stock_root:Path,*,create:bool)->Path:
     root=Path(stock_root)
     if root.is_symlink() or not root.is_dir() or root.stat().st_mode&0o077:
         raise ValueError("stock root must be private real directory")
@@ -43,8 +43,10 @@ def _folder(stock_root:Path)->Path:
     if folder.exists() or folder.is_symlink():
         if folder.is_symlink() or not folder.is_dir():
             raise ValueError("stock warmup child must be real directory")
-    else:
+    elif create:
         folder.mkdir(mode=0o700)
+    else:
+        raise ValueError("stock warmup child does not exist")
     os.chmod(folder,0o700)
     if folder.stat().st_mode&0o077:
         raise PermissionError("stock warmup child must be private")
@@ -89,7 +91,7 @@ def collect_stock_model_warmup(
         raise PermissionError("private DATA key required")
     if not isinstance(secret,str) or not secret.strip() or secret!=secret.strip():
         raise PermissionError("private DATA secret required")
-    folder=_folder(stock_root)
+    folder=_folder(stock_root,create=True)
     first=_utc(first_forward_open)
     target=folder/("stock-model-warmup-before-"+first.strftime("%Y%m%dT%H%MZ")+".json")
     if target.exists():
@@ -205,7 +207,7 @@ def load_stock_model_warmup(
     stock_root:Path,
     first_forward_open:datetime,
 )->tuple[dict[str,object],dict[str,tuple[ResearchBar,...]]]:
-    folder=_folder(stock_root)
+    folder=_folder(stock_root,create=False)
     first=_utc(first_forward_open)
     target=folder/("stock-model-warmup-before-"+first.strftime("%Y%m%dT%H%MZ")+".json")
     if (
