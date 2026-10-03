@@ -152,7 +152,7 @@ def _convert_member(
 
     if len(frame) < 1000:
         raise RuntimeError(
-            f"{pair}: only {len(frame)} 15m rows found for Q2; refusing weak dataset"
+            f"{pair}: only {len(frame)} 15m rows found in requested quarter; refusing weak dataset"
         )
 
     filename = pair.replace("/", "_") + "-15m.feather"
@@ -197,7 +197,7 @@ def main() -> int:
     parser.add_argument("--archive", default=None)
     args = parser.parse_args()
 
-    match = re.fullmatch(r"(20\\d{2})Q([1-4])", args.quarter.upper())
+    match = re.fullmatch(r"(20\d{2})Q([1-4])", args.quarter.upper())
     if not match:
         raise SystemExit("--quarter must look like 2026Q1")
 
