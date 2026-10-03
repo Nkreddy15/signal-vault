@@ -561,8 +561,8 @@ footer{text-align:center;color:#35506b;font-size:7px;letter-spacing:.17em;margin
 }
 .side-brand{
   visibility:hidden;
-  height:190px;
-  min-height:190px;
+  height:172px;
+  min-height:172px;
   padding:0;
 }
 .main{position:relative;z-index:1}
