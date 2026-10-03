@@ -152,7 +152,7 @@ def _decorate_trade(trade, strategy_name=""):
         )
         exit_logic = (
             "Adaptive volatility target, cost-cleared profit protection, "
-            "regime-failure exit, or -1.8% hard stop."
+            "persistent/critical regime-failure exit, or -1.8% hard stop."
         )
     else:
         target_rule = "ROI reference +0.40%"
