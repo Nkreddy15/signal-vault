@@ -286,6 +286,43 @@ def run_backtest(frames: Dict[str, pd.DataFrame], label: str) -> dict:
                 balance += trade.pnl_usd
                 del positions[pair]
 
+        # New signals were formed on the previous completed candle, so entries
+        # occur at this candle's open. They must then be exposed to this same
+        # candle's high/low; otherwise the simulator would optimistically skip
+        # entry-candle stops.
+        available = MAX_OPEN_TRADES - len(positions)
+        if available > 0:
+            candidates: List[Tuple[float, str, str, float]] = []
+            for pair, frame in frames.items():
+                if pair in positions or date not in frame.index:
+                    continue
+                loc = frame.index.get_loc(date)
+                if isinstance(loc, slice) or loc == 0:
+                    continue
+                row = frame.iloc[loc]
+                prev = frame.iloc[loc - 1]
+                side: Optional[str] = None
+                if bool(prev["long_signal"]):
+                    side = "long"
+                elif bool(prev["short_signal"]):
+                    side = "short"
+                if side is None:
+                    continue
+                candidates.append(
+                    (float(prev["signal_score"]), pair, side, float(row["open"]))
+                )
+
+            candidates.sort(reverse=True)
+            for _, pair, side, entry_price in candidates[:available]:
+                if balance <= 0:
+                    break
+                stake = min(STAKE, max(balance, 0.0))
+                if stake <= 0:
+                    break
+                positions[pair] = Position(pair, side, date, entry_price, stake)
+
+        # Conservative intrabar target/stop handling for both carried and newly
+        # opened positions. If both thresholds are touched, stop wins.
         for pair in list(positions):
             frame = frames[pair]
             if date not in frame.index:
@@ -319,37 +356,6 @@ def run_backtest(frames: Dict[str, pd.DataFrame], label: str) -> dict:
         peak_balance = max(peak_balance, balance)
         if peak_balance > 0:
             max_drawdown = max(max_drawdown, (peak_balance - balance) / peak_balance)
-
-        available = MAX_OPEN_TRADES - len(positions)
-        if available <= 0:
-            continue
-
-        candidates: List[Tuple[float, str, str, float]] = []
-        for pair, frame in frames.items():
-            if pair in positions or date not in frame.index:
-                continue
-            loc = frame.index.get_loc(date)
-            if isinstance(loc, slice) or loc == 0:
-                continue
-            row = frame.iloc[loc]
-            prev = frame.iloc[loc - 1]
-            side: Optional[str] = None
-            if bool(prev["long_signal"]):
-                side = "long"
-            elif bool(prev["short_signal"]):
-                side = "short"
-            if side is None:
-                continue
-            candidates.append((float(prev["signal_score"]), pair, side, float(row["open"])))
-
-        candidates.sort(reverse=True)
-        for _, pair, side, entry_price in candidates[:available]:
-            if balance <= 0:
-                break
-            stake = min(STAKE, max(balance, 0.0))
-            if stake <= 0:
-                break
-            positions[pair] = Position(pair, side, date, entry_price, stake)
 
     for pair in list(positions):
         pos = positions[pair]
