@@ -13,10 +13,11 @@ import numpy as np
 import pandas as pd
 import multi_strategy_lab as m
 
-VERSION = 'REGIME-SWING-LAB-1'
+VERSION = 'REGIME-SWING-LAB-2'
 FAMILIES = ('leader_7d', 'leader_28d', 'channel_7d', 'blend')
 START = int(pd.Timestamp('2026-03-01', tz='UTC').value//1_000_000)
 SPEC = dict(decision='Complete UTC daily candle; next 15m opening fill',
+    daily_input='Kraken trade-only archive: aggregate observed intervals after UTC day closes; no artificial fills',
     selection='Same January 1–7 formation universe; no later winner selection',
     leader_7d='Top two long / bottom two synthetic short, 7d momentum divided by 14d daily volatility',
     leader_28d='Top two / bottom two, equally weighted 7d and 28d risk-adjusted momentum',
@@ -31,7 +32,7 @@ LIMITATIONS = [
     'Long-only results are cash-funded spot approximations. Synthetic shorts are separate experiments, not executable spot shorts.',
     'Synthetic short carry is a 0.03%/day assumption; actual borrow, margin availability, funding and liquidation are not modeled.',
     'Alpaca rate sensitivity uses Kraken data and simplified cash-fee accounting, not Alpaca venue or asset eligibility evidence.',
-    'Days with missing 15m bars are excluded. Daily indicators restart after gaps. Pending exits wait for an observed asset quote.',
+    'Kraken archive intervals without trades are omitted. Closed daily OHLCV aggregates observed trades; a wholly absent day resets indicators. No synthetic execution quotes are added.',
     'Daily rankings use only previously closed data; hold-rank buffers reduce forced turnover, but stops and exits still incur costs.',
     'No account or per-trade profit target. Stops, trend exits, 28-day time exits and drawdown triggers can still realize losses.',
     'Higher equity increases stake and capacity through the shared engine; it does not manufacture additional signals.',
@@ -39,14 +40,24 @@ LIMITATIONS = [
 ]
 
 
-def daily_features(raw):
+def daily_features(raw, closed_before_ms=None, strict_intervals=False):
+    """Aggregate closed archive days, not 96 trade-bearing intervals.
+
+    Kraken archives explicitly omit intervals without trades. Aggregating the
+    remaining observed OHLCV is valid for that source. This interpretation is
+    not suitable for an arbitrary incomplete live feed. Entire missing days
+    still restart indicators; no fabricated 15m rows enter the fill engine.
+    """
     raw = m.normalized(raw)
+    cutoff = int(raw.ts.iloc[-1])+m.BAR if closed_before_ms is None else closed_before_ms
     day = raw.ts//m.DAY*m.DAY
     grouped = raw.groupby(day, sort=True)
     f = grouped.agg(open=('open','first'), high=('high','max'), low=('low','min'),
         close=('close','last'), volume=('volume','sum'), count=('ts','size'),
         first_ms=('ts','min'), last_ms=('ts','max')).reset_index(names='ts')
-    f = f[(f['count']==96) & (f.first_ms==f.ts) & (f.last_ms==f.ts+m.DAY-m.BAR)].copy()
+    f = f[f.ts+m.DAY<=cutoff].copy()
+    if strict_intervals:
+        f = f[(f['count']==96) & (f.first_ms==f.ts) & (f.last_ms==f.ts+m.DAY-m.BAR)].copy()
     if f.empty:
         return f.reset_index(drop=True)
     block = (f.ts.diff().fillna(m.DAY)!=m.DAY).cumsum()
@@ -104,10 +115,11 @@ def rank_day(rows, family, mode):
     return entries, desired
 
 
-def compile_research(frames, mode):
+def compile_research(frames, mode, strict_intervals=False):
     daily, by_day = {}, {}
+    cutoff = max(int(raw.ts.iloc[-1])+m.BAR for raw in frames.values())
     for pair,raw in frames.items():
-        daily[pair]=daily_features(raw)
+        daily[pair]=daily_features(raw,cutoff,strict_intervals)
         for row in daily[pair].itertuples(index=False):
             by_day.setdefault(int(row.ts),{})[pair]=row
     signals, exits, rankings = {}, {}, []
@@ -151,29 +163,33 @@ def load_universe(root):
     return frames,receipt,manifest
 
 
-def run(frames, receipt, manifest, out, daily_cost=0):
+def run(frames, receipt, manifest, out, daily_cost=0, strict_intervals=False, experiment=None):
     out=Path(out)
     out.mkdir(parents=True,exist_ok=True)
+    active = experiment or dict(families=FAMILIES,compiler=compile_research,spec=SPEC,
+        version=VERSION,source=__file__)
+    families, spec, version = active['families'],active['spec'],active['version']
+    expected = len(families)*2*2*len(m.FEE_PROFILES)*2
     reports, baselines = [], {}
     for mode in ('long_only','synthetic_long_short'):
         print('Compiling daily decisions: '+mode,flush=True)
-        market,exits,rankings=compile_research(frames,mode)
+        market,exits,rankings=active['compiler'](frames,mode,strict_intervals)
         market=[row for row in market if row[0]>=START]
         if len(market)<96:
             raise ValueError('Insufficient March–June research candles')
-        m.save_json(out/(mode+'-rankings.json'),dict(spec=SPEC,rankings=rankings))
+        m.save_json(out/(mode+'-rankings.json'),dict(spec=spec,rankings=rankings))
         windows=m.month_windows(market)
-        for family in FAMILIES:
+        for family in families:
             for risk in ('balanced','aggressive'):
                 for fee in m.FEE_PROFILES:
                     for execution in ('trigger','extrema'):
                         cfg=m.Config(family=family,risk=risk,mode=mode,spread_bps=15,
                             execution=execution,fee_profile=fee,daily_operating_cost_usd=daily_cost)
                         name=f'{family}-{risk}-{mode}-{fee}-15bps-{execution}'
-                        result=m.simulate(market,cfg,allowed_families=FAMILIES,scheduled_exits=exits)
+                        result=m.simulate(market,cfg,allowed_families=families,scheduled_exits=exits)
                         months=[]
                         for month,lo,hi,partial in windows:
-                            r=m.simulate(market,cfg,lo,hi,allowed_families=FAMILIES,scheduled_exits=exits)
+                            r=m.simulate(market,cfg,lo,hi,allowed_families=families,scheduled_exits=exits)
                             months.append(dict(month=month,partial=partial,**r['summary']))
                         full=[r for r in months if not r['partial']]
                         row=dict(name=name,config=m.asdict(cfg),**result['summary'],
@@ -186,38 +202,44 @@ def run(frames, receipt, manifest, out, daily_cost=0):
                             row['positive_months']>=math.ceil(.6*len(full)) and
                             row['profit_factor'] is not None and row['profit_factor']>=1.1 and
                             row['max_drawdown_pct']<=100*cfg.drawdown_limit and not row['pending_positions'])
-                        result.update(monthly_independent_100=months,version=VERSION,spec=SPEC,
+                        result.update(monthly_independent_100=months,version=version,spec=spec,
                             input_manifest=manifest,universe=receipt,limitations=LIMITATIONS)
                         m.save_json(out/(name+'.json'),result)
                         if result['trades']:
                             pd.DataFrame(result['trades']).to_csv(out/(name+'-trades.csv'),index=False)
                         reports.append(row)
-                        print(f"[{len(reports)}/64] {name}: end ${row['ending_equity']:.2f}; trades {row['trades']}; DD {row['max_drawdown_pct']:.2f}%",flush=True)
-                        m.save_json(out/'regime-progress.json',dict(version=VERSION,completed=len(reports),expected=64,reports=reports))
+                        print(f"[{len(reports)}/{expected}] {name}: end ${row['ending_equity']:.2f}; trades {row['trades']}; DD {row['max_drawdown_pct']:.2f}%",flush=True)
+                        m.save_json(out/'regime-progress.json',dict(version=version,completed=len(reports),expected=expected,reports=reports))
                         key=fee+'-15bps'
                         if key not in baselines:
                             baselines[key]=m.buy_and_hold(market,cfg)
     robust=[]
-    for family in FAMILIES:
+    for family in families:
         for risk in ('balanced','aggressive'):
             group=[r for r in reports if r['config']['family']==family and r['config']['risk']==risk and
                 r['config']['mode']=='long_only' and r['config']['fee_profile']=='kraken_spot']
             if len(group)==2 and all(r['development_screen_pass'] for r in group):
                 robust.append(f'{family}-{risk}-kraken-15bps')
     coverage={}
+    cutoff = max(int(raw.ts.iloc[-1])+m.BAR for raw in frames.values())
     for pair,raw in frames.items():
-        daily=daily_features(raw)
+        daily=daily_features(raw,cutoff,strict_intervals)
         coverage[pair]=dict(complete_days=len(daily),
             complete_days_after_warmup=int((daily.get('age',pd.Series(dtype=int))>=29).sum()))
-    summary=dict(version=VERSION,status='DEVELOPMENT_ONLY_NO_ACTIVATION',profit_ceiling=None,
+    summary=dict(version=version,status='DEVELOPMENT_ONLY_NO_ACTIVATION',profit_ceiling=None,
+        daily_input_policy='strict_96_interval_sensitivity' if strict_intervals else 'kraken_trade_only_archive',
         reports=reports,robust_kraken_long_only_candidates=robust,
         fee_rate_sensitivity_only=[r['name'] for r in reports if r['config']['fee_profile']!='kraken_spot'
-            and r['development_screen_pass']],spec=SPEC,input_manifest=manifest,universe=receipt,
+            and r['development_screen_pass']],spec=spec,input_manifest=manifest,universe=receipt,
         buy_and_hold_baselines=baselines,limitations=LIMITATIONS,
-        source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        source_sha256=hashlib.sha256(Path(active['source']).read_bytes()).hexdigest(),
+        runner_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         shared_engine_sha256=hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest(),
         runtime_versions=dict(pandas=pd.__version__,numpy=np.__version__),sources=m.SOURCES,
         daily_coverage=coverage)
+    for name,path in [('replay-strategy.py',active['source']),('replay-runner.py',__file__),
+                      ('replay-accounting.py',m.__file__)]:
+        (out/name).write_bytes(Path(path).read_bytes())
     m.save_json(out/'regime-summary.json',summary)
     lines=['# Daily regime swing research','', 'No activation. Reused data. Synthetic shorts are separate sensitivity experiments.','',
         '| Configuration | End equity | Peak | Trades | Gross | Fees | Carry | Max DD | Median month |',
@@ -232,14 +254,22 @@ def run(frames, receipt, manifest, out, daily_cost=0):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--data-dir',required=True)
+    inputs=p.add_mutually_exclusive_group(required=True)
+    inputs.add_argument('--data-dir')
+    inputs.add_argument('--bundle')
     p.add_argument('--output-dir',required=True)
     p.add_argument('--daily-operating-cost-usd',type=float,default=0)
+    p.add_argument('--strict-intervals',action='store_true',help='Reproduce the old 96-interval coverage sensitivity')
     a=p.parse_args()
     if not math.isfinite(a.daily_operating_cost_usd) or a.daily_operating_cost_usd<0:
         raise ValueError('Operating cost must be finite and nonnegative')
-    frames,receipt,manifest=load_universe(a.data_dir)
-    run(frames,receipt,manifest,a.output_dir,a.daily_operating_cost_usd)
+    if a.bundle:
+        from export_research_bundle import load_bundle
+        frames,receipt,bundle=load_bundle(a.bundle)
+        manifest=[dict(pair=c['pair'],bars=c['bars'],sha256=c['source_feather_sha256']) for c in bundle['candles']]
+    else:
+        frames,receipt,manifest=load_universe(a.data_dir)
+    run(frames,receipt,manifest,a.output_dir,a.daily_operating_cost_usd,a.strict_intervals)
     print('Saved regime-summary.json and regime-results.md. Paper entries remain paused.',flush=True)
 
 

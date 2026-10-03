@@ -17,13 +17,20 @@ not download data, select assets by subsequent performance, fit models, restart
 paper containers or remove paused-entry markers. It saves separate reports
 and puts `regime-summary.txt` directly in Downloads, revealed in Finder for
 upload using the chat attachment button. Detailed account, fill and daily
-ranking receipts stay in the Docker volume under `regime-swing-v1`.
+ranking receipts stay in the Docker volume under `regime-swing-v2`. The old
+`regime-swing-v1` results are preserved separately.
 
 ## Entry and exit rules
 
-The same 24-asset formation selection is retained. Complete UTC days are
-aggregated from all 96 observed 15m bars. Incomplete days are excluded, and
-daily indicators restart after a missing day. All three families require at
+The same 24-asset formation selection is retained. V2 fixes the archive
+interpretation: Kraken omits intervals without trades, so closed daily OHLCV
+aggregates all observed trade intervals, even if fewer than 96 exist. No
+execution bars or prices are inserted. The day must have ended according to
+the archive's last closed global timestamp. A wholly absent day still restarts
+daily indicators. This policy is specific to Kraken's trade-only archives;
+it must not be used to repair an arbitrary incomplete live feed.
+`--strict-intervals` reproduces the original 96-interval sensitivity.
+All three families require at
 least 29 complete consecutive days before entry. Testing starts March 1 for
 comparison with the forecasting research.
 
@@ -103,5 +110,14 @@ Mechanical verification uses generated fixtures for chronology, complete-day
 aggregation, rank buffers, gap resets, both trade sides, exit-before-entry
 capacity handling, pending exits, unlimited targets, daily trailing distances,
 account reconciliation and the complete 64-scenario reporting pipeline.
-Generated fixture returns are not market evidence. The build workspace has
-no actual archives or Docker; the Mac command must verify the real replay.
+Generated fixture returns are not market evidence. The uploaded portable
+archive now supplies 412,086 actual candles for research in the build workspace;
+Docker remains unavailable there. See `DURABLE_TREND_FINDINGS.md` for the
+actual corrected replay, subsequent fixed experiments and their limitations.
+Use `--bundle signal-vault-research.zip` instead of `--data-dir` for direct
+Python replay without Feather/pyarrow. Each completed run saves exact strategy,
+runner and accounting sources alongside its result so later exports can retain
+the original code identity.
+
+[Kraken's archive documentation](https://support.kraken.com/articles/360047124832-downloadable-historical-ohlcvt-open-high-low-close-volume-trades-data)
+explains why no-trade intervals are absent.

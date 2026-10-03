@@ -39,7 +39,7 @@ def export_bundle(data_dir, evidence_dir):
     pairs = selected_pairs(receipt)
     summary_raw = (evidence_dir/'regime-summary.json').read_bytes()
     summary = json.loads(summary_raw)
-    if summary.get('version')!='REGIME-SWING-LAB-1' or summary.get('universe')!=receipt:
+    if summary.get('version') not in ('REGIME-SWING-LAB-1','REGIME-SWING-LAB-2','DURABLE-TREND-LAB-1') or summary.get('universe')!=receipt:
         raise ValueError('Replay does not match this frozen universe')
     expected = {item['pair']:item for item in summary['input_manifest']}
     if set(expected)!=set(pairs) or len(expected)!=len(summary['input_manifest']):
@@ -71,9 +71,14 @@ def export_bundle(data_dir, evidence_dir):
         files['evidence/'+path.name] = raw
         # Full scenario JSON includes its fills, equity curve and monthly accounts.
         # Do not duplicate those ledgers as CSV in this compact transport.
-    for name, field in [('regime_swing_lab.py','source_sha256'),
-                        ('multi_strategy_lab.py','shared_engine_sha256')]:
-        raw = Path(__file__).with_name(name).read_bytes()
+    strategy_name='durable_trend_lab.py' if summary['version']=='DURABLE-TREND-LAB-1' else 'regime_swing_lab.py'
+    sources=[(strategy_name,'source_sha256','replay-strategy.py'),
+        ('multi_strategy_lab.py','shared_engine_sha256','replay-accounting.py')]
+    if 'runner_sha256' in summary:
+        sources.append(('regime_swing_lab.py','runner_sha256','replay-runner.py'))
+    for name,field,snapshot in sources:
+        source=evidence_dir/snapshot
+        raw = source.read_bytes() if source.exists() else Path(__file__).with_name(name).read_bytes()
         if digest(raw)!=summary[field]:
             raise ValueError('Replay engine changed; preserve the original source before export')
         files['source/'+name] = raw

@@ -25,7 +25,7 @@ class RegimeTests(unittest.TestCase):
         daily=r.daily_features(f)
         self.assertEqual(len(daily),65)
         cut=f.drop(index=40*96+5)
-        changed=r.daily_features(cut)
+        changed=r.daily_features(cut,strict_intervals=True)
         self.assertEqual(len(changed),64)
         after=changed[changed.ts==START+41*m.DAY].iloc[0]
         self.assertEqual(after.age,1)
@@ -112,13 +112,30 @@ class RegimeTests(unittest.TestCase):
         self.assertEqual(entire_feed_gap['trades'][0]['reason'],'RANK_EXIT')
         self.assertEqual(entire_feed_gap['trades'][0]['exit_ms'],START+2*m.BAR)
 
-    def test_asset_without_complete_days_stays_in_universe(self):
+    def test_strict_policy_excludes_sparse_days_but_retains_market(self):
         raw=frame(40*96).drop(index=np.arange(0,40*96,96))
         daily=r.daily_features(raw)
-        self.assertTrue(daily.empty)
+        self.assertEqual(len(daily),40)
         market,exits,receipts=r.compile_research({'SPARSE':raw},'long_only')
         self.assertEqual(len(market),len(raw))
-        self.assertFalse(any(signals for ts,rows in market for bar,signals in rows.values()))
+        strict,_,_=r.compile_research({'SPARSE':raw},'long_only',strict_intervals=True)
+        self.assertFalse(any(signals for ts,rows in strict for bar,signals in rows.values()))
+
+    def test_archive_no_trade_intervals_preserve_calendar_history_without_fabricated_quotes(self):
+        full=frame(65*96)
+        sparse=full.drop(index=[10*96+4,20*96+95,25*96,30*96+2])
+        observed=r.daily_features(sparse)
+        self.assertEqual(len(observed),65)
+        self.assertEqual(observed.age.iloc[-1],65)
+        self.assertEqual(observed['count'].sum(),len(sparse))
+        day_rows=sparse[(sparse.ts>=START+10*m.DAY)&(sparse.ts<START+11*m.DAY)]
+        self.assertEqual(observed[observed.ts==START+10*m.DAY]['volume'].iloc[0],day_rows.volume.sum())
+        self.assertEqual(r.daily_features(sparse.iloc[:-1]).ts.iloc[-1],START+63*m.DAY)
+        missing_day=sparse[(sparse.ts<START+40*m.DAY)|(sparse.ts>=START+41*m.DAY)]
+        changed=r.daily_features(missing_day)
+        self.assertEqual(changed[changed.ts==START+41*m.DAY].age.iloc[0],1)
+        market,_,_=r.compile_research({'SPARSE':sparse},'long_only')
+        self.assertEqual([t for t,rows in market],list(sparse.ts))
 
     def test_exit_instruction_rejects_current_or_future_candle(self):
         with self.assertRaisesRegex(ValueError,'previous closed'):

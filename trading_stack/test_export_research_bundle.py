@@ -76,6 +76,23 @@ class ExportTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'checksum mismatch'):
                 e.load_bundle(changed.getvalue())
 
+    def test_saved_replay_sources_allow_export_after_code_update(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data,evidence,raw,summary=self.fixture(Path(tmp))
+            archived=b'# archived fixture engine, not current code\n'
+            summary['source_sha256']=e.digest(archived)
+            summary['runner_sha256']=e.digest(archived)
+            (evidence/'regime-summary.json').write_text(json.dumps(summary))
+            (evidence/'replay-strategy.py').write_bytes(archived)
+            (evidence/'replay-runner.py').write_bytes(archived)
+            (evidence/'replay-accounting.py').write_bytes(Path(m.__file__).read_bytes())
+            with patch.object(e.pd,'read_feather',return_value=raw):
+                bundle=e.export_bundle(data,evidence)
+            with zipfile.ZipFile(io.BytesIO(bundle)) as z:
+                self.assertEqual(z.read('source/regime_swing_lab.py'),archived)
+            frames,_,_=e.load_bundle(bundle)
+            pd.testing.assert_frame_equal(frames['BTC/USD'],m.normalized(raw))
+
     def test_rejects_path_pairs_incomplete_ledgers_and_wrong_scenario_inputs(self):
         with self.assertRaisesRegex(ValueError,'Invalid frozen'):
             e.selected_pairs(dict(selected=[dict(pair='../BTC/USD')]))

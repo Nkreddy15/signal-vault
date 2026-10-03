@@ -12,7 +12,7 @@ trap 'rm -f "$TEMP"' EXIT
 dc run --rm -T --no-deps --entrypoint python crypto_edge_lab \
   /freqtrade/user_data/export_research_bundle.py \
   --data-dir /freqtrade/data/edge-universe-v1 \
-  --evidence-dir /freqtrade/data/regime-swing-v1 --stdout > "$TEMP"
+  --evidence-dir "/freqtrade/data/${1:-regime-swing-v2}" --stdout > "$TEMP"
 mv "$TEMP" "$DEST"
 echo 'Completed. Upload Downloads/signal-vault-research.zip with the chat attachment button.'
 open -R "$DEST"
