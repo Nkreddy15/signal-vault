@@ -52,6 +52,8 @@ class SignalVaultPaperExecutionV2(IStrategy):
     MIN_PROFIT_TARGET = 0.022
     MAX_PROFIT_TARGET = 0.050
     PROFIT_PROTECT_FLOOR = 0.016
+    REGIME_FAIL_EXIT_FLOOR = -0.010
+    CRITICAL_BREAK_EXIT_FLOOR = -0.006
 
     @property
     def protections(self):
@@ -147,6 +149,18 @@ class SignalVaultPaperExecutionV2(IStrategy):
 
         dataframe["sv2_recent_pullback"] = (
             low.rolling(4).min() <= dataframe["sv2_ema20"]
+        )
+
+        below_ema50 = close < dataframe["sv2_ema50"]
+        below_ema200 = close < dataframe["sv2_ema200"]
+        dataframe["sv2_below_ema50_3"] = (
+            below_ema50
+            & below_ema50.shift(1).fillna(False)
+            & below_ema50.shift(2).fillna(False)
+        )
+        dataframe["sv2_below_ema200_2"] = (
+            below_ema200
+            & below_ema200.shift(1).fillna(False)
         )
         return dataframe
 
@@ -253,19 +267,20 @@ class SignalVaultPaperExecutionV2(IStrategy):
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # Only a decisive regime break emits a dataframe exit signal. Profit
-        # taking is handled in custom_exit() so tiny sub-friction exits are not
-        # the default behavior.
-        severe_regime_failure = (
-            (dataframe["close"] < dataframe["sv2_ema50"])
+        # V1 repeatedly paid friction on small trend-failure exits. V2 therefore
+        # does not emit a normal exit on a single EMA wobble. Dataframe exits
+        # are reserved for a persistent, stronger structural break.
+        critical_break = (
+            dataframe["sv2_below_ema200_2"]
             & (dataframe["sv2_ema20"] < dataframe["sv2_ema50"])
-            & (dataframe["sv2_roc4"] < -0.005)
-        ) | (dataframe["close"] < dataframe["sv2_ema200"])
+            & (dataframe["sv2_roc12"] < -0.01)
+            & (dataframe["volume"] > 0)
+        )
 
         dataframe.loc[
-            severe_regime_failure & (dataframe["volume"] > 0),
+            critical_break,
             ["exit_long", "exit_tag"],
-        ] = (1, "v2_regime_failure")
+        ] = (1, "v2_critical_structure_break")
 
         return dataframe
 
@@ -312,13 +327,34 @@ class SignalVaultPaperExecutionV2(IStrategy):
         if current_profit >= protect_floor and trend_softening:
             return "v2_cost_cleared_profit_protect"
 
-        regime_failed = (
-            float(last.get("close") or 0.0) < float(last.get("sv2_ema50") or 0.0)
+        persistent_regime_failed = (
+            bool(last.get("sv2_below_ema50_3"))
             and float(last.get("sv2_ema20") or 0.0)
             < float(last.get("sv2_ema50") or 0.0)
+            and float(last.get("sv2_roc4") or 0.0) < 0.0
         )
-        if current_profit < 0.0 and regime_failed:
-            return "v2_regime_failure"
+        critical_break = (
+            bool(last.get("sv2_below_ema200_2"))
+            and float(last.get("sv2_ema20") or 0.0)
+            < float(last.get("sv2_ema50") or 0.0)
+            and float(last.get("sv2_roc12") or 0.0) < -0.01
+        )
+
+        # Anti-churn rule: do not pay a full round-trip fee because of one
+        # ordinary trend wobble while the trade is only a few tenths of a
+        # percent down. A loss exit needs persistence plus a meaningful
+        # adverse move, unless the structure has broken more severely.
+        if (
+            persistent_regime_failed
+            and current_profit <= self.REGIME_FAIL_EXIT_FLOOR
+        ):
+            return "v2_persistent_regime_failure"
+
+        if (
+            critical_break
+            and current_profit <= self.CRITICAL_BREAK_EXIT_FLOOR
+        ):
+            return "v2_critical_structure_break"
 
         age_hours = (current_time - trade.open_date_utc).total_seconds() / 3600.0
         if (
