@@ -18,6 +18,30 @@ services:
     volumes:
       - crypto_data:/freqtrade/data
 
+  crypto_v8_overnight:
+    build:
+      context: ./crypto
+    container_name: signal-vault-v8-overnight-paper
+    restart: "no"
+    profiles:
+      - overnight
+    entrypoint: ["python", "/freqtrade/user_data/v8_overnight_paper.py"]
+    environment:
+      V8_STATE_DIR: /freqtrade/data/v8-overnight
+      V8_STARTING_BALANCE: "100"
+      V8_STAKE_USD: "15"
+      V8_MAX_OPEN_TRADES: "3"
+      V8_ROUND_TRIP_FRICTION: "0.0074"
+      V8_TARGET_GROSS: "0.12"
+      V8_STOP_GROSS: "0.04"
+      V8_COOLDOWN_HOURS: "24"
+      V8_MAX_HOLD_HOURS: "240"
+      V8_POLL_SECONDS: "60"
+      V8_OVERNIGHT_HOURS: "8"
+      V8_ENTRY_GRACE_MINUTES: "10"
+    volumes:
+      - crypto_data:/freqtrade/data
+
   stocks:
     build:
       context: ./stocks
