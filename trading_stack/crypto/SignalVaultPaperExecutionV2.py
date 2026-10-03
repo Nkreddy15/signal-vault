@@ -267,21 +267,12 @@ class SignalVaultPaperExecutionV2(IStrategy):
         return dataframe
 
     def populate_exit_trend(self, dataframe: DataFrame, metadata: dict) -> DataFrame:
-        # V1 repeatedly paid friction on small trend-failure exits. V2 therefore
-        # does not emit a normal exit on a single EMA wobble. Dataframe exits
-        # are reserved for a persistent, stronger structural break.
-        critical_break = (
-            dataframe["sv2_below_ema200_2"]
-            & (dataframe["sv2_ema20"] < dataframe["sv2_ema50"])
-            & (dataframe["sv2_roc12"] < -0.01)
-            & (dataframe["volume"] > 0)
-        )
-
-        dataframe.loc[
-            critical_break,
-            ["exit_long", "exit_tag"],
-        ] = (1, "v2_critical_structure_break")
-
+        # V2 deliberately avoids dataframe exits because they cannot see the
+        # trade's current profit. Otherwise a strong-looking indicator break
+        # could still recreate V1's fee-sized exits. All discretionary exits
+        # are handled in custom_exit(), where structure and current P&L can be
+        # evaluated together. The hard stoploss remains independent.
+        dataframe["exit_long"] = 0
         return dataframe
 
     def custom_exit(
