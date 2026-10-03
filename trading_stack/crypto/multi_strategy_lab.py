@@ -28,6 +28,13 @@ TIERS = ((0, .008), (2500, .006), (10000, .0038), (25000, .0035),
          (1000000, .0018), (2500000, .0015), (5000000, .0012),
          (10000000, .001), (50000000, .0009), (100000000, .0008),
          (250000000, .0007), (400000000, .0006), (500000000, .0005))
+FEE_PROFILES = {
+    "kraken_spot": TIERS,
+    # A fee-rate sensitivity on Kraken candles, not Alpaca venue/fill evidence.
+    "alpaca_rate_sensitivity": ((0, .0025), (100000, .0022), (500000, .002),
+        (1000000, .0018), (10000000, .0015), (25000000, .0013),
+        (50000000, .0012), (100000000, .001)),
+}
 SOURCES = {
     "spot_fees": "https://support.kraken.com/articles/cross-platform-fee-tier-changes",
     "time_series_momentum": "https://www.nber.org/papers/w24877",
@@ -49,6 +56,7 @@ class Config:
     short_carry_per_day: float = .0003  # sensitivity assumption, not a quote
     starting_balance: float = 100
     daily_operating_cost_usd: float = 0
+    fee_profile: str = "kraken_spot"
 
     @property
     def risk_fraction(self):
@@ -74,10 +82,12 @@ class Signal:
     signal_ms: int
     reference_price: float | None = None
     atr: float = 0
+    trailing: bool = True
 
 
 class Fees:
-    def __init__(self):
+    def __init__(self, profile="kraken_spot"):
+        self.tiers = FEE_PROFILES[profile]
         self.fills = deque()
         self.volume = 0.0
 
@@ -85,7 +95,7 @@ class Fees:
         while self.fills and self.fills[0][0] <= now - 30 * DAY:
             self.volume -= self.fills.popleft()[1]
         self.volume = max(0.0, self.volume)
-        return next(rate for threshold, rate in reversed(TIERS) if self.volume >= threshold)
+        return next(rate for threshold, rate in reversed(self.tiers) if self.volume >= threshold)
 
     def record(self, now, notional):
         self.fills.append((now, notional))
@@ -244,8 +254,8 @@ def bar_exit(pos, bar, cfg):
     return raw*(1-side*cfg.slippage), reason, bool(stop_hit and target_hit)
 
 
-def simulate(market, cfg, start=None, end=None, family_schedule=None):
-    if cfg.family not in FAMILIES or cfg.risk not in ("balanced", "aggressive"):
+def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_families=FAMILIES):
+    if cfg.family not in allowed_families or cfg.risk not in ("balanced", "aggressive"):
         raise ValueError("Unknown strategy or risk profile")
     if cfg.mode not in ("long_only", "synthetic_long_short") or cfg.execution not in ("trigger", "extrema"):
         raise ValueError("Unknown execution or side mode")
@@ -255,10 +265,12 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None):
             not 0 <= cfg.short_carry_per_day <= .05 or cfg.starting_balance <= 0 or
             cfg.daily_operating_cost_usd < 0):
         raise ValueError("Invalid costs or starting capital")
-    fees, balance, positions, trades = Fees(), cfg.starting_balance, {}, []
+    if cfg.fee_profile not in FEE_PROFILES:
+        raise ValueError("Unknown fee scenario")
+    fees, balance, positions, trades = Fees(cfg.fee_profile), cfg.starting_balance, {}, []
     peak, max_dd, day_start, risk_day = balance, 0.0, balance, None
     halted, daily_halt, last, counts, curve = False, False, {}, Counter(), []
-    max_slots, max_reserved, max_exposure, min_fee = 0, 0.0, 0.0, .008
+    max_slots, max_reserved, max_exposure, min_fee = 0, 0.0, 0.0, fees.tiers[0][1]
     first, finish, last_now = None, None, None
     operating_cost = 0.0
 
@@ -368,6 +380,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None):
                     entry_fee=entry_fee, stop_price=price*(1-sig.side*sig.stop),
                     target_price=price*(1+sig.side*target), hold_bars=sig.hold_bars,
                     initial_stop=sig.stop, peak_price=price)
+                positions[pair]["trailing"] = sig.trailing
                 counts["opened"] += 1
                 max_slots = max(max_slots, len(positions))
                 reserved += stake
@@ -386,7 +399,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None):
             o, h, l, c, atr = rows[pair][0]
             # Trailing levels take effect next bar; this bar cannot see its own
             # future favorable extreme before checking its old stop.
-            if pos["family"] != "range_reversal":
+            if pos["family"] != "range_reversal" and pos.get("trailing", True):
                 if pos["side"] == 1:
                     pos["peak_price"] = max(pos["peak_price"], h)
                     if pos["peak_price"] >= pos["entry_price"]*(1+pos["initial_stop"]):
@@ -437,8 +450,12 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None):
         ruined=ending <= 0, halted=halted, max_concurrent=max_slots,
         max_reserved_notional=max_reserved, max_exposure_pct=100*max_exposure,
         lowest_taker_fee_pct=100*min_fee, ambiguous_bars=sum(t["ambiguous_bar"] for t in trades),
+        peak_equity=peak, recorded_fill_gross_pnl=sum(t["gross_pnl"] for t in trades),
+        exit_reasons=dict(Counter(t["reason"] for t in trades)),
+        median_hold_hours=float(np.median([(t["exit_ms"]-t["entry_ms"])/3_600_000 for t in trades])) if trades else None,
         by_strategy={f:dict(trades=sum(t["family"] == f for t in trades),
-            pnl=sum(t["pnl"] for t in trades if t["family"] == f)) for f in FAMILIES if f != "blend"},
+            pnl=sum(t["pnl"] for t in trades if t["family"] == f))
+            for f in sorted(set(allowed_families)-{"blend"} | {t["family"] for t in trades})},
         diagnostics=dict(counts))
     return dict(config=asdict(cfg), summary=summary, trades=trades, equity_curve=curve)
 
@@ -466,10 +483,11 @@ def buy_and_hold(market, cfg):
             last[pair] = (now+BAR, bar[3])
     returns = {}
     for pair, (now, opening) in first.items():
-        stake = 100/(1+TIERS[0][1])
+        rate = FEE_PROFILES[cfg.fee_profile][0][1]
+        stake = 100/(1+rate)
         entry = entry_price(opening, 1, cfg)
         exit = exit_price(last[pair][1], 1, cfg)
-        proceeds = stake*exit/entry*(1-TIERS[0][1])
+        proceeds = stake*exit/entry*(1-rate)
         returns[pair] = dict(start_ms=now, end_ms=last[pair][0], ending_equity=proceeds,
             return_pct=proceeds-100)
     return dict(btc=returns.get("BTC/USD"), equal_weight_ending_equity=
