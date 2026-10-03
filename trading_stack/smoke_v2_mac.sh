@@ -16,43 +16,40 @@ docker compose -f "$COMPOSE" build crypto
 
 echo
 echo "Preparing BTC/USD 15m candles from existing Kraken trade data..."
-docker compose -f "$COMPOSE" run --rm --no-deps \
-  --entrypoint /bin/bash crypto -lc "
-    mkdir -p '$DATA_DIR' '$RESULT_DIR'
-    if ! freqtrade trades-to-ohlcv \
-      --config /freqtrade/user_data/config.json \
-      --datadir '$DATA_DIR' \
-      --pairs BTC/USD \
-      --timeframes 15m; then
-      echo "Existing BTC trade data was not usable; downloading a short BTC-only window..."
-      freqtrade download-data \
-        -vv \
-        --config /freqtrade/user_data/config.json \
-        --datadir '$DATA_DIR' \
-        --pairs BTC/USD \
-        --timeframes 15m \
-        --days 4 \
-        --dl-trades \
-        --convert
-    fi
-  "
+if ! docker compose -f "$COMPOSE" run --rm --no-deps \
+  --entrypoint freqtrade crypto \
+  trades-to-ohlcv \
+  --config /freqtrade/user_data/config.json \
+  --datadir "$DATA_DIR" \
+  --pairs BTC/USD \
+  --timeframes 15m; then
+  echo "Existing BTC trade data was not usable; downloading a short BTC-only trade window..."
+  docker compose -f "$COMPOSE" run --rm --no-deps \
+    --entrypoint freqtrade crypto \
+    download-data \
+    -vv \
+    --config /freqtrade/user_data/config.json \
+    --datadir "$DATA_DIR" \
+    --pairs BTC/USD \
+    --timeframes 15m \
+    --days 4 \
+    --dl-trades \
+    --convert
+fi
 
 echo
 echo "Running V2 BTC-only smoke backtest..."
 docker compose -f "$COMPOSE" run --rm --no-deps \
-  --entrypoint /bin/bash crypto -lc "
-    set -o pipefail
-    freqtrade backtesting \
-      --config /freqtrade/user_data/config.json \
-      --datadir '$DATA_DIR' \
-      --strategy-path /freqtrade/user_data/strategies \
-      --strategy SignalVaultPaperExecutionV2 \
-      --pairs BTC/USD \
-      --timeframe 15m \
-      --export trades \
-      --backtest-directory '$RESULT_DIR' \
-      2>&1 | tee '$RESULT_DIR/latest-summary.txt'
-  "
+  --entrypoint freqtrade crypto \
+  backtesting \
+  --config /freqtrade/user_data/config.json \
+  --datadir "$DATA_DIR" \
+  --strategy-path /freqtrade/user_data/strategies \
+  --strategy SignalVaultPaperExecutionV2 \
+  --pairs BTC/USD \
+  --timeframe 15m \
+  --export trades \
+  --backtest-directory "$RESULT_DIR"
 
 echo
 echo "V2 smoke test complete."
