@@ -33,12 +33,39 @@ if exchange.get("key") or exchange.get("secret"):
     raise SystemExit("Refusing to start: PAPER-only config must not contain exchange credentials")
 PY
 
-DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/signal-vault-execution-paper-v1.sqlite}"
+STRATEGY="${SIGNAL_VAULT_CRYPTO_STRATEGY:-SignalVaultPaperExecutionV1}"
 
-echo "Starting Signal Vault high-activity PAPER execution harness: 5m, six-pair universe."
-echo "Purpose: validate simulated entries/exits/P&L plumbing. Not a profitability claim."
+case "$STRATEGY" in
+  SignalVaultPaperExecutionV1)
+    DEFAULT_DB="signal-vault-execution-paper-v1.sqlite"
+    DESCRIPTION="V1 high-activity execution harness: 5m, six-pair universe"
+    ;;
+  SignalVaultPaperExecutionV2)
+    DEFAULT_DB="signal-vault-execution-paper-v2.sqlite"
+    DESCRIPTION="V2 cost-aware regime strategy: 15m, six-pair universe"
+    ;;
+  SignalVaultPaperEMA12x26V1)
+    DEFAULT_DB="signal-vault-ema12x26-paper-v1.sqlite"
+    DESCRIPTION="EMA 12x26 research adapter: 1h, six-pair universe"
+    ;;
+  *)
+    echo "Refusing to start: unsupported PAPER strategy '$STRATEGY'." >&2
+    exit 2
+    ;;
+esac
+
+DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/$DEFAULT_DB}"
+
+if [[ "$STRATEGY" == "SignalVaultPaperExecutionV2" && "$DB_URL" == *"paper-v1.sqlite"* ]]; then
+  echo "Refusing to start V2 against the V1 trade database." >&2
+  echo "Unset FREQTRADE_DB_URL or point it to a dedicated V2 PAPER database." >&2
+  exit 2
+fi
+
+echo "Starting Signal Vault PAPER strategy: $DESCRIPTION."
+echo "Purpose: collect PAPER evidence. No profitability claim and no live execution."
 
 exec freqtrade trade \
   --config /freqtrade/user_data/config.json \
-  --strategy SignalVaultPaperExecutionV1 \
+  --strategy "$STRATEGY" \
   --db-url "$DB_URL"
