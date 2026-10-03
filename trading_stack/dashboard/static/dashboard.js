@@ -377,6 +377,12 @@ function renderInspector(trade, openChart = true) {
   $('exitLogic').textContent = trade.exit_logic || '—';
   $('chartPair').textContent = trade.pair || '—';
   $('chartSide').textContent = sideText(trade);
+  const liveTimeframe = state.snapshot?.crypto?.config?.timeframe || '5m';
+  const tfButton = document.querySelector('.tf[data-tf]');
+  if (tfButton) {
+    tfButton.dataset.tf = liveTimeframe;
+    tfButton.textContent = `${liveTimeframe} live`;
+  }
 
   $('overviewMetrics').innerHTML = [
     metric('Entry Price', price(trade.open_rate)),
@@ -441,15 +447,16 @@ function switchTab(name) {
 
 async function fetchCandles(trade) {
   state.candles = [];
-  $('candleState').textContent = 'Loading real 5m candles from the running Freqtrade engine…';
+  const timeframe = state.snapshot?.crypto?.config?.timeframe || '5m';
+  $('candleState').textContent = `Loading real ${timeframe} candles from the running Freqtrade engine…`;
   $('candleChart').innerHTML = '';
   try {
-    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=5m&limit=300`;
+    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=${encodeURIComponent(timeframe)}&limit=300`;
     const r = await fetch(url, {cache: 'no-store'});
     const data = await r.json();
     if (!r.ok || data.error && !data.candles?.length) throw new Error(data.error || `HTTP ${r.status}`);
     state.candles = data.candles || [];
-    $('candleState').textContent = state.candles.length ? `${state.candles.length} live 5m candles · real engine data` : 'No candle rows returned by Freqtrade.';
+    $('candleState').textContent = state.candles.length ? `${state.candles.length} live ${timeframe} candles · real engine data` : 'No candle rows returned by Freqtrade.';
     drawCandles(state.candles, trade);
   } catch (e) {
     $('candleState').textContent = `Candles unavailable: ${e.message}`;
