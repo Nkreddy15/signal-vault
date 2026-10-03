@@ -1,5 +1,7 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+import paper_final_view
 
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -45,6 +47,8 @@ def _freq(path, params=None):
 
 
 def _alpaca(path, params=None):
+    if not ALPACA_KEY or not ALPACA_SECRET:
+        return None, "Alpaca paper credentials not configured"
     headers = {
         "APCA-API-KEY-ID": ALPACA_KEY,
         "APCA-API-SECRET-KEY": ALPACA_SECRET,
@@ -264,6 +268,12 @@ def candles():
             }
         ), 400
 
+    if paper_final_view.active() and request.args.get("engine") != "v1":
+        if timeframe != "1h":
+            return jsonify({"candles": [], "error": "Final paper strategy uses 1h candles."}), 400
+        rows, error = paper_final_view.candles(pair, limit)
+        return jsonify({"pair": pair, "timeframe": "1h", "candles": rows, "error": error})
+
     payload, error = _freq(
         "pair_candles",
         {"pair": pair, "timeframe": timeframe, "limit": limit},
@@ -279,20 +289,25 @@ def candles():
     )
 
 
+@app.get("/api/paper-final")
+def paper_final_status():
+    return jsonify(paper_final_view.summary())
+
+
 @app.get("/api/snapshot")
 def snapshot():
-    crypto_health, crypto_health_err = _freq("health")
-    crypto_config, crypto_config_err = _freq("show_config")
-    crypto_profit, crypto_profit_err = _freq("profit")
-    crypto_open_trades, crypto_open_trades_err = _freq("status")
-    crypto_trades, crypto_trades_err = _freq("trades", {"limit": 100})
-
-    account, account_err = _alpaca("account")
-    positions, positions_err = _alpaca("positions")
-    orders, orders_err = _alpaca(
-        "orders", {"status": "all", "limit": 100, "direction": "desc"}
-    )
-    clock, clock_err = _alpaca("clock")
+    calls = [(_freq, "health", None), (_freq, "show_config", None),
+        (_freq, "profit", None), (_freq, "status", None),
+        (_freq, "trades", {"limit": 100}), (_alpaca, "account", None),
+        (_alpaca, "positions", None),
+        (_alpaca, "orders", {"status": "all", "limit": 100, "direction": "desc"}),
+        (_alpaca, "clock", None)]
+    with ThreadPoolExecutor(max_workers=9) as pool:
+        results = list(pool.map(lambda c: c[0](c[1], c[2]), calls))
+    ((crypto_health, crypto_health_err), (crypto_config, crypto_config_err),
+     (crypto_profit, crypto_profit_err), (crypto_open_trades, crypto_open_trades_err),
+     (crypto_trades, crypto_trades_err), (account, account_err),
+     (positions, positions_err), (orders, orders_err), (clock, clock_err)) = results
 
     managed_positions = []
     other_positions = []
@@ -393,7 +408,7 @@ def snapshot():
         err for err in [account_err, positions_err, orders_err, clock_err] if err
     ]
 
-    return jsonify(
+    response = jsonify(
         {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "mode": "PAPER_ONLY",
@@ -477,6 +492,17 @@ def snapshot():
             },
         }
     )
+    if paper_final_view.active():
+        payload = response.get_json()
+        latest = paper_final_view.summary()
+        payload["legacy_crypto"] = payload["crypto"]
+        payload["paper_final"] = {k: v for k, v in latest.items() if k not in ("crypto", "safety")}
+        if request.args.get("engine") != "v1":
+            payload["crypto"] = latest["crypto"]
+            payload["safety"].update(latest["safety"])
+            payload["system"]["crypto_engine"] = latest["status"]
+        return jsonify(payload)
+    return response
 
 
 if __name__ == "__main__":

@@ -328,6 +328,20 @@ function renderHealth(d) {
 
 function renderSnapshot(d) {
   state.snapshot = d;
+  let banner = $('paperReleaseBanner');
+  if (!banner) {
+    banner = document.createElement('aside');
+    banner.id = 'paperReleaseBanner';
+    banner.style.cssText = 'position:relative;margin:18px 3%;padding:16px;border:1px solid #327698;background:#081929;color:#d9ecf8;border-radius:12px;line-height:1.5;z-index:2';
+    const main = document.querySelector('main');
+    (main || document.body).prepend(banner);
+  }
+  banner.hidden = !d.paper_final;
+  if (d.paper_final) {
+    const p = d.paper_final;
+    const legacy = d.legacy_crypto || {};
+    banner.innerHTML = `<strong>V9 Overnight · ${esc(p.status)}</strong> <a href="/" style="color:#72d1ff">View V9</a> · <a href="/?engine=v1" style="color:#72d1ff">Inspect V1 trades</a><br>${esc(p.note || '')}<br>Ends ${esc(shortTime(p.ends_at))} · V1 draining: ${n(legacy.open_trade_count)} open · V1 realized: ${money(legacy.closed_pnl_usd)} (separate ledger)<details><summary>Why the bot is waiting</summary>${(p.diagnostics || []).map(r => `<div>${esc(r.pair)}: ${esc(r.reason)}</div>`).join('') || 'Waiting for first complete market scan.'}</details>`;
+  }
   $('updatedAt').textContent = new Date(d.generated_at).toLocaleTimeString();
   renderKPIs(d);
   renderEngine(d);
@@ -440,7 +454,7 @@ function closeTradeModal() {
   document.body.style.overflow = '';
 }
 function switchTab(name) {
-  $document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.dataset.panel === name));
   if (name === 'chart' && state.selectedTrade && !state.candles.length) fetchCandles(state.selectedTrade);
 }
@@ -448,15 +462,16 @@ function switchTab(name) {
 async function fetchCandles(trade) {
   state.candles = [];
   const timeframe = state.snapshot?.crypto?.config?.timeframe || '5m';
-  $('candleState').textContent = `Loading real ${timeframe} candles from the running Freqtrade engine…`;
+  $('candleState').textContent = `Loading ${timeframe} market candles…`;
   $('candleChart').innerHTML = '';
   try {
-    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=${encodeURIComponent(timeframe)}&limit=300`;
+    const engine = new URLSearchParams(location.search).get('engine') === 'v1' ? '&engine=v1' : '';
+    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=${encodeURIComponent(timeframe)}&limit=300${engine}`;
     const r = await fetch(url, {cache: 'no-store'});
     const data = await r.json();
     if (!r.ok || data.error && !data.candles?.length) throw new Error(data.error || `HTTP ${r.status}`);
     state.candles = data.candles || [];
-    $('candleState').textContent = state.candles.length ? `${state.candles.length} live ${timeframe} candles · real engine data` : 'No candle rows returned by Freqtrade.';
+    $('candleState').textContent = state.candles.length ? `${state.candles.length} ${timeframe} candles · exchange market data` : 'No candle rows available yet.';
     drawCandles(state.candles, trade);
   } catch (e) {
     $('candleState').textContent = `Candles unavailable: ${e.message}`;
@@ -544,7 +559,7 @@ function drawCandles(candles, trade) {
     const yy = y(value);
     return `<line x1="${left}" y1="${yy}" x2="${W-right}" y2="${yy}" stroke="${color}" stroke-width="1.2" stroke-dasharray="${dash}"/><rect x="${W-right-2}" y="${yy-10}" width="76" height="18" rx="4" fill="${color}" opacity=".14" stroke="${color}"/><text x="${W-right+3}" y="${yy+3}" fill="${color}" font-size="8">${esc(label)} ${price(value)}</text>`;
   }
-  out += level(trade.target_price, '#2ce390', 'ROI');
+  out += level(trade.target_price, '#2ce390', 'Target');
   out += level(trade.current_rate || trade.close_rate, '#208dff', trade.is_open ? 'Current' : 'Exit', '2 3');
   out += level(trade.stop_price, '#ff506c', 'Stop');
   out += level(trade.open_rate, '#2ad8ff', 'Entry', '2 4');
@@ -554,14 +569,14 @@ function drawCandles(candles, trade) {
     let nearest = 0, dist = Infinity;
     visible.forEach((c, i) => { const t = candleTimeMs(c.time); if (Number.isFinite(t) && Math.abs(t-openMs) < dist) { dist = Math.abs(t-openMs); nearest = i; } });
     const xx = x(nearest), yy = y(trade.open_rate);
-    out += `<circle cx="${xx}" cy="${yy}" r="5" fill="#2ce390" stroke="#dffff1" stroke-width="1.5"/><text x="${xx+8}" y="${yy-7}" fill="#8ef3c0" font-size="9">BUY ${price(trade.open_rate)}</text>`;
+    out += `<circle cx="${xx}" cy="${yy}" r="5" fill="#2ce390" stroke="#dffff1" stroke-width="1.5"/><text x="${Math.min(xx+8,W-right-145)}" y="${yy-7}" fill="#8ef3c0" font-size="9">${trade.is_short ? 'SELL SHORT' : 'BUY'} ${price(trade.open_rate)}</text>`;
   }
   if (!trade.is_open && trade.close_date && trade.close_rate) {
     const closeMs = new Date(trade.close_date).getTime();
     let nearest = visible.length-1, dist = Infinity;
     visible.forEach((c, i) => { const t = candleTimeMs(c.time); if (Number.isFinite(t) && Math.abs(t-closeMs) < dist) { dist = Math.abs(t-closeMs); nearest = i; } });
     const xx = x(nearest), yy = y(trade.close_rate);
-    out += `<circle cx="${xx}" cy="${yy}" r="5" fill="#ff506c" stroke="#ffe3e8" stroke-width="1.5"/><text x="${Math.max(left,xx-75)}" y="${yy-7}" fill="#ff94a5" font-size="9">SELL ${price(trade.close_rate)}</text>`;
+    out += `<circle cx="${xx}" cy="${yy}" r="5" fill="#ff506c" stroke="#ffe3e8" stroke-width="1.5"/><text x="${Math.max(left,xx-115)}" y="${yy-7}" fill="#ff94a5" font-size="9">${trade.is_short ? 'BUY TO COVER' : 'SELL'} ${price(trade.close_rate)}</text>`;
   }
 
   const labels = [0, Math.floor((visible.length-1)/2), visible.length-1];
@@ -576,7 +591,8 @@ function drawCandles(candles, trade) {
 
 async function refresh() {
   try {
-    const r = await fetch('/api/snapshot', {cache: 'no-store'});
+    const engine = new URLSearchParams(location.search).get('engine') === 'v1' ? '?engine=v1' : '';
+    const r = await fetch(`/api/snapshot${engine}`, {cache: 'no-store'});
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     renderSnapshot(await r.json());
   } catch (e) {

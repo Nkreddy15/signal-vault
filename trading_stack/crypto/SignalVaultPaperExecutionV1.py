@@ -10,6 +10,8 @@ PAPER/dry-run only.
 
 from __future__ import annotations
 
+from pathlib import Path
+import os
 from pandas import DataFrame
 
 from freqtrade.strategy import IStrategy
@@ -29,6 +31,12 @@ class SignalVaultPaperExecutionV1(IStrategy):
     use_exit_signal = True
     exit_profit_only = False
     ignore_roi_if_entry_signal = False
+
+    def confirm_trade_entry(self, pair, order_type, amount, rate, time_in_force,
+                            current_time, entry_tag, side, **kwargs):
+        # Persistent handoff: old trades keep V1 exits across container restarts.
+        root = Path(os.getenv("PERSIST_DIR", "/freqtrade/data"))
+        return not (root / "paper-final-v9" / "activated").exists()
 
     @property
     def protections(self):

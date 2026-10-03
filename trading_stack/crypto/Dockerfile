@@ -1,4 +1,4 @@
-FROM freqtradeorg/freqtrade:stable
+FROM freqtradeorg/freqtrade:stable@sha256:9d67afb8eb5f4e1210f4fb067efcbd5e005bd4f1c27f6f3888b8b9fc7f9b5199
 
 USER root
 RUN mkdir -p /freqtrade/data /freqtrade/user_data/strategies \
@@ -17,6 +17,7 @@ COPY --chown=ftuser:ftuser research_v7_low_turnover.py /freqtrade/user_data/rese
 COPY --chown=ftuser:ftuser research_v8_short_only.py /freqtrade/user_data/research_v8_short_only.py
 COPY --chown=ftuser:ftuser v8_overnight_paper.py /freqtrade/user_data/v8_overnight_paper.py
 COPY --chown=ftuser:ftuser v8_forward_lab.py /freqtrade/user_data/v8_forward_lab.py
+COPY --chown=ftuser:ftuser paper_final.py /freqtrade/user_data/paper_final.py
 COPY --chown=ftuser:ftuser binance_q4_holdout.py /freqtrade/user_data/binance_q4_holdout.py
 COPY --chown=ftuser:ftuser start.sh /freqtrade/start-open-source-stack.sh
 RUN chmod 0755 /freqtrade/start-open-source-stack.sh

@@ -18,6 +18,24 @@ services:
     volumes:
       - crypto_data:/freqtrade/data
 
+  crypto_final:
+    build:
+      context: ./crypto
+    container_name: signal-vault-paper-final
+    restart: unless-stopped
+    profiles: [final]
+    entrypoint: ["python", "/freqtrade/user_data/paper_final.py"]
+    environment:
+      PAPER_FINAL_STATE_DIR: /freqtrade/data/paper-final-v9
+    volumes:
+      - crypto_data:/freqtrade/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,time; s=json.load(open('/freqtrade/data/paper-final-v9/summary.json')); assert s['status'] in ('RUNNING','SESSION_COMPLETE','SESSION_LOSS_LIMIT') and time.time()*1000-s['last_success_ms']<120000"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+
   crypto_v8_forward_lab:
     build:
       context: ./crypto
@@ -90,6 +108,8 @@ services:
       STOCK_DAILY_BUY_CAP: "16"
     ports:
       - "127.0.0.1:8090:8090"
+    volumes:
+      - crypto_data:/paper-data:ro
 
 volumes:
   crypto_data:
