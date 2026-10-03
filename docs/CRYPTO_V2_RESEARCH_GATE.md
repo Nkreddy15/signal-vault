@@ -74,3 +74,18 @@ cannot be caused solely by one soft regime condition staying false after a
 restart. The cost gate, minimum gross target, hard stop, PAPER-only boundary,
 and separate V2 database were not loosened. A restart still never creates a
 trade by itself; the strategy must see a valid cost-aware setup.
+
+
+## Anti-churn revision from V1 evidence
+
+V1 paper logs showed several trades exiting on a single trend-failure signal while
+gross P&L was only a few tenths of a percent negative. That is the same scale as
+round-trip exchange friction, so V2 now requires persistence before an ordinary
+loss exit. A normal regime-failure exit requires three consecutive closes below
+EMA50, EMA20 below EMA50, negative short momentum, and at least a -1.0% gross
+trade move. A stronger structural break can exit from -0.6% gross when price has
+remained below EMA200 for two candles and 3-hour momentum is below -1.0%.
+
+The -1.8% hard stop remains unchanged. This revision is intended to reduce
+fee-sized whipsaw exits; it is not a claim that holding losers longer improves
+returns. The backtest must decide that.
