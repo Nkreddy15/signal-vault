@@ -10,6 +10,7 @@ COPY --chown=ftuser:ftuser SignalVaultPaperExecutionV2.py /freqtrade/user_data/s
 COPY --chown=ftuser:ftuser SignalVaultPaperExecutionV3.py /freqtrade/user_data/strategies/SignalVaultPaperExecutionV3.py
 COPY --chown=ftuser:ftuser SignalVaultPaperExecutionV4.py /freqtrade/user_data/strategies/SignalVaultPaperExecutionV4.py
 COPY --chown=ftuser:ftuser kraken_quarterly_ohlcv.py /freqtrade/user_data/kraken_quarterly_ohlcv.py
+COPY --chown=ftuser:ftuser research_v5_bidirectional.py /freqtrade/user_data/research_v5_bidirectional.py
 COPY --chown=ftuser:ftuser start.sh /freqtrade/start-open-source-stack.sh
 RUN chmod 0755 /freqtrade/start-open-source-stack.sh
 USER ftuser
