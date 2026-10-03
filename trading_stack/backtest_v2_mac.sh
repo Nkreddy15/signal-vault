@@ -3,45 +3,25 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE="$ROOT/trading_stack/docker-compose.yml"
-DATA_DIR="/freqtrade/data/v2-market-data"
+DATA_DIR="/freqtrade/data/v2-quarterly-ohlcv"
 RESULT_DIR="/freqtrade/data/v2-backtests"
-DAYS="${V2_BACKTEST_DAYS:-90}"
-PAIRS=(BTC/USD ETH/USD SOL/USD XRP/USD DOGE/USD ADA/USD)
 
 echo "Signal Vault V2 research runner"
-echo "PAPER/research only. This does not restart the running trading container."
-echo "Target historical window: $DAYS days"
+echo "PAPER/research only. This does not restart the running V1 trading container."
+echo "Historical source: Kraken official 2026 Q2 OHLCVT archive (15m candles)."
 echo
 
 docker compose -f "$COMPOSE" build crypto
 
-for pair in "${PAIRS[@]}"; do
-  echo
-  echo "=== DOWNLOAD/RESUME $pair ==="
-  docker compose -f "$COMPOSE" run --rm --no-deps \
-    --entrypoint freqtrade crypto \
-    download-data \
-    --config /freqtrade/user_data/config.json \
-    --datadir "$DATA_DIR" \
-    --pairs "$pair" \
-    --timeframes 15m \
-    --days "$DAYS" \
-    --dl-trades \
-    --convert
-done
-
 echo
-echo "=== DOWNLOADED TRADE COVERAGE ==="
+echo "Preparing six-pair Kraken Q2 2026 15m dataset..."
 docker compose -f "$COMPOSE" run --rm --no-deps \
-  --entrypoint freqtrade crypto \
-  list-data \
-  --config /freqtrade/user_data/config.json \
-  --datadir "$DATA_DIR" \
-  --trades \
-  --show-timerange
+  --entrypoint python crypto \
+  /freqtrade/user_data/kraken_quarterly_ohlcv.py \
+  --outdir "$DATA_DIR"
 
 echo
-echo "=== GENERATED 15m CANDLE COVERAGE ==="
+echo "=== 15m DATA COVERAGE ==="
 docker compose -f "$COMPOSE" run --rm --no-deps \
   --entrypoint freqtrade crypto \
   list-data \
@@ -50,7 +30,7 @@ docker compose -f "$COMPOSE" run --rm --no-deps \
   --show-timerange
 
 echo
-echo "Running SignalVaultPaperExecutionV2 multi-pair backtest..."
+echo "Running SignalVaultPaperExecutionV2 multi-pair backtest for 2026 Q2..."
 docker compose -f "$COMPOSE" run --rm --no-deps \
   --entrypoint /bin/bash crypto -lc "
     mkdir -p '"$RESULT_DIR"'
@@ -61,6 +41,7 @@ docker compose -f "$COMPOSE" run --rm --no-deps \
       --strategy-path /freqtrade/user_data/strategies \
       --strategy SignalVaultPaperExecutionV2 \
       --timeframe 15m \
+      --timerange 20260401-20260701 \
       --export trades \
       --backtest-directory '"$RESULT_DIR"' \
       2>&1 | tee '"$RESULT_DIR"'/latest-summary.txt
