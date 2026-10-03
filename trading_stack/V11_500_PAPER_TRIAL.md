@@ -52,3 +52,9 @@ The $500 historical counterpart previously ended at $542.54 before operating cos
 Thirteen V11 fixtures cover isolated capital, persistence, duplicate prevention, stale/late quotes, incomplete rankings, daily-data parity, financing reconciliation, session closure, stop/regime exits, feed failures, caching, automatic process exit, older held-position detection and dashboard selection. Thirty existing V10 checks and the dashboard DOM harness also pass. These establish behavior on deterministic fixtures. Docker builds, public API access and actual launch on the user's Mac cannot be verified from this workspace; the launcher explicitly verifies those before announcing success.
 
 Primary references: [Kraken OHLC endpoint](https://docs.kraken.com/api/docs/rest-api/get-ohlc-data), [fee schedule](https://www.kraken.com/features/fee-schedule), [US margin fees](https://support.kraken.com/articles/us-margin-fees).
+
+## Launcher import fix — October 3
+
+The user's first Mac run confirms successful Docker image builds and fresh daily history/bid-ask preflight for all 15 assets. The next inline Python check failed with `ModuleNotFoundError: paper_v11`: Python launched from stdin did not include `/freqtrade/user_data` on its module search path. This occurred before account creation, old-entry pause, cutover and dashboard restart. The subsequent status 404 came from the older dashboard image still running.
+
+Both inline V11 imports now explicitly set the image source path first. Two launcher regression checks execute those actual import prefixes from an unrelated working directory with the project absent from `PYTHONPATH`, parse all inline Python, and exercise the old dashboard's 404 response. That 404 now explains the missing V11 deployment without a traceback. Rerun the original launcher after pulling the fix; no ledger deletion or account reset is needed. Full Mac startup still requires the fresh-cycle/dashboard verification printed by the launcher.

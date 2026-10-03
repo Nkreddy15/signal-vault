@@ -10,8 +10,9 @@ dc build crypto crypto_v11 dashboard
 echo 'Preflight public daily history and bid/ask; no paper account created yet...'
 dc run --rm -T --no-deps crypto_v11 --preflight
 dc run --rm -T --no-deps --entrypoint python crypto_v11 - <<'PY'
-import json, sqlite3, time
+import json, sqlite3, sys, time
 from pathlib import Path
+sys.path.insert(0, '/freqtrade/user_data')
 from paper_v11 import VERSION,SPEC
 p=Path('/freqtrade/data/paper-v11-500/ledger.sqlite3')
 if p.exists():
@@ -70,9 +71,10 @@ trap failed ERR
 dc stop crypto_final crypto_v10 crypto_v8_forward_lab crypto_v8_overnight
 echo 'Backing up old ledgers and checking that older synthetic campaigns are flat...'
 dc run --rm -T --no-deps --entrypoint python crypto_v11 - <<'PY'
-import json,shutil,sqlite3
+import json,shutil,sqlite3,sys
 from pathlib import Path
 from datetime import datetime,timezone
+sys.path.insert(0, '/freqtrade/user_data')
 from paper_v11 import has_held_positions
 root=Path('/freqtrade/data')
 backup=root/'v11-upgrade-backups'/datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ')
