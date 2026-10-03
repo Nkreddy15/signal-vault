@@ -18,6 +18,21 @@ services:
     volumes:
       - crypto_data:/freqtrade/data
 
+  crypto_v8_forward_lab:
+    build:
+      context: ./crypto
+    container_name: signal-vault-v8-forward-lab
+    restart: unless-stopped
+    profiles:
+      - forwardlab
+    entrypoint: ["python", "/freqtrade/user_data/v8_forward_lab.py"]
+    environment:
+      FORWARD_LAB_STATE_DIR: /freqtrade/data/v8-forward-lab
+      FORWARD_LAB_POLL_SECONDS: "60"
+      FORWARD_LAB_ENTRY_GRACE_MINUTES: "10"
+    volumes:
+      - crypto_data:/freqtrade/data
+
   crypto_v8_overnight:
     build:
       context: ./crypto
