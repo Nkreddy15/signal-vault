@@ -31,7 +31,7 @@ class SignalVaultPaperExecutionV2(IStrategy):
     timeframe = "15m"
     can_short = False
     process_only_new_candles = True
-    startup_candle_count = 240
+    startup_candle_count = 210
 
     # Disable fixed ROI exits. V2 uses custom_exit() so the target can scale
     # with current volatility while keeping an explicit minimum target.
@@ -154,12 +154,23 @@ class SignalVaultPaperExecutionV2(IStrategy):
         close = dataframe["close"]
         volume_ok = dataframe["volume"] > 0
 
+        # Do not require every trend test to be true at the same time.
+        # V1/V2 early iterations could look "stuck" after a restart simply
+        # because one narrow gate stayed false for many candles. V2 now uses
+        # a scored regime: broad structure still has to be bullish, but one
+        # soft condition may temporarily disagree without suppressing every
+        # otherwise valid setup.
+        regime_score = (
+            (dataframe["sv2_ema20"] > dataframe["sv2_ema50"]).astype(int)
+            + (dataframe["sv2_ema50"] > dataframe["sv2_ema200"]).astype(int)
+            + (close > dataframe["sv2_ema20"]).astype(int)
+            + (dataframe["sv2_ema50_slope_8"] > 0.0005).astype(int)
+            + (dataframe["sv2_roc96"] > -0.005).astype(int)
+        )
         trend_regime = (
-            (dataframe["sv2_ema20"] > dataframe["sv2_ema50"])
-            & (dataframe["sv2_ema50"] > dataframe["sv2_ema200"])
-            & (close > dataframe["sv2_ema20"])
-            & (dataframe["sv2_ema50_slope_8"] > 0.001)
-            & (dataframe["sv2_roc96"] > 0)
+            (regime_score >= 4)
+            & (close > dataframe["sv2_ema200"])
+            & (dataframe["sv2_ema20"] > dataframe["sv2_ema50"])
         )
 
         required_capacity = max(
@@ -169,26 +180,35 @@ class SignalVaultPaperExecutionV2(IStrategy):
         cost_gate = dataframe["sv2_move_capacity"] >= required_capacity
 
         momentum = (
-            (dataframe["sv2_roc4"] > 0.004)
-            & (dataframe["sv2_roc12"] > 0.008)
-            & dataframe["sv2_rsi14"].between(54, 72)
-            & (dataframe["sv2_vol_ratio"] >= 0.90)
+            (dataframe["sv2_roc4"] > 0.0025)
+            & (dataframe["sv2_roc12"] > 0.005)
+            & dataframe["sv2_rsi14"].between(52, 74)
+            & (dataframe["sv2_vol_ratio"] >= 0.80)
         )
 
         breakout = (
             (close > dataframe["sv2_prior_high24"])
-            & (dataframe["sv2_vol_ratio"] >= 1.15)
-            & (dataframe["sv2_rsi14"] < 76)
+            & (dataframe["sv2_vol_ratio"] >= 1.05)
+            & (dataframe["sv2_rsi14"] < 78)
         )
 
         pullback_continuation = (
             dataframe["sv2_recent_pullback"]
             & (close > dataframe["sv2_ema20"])
             & (dataframe["sv2_roc4"] > 0)
-            & dataframe["sv2_rsi14"].between(50, 68)
+            & dataframe["sv2_rsi14"].between(48, 70)
         )
 
-        confirmed_setup = momentum | breakout | pullback_continuation
+        trend_continuation = (
+            (close > dataframe["sv2_ema20"])
+            & (dataframe["sv2_roc12"] > 0.004)
+            & dataframe["sv2_rsi14"].between(50, 72)
+            & (dataframe["sv2_vol_ratio"] >= 0.75)
+        )
+
+        confirmed_setup = (
+            momentum | breakout | pullback_continuation | trend_continuation
+        )
         enter = trend_regime & cost_gate & confirmed_setup & volume_ok
 
         dataframe.loc[enter, "enter_long"] = 1
@@ -201,14 +221,30 @@ class SignalVaultPaperExecutionV2(IStrategy):
             "enter_tag",
         ] = "v2_trend_breakout"
         dataframe.loc[
-            enter & pullback_continuation & ~momentum & ~breakout,
+            enter
+            & pullback_continuation
+            & ~momentum
+            & ~breakout
+            & ~trend_continuation,
             "enter_tag",
         ] = "v2_trend_pullback"
         dataframe.loc[
             enter
+            & trend_continuation
+            & ~momentum
+            & ~breakout
+            & ~pullback_continuation,
+            "enter_tag",
+        ] = "v2_trend_continuation"
+        dataframe.loc[
+            enter
             & (
-                (momentum.astype(int) + breakout.astype(int)
-                 + pullback_continuation.astype(int))
+                (
+                    momentum.astype(int)
+                    + breakout.astype(int)
+                    + pullback_continuation.astype(int)
+                    + trend_continuation.astype(int)
+                )
                 >= 2
             ),
             "enter_tag",
