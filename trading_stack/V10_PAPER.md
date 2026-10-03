@@ -65,6 +65,18 @@ positive expectancy before this candidate deserves any real capital.
 
 ## Shutdown and diagnostics
 
+To backtest the frozen V10 against the previously used 2026 Q1/Q2 Kraken
+archives, run `bash trading_stack/backtest_v10_mac.sh`. It uses separate
+research campaigns, preserves the forward ledger, and does not restart V10.
+Two modeled spread scenarios (5 and 15 bps) include the current fee model.
+Results include long/short trade counts, costs, profit factor, weekly P&L,
+drawdown and entry blockers. The 15m OHLC adverse-first stress approximation
+cannot reproduce actual 30-second quote exits. Q1/Q2 are development data,
+not unseen validation. Independent seven-day $100 campaign P&Ls must not be
+read as a continuously compounded $100 account. Full reports/trades live in
+the Docker volume at `v10-backtest-results`; a summary is copied locally to
+`.data/v10-backtest-results/v10-backtest-summary.json`.
+
 Mac shutdown stops the process. After restarting Docker, the container resumes
 the same campaign. Missed candles are not traded retrospectively; overdue exits
 use the first fresh executable quote, never an invented stop/target fill.
