@@ -107,15 +107,23 @@ echo 'Waiting for a fresh runtime cycle and the $500 dashboard selection...'
 ok=0
 for attempt in {1..60}; do
   if dc exec -T dashboard python - <<'PY'
-import json,time,urllib.request
+import json,time,urllib.request,urllib.error
 def get(path):
     with urllib.request.urlopen('http://127.0.0.1:8090'+path,timeout=15) as r:return json.load(r)
-s=get('/api/paper-v11')
-assert s['version']=='V11-PAPER-500-1' and s['status']=='RUNNING' and s['cycles']>=1
-assert time.time()*1000-(s['last_success_ms'] or 0)<120000
-d=get('/api/snapshot')
-assert d['paper_final']['version']=='V11-PAPER-500-1'
-assert d['crypto']['starting_balance']==500 and d['crypto']['config']['timeframe']=='1d'
+try:
+    s=get('/api/paper-v11')
+    if s.get('version')!='V11-PAPER-500-1' or s.get('status')!='RUNNING' or s.get('cycles',0)<1:
+        raise SystemExit('Waiting: V11 has not completed its first successful market cycle.')
+    if time.time()*1000-(s.get('last_success_ms') or 0)>=120000:
+        raise SystemExit('Waiting: V11 needs a fresh successful market cycle.')
+    d=get('/api/snapshot')
+    if d.get('paper_final',{}).get('version')!='V11-PAPER-500-1':
+        raise SystemExit('Waiting: dashboard has not selected V11 yet.')
+    crypto=d.get('crypto',{})
+    if crypto.get('starting_balance')!=500 or crypto.get('config',{}).get('timeframe')!='1d':
+        raise SystemExit('Waiting: dashboard account settings are not verified yet.')
+except (urllib.error.URLError,TimeoutError,ConnectionError) as exc:
+    raise SystemExit('Waiting: dashboard connection is not ready ('+str(exc)+').')
 print('Fresh V11 cycle and $500 dashboard verified.')
 PY
   then ok=1; break; fi

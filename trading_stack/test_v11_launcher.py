@@ -1,12 +1,18 @@
 """Reproduce Docker's python-stdin import context without Docker or network."""
 import ast
+import contextlib
+import io
+import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+import urllib.error
 
 ROOT=Path(__file__).parent
 
@@ -47,6 +53,33 @@ class LauncherTests(unittest.TestCase):
         self.assertNotEqual(result.returncode,0)
         self.assertIn('dashboard still runs an older image',result.stderr)
         self.assertNotIn('Traceback',result.stderr)
+
+    def test_readiness_waits_without_tracebacks_and_requires_every_gate(self):
+        block=blocks((ROOT/'start_v11_500_mac.sh').read_text())[-1]
+        state={'version':'V11-PAPER-500-1','status':'RUNNING','cycles':1,'last_success_ms':time.time()*1000}
+        dashboard={'paper_final':{'version':'V11-PAPER-500-1'},'crypto':{'starting_balance':500,'config':{'timeframe':'1d'}}}
+        cases=[
+            ({**state,'cycles':0},dashboard,'first successful market cycle'),
+            ({**state,'status':'STARTING'},dashboard,'first successful market cycle'),
+            ({**state,'last_success_ms':0},dashboard,'fresh successful market cycle'),
+            (state,{**dashboard,'paper_final':{}},'has not selected V11'),
+            (state,{**dashboard,'crypto':{'starting_balance':100}},'account settings'),
+        ]
+        for s,d,message in cases:
+            with self.subTest(message=message):
+                output=io.StringIO()
+                responses=[io.StringIO(json.dumps(s)),io.StringIO(json.dumps(d))]
+                with patch('urllib.request.urlopen',side_effect=responses),contextlib.redirect_stdout(output):
+                    with self.assertRaises(SystemExit) as error:exec(block,{})
+                self.assertIn(message,str(error.exception))
+                self.assertEqual(output.getvalue(),'')
+        with patch('urllib.request.urlopen',side_effect=urllib.error.URLError('starting')):
+            with self.assertRaises(SystemExit) as error:exec(block,{})
+        self.assertIn('dashboard connection is not ready',str(error.exception))
+        output=io.StringIO()
+        with patch('urllib.request.urlopen',side_effect=[io.StringIO(json.dumps(state)),io.StringIO(json.dumps(dashboard))]),contextlib.redirect_stdout(output):
+            exec(block,{})
+        self.assertIn('Fresh V11 cycle and $500 dashboard verified.',output.getvalue())
 
 
 if __name__=='__main__':unittest.main()
