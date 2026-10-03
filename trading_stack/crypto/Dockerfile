@@ -20,6 +20,7 @@ COPY --chown=ftuser:ftuser v8_forward_lab.py /freqtrade/user_data/v8_forward_lab
 COPY --chown=ftuser:ftuser paper_final.py /freqtrade/user_data/paper_final.py
 COPY --chown=ftuser:ftuser paper_v10.py /freqtrade/user_data/paper_v10.py
 COPY --chown=ftuser:ftuser backtest_v10.py /freqtrade/user_data/backtest_v10.py
+COPY --chown=ftuser:ftuser multi_strategy_lab.py /freqtrade/user_data/multi_strategy_lab.py
 COPY --chown=ftuser:ftuser binance_q4_holdout.py /freqtrade/user_data/binance_q4_holdout.py
 COPY --chown=ftuser:ftuser start.sh /freqtrade/start-open-source-stack.sh
 RUN chmod 0755 /freqtrade/start-open-source-stack.sh
