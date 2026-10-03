@@ -115,6 +115,10 @@ def _signal_explanation(tag):
             "V2 bullish regime with a pullback-and-reclaim continuation. "
             "Entry also passed the cost-aware movement-capacity gate."
         ),
+        "v2_trend_continuation": (
+            "V2 bullish regime with continued positive 3-hour momentum. "
+            "Entry also passed the cost-aware movement-capacity gate."
+        ),
         "v2_multi_confirmed": (
             "V2 entry had multiple confirmations inside a bullish regime and "
             "enough recent movement capacity to clear the friction buffer."
