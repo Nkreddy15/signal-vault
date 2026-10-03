@@ -240,22 +240,68 @@ function renderStocks(d) {
   $('otherPositions').innerHTML = other.length ? other.map((p) => `<div class="other-row"><div><span>Symbol</span><strong>${esc(p.symbol)}</strong></div><div><span>Class</span><strong>${esc(p.asset_class)}</strong></div><div><span>Market Value</span><strong>${money(p.market_value)}</strong></div></div>`).join('') : `<div class="empty">No other PAPER positions.</div>`;
 }
 
+function tradeOutcome(trade) {
+  if (trade?.is_open) return {label: 'OPEN', cls: 'open'};
+  const pnl = n(trade?.profit_abs);
+  const ratio = n(trade?.profit_ratio);
+  if (pnl > 0 || (pnl === 0 && ratio > 0)) return {label: 'PROFIT', cls: 'win'};
+  if (pnl < 0 || (pnl === 0 && ratio < 0)) return {label: 'LOSS', cls: 'loss'};
+  return {label: 'FLAT', cls: 'flat'};
+}
+
+function setTradeFilter(filter, {scroll = false} = {}) {
+  state.tradeFilter = filter;
+  $('.segment').forEach((b) => b.classList.toggle('active', b.dataset.filter === filter));
+  renderTradeTable();
+  if (scroll) {
+    const target = $('performance');
+    target?.scrollIntoView({behavior: 'smooth', block: 'start'});
+    target?.classList.remove('history-focus');
+    requestAnimationFrame(() => target?.classList.add('history-focus'));
+    setTimeout(() => target?.classList.remove('history-focus'), 1400);
+  }
+}
+
 function renderTradeTable() {
   const c = state.snapshot?.crypto;
   if (!c) return;
+  const openTrades = c.open_trades || [];
+  const closedTrades = c.closed_trades || [];
   let rows = [];
-  if (state.tradeFilter === 'open') rows = c.open_trades || [];
-  else if (state.tradeFilter === 'closed') rows = c.closed_trades || [];
-  else rows = [...(c.open_trades || []), ...(c.closed_trades || [])];
+  if (state.tradeFilter === 'open') rows = openTrades;
+  else if (state.tradeFilter === 'closed') rows = closedTrades;
+  else if (state.tradeFilter === 'winners') rows = closedTrades.filter((t) => tradeOutcome(t).cls === 'win');
+  else if (state.tradeFilter === 'losers') rows = closedTrades.filter((t) => tradeOutcome(t).cls === 'loss');
+  else rows = [...openTrades, ...closedTrades];
+
+  const wins = closedTrades.filter((t) => tradeOutcome(t).cls === 'win').length;
+  const losses = closedTrades.filter((t) => tradeOutcome(t).cls === 'loss').length;
+  const flats = closedTrades.filter((t) => tradeOutcome(t).cls === 'flat').length;
+  const decided = wins + losses;
+  const winRate = decided ? wins / decided : 0;
+  const realized = closedTrades.reduce((sum, t) => sum + n(t.profit_abs), 0);
 
   $('openCount').textContent = String(c.open_trade_count || 0);
   $('closedCount').textContent = String(c.profit?.closed_trade_count ?? c.closed_trade_count ?? 0);
+  $('tradeSummary').innerHTML = [
+    ['Closed', closedTrades.length],
+    ['Profits', wins],
+    ['Losses', losses],
+    ['Flat', flats],
+    ['Win rate', decided ? `${(winRate * 100).toFixed(1)}%` : '—'],
+    ['Realized', money(realized)],
+  ].map(([label, value]) => `<div><span>${esc(label)}</span><strong class="${label === 'Realized' ? cssPnL(realized) : ''}">${esc(value)}</strong></div>`).join('');
+
   if (!rows.length) {
-    $('cryptoTradeTable').innerHTML = `<div class="empty">No ${state.tradeFilter === 'open' ? 'open' : state.tradeFilter === 'closed' ? 'closed' : ''} crypto trades to show.</div>`;
+    const label = state.tradeFilter === 'open' ? 'open' : state.tradeFilter === 'closed' ? 'closed' : state.tradeFilter;
+    $('cryptoTradeTable').innerHTML = `<div class="empty">No ${esc(label)} crypto trades to show.</div>`;
     return;
   }
-  $('cryptoTradeTable').innerHTML = `<table><thead><tr><th>#</th><th>Pair</th><th>Side</th><th>Amount</th><th>Stake</th><th>Entry</th><th>Current / Exit</th><th>P&amp;L</th><th>Return</th><th>Opened</th></tr></thead><tbody>${rows.map((t, i) => `<tr class="trade-row" data-trade-id="${esc(tradeId(t))}"><td>${i+1}</td><td><strong>${esc(t.pair)}</strong></td><td class="positive">${sideText(t)}</td><td>${qty(t.amount)}</td><td>${money(t.stake_amount)}</td><td>${price(t.open_rate)}</td><td>${price(t.is_open ? t.current_rate : t.close_rate)}</td><td class="${cssPnL(t.profit_abs)}">${money(t.profit_abs)}</td><td class="${cssPnL(t.profit_ratio)}">${pct(t.profit_ratio)}</td><td>${shortTime(t.open_date)}</td></tr>`).join('')}</tbody></table>`;
-  $$('.trade-row').forEach((row) => row.addEventListener('click', () => openTrade(row.dataset.tradeId)));
+  $('cryptoTradeTable').innerHTML = `<table><thead><tr><th>#</th><th>Result</th><th>Market</th><th>Side</th><th>Stake</th><th>Entry</th><th>Current / Exit</th><th>P&amp;L</th><th>Return</th><th>Opened</th><th>Closed</th><th>Exit Reason</th></tr></thead><tbody>${rows.map((t, i) => {
+    const outcome = tradeOutcome(t);
+    return `<tr class="trade-row" data-trade-id="${esc(tradeId(t))}"><td>${i+1}</td><td><span class="result-badge ${outcome.cls}">${outcome.label}</span></td><td><strong>CRYPTO · ${esc(t.pair)}</strong></td><td class="positive">${sideText(t)}</td><td>${money(t.stake_amount)}</td><td>${price(t.open_rate)}</td><td>${price(t.is_open ? t.current_rate : t.close_rate)}</td><td class="${cssPnL(t.profit_abs)}">${money(t.profit_abs)}</td><td class="${cssPnL(t.profit_ratio)}">${pct(t.profit_ratio)}</td><td>${shortTime(t.open_date)}</td><td>${t.is_open ? '—' : shortTime(t.close_date)}</td><td>${esc(t.is_open ? 'Still open' : (t.exit_reason || '—'))}</td></tr>`;
+  }).join('')}</tbody></table>`;
+  $('.trade-row').forEach((row) => row.addEventListener('click', () => openTrade(row.dataset.tradeId)));
 }
 
 function renderOrders() {
@@ -317,6 +363,7 @@ function renderInspector(trade, openChart = true) {
   setStatus($('modalStatus'), trade.is_open ? 'OPEN' : 'CLOSED', !!trade.is_open);
   $('detailPair').textContent = trade.pair || '—';
   $('detailSide').textContent = `${sideText(trade)} · ${money(trade.stake_amount)} stake`;
+  $('detailPnlLabel').textContent = trade.is_open ? 'OPEN P&L' : 'REALIZED P&L';
   $('detailPnl').textContent = money(trade.profit_abs);
   $('detailPnl').className = cssPnL(trade.profit_abs);
   $('detailPnlPct').textContent = pct(trade.profit_ratio);
@@ -333,7 +380,7 @@ function renderInspector(trade, openChart = true) {
 
   $('overviewMetrics').innerHTML = [
     metric('Entry Price', price(trade.open_rate)),
-    metric('Current Price', price(trade.current_rate)),
+    metric(trade.is_open ? 'Current Price' : 'Exit Price', price(trade.is_open ? trade.current_rate : trade.close_rate)),
     metric('ROI Target', price(trade.target_price), 'positive'),
     metric('Stop Loss', price(trade.stop_price), 'negative'),
     metric('Position Size', `${qty(trade.amount)} · ${money(trade.stake_amount)}`),
@@ -397,7 +444,7 @@ async function fetchCandles(trade) {
   $('candleState').textContent = 'Loading real 5m candles from the running Freqtrade engine…';
   $('candleChart').innerHTML = '';
   try {
-    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=5m&limit=120`;
+    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=5m&limit=300`;
     const r = await fetch(url, {cache: 'no-store'});
     const data = await r.json();
     if (!r.ok || data.error && !data.candles?.length) throw new Error(data.error || `HTTP ${r.status}`);
@@ -426,7 +473,33 @@ function drawCandles(candles, trade) {
     return;
   }
 
-  const visible = candles.slice(-80);
+  const source = candles;
+  const nearestIndex = (when) => {
+    const target = new Date(when || 0).getTime();
+    if (!Number.isFinite(target)) return -1;
+    let best = -1, distance = Infinity;
+    source.forEach((c, i) => {
+      const t = candleTimeMs(c.time);
+      if (Number.isFinite(t) && Math.abs(t - target) < distance) {
+        best = i;
+        distance = Math.abs(t - target);
+      }
+    });
+    return best;
+  };
+
+  let visible = source.slice(-100);
+  const openIndex = nearestIndex(trade.open_date);
+  const closeIndex = trade.is_open ? source.length - 1 : nearestIndex(trade.close_date);
+  if (openIndex >= 0 && closeIndex >= 0) {
+    let start = Math.max(0, Math.min(openIndex, closeIndex) - 18);
+    let end = Math.min(source.length, Math.max(openIndex, closeIndex) + 19);
+    if (end - start > 120) {
+      start = Math.max(0, end - 120);
+    }
+    visible = source.slice(start, end);
+  }
+
   const special = [trade.open_rate, trade.current_rate, trade.target_price, trade.stop_price, trade.close_rate].map(n).filter((v) => v > 0);
   let low = Math.min(...visible.map(c => n(c.low)), ...special);
   let high = Math.max(...visible.map(c => n(c.high)), ...special);
@@ -505,12 +578,21 @@ async function refresh() {
   }
 }
 
-$$('.segment').forEach((button) => button.addEventListener('click', () => {
-  state.tradeFilter = button.dataset.filter;
-  $$('.segment').forEach((b) => b.classList.toggle('active', b === button));
-  renderTradeTable();
+$('.segment').forEach((button) => button.addEventListener('click', () => {
+  setTradeFilter(button.dataset.filter);
 }));
-$$('.tab').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+const completedCryptoKpi = $('completedCryptoKpi');
+if (completedCryptoKpi) {
+  const showCompleted = () => setTradeFilter('closed', {scroll: true});
+  completedCryptoKpi.addEventListener('click', showCompleted);
+  completedCryptoKpi.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      showCompleted();
+    }
+  });
+}
+$('.tab').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
 $$('[data-close-modal]').forEach((el) => el.addEventListener('click', closeTradeModal));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTradeModal(); });
 
