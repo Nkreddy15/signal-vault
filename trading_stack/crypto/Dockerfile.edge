@@ -13,5 +13,8 @@ COPY --chown=ftuser:ftuser forecast_edge_lab.py /freqtrade/user_data/forecast_ed
 COPY --chown=ftuser:ftuser regime_swing_lab.py /freqtrade/user_data/regime_swing_lab.py
 COPY --chown=ftuser:ftuser export_research_bundle.py /freqtrade/user_data/export_research_bundle.py
 COPY --chown=ftuser:ftuser durable_trend_lab.py /freqtrade/user_data/durable_trend_lab.py
+COPY --chown=ftuser:ftuser financing_edge_lab.py /freqtrade/user_data/financing_edge_lab.py
+COPY --chown=ftuser:ftuser bear_regime_lab.py /freqtrade/user_data/bear_regime_lab.py
+COPY --chown=ftuser:ftuser equity_data_bundle.py /freqtrade/user_data/equity_data_bundle.py
 USER ftuser
 ENTRYPOINT ["python", "/freqtrade/user_data/forecast_edge_lab.py"]

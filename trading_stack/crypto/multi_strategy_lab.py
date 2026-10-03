@@ -57,6 +57,8 @@ class Config:
     starting_balance: float = 100
     daily_operating_cost_usd: float = 0
     fee_profile: str = "kraken_spot"
+    short_opening_fee: float = 0
+    short_rollover_per_4h: float | None = None
 
     @property
     def risk_fraction(self):
@@ -267,6 +269,10 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
             not 0 <= cfg.short_carry_per_day <= .05 or cfg.starting_balance <= 0 or
             cfg.daily_operating_cost_usd < 0):
         raise ValueError("Invalid costs or starting capital")
+    if (not math.isfinite(cfg.short_opening_fee) or not 0 <= cfg.short_opening_fee <= .05 or
+            (cfg.short_rollover_per_4h is not None and (not math.isfinite(cfg.short_rollover_per_4h)
+                or not 0 <= cfg.short_rollover_per_4h <= .05))):
+        raise ValueError("Invalid financing sensitivity")
     if cfg.fee_profile not in FEE_PROFILES:
         raise ValueError("Unknown fee scenario")
     fees, balance, positions, trades = Fees(cfg.fee_profile), cfg.starting_balance, {}, []
@@ -275,14 +281,15 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
     max_slots, max_reserved, max_exposure, min_fee = 0, 0.0, 0.0, fees.tiers[0][1]
     first, finish, last_now = None, None, None
     operating_cost = 0.0
-    pending_exits = {}
+    pending_exits, financing_events, last_quote_ms = {}, [], {}
     exit_times = iter(sorted((scheduled_exits or {}).items()))
     next_exit = next(exit_times, None)
 
     def pnl(pos, price, now, fee_rate):
         gross = pos["stake"]*(price/pos["entry_price"]-1)*pos["side"]
         exit_fee = pos["stake"]*price/pos["entry_price"]*fee_rate
-        carry = pos["stake"]*cfg.short_carry_per_day*max(0, now-pos["entry_ms"])/DAY if pos["side"] == -1 else 0
+        carry = (pos.get('rollover_paid',0) if cfg.short_rollover_per_4h is not None else
+            pos["stake"]*cfg.short_carry_per_day*max(0, now-pos["entry_ms"])/DAY) if pos["side"] == -1 else 0
         return gross, exit_fee, carry
 
     def equity(now):
@@ -290,7 +297,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
         rate = fees.rate(now)
         for pair, pos in positions.items():
             gross, fee, carry = pnl(pos, exit_price(last[pair], pos["side"], cfg), now, rate)
-            total += gross-fee-carry
+            total += gross-fee-(carry if cfg.short_rollover_per_4h is None else 0)
         return total
 
     def close(pair, price, now, reason, ambiguous=False):
@@ -300,11 +307,11 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
         rate = fees.rate(now)
         min_fee = min(min_fee, rate)
         gross, fee, carry = pnl(pos, price, now, rate)
-        balance += gross-fee-carry
+        balance += gross-fee-(carry if cfg.short_rollover_per_4h is None else 0)
         fees.record(now, pos["stake"]*price/pos["entry_price"])
         trades.append(dict(pos, pair=pair, exit_ms=now, exit_price=price, reason=reason,
             ambiguous_bar=ambiguous, gross_pnl=gross, exit_fee=fee, carry=carry,
-            pnl=gross-pos["entry_fee"]-fee-carry))
+            pnl=gross-pos["entry_fee"]-fee-carry-pos.get('opening_financing_fee',0)))
 
     for now, rows in market:
         if (start is not None and now < start) or (end is not None and now >= end):
@@ -317,6 +324,24 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
         last_now, finish = now, now+BAR
         for pair, (bar, _) in rows.items():
             last[pair] = bar[0]
+            last_quote_ms[pair] = now
+        # Borrowed-asset fees are valued at the latest observed mark, then
+        # deducted from shadow USD cash. This is an explicit sensitivity, not
+        # historical broker financing. Overdue ticks are assessed on return
+        # of the feed; no past mark or executable quote is fabricated.
+        if cfg.short_rollover_per_4h is not None:
+            for pair,pos in positions.items():
+                if pos['side']!=-1:
+                    continue
+                while pos['next_rollover_ms']<=now:
+                    amount=pos['stake']/pos['entry_price']*last[pair]*cfg.short_rollover_per_4h
+                    balance-=amount
+                    pos['rollover_paid']+=amount
+                    if amount:
+                        financing_events.append(dict(pair=pair,kind='ROLLOVER',due_ms=pos['next_rollover_ms'],
+                            assessed_ms=now,quote_ms=last_quote_ms[pair],mark=last[pair],amount_usd=amount,
+                            rate=cfg.short_rollover_per_4h))
+                    pos['next_rollover_ms']+=4*3_600_000
         marked = equity(now)
         fresh = all(pair in rows for pair in positions)
         if risk_day != now//DAY and fresh:
@@ -374,17 +399,18 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                     counts["opening_price_drift"] += 1
                     continue
                 price = entry_price(mid, sig.side, cfg)
+                opening_finance_rate=cfg.short_opening_fee if sig.side==-1 else 0
                 target = sig.target
                 if sig.family == "range_reversal" and sig.reference_price is not None:
                     mean_anchor = sig.reference_price*(1+sig.side*sig.target)
                     target = sig.side*(mean_anchor/price-1)
-                if target is not None and target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01:
+                if target is not None and target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01+opening_finance_rate:
                     counts["target_below_cost_buffer"] += 1
                     continue
                 reserved = sum(p["stake"] for p in positions.values())
                 free = max(0, balance-reserved)
-                stake = min(marked*cfg.risk_fraction/(sig.stop+2*rate+2*cfg.slippage),
-                    .8*marked/capacity, max(0, .8*marked-reserved), free/(1+rate))
+                stake = min(marked*cfg.risk_fraction/(sig.stop+2*rate+2*cfg.slippage+opening_finance_rate),
+                    .8*marked/capacity, max(0, .8*marked-reserved), free/(1+rate+opening_finance_rate))
                 if family == "blend":
                     family_stake = sum(p["stake"] for p in positions.values() if p["family"] == sig.family)
                     stake = min(stake, max(0, .5*marked-family_stake))
@@ -392,7 +418,8 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                     counts["insufficient_cash_or_family_budget"] += 1
                     continue
                 entry_fee = stake*rate
-                balance -= entry_fee
+                opening_financing_fee=stake*opening_finance_rate
+                balance -= entry_fee+opening_financing_fee
                 fees.record(now, stake)
                 min_fee = min(min_fee, rate)
                 positions[pair] = dict(family=sig.family, side=sig.side, stake=stake,
@@ -402,6 +429,12 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                     initial_stop=sig.stop, peak_price=price)
                 positions[pair]["trailing"] = sig.trailing
                 positions[pair]["trailing_distance"] = sig.trailing_distance
+                positions[pair]['opening_financing_fee']=opening_financing_fee
+                positions[pair]['rollover_paid']=0.
+                positions[pair]['next_rollover_ms']=now+4*3_600_000
+                if opening_financing_fee:
+                    financing_events.append(dict(pair=pair,kind='OPENING',due_ms=now,assessed_ms=now,
+                        quote_ms=now,mark=price,amount_usd=opening_financing_fee,rate=opening_finance_rate))
                 counts["opened"] += 1
                 max_slots = max(max_slots, len(positions))
                 reserved += stake
@@ -433,6 +466,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                         pos["stop_price"] = min(pos["stop_price"], pos["peak_price"]*(1+distance))
         for pair, (bar, _) in rows.items():
             last[pair] = bar[3]
+            last_quote_ms[pair] = now+BAR-1
         marked = equity(now+BAR-1)
         peak = max(peak, marked)
         max_dd = max(max_dd, 1-marked/peak)
@@ -470,6 +504,8 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
         profit_factor=profit/loss if loss else None, max_drawdown_pct=100*max_dd,
         fees=sum(t["entry_fee"]+t["exit_fee"] for t in trades)+sum(p["entry_fee"] for p in positions.values()),
         short_carry=sum(t["carry"] for t in trades), pending_positions=len(positions),
+        short_opening_fees=sum(t.get('opening_financing_fee',0) for t in trades)+sum(p.get('opening_financing_fee',0) for p in positions.values()),
+        short_rollover_fees=sum(p.get('rollover_paid',0) for p in trades)+sum(p.get('rollover_paid',0) for p in positions.values()),
         ruined=ending <= 0, halted=halted, max_concurrent=max_slots,
         max_reserved_notional=max_reserved, max_exposure_pct=100*max_exposure,
         lowest_taker_fee_pct=100*min_fee, ambiguous_bars=sum(t["ambiguous_bar"] for t in trades),
@@ -480,7 +516,8 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
             pnl=sum(t["pnl"] for t in trades if t["family"] == f))
             for f in sorted(set(allowed_families)-{"blend"} | {t["family"] for t in trades})},
         diagnostics=dict(counts))
-    return dict(config=asdict(cfg), summary=summary, trades=trades, equity_curve=curve)
+    return dict(config=asdict(cfg), summary=summary, trades=trades, equity_curve=curve,
+        financing_events=financing_events)
 
 
 def month_windows(market):
