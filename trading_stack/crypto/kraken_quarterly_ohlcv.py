@@ -40,23 +40,71 @@ def _normalized_stem(name: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", stem)
 
 
-def _find_member(names: list[str], aliases: tuple[str, ...]) -> str | None:
-    candidates: list[tuple[int, str]] = []
+def _sample_interval_seconds(zf: zipfile.ZipFile, member: str) -> float | None:
+    """Infer candle spacing from timestamps instead of trusting filename syntax."""
+    try:
+        with zf.open(member) as fh:
+            sample = pd.read_csv(fh, header=None, nrows=32)
+    except Exception:
+        return None
+
+    if sample.empty or sample.shape[1] < 1:
+        return None
+
+    ts = pd.to_numeric(sample.iloc[:, 0], errors="coerce").dropna()
+    if len(ts) < 3:
+        return None
+
+    # Kraken archives may encode timestamps in seconds or milliseconds.
+    values = ts.astype(float)
+    if float(values.max()) > 10_000_000_000:
+        values = values / 1000.0
+
+    diffs = values.diff().dropna()
+    diffs = diffs[diffs > 0]
+    if diffs.empty:
+        return None
+    return float(diffs.median())
+
+
+def _find_member(
+    zf: zipfile.ZipFile,
+    names: list[str],
+    aliases: tuple[str, ...],
+    target_interval_seconds: int = 900,
+) -> str | None:
+    """Find the actual 15m member by inspecting candle spacing.
+
+    Kraken archive filenames can contain separators that make naive normalized
+    matching ambiguous (for example, a 1-minute/5-minute-looking name can
+    collapse to the same normalized suffix as "15"). We therefore shortlist
+    by pair alias and verify the median timestamp spacing is exactly 15 minutes.
+    """
+    candidates: list[str] = []
     for name in names:
         if not name.lower().endswith(".csv"):
             continue
         stem = _normalized_stem(name)
-        for alias in aliases:
-            # Expected archive names are typically PAIR_15.csv. Normalizing
-            # makes this robust to separators and nested directories.
-            if stem == f"{alias}15":
-                return name
-            if alias in stem and stem.endswith("15"):
-                candidates.append((len(stem), name))
-    if not candidates:
+        if any(alias in stem for alias in aliases):
+            candidates.append(name)
+
+    scored: list[tuple[float, int, str]] = []
+    for name in candidates:
+        interval = _sample_interval_seconds(zf, name)
+        if interval is None:
+            continue
+        distance = abs(interval - target_interval_seconds)
+        scored.append((distance, len(name), name))
+
+    if not scored:
         return None
-    candidates.sort()
-    return candidates[0][1]
+
+    scored.sort()
+    distance, _, member = scored[0]
+    # Refuse an accidental nearest-match if it is not actually ~15m.
+    if distance > 5:
+        return None
+    return member
 
 
 def _download(url: str, target: Path) -> None:
@@ -170,7 +218,7 @@ def main() -> int:
         selected: dict[str, str] = {}
 
         for pair, aliases in PAIR_ALIASES.items():
-            member = _find_member(names, aliases)
+            member = _find_member(zf, names, aliases)
             if member is None:
                 missing.append(pair)
             else:
