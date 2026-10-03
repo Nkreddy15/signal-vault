@@ -15,17 +15,33 @@ docker compose -f "$COMPOSE" build crypto
 
 echo
 echo "Downloading/refreshing $DAYS days of public Kraken trade history and converting to 15m candles..."
-docker compose -f "$COMPOSE" run --rm --no-deps   --entrypoint /bin/bash crypto -lc "
+docker compose -f "$COMPOSE" run --rm --no-deps \
+  --entrypoint /bin/bash crypto -lc "
     mkdir -p '$DATA_DIR' '$RESULT_DIR'
-    freqtrade download-data       --config /freqtrade/user_data/config.json       --datadir '$DATA_DIR'       --timeframes 15m       --days 180       --dl-trades       --convert
+    freqtrade download-data \
+      --config /freqtrade/user_data/config.json \
+      --datadir '$DATA_DIR' \
+      --timeframes 15m \
+      --days '$DAYS' \
+      --dl-trades \
+      --convert
   "
 
 echo
 echo "Running SignalVaultPaperExecutionV2 backtest..."
-docker compose -f "$COMPOSE" run --rm --no-deps   --entrypoint /bin/bash crypto -lc "
+docker compose -f "$COMPOSE" run --rm --no-deps \
+  --entrypoint /bin/bash crypto -lc "
     mkdir -p '$RESULT_DIR'
     set -o pipefail
-    freqtrade backtesting       --config /freqtrade/user_data/config.json       --datadir '$DATA_DIR'       --strategy-path /freqtrade/user_data/strategies       --strategy SignalVaultPaperExecutionV2       --timeframe 15m       --export trades       --backtest-directory '$RESULT_DIR'       2>&1 | tee '$RESULT_DIR/latest-summary.txt'
+    freqtrade backtesting \
+      --config /freqtrade/user_data/config.json \
+      --datadir '$DATA_DIR' \
+      --strategy-path /freqtrade/user_data/strategies \
+      --strategy SignalVaultPaperExecutionV2 \
+      --timeframe 15m \
+      --export trades \
+      --backtest-directory '$RESULT_DIR' \
+      2>&1 | tee '$RESULT_DIR/latest-summary.txt'
   "
 
 echo
