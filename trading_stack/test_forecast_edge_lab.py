@@ -113,6 +113,43 @@ class EdgeTests(unittest.TestCase):
         self.assertEqual(result["nonoverlapping_asset_events"], 12)
         self.assertIsNone(e.calibration(validation, np.ones(100)*.03, hold=192, min_events=10))
 
+    def test_diagnostics_distinguish_prediction_and_sample_rejections(self):
+        validation = pd.DataFrame(dict(pair=["AAA/USD"]*100, ts=START+np.arange(100)*m.BAR,
+            y=[.02]*100))
+        below = e.calibration_details(validation, np.full(100, -.01), hold=8, min_events=10)
+        self.assertIsNone(below["selection"])
+        self.assertTrue(all("NO_PREDICTIONS_ABOVE_THRESHOLD" in r["rejection_reasons"]
+            for r in below["thresholds"]))
+        sparse = e.calibration_details(validation, np.full(100, .03), hold=192, min_events=10)
+        row = sparse["thresholds"][0]
+        self.assertEqual(row["raw_events"], 100)
+        self.assertEqual(row["nonoverlapping_asset_events"], 1)
+        self.assertEqual(row["rejection_reasons"], ["TOO_FEW_NONOVERLAPPING_EVENTS"])
+        good = e.calibration_details(validation, np.full(100, .03), hold=8, min_events=10)
+        self.assertEqual(good["selection"]["threshold"], .003)
+        self.assertEqual(good["selection"]["nonoverlapping_asset_events"], 12)
+        self.assertAlmostEqual(good["selection"]["mean_net_return"], .02)
+        self.assertIsNone(good["selection"]["profit_factor"])
+
+    def test_diagnostics_identify_losing_selected_outcomes(self):
+        validation = pd.DataFrame(dict(pair=["AAA/USD"]*10, ts=START+np.arange(10)*10*m.BAR,
+            y=[.02, -.03]*5))
+        details = e.calibration_details(validation, np.full(10, .03), hold=8, min_events=10)
+        row = details["thresholds"][0]
+        self.assertIsNone(details["selection"])
+        self.assertEqual(row["rejection_reasons"],
+            ["MEAN_NET_RETURN_BELOW_0.3_PERCENT", "PROFIT_FACTOR_BELOW_1.1"])
+        self.assertAlmostEqual(row["profit_factor"], 2/3)
+        with self.assertRaisesRegex(ValueError, "align"):
+            e.calibration_details(validation, [.03])
+
+    def test_predictive_skill_compares_against_past_mean(self):
+        actual = np.array([-.02, .03])
+        perfect = e.predictive_diagnostics(actual, actual, .005)
+        self.assertEqual(perfect["mse_skill_vs_past_mean"], 1)
+        constant = e.predictive_diagnostics(actual, np.full(2, .005), .005)
+        self.assertEqual(constant["mse_skill_vs_past_mean"], 0)
+
     def test_monthly_fit_and_first_forecast_are_invariant_to_later_prices(self):
         frames = {"AAA/USD":frame(7000), "BBB/USD":frame(7000)}
         _, original, _ = e.monthly_predictions(frames, "kraken_spot", START+7*m.DAY,
@@ -128,6 +165,8 @@ class EdgeTests(unittest.TestCase):
         self.assertEqual(before["month"], "2026-03")
         self.assertEqual(before["training_data_sha256"], after["training_data_sha256"])
         self.assertEqual(before["first_test_forecasts"], after["first_test_forecasts"])
+        self.assertEqual(before["calibration_diagnostics"], after["calibration_diagnostics"])
+        self.assertEqual(before["past_validation_predictive_diagnostics"], after["past_validation_predictive_diagnostics"])
         self.assertLess(before["train_max_label_end_ms"], before["validation_start_ms"])
         self.assertLess(before["calibration_max_label_end_ms"], before["test_start_ms"])
 
@@ -153,7 +192,8 @@ class EdgeTests(unittest.TestCase):
             candidates = {family:{(int(r.ts)+m.BAR, "AAA/USD"):
                 m.Signal(family, 1, 1, .02, .06, e.HOLD, int(r.ts), float(r.close), float(r.atr), False)}
                 for family in e.ARRANGEMENTS}
-            return candidates, [dict(status="PAST_ONLY_FIT", test_start_ms=int(raw.ts.iloc[0]))], prepared
+            return candidates, [dict(status="PAST_ONLY_FIT", month="2026-03",
+                calibration_diagnostics={}, test_start_ms=int(raw.ts.iloc[0]))], prepared
         with tempfile.TemporaryDirectory() as d:
             root, out = Path(d)/"data", Path(d)/"out"
             root.mkdir()
@@ -170,6 +210,26 @@ class EdgeTests(unittest.TestCase):
             self.assertTrue(all(r["trades"] == 1 for r in result["reports"]))
             self.assertTrue((out/"forecast-results.md").is_file())
             self.assertEqual(result["milestones"][-1], 10000)
+
+    def test_diagnostics_only_skips_replay_and_writes_uploadable_receipts(self):
+        raw = frame(1000)
+        fold = dict(status="INSUFFICIENT_PAST_DATA", month="2026-02")
+        with tempfile.TemporaryDirectory() as d:
+            root, out = Path(d)/"data", Path(d)/"out"
+            root.mkdir()
+            (root/"universe.json").write_text(json.dumps(dict(selected=[dict(pair="AAA/USD")], formation_end_ms=START)))
+            (root/"AAA_USD-15m.feather").write_bytes(b'fixture')
+            with patch.object(pd, "read_feather", return_value=raw),\
+                    patch.object(e, "monthly_predictions", return_value=({}, [fold], {})),\
+                    patch.object(m, "simulate", side_effect=AssertionError("Must not replay")),\
+                    patch("sys.argv", ["lab", "--data-dir", str(root), "--output-dir", str(out), "--diagnostics-only"]),\
+                    contextlib.redirect_stdout(io.StringIO()):
+                e.main()
+            result = json.loads((out/"forecast-diagnostics.json").read_text())
+            self.assertFalse(result["policy_changed"])
+            self.assertEqual(len(result["folds"]), 2)
+            self.assertIn("INSUFFICIENT_PAST_DATA", (out/"forecast-diagnostics.md").read_text())
+            self.assertFalse((out/"forecast-summary.json").exists())
 
     def test_engine_can_hold_and_earn_above_reporting_milestones(self):
         sig = m.Signal("forecast_ridge", 1, 1, .02, .06, 8, START-m.BAR, 100, .001, False)

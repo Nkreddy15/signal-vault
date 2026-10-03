@@ -41,6 +41,30 @@ Detailed results stay in the existing Docker volume at `edge-research-v1`;
 data and the selection manifest stay under `edge-universe-v1`. If a later step
 fails, the prior cost-audit files have already been copied locally.
 
+### Diagnose a completed zero-trade run
+
+The original `FORECAST-EDGE-LAB-1` summary retained only a selected threshold
+or `null`. A `null` did not explain whether forecasts were below thresholds,
+selected nonoverlapping events were too few, or their realized after-cost
+outcomes failed the mean/profit-factor requirements. Version 1.1 preserves
+the trading policy and exposes every rejection, prediction distribution,
+selected count by asset, and earlier validation error against the past
+training-mean baseline. It also records the particular insufficient-history
+requirements for skipped folds. Diagnostic statistics do not activate trades.
+
+After pulling the update, reuse the already prepared universe:
+
+```bash
+bash trading_stack/diagnose_edge_mac.sh
+```
+
+This runs training/calibration only, without downloading or reselecting assets,
+rerunning the 48 portfolios, or changing paused entries. It writes separate
+diagnostic outputs, preserves the original research reports, and copies the
+JSON receipt to `~/Downloads/forecast-diagnostics.txt` for attachment using
+the chat's file-upload button. The default full research command also exports
+both diagnostic files. No activation criteria are relaxed to make a run trade.
+
 An optional power/connectivity/subscription estimate is deducted from every
 simulated account, including periods holding only cash:
 

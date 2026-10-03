@@ -23,7 +23,7 @@ dc run --rm -T --no-deps --entrypoint python crypto_edge_lab /freqtrade/user_dat
   --output-dir /freqtrade/data/edge-universe-v1 --count "${EDGE_UNIVERSE_COUNT:-24}"
 dc run --rm -T --no-deps crypto_edge_lab \
   --data-dir /freqtrade/data/edge-universe-v1 --output-dir /freqtrade/data/edge-research-v1 "$@"
-for name in forecast-summary.json forecast-results.md; do
+for name in forecast-summary.json forecast-results.md forecast-diagnostics.json forecast-diagnostics.md; do
   dc run --rm -T --no-deps --entrypoint python crypto_edge_lab - "$name" <<'PY' > "../.data/edge-research-v1/$name"
 import sys
 from pathlib import Path
@@ -35,7 +35,7 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 root=Path('../.data/edge-research-v1')
 with ZipFile('../.data/edge-research-review.zip','w',ZIP_DEFLATED) as z:
-    for name in ('prior-strategy-audit.json','prior-strategy-audit.md','forecast-summary.json','forecast-results.md'):
+    for name in ('prior-strategy-audit.json','prior-strategy-audit.md','forecast-summary.json','forecast-results.md','forecast-diagnostics.json','forecast-diagnostics.md'):
         z.write(root/name,arcname=name)
 print('Review bundle: .data/edge-research-review.zip')
 PY
