@@ -20,9 +20,9 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_URL = (
+DEFAULT_URL_TEMPLATE = (
     "https://assets.kraken.com/marketing/institutions/"
-    "Kraken_OHLCVT_2026Q2.zip"
+    "Kraken_OHLCVT_{quarter}.zip"
 )
 
 PAIR_ALIASES = {
@@ -112,7 +112,14 @@ def _download(url: str, target: Path) -> None:
     print(f"Archive saved: {target} ({target.stat().st_size / 1024**2:.1f} MiB)")
 
 
-def _convert_member(zf: zipfile.ZipFile, member: str, pair: str, outdir: Path) -> None:
+def _convert_member(
+    zf: zipfile.ZipFile,
+    member: str,
+    pair: str,
+    outdir: Path,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+) -> None:
     with zf.open(member) as fh:
         frame = pd.read_csv(
             fh,
@@ -139,9 +146,8 @@ def _convert_member(zf: zipfile.ZipFile, member: str, pair: str, outdir: Path) -
         .reset_index(drop=True)
     )
 
-    # Q2 archive can contain boundary rows; keep the declared research quarter.
-    start = pd.Timestamp("2026-04-01T00:00:00Z")
-    end = pd.Timestamp("2026-07-01T00:00:00Z")
+    # Quarterly archives can contain boundary rows; keep only the declared
+    # research quarter.
     frame = frame[(frame["date"] >= start) & (frame["date"] < end)].copy()
 
     if len(frame) < 1000:
@@ -185,19 +191,35 @@ def _convert_member(zf: zipfile.ZipFile, member: str, pair: str, outdir: Path) -
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--url", default=DEFAULT_URL)
-    parser.add_argument("--outdir", default="/freqtrade/data/v2-quarterly-ohlcv")
-    parser.add_argument(
-        "--archive",
-        default="/freqtrade/data/v2-quarterly-ohlcv/Kraken_OHLCVT_2026Q2.zip",
-    )
+    parser.add_argument("--quarter", default="2026Q2")
+    parser.add_argument("--url", default=None)
+    parser.add_argument("--outdir", default=None)
+    parser.add_argument("--archive", default=None)
     args = parser.parse_args()
 
-    outdir = Path(args.outdir)
-    archive = Path(args.archive)
+    match = re.fullmatch(r"(20\\d{2})Q([1-4])", args.quarter.upper())
+    if not match:
+        raise SystemExit("--quarter must look like 2026Q1")
+
+    year = int(match.group(1))
+    quarter_number = int(match.group(2))
+    start_month = (quarter_number - 1) * 3 + 1
+    start = pd.Timestamp(
+        year=year, month=start_month, day=1, tz="UTC"
+    )
+    end = start + pd.DateOffset(months=3)
+
+    quarter = args.quarter.upper()
+    outdir = Path(
+        args.outdir or f"/freqtrade/data/kraken-{quarter.lower()}-ohlcv"
+    )
+    archive = Path(
+        args.archive or outdir / f"Kraken_OHLCVT_{quarter}.zip"
+    )
+    url = args.url or DEFAULT_URL_TEMPLATE.format(quarter=quarter)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    _download(args.url, archive)
+    _download(url, archive)
 
     try:
         zf = zipfile.ZipFile(archive)
@@ -227,9 +249,9 @@ def main() -> int:
 
         for pair, member in selected.items():
             print(f"{pair}: archive member -> {member}")
-            _convert_member(zf, member, pair, outdir)
+            _convert_member(zf, member, pair, outdir, start, end)
 
-    print("Kraken Q2 2026 15m research dataset prepared successfully.")
+    print(f"Kraken {quarter} 15m + 1h research dataset prepared successfully.")
     return 0
 
 
