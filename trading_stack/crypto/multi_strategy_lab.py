@@ -59,6 +59,7 @@ class Config:
     fee_profile: str = "kraken_spot"
     short_opening_fee: float = 0
     short_rollover_per_4h: float | None = None
+    allow_subcost_targets: bool = False  # explicit research diagnostic only
 
     @property
     def risk_fraction(self):
@@ -404,7 +405,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                 if sig.family == "range_reversal" and sig.reference_price is not None:
                     mean_anchor = sig.reference_price*(1+sig.side*sig.target)
                     target = sig.side*(mean_anchor/price-1)
-                if target is not None and target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01+opening_finance_rate:
+                if target is not None and target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01+opening_finance_rate and not cfg.allow_subcost_targets:
                     counts["target_below_cost_buffer"] += 1
                     continue
                 reserved = sum(p["stake"] for p in positions.values())
