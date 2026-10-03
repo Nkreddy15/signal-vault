@@ -17,12 +17,15 @@ justify the friction budget."
 ## Frozen V2 design before results
 
 - timeframe: 15m
+- startup warmup: 210 candles; restart never forces an entry, but V2 does not
+  require every soft regime test to remain true at once after restart
 - long-only Kraken spot PAPER/dry-run
 - six-pair universe from the existing config
-- bullish regime required: EMA20 > EMA50 > EMA200, positive EMA50 slope,
-  positive 24h return, and price above EMA20
-- setup confirmation: momentum, breakout, pullback continuation, or multiple
-  confirmations
+- bullish regime required, but evaluated with a scored regime instead of
+  requiring every soft trend condition simultaneously; price must remain
+  above EMA200 and EMA20 must remain above EMA50
+- setup confirmation: momentum, breakout, pullback continuation,
+  trend continuation, or multiple confirmations
 - assumed round-trip friction used by the entry gate: 0.74%
 - minimum movement-capacity gate: 1.80%
 - minimum adaptive gross profit target: 2.20%
@@ -63,3 +66,11 @@ V2.
 Passing this gate only permits a V2 PAPER trial. It does not permit live
 trading, real-money activation, leverage, shorting, or automatic strategy
 promotion.
+
+## Restart-resilience revision
+
+Before the first meaningful multi-asset backtest, V2 was revised so inactivity
+cannot be caused solely by one soft regime condition staying false after a
+restart. The cost gate, minimum gross target, hard stop, PAPER-only boundary,
+and separate V2 database were not loosened. A restart still never creates a
+trade by itself; the strategy must see a valid cost-aware setup.
