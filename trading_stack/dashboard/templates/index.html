@@ -85,7 +85,7 @@
           <span class="kpi-icon">↗</span><div class="kpi-title">Managed Stock P&amp;L</div>
           <div id="stockPnl" class="kpi-number">—</div><div id="stockPnlSub" class="kpi-foot">No open positions</div>
         </article>
-        <article class="kpi-card">
+        <article class="kpi-card clickable-kpi" id="completedCryptoKpi" tabindex="0" role="button" aria-label="Show all completed crypto trades">
           <span class="kpi-icon">▤</span><div class="kpi-title">Completed Crypto Trades</div>
           <div id="closedTrades" class="kpi-number">—</div><div id="closedTradesSub" class="kpi-foot">—</div>
         </article>
@@ -137,8 +137,9 @@
         <article class="panel">
           <div class="panel-header compact">
             <div><h2>Crypto Trade Activity</h2><p>Live and recent trades from the crypto engine</p></div>
-            <div class="segmented"><button class="segment active" data-filter="open">Open Trades <span id="openCount">0</span></button><button class="segment" data-filter="closed">Closed Trades <span id="closedCount">0</span></button><button class="segment" data-filter="all">View All</button></div>
+            <div class="segmented"><button class="segment active" data-filter="open">Open Trades <span id="openCount">0</span></button><button class="segment" data-filter="closed">Closed Trades <span id="closedCount">0</span></button><button class="segment" data-filter="winners">Winners</button><button class="segment" data-filter="losers">Losers</button><button class="segment" data-filter="all">View All</button></div>
           </div>
+          <div id="tradeSummary" class="trade-summary" aria-live="polite"></div>
           <div id="cryptoTradeTable" class="table-scroll"></div>
         </article>
         <article class="panel performance-panel">
@@ -185,7 +186,7 @@
       <div class="tab-panel active" data-panel="overview">
         <div class="detail-hero">
           <div><small>POSITION</small><h3 id="detailPair">—</h3><p id="detailSide">—</p></div>
-          <div class="detail-pnl"><small>OPEN P&amp;L</small><strong id="detailPnl">—</strong><span id="detailPnlPct">—</span></div>
+          <div class="detail-pnl"><small id="detailPnlLabel">OPEN P&amp;L</small><strong id="detailPnl">—</strong><span id="detailPnlPct">—</span></div>
         </div>
         <div id="overviewMetrics" class="detail-grid"></div>
         <div class="explanation-card"><span>EXECUTION REASON</span><strong id="signalTag">—</strong><p id="signalReason">—</p></div>
