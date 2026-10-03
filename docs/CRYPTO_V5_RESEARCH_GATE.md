@@ -41,11 +41,19 @@ V5 tests a long / short / cash regime model on 1h candles.
 
 2025 Q4 is declared as the next unseen holdout before V5 is run.
 
+Kraken's current incremental archive page does not expose a standalone Q4 2025
+archive. Rather than download the ~10 GB multipart full-history Kraken archive,
+the holdout uses Binance public SPOT 1h klines for BTCUSDT, ETHUSDT, SOLUSDT,
+XRPUSDT, DOGEUSDT, and ADAUSDT. This is intentionally a cross-venue robustness
+test. It is not Kraken-native execution evidence and cannot validate Kraken
+futures fees, funding, spread, or fill behavior.
+
 ## V5 gate
 
 V5 is rejected unless all of these hold:
 
-1. 2025 Q4 holdout return is positive after the 0.74% friction deduction.
+1. 2025 Q4 Binance cross-venue holdout return is positive after the 0.74%
+   friction deduction.
 2. Holdout profit factor is above 1.20.
 3. Holdout expectancy per trade is positive.
 4. Holdout closed-balance drawdown is below 8%.
