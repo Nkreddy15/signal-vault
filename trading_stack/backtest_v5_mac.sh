@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE="$ROOT/trading_stack/docker-compose.yml"
 Q1_DIR="/freqtrade/data/v5-2026q1-ohlcv"
 Q2_DIR="/freqtrade/data/v5-2026q2-ohlcv"
