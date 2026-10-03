@@ -12,7 +12,7 @@ services:
       FREQTRADE__API_SERVER__JWT_SECRET_KEY: ${FREQTRADE__API_SERVER__JWT_SECRET_KEY}
       FREQTRADE__API_SERVER__WS_TOKEN: ${FREQTRADE__API_SERVER__WS_TOKEN}
       PERSIST_DIR: /freqtrade/data
-      FREQTRADE_DB_URL: sqlite:////freqtrade/data/signal-vault-execution-paper-v1.sqlite
+      SIGNAL_VAULT_CRYPTO_STRATEGY: ${SIGNAL_VAULT_CRYPTO_STRATEGY:-SignalVaultPaperExecutionV1}
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
