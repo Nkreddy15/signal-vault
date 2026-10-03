@@ -7,6 +7,7 @@ COPY --chown=ftuser:ftuser config.json /freqtrade/user_data/config.json
 COPY --chown=ftuser:ftuser SignalVaultPaperEMA12x26V1.py /freqtrade/user_data/strategies/SignalVaultPaperEMA12x26V1.py
 COPY --chown=ftuser:ftuser SignalVaultPaperExecutionV1.py /freqtrade/user_data/strategies/SignalVaultPaperExecutionV1.py
 COPY --chown=ftuser:ftuser SignalVaultPaperExecutionV2.py /freqtrade/user_data/strategies/SignalVaultPaperExecutionV2.py
+COPY --chown=ftuser:ftuser kraken_quarterly_ohlcv.py /freqtrade/user_data/kraken_quarterly_ohlcv.py
 COPY --chown=ftuser:ftuser start.sh /freqtrade/start-open-source-stack.sh
 RUN chmod 0755 /freqtrade/start-open-source-stack.sh
 USER ftuser
