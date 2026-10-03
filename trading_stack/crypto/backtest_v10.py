@@ -37,7 +37,10 @@ class MemoryLedger:
 def prepare(frame, pair):
     f=frame.copy()
     if 'ts' not in f:
-        f['ts']=pd.to_datetime(f['date'],utc=True).astype('int64')//1_000_000
+        # Datetime integers use the Series' resolution (s/ms/us/ns), which
+        # can differ across pandas/Feather versions. Normalize before scaling.
+        dates=pd.to_datetime(f['date'],utc=True).astype('datetime64[ns, UTC]')
+        f['ts']=dates.astype('int64')//1_000_000
     f=f[['ts','open','high','low','close','volume']].sort_values('ts').reset_index(drop=True)
     if f.empty or f.ts.duplicated().any():
         raise ValueError(f'{pair}: empty or duplicate candles')
