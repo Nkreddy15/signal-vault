@@ -328,19 +328,21 @@ function renderHealth(d) {
 
 function renderSnapshot(d) {
   state.snapshot = d;
-  let banner = $('paperReleaseBanner');
-  if (!banner) {
-    banner = document.createElement('aside');
-    banner.id = 'paperReleaseBanner';
-    banner.style.cssText = 'position:relative;margin:18px 3%;padding:16px;border:1px solid #327698;background:#081929;color:#d9ecf8;border-radius:12px;line-height:1.5;z-index:2';
-    const main = document.querySelector('main');
-    (main || document.body).prepend(banner);
-  }
-  banner.hidden = !d.paper_final;
+  const releaseBar = $('paperReleaseBar');
+  releaseBar.hidden = !d.paper_final;
   if (d.paper_final) {
     const p = d.paper_final;
     const legacy = d.legacy_crypto || {};
-    banner.innerHTML = `<strong>V9 Overnight · ${esc(p.status)}</strong> <a href="/" style="color:#72d1ff">View V9</a> · <a href="/?engine=v1" style="color:#72d1ff">Inspect V1 trades</a><br>${esc(p.note || '')}<br>Ends ${esc(shortTime(p.ends_at))} · V1 draining: ${n(legacy.open_trade_count)} open · V1 realized: ${money(legacy.closed_pnl_usd)} (separate ledger)<details><summary>Why the bot is waiting</summary>${(p.diagnostics || []).map(r => `<div>${esc(r.pair)}: ${esc(r.reason)}</div>`).join('') || 'Waiting for first complete market scan.'}</details>`;
+    releaseBar.title = p.note || '';
+    const status = String(p.status || 'UNKNOWN').toUpperCase();
+    $('paperReleaseTitle').textContent = `V9 · ${status}`;
+    $('paperReleaseTitle').className = status === 'RUNNING' ? 'positive' : 'neutral';
+    $('paperReleaseMeta').textContent = `Ends ${shortTime(p.ends_at)} · Synthetic paper · No broker orders`;
+    $('paperLegacyTitle').textContent = `${n(legacy.open_trade_count)} OPEN`;
+    $('paperLegacyMeta').textContent = `${money(legacy.closed_pnl_usd)} realized · separate ledger`;
+    $('paperReleaseDiagnostics').innerHTML = (p.diagnostics || []).map((row) =>
+      `<div><strong>${esc(row.pair)}</strong> · ${esc(row.reason)}</div>`
+    ).join('') || '<div>Waiting for the first complete market scan.</div>';
   }
   $('updatedAt').textContent = new Date(d.generated_at).toLocaleTimeString();
   renderKPIs(d);

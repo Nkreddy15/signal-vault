@@ -107,6 +107,26 @@
             <div><small>Strategy</small><strong id="metaStrategy">—</strong></div>
             <div><small>Timeframe</small><strong id="metaTimeframe">—</strong></div>
           </div>
+          <section id="paperReleaseBar" class="paper-release-bar" hidden aria-live="polite">
+            <div class="paper-release-session">
+              <span class="paper-release-kicker">OVERNIGHT PAPER SESSION</span>
+              <strong id="paperReleaseTitle">V9 · CHECKING</strong>
+              <small id="paperReleaseMeta">Session status unavailable</small>
+            </div>
+            <div class="paper-release-legacy">
+              <span class="paper-release-kicker">V1 DRAIN</span>
+              <strong id="paperLegacyTitle">0 OPEN</strong>
+              <small id="paperLegacyMeta">Separate ledger</small>
+            </div>
+            <details class="paper-release-details">
+              <summary>Why waiting</summary>
+              <div id="paperReleaseDiagnostics" class="paper-release-diagnostics"></div>
+            </details>
+            <nav class="paper-release-links" aria-label="Crypto engine views">
+              <a href="/">V9 view</a>
+              <a href="/?engine=v1">V1 trades</a>
+            </nav>
+          </section>
           <div id="cryptoCards" class="trade-card-grid"></div>
         </article>
 
