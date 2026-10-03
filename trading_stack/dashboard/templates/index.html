@@ -109,8 +109,8 @@
           </div>
           <section id="paperReleaseBar" class="paper-release-bar" hidden aria-live="polite">
             <div class="paper-release-session">
-              <span class="paper-release-kicker">OVERNIGHT PAPER SESSION</span>
-              <strong id="paperReleaseTitle">V9 · CHECKING</strong>
+              <span class="paper-release-kicker">PAPER SESSION</span>
+              <strong id="paperReleaseTitle">CHECKING</strong>
               <small id="paperReleaseMeta">Session status unavailable</small>
             </div>
             <div class="paper-release-legacy">
@@ -119,11 +119,13 @@
               <small id="paperLegacyMeta">Separate ledger</small>
             </div>
             <details class="paper-release-details">
-              <summary>Why waiting</summary>
+              <summary>Signals &amp; entry checks</summary>
+              <p id="paperScanStats" class="paper-scan-stats"></p>
               <div id="paperReleaseDiagnostics" class="paper-release-diagnostics"></div>
             </details>
             <nav class="paper-release-links" aria-label="Crypto engine views">
-              <a href="/">V9 view</a>
+              <a href="/" id="paperCurrentLink">Latest</a>
+              <a href="/?engine=v9">V9 results</a>
               <a href="/?engine=v1">V1 trades</a>
             </nav>
           </section>

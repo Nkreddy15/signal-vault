@@ -2,6 +2,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import paper_final_view
+import paper_v10_view
 
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -268,6 +269,12 @@ def candles():
             }
         ), 400
 
+    if paper_v10_view.active() and request.args.get("engine") not in ("v1", "v9"):
+        if timeframe != "15m":
+            return jsonify({"candles": [], "error": "V10 uses 15m candles."}), 400
+        rows, error = paper_v10_view.candles(pair, limit, request.args.get("trade_id"))
+        return jsonify({"pair": pair, "timeframe": "15m", "candles": rows, "error": error})
+
     if paper_final_view.active() and request.args.get("engine") != "v1":
         if timeframe != "1h":
             return jsonify({"candles": [], "error": "Final paper strategy uses 1h candles."}), 400
@@ -292,6 +299,11 @@ def candles():
 @app.get("/api/paper-final")
 def paper_final_status():
     return jsonify(paper_final_view.summary())
+
+
+@app.get("/api/paper-v10")
+def paper_v10_status():
+    return jsonify(paper_v10_view.summary())
 
 
 @app.get("/api/snapshot")
@@ -492,9 +504,10 @@ def snapshot():
             },
         }
     )
-    if paper_final_view.active():
+    if paper_v10_view.active() or paper_final_view.active():
         payload = response.get_json()
-        latest = paper_final_view.summary()
+        use_v10 = paper_v10_view.active() and request.args.get("engine") != "v9"
+        latest = paper_v10_view.summary() if use_v10 else paper_final_view.summary()
         payload["legacy_crypto"] = payload["crypto"]
         payload["paper_final"] = {k: v for k, v in latest.items() if k not in ("crypto", "safety")}
         if request.args.get("engine") != "v1":

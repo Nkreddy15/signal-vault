@@ -36,7 +36,8 @@ class SignalVaultPaperExecutionV1(IStrategy):
                             current_time, entry_tag, side, **kwargs):
         # Persistent handoff: old trades keep V1 exits across container restarts.
         root = Path(os.getenv("PERSIST_DIR", "/freqtrade/data"))
-        return not (root / "paper-final-v9" / "activated").exists()
+        return not any((root / folder / "activated").exists()
+                       for folder in ("paper-final-v9", "paper-v10"))
 
     @property
     def protections(self):

@@ -36,6 +36,24 @@ services:
       start_period: 120s
       retries: 3
 
+  crypto_v10:
+    build:
+      context: ./crypto
+    container_name: signal-vault-paper-v10
+    restart: unless-stopped
+    profiles: [v10]
+    entrypoint: ["python", "/freqtrade/user_data/paper_v10.py"]
+    environment:
+      PAPER_V10_STATE_DIR: /freqtrade/data/paper-v10
+    volumes:
+      - crypto_data:/freqtrade/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,time; s=json.load(open('/freqtrade/data/paper-v10/summary.json')); assert s['status'] in ('RUNNING','DRAINING','DAILY_LOSS_LIMIT','SESSION_COMPLETE','SESSION_LOSS_LIMIT') and time.time()*1000-(s['last_success_ms'] or 0)<120000"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+
   crypto_v8_forward_lab:
     build:
       context: ./crypto

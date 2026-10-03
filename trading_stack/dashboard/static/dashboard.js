@@ -14,10 +14,12 @@ function n(value, fallback = 0) {
   return Number.isFinite(v) ? v : fallback;
 }
 function money(value, digits = 2) {
+  if (value == null) return '—';
   const v = n(value);
   return `${v < 0 ? '-' : ''}$${Math.abs(v).toFixed(digits)}`;
 }
 function pct(value, digits = 2) {
+  if (value == null) return '—';
   const v = n(value) * 100;
   return `${v >= 0 ? '+' : ''}${v.toFixed(digits)}%`;
 }
@@ -106,9 +108,9 @@ function renderKPIs(d) {
   const openCount = n(c.open_trade_count);
   const openPct = exposure ? openPnl / exposure : 0;
 
-  $('cryptoPnl').textContent = money(openPnl);
+  $('cryptoPnl').textContent = money(c.open_pnl_usd);
   $('cryptoPnl').className = `kpi-number ${cssPnL(openPnl)}`;
-  $('cryptoPnlPct').textContent = `${pct(openPct)} · ${openCount} open`;
+  $('cryptoPnlPct').textContent = `${c.open_pnl_usd == null ? 'Marks unavailable' : pct(openPct)} · ${openCount} open${c.marks_stale ? ' · stale marks' : ''}`;
   $('cryptoPnlPct').className = `kpi-foot ${cssPnL(openPnl)}`;
   $('cryptoExposure').textContent = money(exposure);
   $('cryptoSlots').textContent = `${openCount} / ${totalSlots} positions used`;
@@ -131,7 +133,7 @@ function renderKPIs(d) {
   $('marketState').className = `kpi-number ${marketOpen ? 'positive' : 'neutral'}`;
   $('marketNext').textContent = marketOpen ? `Next close ${shortTime(s.clock?.next_close)}` : `Next open ${shortTime(s.clock?.next_open)}`;
 
-  state.pnlHistory.push(openPnl);
+  if (c.open_pnl_usd != null && !c.marks_stale) state.pnlHistory.push(openPnl);
   if (state.pnlHistory.length > 80) state.pnlHistory.shift();
   drawMicroChart();
   drawPerformanceChart();
@@ -189,11 +191,11 @@ function renderEngine(d) {
   $('metaStrategy').textContent = c.config?.strategy || '—';
   $('metaTimeframe').textContent = c.config?.timeframe || '—';
   $('cryptoTopMeta').textContent = `${c.config?.exchange || 'Kraken'} · ${c.config?.runmode || 'Dry Run'}`;
-  setStatus($('cryptoTopStatus'), running ? 'Running' : 'Degraded', running);
+  setStatus($('cryptoTopStatus'), running ? 'Running' : String(c.bot_state || 'Unknown').replaceAll('_', ' '), running);
 
   const cards = c.open_trades || [];
   $('cryptoCards').innerHTML = cards.length ? cards.map((trade) => {
-    const pnl = n(trade.profit_abs);
+    const pnl = trade.profit_abs;
     const symbol = esc(trade.pair);
     const tag = esc(trade.enter_tag || 'signal');
     return `<article class="trade-card" tabindex="0" role="button" data-trade-id="${esc(tradeId(trade))}">
@@ -204,10 +206,10 @@ function renderEngine(d) {
         <div><div class="metric-label">Open P&amp;L</div><div class="metric-value ${cssPnL(pnl)}">${money(pnl)}</div></div>
         <div><div class="metric-label">Return</div><div class="metric-value ${cssPnL(trade.profit_ratio)}">${pct(trade.profit_ratio)}</div></div>
       </div>
-      <div class="trade-mini"><svg viewBox="0 0 180 25"><polyline points="0,16 18,13 36,15 54,10 72,14 90,9 108,12 126,8 144,12 162,7 180,10" fill="none" stroke="${pnl>=0?'#2ce390':'#ff506c'}" stroke-width="1.5"/></svg></div>
+      <div class="trade-mini">${tradeSparkline(trade)}</div>
       <button class="view-trade" type="button">◉ View Trade &nbsp;→</button>
     </article>`;
-  }).join('') : `<div class="empty">No open crypto positions. The engine remains active and scanning.</div>`;
+  }).join('') : `<div class="empty">${running ? 'No open crypto positions. See Signals & entry checks for the latest decision.' : `No open crypto positions. Engine: ${esc(c.bot_state || 'UNKNOWN')}.`}</div>`;
 
   $$('.trade-card').forEach((card) => {
     const open = () => openTrade(card.dataset.tradeId);
@@ -238,6 +240,14 @@ function renderStocks(d) {
   const other = s.other_positions || [];
   $('otherPositionCount').textContent = String(other.length);
   $('otherPositions').innerHTML = other.length ? other.map((p) => `<div class="other-row"><div><span>Symbol</span><strong>${esc(p.symbol)}</strong></div><div><span>Class</span><strong>${esc(p.asset_class)}</strong></div><div><span>Market Value</span><strong>${money(p.market_value)}</strong></div></div>`).join('') : `<div class="empty">No other PAPER positions.</div>`;
+}
+
+function tradeSparkline(trade) {
+  const values = (trade.price_history || []).map(Number).filter(Number.isFinite);
+  if (values.length < 2) return '<span class="mark-history-empty">Waiting for quote history</span>';
+  const low = Math.min(...values), high = Math.max(...values), span = high-low || 1;
+  const points = values.map((v,i) => `${(i/(values.length-1)*180).toFixed(2)},${(23-(v-low)/span*21).toFixed(2)}`).join(' ');
+  return `<svg viewBox="0 0 180 25" aria-label="Observed price history"><polyline points="${points}" fill="none" stroke="${n(trade.profit_abs)>=0?'#2ce390':'#ff506c'}" stroke-width="1.5"/></svg>`;
 }
 
 function tradeOutcome(trade) {
@@ -335,13 +345,18 @@ function renderSnapshot(d) {
     const legacy = d.legacy_crypto || {};
     releaseBar.title = p.note || '';
     const status = String(p.status || 'UNKNOWN').toUpperCase();
-    $('paperReleaseTitle').textContent = `V9 · ${status}`;
+    const version = String(p.version || 'V9').split('-')[0];
+    $('paperReleaseTitle').textContent = `${version} · ${status}`;
     $('paperReleaseTitle').className = status === 'RUNNING' ? 'positive' : 'neutral';
-    $('paperReleaseMeta').textContent = `Ends ${shortTime(p.ends_at)} · Synthetic paper · No broker orders`;
+    $('paperReleaseMeta').textContent = p.next_evaluation_at
+      ? `Next ${shortTime(p.next_evaluation_at)} · Ends ${shortTime(p.ends_at)}`
+      : `Ends ${shortTime(p.ends_at)} · Synthetic paper`;
+    $('paperCurrentLink').textContent = 'Latest paper';
+    $('paperScanStats').textContent = `${n(p.cycles)} market cycles · ${n(p.intervals_evaluated ?? p.hours_evaluated)} evaluated intervals · ${p.note || ''}`;
     $('paperLegacyTitle').textContent = `${n(legacy.open_trade_count)} OPEN`;
     $('paperLegacyMeta').textContent = `${money(legacy.closed_pnl_usd)} realized · separate ledger`;
     $('paperReleaseDiagnostics').innerHTML = (p.diagnostics || []).map((row) =>
-      `<div><strong>${esc(row.pair)}</strong> · ${esc(row.reason)}</div>`
+      `<div><strong>${esc(row.pair)} ${esc(row.side || '')}</strong><span>${esc(row.regime || '')} · ${esc(row.reason)}</span>${row.execution ? `<small>${esc(row.execution)}</small>` : ''}</div>`
     ).join('') || '<div>Waiting for the first complete market scan.</div>';
   }
   $('updatedAt').textContent = new Date(d.generated_at).toLocaleTimeString();
@@ -414,6 +429,10 @@ function renderInspector(trade, openChart = true) {
     metric('Pair', esc(trade.pair)),
     metric('Status', trade.is_open ? 'OPEN' : 'CLOSED', trade.is_open ? 'positive' : 'neutral'),
     metric('Direction', sideText(trade), 'positive'),
+    ...(trade.fee_usd != null ? [
+      metric('Modeled Round-trip Fees', money(trade.fee_usd)),
+      metric('Slippage Allowance', money(trade.slippage_allowance_usd)),
+    ] : []),
     metric('Entry', price(trade.open_rate)),
     metric('Current / Exit', price(trade.is_open ? trade.current_rate : trade.close_rate)),
     metric('Target Rule', esc(trade.target_rule || '+0.40% ROI reference')),
@@ -467,8 +486,9 @@ async function fetchCandles(trade) {
   $('candleState').textContent = `Loading ${timeframe} market candles…`;
   $('candleChart').innerHTML = '';
   try {
-    const engine = new URLSearchParams(location.search).get('engine') === 'v1' ? '&engine=v1' : '';
-    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=${encodeURIComponent(timeframe)}&limit=300${engine}`;
+    const chosenEngine = new URLSearchParams(location.search).get('engine');
+    const engine = ['v1', 'v9'].includes(chosenEngine) ? `&engine=${chosenEngine}` : '';
+    const url = `/api/candles?pair=${encodeURIComponent(trade.pair)}&timeframe=${encodeURIComponent(timeframe)}&trade_id=${encodeURIComponent(tradeId(trade))}&limit=300${engine}`;
     const r = await fetch(url, {cache: 'no-store'});
     const data = await r.json();
     if (!r.ok || data.error && !data.candles?.length) throw new Error(data.error || `HTTP ${r.status}`);
@@ -593,7 +613,8 @@ function drawCandles(candles, trade) {
 
 async function refresh() {
   try {
-    const engine = new URLSearchParams(location.search).get('engine') === 'v1' ? '?engine=v1' : '';
+    const chosenEngine = new URLSearchParams(location.search).get('engine');
+    const engine = ['v1', 'v9'].includes(chosenEngine) ? `?engine=${chosenEngine}` : '';
     const r = await fetch(`/api/snapshot${engine}`, {cache: 'no-store'});
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     renderSnapshot(await r.json());

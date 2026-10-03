@@ -1,5 +1,9 @@
 # Signal Vault autonomous PAPER stack
 
+Latest separate campaign: [V10 paper runtime and Mac activation](V10_PAPER.md).
+Run `bash trading_stack/start_v10_mac.sh` after pulling the latest branch.
+The V1 sections below describe the legacy engine; V9 and V10 have separate ledgers.
+
 This stack is intentionally PAPER/dry-run only. It is for unattended execution
 evidence and observability while strategy quality is evaluated separately.
 

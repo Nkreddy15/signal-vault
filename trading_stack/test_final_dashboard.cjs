@@ -48,4 +48,29 @@ if (!el('paperReleaseDiagnostics').innerHTML.includes('BTC regime not bearish'))
 const template = fs.readFileSync(path.join(__dirname,'dashboard/templates/index.html'),'utf8');
 if (template.indexOf('paperReleaseBar') < template.indexOf('engine-meta')) throw Error('Paper status escaped the crypto panel');
 if (source.includes('paperReleaseBanner') || source.includes('.prepend(banner)')) throw Error('Old layout-breaking banner remains');
-console.log('PASS: compact V9 status, inspector, tabs, and short trade chart (DOM harness).');
+context.snapshot.paper_final = {...context.snapshot.paper_final,
+  version:'V10-PAPER-1',next_evaluation_at:'2026-10-03T12:15:00Z',
+  cycles:12,intervals_evaluated:2,
+  diagnostics:[{pair:'ETH/USD',side:'LONG',regime:'UPTREND',reason:'Own-asset trend confirmed',execution:'OPENED'}]};
+context.snapshot.crypto.config.timeframe = '15m';
+vm.runInContext('renderSnapshot(snapshot)',context);
+if (el('paperReleaseTitle').textContent !== 'V10 · RUNNING') throw Error('V10 status did not render');
+if (!el('paperScanStats').textContent.includes('2 evaluated intervals')) throw Error('V10 scan counts failed');
+if (!el('paperReleaseDiagnostics').innerHTML.includes('OPENED')) throw Error('V10 entry diagnostics failed');
+context.trade={...context.trade,is_short:false,target_price:102.7,stop_price:99.2,
+  fee_usd:.24,slippage_allowance_usd:.03};
+vm.runInContext('renderInspector(trade,false);drawCandles(candles,trade)',context);
+if (el('detailSide').textContent !== 'Long · $15.00 stake') throw Error('Long inspector failed');
+if (!el('executionMetrics').innerHTML.includes('Modeled Round-trip Fees')) throw Error('Cost breakdown missing');
+if (el('candleChart').innerHTML.includes('SELL SHORT') || !el('candleChart').innerHTML.includes('BUY 100')) throw Error('Long chart labels failed');
+if (!vm.runInContext('tradeSparkline({price_history:[100,101,100.5],profit_abs:1})',context).includes('180.00')) throw Error('Observed quote sparkline failed');
+vm.runInContext('snapshot.crypto.open_pnl_usd=null;renderSnapshot(snapshot)',context);
+if(el('cryptoPnl').textContent !== '—') throw Error('Missing marks were shown as zero profit');
+let fetchedURL='';
+context.location.search='?engine=v9';
+context.fetch=async url=>{fetchedURL=url;return {ok:true,json:async()=>context.snapshot}};
+(async()=>{
+  await vm.runInContext('refresh()',context);
+  if(fetchedURL !== '/api/snapshot?engine=v9') throw Error('V9 view refresh lost engine selection');
+  console.log('PASS: V9/V10 status, entry diagnostics, missing marks, fees, long/short charts and view selection (DOM harness).');
+})().catch(err=>{console.error(err);process.exitCode=1});

@@ -340,7 +340,7 @@ button{color:inherit}
 .paper-release-bar[hidden]{display:none!important}
 .paper-release-bar{
   display:grid;
-  grid-template-columns:minmax(235px,1.35fr) minmax(140px,.72fr) minmax(150px,.8fr) auto;
+  grid-template-columns:minmax(0,1.35fr) minmax(0,.72fr);
   align-items:center;
   gap:10px;
   margin:8px 0 10px;
@@ -373,8 +373,12 @@ button{color:inherit}
   margin-top:8px;padding:8px 9px;border:1px solid rgba(22,139,198,.38);border-radius:7px;
   background:rgba(3,15,27,.72);line-height:1.45
 }
-.paper-release-diagnostics div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.paper-release-links{display:flex;gap:5px;white-space:nowrap}
+.paper-release-diagnostics div{min-width:0;overflow-wrap:anywhere;padding:6px;background:rgba(16,53,77,.25);border-radius:4px}
+.paper-release-diagnostics strong,.paper-release-diagnostics span,.paper-release-diagnostics small{display:block}
+.paper-release-diagnostics small{color:#6ccce9;margin-top:3px}
+.paper-scan-stats{font-size:8px;line-height:1.5;color:#87a9bf;max-width:100%}
+.mark-history-empty{font-size:8px;color:#6d8caa}
+.paper-release-links{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
 .paper-release-links a{
   padding:5px 7px;border:1px solid rgba(32,156,211,.34);border-radius:6px;
   color:#70d8f8;text-decoration:none;font-size:7px
