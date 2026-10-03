@@ -20,8 +20,10 @@ STOCK_UNIVERSE = {
     "META", "GOOGL", "JPM", "V", "AMD", "TSLA",
 }
 
-CRYPTO_ROI_TARGET = 0.004
-CRYPTO_STOPLOSS = -0.02
+V1_CRYPTO_ROI_TARGET = 0.004
+V1_CRYPTO_STOPLOSS = -0.02
+V2_MIN_PROFIT_TARGET = 0.022
+V2_CRYPTO_STOPLOSS = -0.018
 
 
 def _safe_get(url, *, auth=None, headers=None, params=None):
@@ -101,36 +103,69 @@ def _signal_explanation(tag):
             "Mean-reversion bounce: price was statistically stretched lower "
             "and then turned upward with the fast EMA."
         ),
+        "v2_trend_momentum": (
+            "V2 trend regime plus momentum confirmation. Entry also passed "
+            "the cost-aware movement-capacity gate."
+        ),
+        "v2_trend_breakout": (
+            "V2 trend regime plus a volume-confirmed breakout. Entry also "
+            "passed the cost-aware movement-capacity gate."
+        ),
+        "v2_trend_pullback": (
+            "V2 bullish regime with a pullback-and-reclaim continuation. "
+            "Entry also passed the cost-aware movement-capacity gate."
+        ),
+        "v2_multi_confirmed": (
+            "V2 entry had multiple confirmations inside a bullish regime and "
+            "enough recent movement capacity to clear the friction buffer."
+        ),
     }
     if not tag:
         return "Signal details are not available for this trade."
     return explanations.get(tag, f"Strategy entry tag: {tag}.")
 
 
-def _decorate_trade(trade):
+def _decorate_trade(trade, strategy_name=""):
     trade = dict(trade or {})
     entry = _f(trade.get("open_rate"))
     current = _f(trade.get("current_rate")) or _f(trade.get("close_rate"))
+
+    is_v2 = strategy_name == "SignalVaultPaperExecutionV2"
+    roi_reference = V2_MIN_PROFIT_TARGET if is_v2 else V1_CRYPTO_ROI_TARGET
+    stoploss_reference = V2_CRYPTO_STOPLOSS if is_v2 else V1_CRYPTO_STOPLOSS
+
     stop = _f(trade.get("stop_loss_abs"))
     if entry > 0 and stop <= 0:
-        stop = entry * (1 + CRYPTO_STOPLOSS)
-    target = entry * (1 + CRYPTO_ROI_TARGET) if entry > 0 else 0.0
+        stop = entry * (1 + stoploss_reference)
+    target = entry * (1 + roi_reference) if entry > 0 else 0.0
     risk = max(entry - stop, 0.0)
     reward = max(target - entry, 0.0)
     rr = reward / risk if risk > 0 else None
+
+    if is_v2:
+        target_rule = (
+            "V2 adaptive target: minimum +2.20% gross; may rise with volatility"
+        )
+        exit_logic = (
+            "Adaptive volatility target, cost-cleared profit protection, "
+            "regime-failure exit, or -1.8% hard stop."
+        )
+    else:
+        target_rule = "ROI reference +0.40%"
+        exit_logic = (
+            "Exit on +0.40% ROI reference, strategy exit signal, or -2% "
+            "stop loss. Protective locks can pause new entries."
+        )
 
     trade.update(
         {
             "current_rate": current,
             "target_price": target,
-            "target_rule": "ROI reference +0.40%",
+            "target_rule": target_rule,
             "stop_price": stop,
             "risk_reward": rr,
             "signal_reason": _signal_explanation(trade.get("enter_tag")),
-            "exit_logic": (
-                "Exit on +0.40% ROI reference, strategy exit signal, or -2% "
-                "stop loss. Protective locks can pause new entries."
-            ),
+            "exit_logic": exit_logic,
         }
     )
     return trade
@@ -214,14 +249,14 @@ def candles():
     except ValueError:
         limit = 120
 
-    allowed_timeframes = {"5m"}
+    allowed_timeframes = {"5m", "15m", "1h"}
     if not pair:
         return jsonify({"candles": [], "error": "pair is required"}), 400
     if timeframe not in allowed_timeframes:
         return jsonify(
             {
                 "candles": [],
-                "error": "Only the live 5m strategy timeframe is available.",
+                "error": "Requested timeframe is not enabled for the dashboard.",
             }
         ), 400
 
@@ -291,6 +326,12 @@ def snapshot():
     elif isinstance(crypto_trades, list):
         raw_history = crypto_trades
 
+    strategy_name = (
+        str((crypto_config or {}).get("strategy") or "")
+        if isinstance(crypto_config, dict)
+        else ""
+    )
+
     trades = []
     seen = set()
     for raw in list(raw_open) + list(raw_history):
@@ -306,7 +347,7 @@ def snapshot():
         if key in seen:
             continue
         seen.add(key)
-        trades.append(_decorate_trade(trade))
+        trades.append(_decorate_trade(trade, strategy_name))
 
     open_trades = [t for t in trades if t.get("is_open") is True]
     closed_trades = [t for t in trades if t.get("is_open") is False]
