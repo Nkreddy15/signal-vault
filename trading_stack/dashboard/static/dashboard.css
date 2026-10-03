@@ -542,3 +542,158 @@ footer{text-align:center;color:#35506b;font-size:7px;letter-spacing:.17em;margin
   .health-grid{grid-template-columns:1fr}
   .risk-card{align-items:flex-start;flex-direction:column}
 }
+
+/* APPROVED_SCREEN_COMPOSITION_V3 */
+.app-shell::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:0;right:0;top:0;
+  height:190px;
+  pointer-events:none;
+  background:url('/static/approved-banner.svg') center top/100% 190px no-repeat;
+  border-bottom:1px solid rgba(12,122,181,.72);
+  box-shadow:inset 0 -28px 55px rgba(1,7,14,.34);
+}
+.sidebar{
+  background:
+    linear-gradient(to bottom,transparent 0,transparent 190px,rgba(3,16,30,.97) 190px,rgba(2,8,18,.99) 100%);
+}
+.side-brand{
+  visibility:hidden;
+  height:190px;
+  min-height:190px;
+  padding:0;
+}
+.main{position:relative;z-index:1}
+.hero{
+  height:190px;
+  min-height:190px;
+  margin:0 -12px 10px;
+  padding:0;
+  background:transparent;
+  border-bottom:0;
+  box-shadow:none;
+  display:block;
+  overflow:visible;
+}
+.hero-art,.watermark-name,.hero-signature,.hero-brand{display:none!important}
+.hero:before{display:none}
+.hero-right{
+  position:absolute;
+  z-index:3;
+  right:18px;
+  top:14px;
+  min-width:292px;
+  padding:0;
+  background:none;
+}
+.hero-mantra{
+  font-size:9px;
+  line-height:1.7;
+  margin-bottom:10px;
+  color:#d6e8f4;
+  text-shadow:0 1px 12px rgba(0,0,0,.78);
+}
+.identity strong{font-size:11px}
+.identity small{font-size:7px;color:#6f8ba4}
+.status-strip{
+  position:absolute;
+  z-index:4;
+  right:12px;
+  bottom:10px;
+  width:min(650px,52vw);
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr)) 112px;
+  gap:7px;
+  margin:0;
+}
+.status-cell,.status-button{
+  min-height:54px;
+  padding:7px 9px;
+  border-radius:8px;
+  background:linear-gradient(180deg,rgba(3,15,28,.91),rgba(2,10,20,.94));
+  border:1px solid rgba(13,119,177,.84);
+  box-shadow:0 10px 24px rgba(0,0,0,.20),inset 0 1px 0 rgba(116,221,255,.025);
+  backdrop-filter:blur(5px);
+}
+.status-kicker{font-size:6px}
+.status-cell strong{font-size:9px;margin:3px 0}
+.status-cell small{font-size:7px}
+.status-button{font-size:9px;border-color:rgba(26,173,233,.95)}
+.kpi-grid{gap:8px}
+.kpi-card{
+  min-height:105px;
+  padding:13px 14px;
+  border-color:rgba(7,116,170,.95);
+  background:linear-gradient(145deg,rgba(7,28,48,.97),rgba(3,14,25,.985));
+}
+.kpi-title{font-size:11px}
+.kpi-number{font-size:25px;margin-top:9px}
+.kpi-foot{font-size:9px}
+.primary-grid{
+  grid-template-columns:minmax(0,1.48fr) minmax(420px,1fr);
+  gap:9px;
+}
+.crypto-panel,.stock-panel{min-height:260px}
+.trade-card-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.trade-card{padding:10px}
+.trade-symbol{font-size:12px}
+.trade-side{font-size:8px}
+.trade-metrics{gap:7px 10px;margin-top:9px}
+.metric-value{font-size:9px}
+.trade-mini{height:23px}
+.view-trade{padding:6px;font-size:8px}
+.stock-body{
+  display:grid;
+  grid-template-columns:minmax(150px,.72fr) minmax(220px,1.28fr);
+  gap:9px;
+  align-items:start;
+}
+.stock-account-column,.stock-position-column{min-width:0}
+.account-list{
+  display:block;
+  padding:9px;
+  min-height:112px;
+}
+.account-line{padding:4px 0;border-bottom:1px solid rgba(70,139,187,.09)}
+.account-line:last-child{border-bottom:0}
+.stock-subpanel,.other-position-panel{margin-top:0}
+.other-position-panel{margin-top:8px}
+.empty{padding:20px 8px}
+.activity-grid{
+  grid-template-columns:minmax(0,1.45fr) minmax(390px,1fr);
+}
+.performance-chart-wrap{height:205px}
+.lower-grid{
+  grid-template-columns:minmax(0,1.3fr) minmax(420px,1fr);
+}
+.panel{
+  border-color:rgba(7,111,164,.96);
+  background:linear-gradient(145deg,rgba(6,25,43,.98),rgba(3,13,23,.99));
+}
+.panel:hover,.kpi-card:hover{
+  border-color:rgba(21,155,217,.98);
+  box-shadow:0 15px 45px rgba(0,0,0,.42),0 0 22px rgba(37,207,255,.045);
+}
+@media(max-width:1450px){
+  .status-strip{width:min(620px,55vw)}
+  .primary-grid{grid-template-columns:minmax(0,1.42fr) minmax(390px,1fr)}
+  .trade-card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .trade-symbol{font-size:11px}
+  .coin-badge{width:29px;height:29px}
+}
+@media(max-width:1280px){
+  .app-shell::before{height:175px;background-size:auto 175px}
+  .side-brand{height:175px;min-height:175px}
+  .hero{height:175px;min-height:175px}
+  .status-strip{width:610px;max-width:64vw}
+  .primary-grid,.activity-grid,.lower-grid{grid-template-columns:1fr}
+  .trade-card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stock-body{grid-template-columns:1fr 1.25fr}
+}
+@media(max-width:980px){
+  .hero-right{display:none}
+  .status-strip{left:12px;right:12px;width:auto;max-width:none}
+  .trade-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
