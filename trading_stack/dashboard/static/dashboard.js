@@ -251,7 +251,7 @@ function tradeOutcome(trade) {
 
 function setTradeFilter(filter, {scroll = false} = {}) {
   state.tradeFilter = filter;
-  $('.segment').forEach((b) => b.classList.toggle('active', b.dataset.filter === filter));
+  document.querySelectorAll('.segment').forEach((b) => b.classList.toggle('active', b.dataset.filter === filter));
   renderTradeTable();
   if (scroll) {
     const target = $('performance');
@@ -301,7 +301,7 @@ function renderTradeTable() {
     const outcome = tradeOutcome(t);
     return `<tr class="trade-row" data-trade-id="${esc(tradeId(t))}"><td>${i+1}</td><td><span class="result-badge ${outcome.cls}">${outcome.label}</span></td><td><strong>CRYPTO · ${esc(t.pair)}</strong></td><td class="positive">${sideText(t)}</td><td>${money(t.stake_amount)}</td><td>${price(t.open_rate)}</td><td>${price(t.is_open ? t.current_rate : t.close_rate)}</td><td class="${cssPnL(t.profit_abs)}">${money(t.profit_abs)}</td><td class="${cssPnL(t.profit_ratio)}">${pct(t.profit_ratio)}</td><td>${shortTime(t.open_date)}</td><td>${t.is_open ? '—' : shortTime(t.close_date)}</td><td>${esc(t.is_open ? 'Still open' : (t.exit_reason || '—'))}</td></tr>`;
   }).join('')}</tbody></table>`;
-  $('.trade-row').forEach((row) => row.addEventListener('click', () => openTrade(row.dataset.tradeId)));
+  document.querySelectorAll('.trade-row').forEach((row) => row.addEventListener('click', () => openTrade(row.dataset.tradeId)));
 }
 
 function renderOrders() {
@@ -434,7 +434,7 @@ function closeTradeModal() {
   document.body.style.overflow = '';
 }
 function switchTab(name) {
-  $$('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  $document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
   $$('.tab-panel').forEach((p) => p.classList.toggle('active', p.dataset.panel === name));
   if (name === 'chart' && state.selectedTrade && !state.candles.length) fetchCandles(state.selectedTrade);
 }
@@ -578,7 +578,7 @@ async function refresh() {
   }
 }
 
-$('.segment').forEach((button) => button.addEventListener('click', () => {
+document.querySelectorAll('.segment').forEach((button) => button.addEventListener('click', () => {
   setTradeFilter(button.dataset.filter);
 }));
 const completedCryptoKpi = $('completedCryptoKpi');
@@ -592,7 +592,7 @@ if (completedCryptoKpi) {
     }
   });
 }
-$('.tab').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
+document.querySelectorAll('.tab').forEach((button) => button.addEventListener('click', () => switchTab(button.dataset.tab)));
 $$('[data-close-modal]').forEach((el) => el.addEventListener('click', closeTradeModal));
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTradeModal(); });
 
