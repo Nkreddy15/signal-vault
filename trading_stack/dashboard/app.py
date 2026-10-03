@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import paper_final_view
 import paper_v10_view
+import paper_v11_view
 
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -258,7 +259,7 @@ def candles():
     except ValueError:
         limit = 120
 
-    allowed_timeframes = {"5m", "15m", "1h"}
+    allowed_timeframes = {"5m", "15m", "1h", "1d"}
     if not pair:
         return jsonify({"candles": [], "error": "pair is required"}), 400
     if timeframe not in allowed_timeframes:
@@ -268,6 +269,12 @@ def candles():
                 "error": "Requested timeframe is not enabled for the dashboard.",
             }
         ), 400
+
+    if paper_v11_view.active() and request.args.get("engine") not in ("v1", "v9", "v10"):
+        if timeframe != "1d":
+            return jsonify({"candles": [], "error": "V11 uses closed daily candles."}), 400
+        rows, error = paper_v11_view.candles(pair, limit, request.args.get("trade_id"))
+        return jsonify({"pair": pair, "timeframe": "1d", "candles": rows, "error": error})
 
     if paper_v10_view.active() and request.args.get("engine") not in ("v1", "v9"):
         if timeframe != "15m":
@@ -304,6 +311,11 @@ def paper_final_status():
 @app.get("/api/paper-v10")
 def paper_v10_status():
     return jsonify(paper_v10_view.summary())
+
+
+@app.get("/api/paper-v11")
+def paper_v11_status():
+    return jsonify(paper_v11_view.summary())
 
 
 @app.get("/api/snapshot")
@@ -504,10 +516,11 @@ def snapshot():
             },
         }
     )
-    if paper_v10_view.active() or paper_final_view.active():
+    if paper_v11_view.active() or paper_v10_view.active() or paper_final_view.active():
         payload = response.get_json()
         use_v10 = paper_v10_view.active() and request.args.get("engine") != "v9"
-        latest = paper_v10_view.summary() if use_v10 else paper_final_view.summary()
+        use_v11 = paper_v11_view.active() and request.args.get("engine") not in ("v1", "v9", "v10")
+        latest = paper_v11_view.summary() if use_v11 else paper_v10_view.summary() if use_v10 else paper_final_view.summary()
         payload["legacy_crypto"] = payload["crypto"]
         payload["paper_final"] = {k: v for k, v in latest.items() if k not in ("crypto", "safety")}
         if request.args.get("engine") != "v1":

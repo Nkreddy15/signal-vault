@@ -351,6 +351,9 @@ function renderSnapshot(d) {
     $('paperReleaseMeta').textContent = p.next_evaluation_at
       ? `Next ${shortTime(p.next_evaluation_at)} · Ends ${shortTime(p.ends_at)}`
       : `Ends ${shortTime(p.ends_at)} · Synthetic paper`;
+    if (d.crypto?.starting_balance != null) {
+      $('paperReleaseMeta').textContent += ` · ${money(d.crypto.starting_balance)} start / ${money(d.crypto.marked_equity)} equity`;
+    }
     $('paperCurrentLink').textContent = 'Latest paper';
     $('paperScanStats').textContent = `${n(p.cycles)} market cycles · ${n(p.intervals_evaluated ?? p.hours_evaluated)} evaluated intervals · ${p.note || ''}`;
     $('paperLegacyTitle').textContent = `${n(legacy.open_trade_count)} OPEN`;
@@ -431,7 +434,8 @@ function renderInspector(trade, openChart = true) {
     metric('Direction', sideText(trade), 'positive'),
     ...(trade.fee_usd != null ? [
       metric('Modeled Round-trip Fees', money(trade.fee_usd)),
-      metric('Slippage Allowance', money(trade.slippage_allowance_usd)),
+      ...(trade.financing_usd != null ? [metric('Modeled Borrowing Charges', money(trade.financing_usd))] : []),
+      ...(trade.slippage_allowance_usd != null ? [metric('Slippage Allowance', money(trade.slippage_allowance_usd))] : []),
     ] : []),
     metric('Entry', price(trade.open_rate)),
     metric('Current / Exit', price(trade.is_open ? trade.current_rate : trade.close_rate)),

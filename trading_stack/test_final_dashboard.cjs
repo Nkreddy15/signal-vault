@@ -57,6 +57,12 @@ vm.runInContext('renderSnapshot(snapshot)',context);
 if (el('paperReleaseTitle').textContent !== 'V10 · RUNNING') throw Error('V10 status did not render');
 if (!el('paperScanStats').textContent.includes('2 evaluated intervals')) throw Error('V10 scan counts failed');
 if (!el('paperReleaseDiagnostics').innerHTML.includes('OPENED')) throw Error('V10 entry diagnostics failed');
+context.snapshot.paper_final={...context.snapshot.paper_final,version:'V11-PAPER-500-1'};
+context.snapshot.crypto={...context.snapshot.crypto,starting_balance:500,marked_equity:499.98};
+context.snapshot.crypto.config.timeframe='1d';
+vm.runInContext('renderSnapshot(snapshot)',context);
+if(el('paperReleaseTitle').textContent!=='V11 · RUNNING')throw Error('V11 selection label failed');
+if(!el('paperReleaseMeta').textContent.includes('$500.00 start / $499.98 equity'))throw Error('V11 account balance not shown');
 context.trade={...context.trade,is_short:false,target_price:102.7,stop_price:99.2,
   fee_usd:.24,slippage_allowance_usd:.03};
 vm.runInContext('renderInspector(trade,false);drawCandles(candles,trade)',context);

@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY app.py /app/app.py
 COPY paper_final_view.py /app/paper_final_view.py
 COPY paper_v10_view.py /app/paper_v10_view.py
+COPY paper_v11_view.py /app/paper_v11_view.py
 COPY templates /app/templates
 COPY static /app/static
 
