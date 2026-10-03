@@ -1,0 +1,12 @@
+FROM freqtradeorg/freqtrade:stable@sha256:9d67afb8eb5f4e1210f4fb067efcbd5e005bd4f1c27f6f3888b8b9fc7f9b5199
+USER root
+RUN python -m pip install --no-cache-dir Flask==3.1.2 gunicorn==23.0.0
+WORKDIR /app/trading_stack
+COPY trading_stack/crypto/*.py ./crypto/
+COPY trading_stack/dashboard/*.py ./dashboard/
+COPY trading_stack/dashboard/templates ./dashboard/templates/
+COPY trading_stack/dashboard/static ./dashboard/static/
+COPY trading_stack/cloud_v11.py trading_stack/cloud_v11_web.py ./
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
+EXPOSE 8090
+ENTRYPOINT ["python", "cloud_v11.py"]
