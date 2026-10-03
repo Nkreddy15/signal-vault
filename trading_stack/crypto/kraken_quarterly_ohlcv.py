@@ -40,71 +40,41 @@ def _normalized_stem(name: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", stem)
 
 
-def _sample_interval_seconds(zf: zipfile.ZipFile, member: str) -> float | None:
-    """Infer candle spacing from timestamps instead of trusting filename syntax."""
-    try:
-        with zf.open(member) as fh:
-            sample = pd.read_csv(fh, header=None, nrows=32)
-    except Exception:
-        return None
-
-    if sample.empty or sample.shape[1] < 1:
-        return None
-
-    ts = pd.to_numeric(sample.iloc[:, 0], errors="coerce").dropna()
-    if len(ts) < 3:
-        return None
-
-    # Kraken archives may encode timestamps in seconds or milliseconds.
-    values = ts.astype(float)
-    if float(values.max()) > 10_000_000_000:
-        values = values / 1000.0
-
-    diffs = values.diff().dropna()
-    diffs = diffs[diffs > 0]
-    if diffs.empty:
-        return None
-    return float(diffs.median())
-
-
 def _find_member(
     zf: zipfile.ZipFile,
     names: list[str],
     aliases: tuple[str, ...],
-    target_interval_seconds: int = 900,
+    target_minutes: int = 15,
 ) -> str | None:
-    """Find the actual 15m member by inspecting candle spacing.
+    """Find an exact pair/timeframe archive member.
 
-    Kraken archive filenames can contain separators that make naive normalized
-    matching ambiguous (for example, a 1-minute/5-minute-looking name can
-    collapse to the same normalized suffix as "15"). We therefore shortlist
-    by pair alias and verify the median timestamp spacing is exactly 15 minutes.
+    Do not use substring matching (SOLUSD must not match MSOLUSD) and do not
+    infer timeframe from sparse trade timestamps. Kraken archive filenames use
+    pair + timeframe forms such as XBTUSD_15.csv.
     """
-    candidates: list[str] = []
+    wanted = set()
+    for alias in aliases:
+        a = alias.upper()
+        wanted.update(
+            {
+                f"{a}_{target_minutes}",
+                f"{a}-{target_minutes}",
+                f"{a}{target_minutes}",
+            }
+        )
+
+    matches: list[str] = []
     for name in names:
         if not name.lower().endswith(".csv"):
             continue
-        stem = _normalized_stem(name)
-        if any(alias in stem for alias in aliases):
-            candidates.append(name)
+        stem = Path(name).stem.upper()
+        if stem in wanted:
+            matches.append(name)
 
-    scored: list[tuple[float, int, str]] = []
-    for name in candidates:
-        interval = _sample_interval_seconds(zf, name)
-        if interval is None:
-            continue
-        distance = abs(interval - target_interval_seconds)
-        scored.append((distance, len(name), name))
-
-    if not scored:
+    if not matches:
         return None
-
-    scored.sort()
-    distance, _, member = scored[0]
-    # Refuse an accidental nearest-match if it is not actually ~15m.
-    if distance > 5:
-        return None
-    return member
+    matches.sort(key=lambda x: (len(Path(x).parts), len(x), x))
+    return matches[0]
 
 
 def _download(url: str, target: Path) -> None:
@@ -183,10 +153,33 @@ def _convert_member(zf: zipfile.ZipFile, member: str, pair: str, outdir: Path) -
     target = outdir / filename
     frame.to_feather(target)
 
+    hourly = (
+        frame.set_index("date")
+        .resample("1h", label="left", closed="left")
+        .agg(
+            {
+                "open": "first",
+                "high": "max",
+                "low": "min",
+                "close": "last",
+                "volume": "sum",
+            }
+        )
+        .dropna(subset=["open", "high", "low", "close"])
+        .reset_index()
+    )
+    hourly_target = outdir / (pair.replace("/", "_") + "-1h.feather")
+    hourly.to_feather(hourly_target)
+
     print(
-        f"{pair}: {len(frame):,} candles | "
+        f"{pair}: {len(frame):,} x 15m | "
         f"{frame['date'].iloc[0]} -> {frame['date'].iloc[-1]} | "
         f"{target.name}"
+    )
+    print(
+        f"{pair}: {len(hourly):,} x 1h | "
+        f"{hourly['date'].iloc[0]} -> {hourly['date'].iloc[-1]} | "
+        f"{hourly_target.name}"
     )
 
 
@@ -218,7 +211,7 @@ def main() -> int:
         selected: dict[str, str] = {}
 
         for pair, aliases in PAIR_ALIASES.items():
-            member = _find_member(zf, names, aliases)
+            member = _find_member(zf, names, aliases, target_minutes=15)
             if member is None:
                 missing.append(pair)
             else:
