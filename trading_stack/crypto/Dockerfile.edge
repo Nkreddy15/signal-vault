@@ -10,5 +10,6 @@ COPY --chown=ftuser:ftuser kraken_quarterly_ohlcv.py /freqtrade/user_data/kraken
 COPY --chown=ftuser:ftuser audit_strategy_results.py /freqtrade/user_data/audit_strategy_results.py
 COPY --chown=ftuser:ftuser prepare_liquid_universe.py /freqtrade/user_data/prepare_liquid_universe.py
 COPY --chown=ftuser:ftuser forecast_edge_lab.py /freqtrade/user_data/forecast_edge_lab.py
+COPY --chown=ftuser:ftuser regime_swing_lab.py /freqtrade/user_data/regime_swing_lab.py
 USER ftuser
 ENTRYPOINT ["python", "/freqtrade/user_data/forecast_edge_lab.py"]

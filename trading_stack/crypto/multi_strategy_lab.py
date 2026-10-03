@@ -77,12 +77,13 @@ class Signal:
     side: int
     score: float
     stop: float
-    target: float
+    target: float | None
     hold_bars: int
     signal_ms: int
     reference_price: float | None = None
     atr: float = 0
     trailing: bool = True
+    trailing_distance: float | None = None
 
 
 class Fees:
@@ -236,9 +237,9 @@ def bar_exit(pos, bar, cfg):
     opening, high, low = executable(o), executable(h), executable(l)
     stop, target = pos["stop_price"], pos["target_price"]
     stop_hit = low <= stop if side == 1 else high >= stop
-    target_hit = high >= target if side == 1 else low <= target
+    target_hit = target is not None and (high >= target if side == 1 else low <= target)
     gap_stop = opening <= stop if side == 1 else opening >= stop
-    gap_target = opening >= target if side == 1 else opening <= target
+    gap_target = target is not None and (opening >= target if side == 1 else opening <= target)
     if gap_stop:
         raw, reason = opening, "GAP_STOP"
     elif gap_target:
@@ -254,7 +255,8 @@ def bar_exit(pos, bar, cfg):
     return raw*(1-side*cfg.slippage), reason, bool(stop_hit and target_hit)
 
 
-def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_families=FAMILIES):
+def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_families=FAMILIES,
+        scheduled_exits=None):
     if cfg.family not in allowed_families or cfg.risk not in ("balanced", "aggressive"):
         raise ValueError("Unknown strategy or risk profile")
     if cfg.mode not in ("long_only", "synthetic_long_short") or cfg.execution not in ("trigger", "extrema"):
@@ -273,6 +275,9 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
     max_slots, max_reserved, max_exposure, min_fee = 0, 0.0, 0.0, fees.tiers[0][1]
     first, finish, last_now = None, None, None
     operating_cost = 0.0
+    pending_exits = {}
+    exit_times = iter(sorted((scheduled_exits or {}).items()))
+    next_exit = next(exit_times, None)
 
     def pnl(pos, price, now, fee_rate):
         gross = pos["stake"]*(price/pos["entry_price"]-1)*pos["side"]
@@ -291,6 +296,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
     def close(pair, price, now, reason, ambiguous=False):
         nonlocal balance, min_fee
         pos = positions.pop(pair)
+        pending_exits.pop(pair, None)
         rate = fees.rate(now)
         min_fee = min(min_fee, rate)
         gross, fee, carry = pnl(pos, price, now, rate)
@@ -320,6 +326,16 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
         halted = halted or marked <= 0 or marked <= peak*(1-cfg.drawdown_limit)
         daily_halt = daily_halt or marked <= day_start*(1-cfg.daily_loss_limit)
         # Existing positions see the opening quote before new orders reserve cash.
+        while next_exit is not None and next_exit[0] <= now:
+            scheduled_ms, routes_by_pair = next_exit
+            for pair, routes in routes_by_pair.items():
+                for exit_family, (signal_ms, reason, desired_side) in routes.items():
+                    if signal_ms != scheduled_ms-BAR or desired_side not in (-1, 0, 1):
+                        raise ValueError("Exit instruction must use the previous closed candle and a valid side")
+                    if (pair in positions and positions[pair]["family"] == exit_family and
+                            positions[pair]["side"] != desired_side):
+                        pending_exits.setdefault(pair, (signal_ms, reason))
+            next_exit = next(exit_times, None)
         for pair, pos in list(positions.items()):
             if pair not in rows:
                 counts["missing_held_candle"] += 1
@@ -327,6 +343,10 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
             if halted or daily_halt or now-pos["entry_ms"] >= pos["hold_bars"]*BAR:
                 close(pair, exit_price(rows[pair][0][0], pos["side"], cfg), now,
                       "DRAWDOWN_HALT" if halted else "DAILY_HALT" if daily_halt else "TIME_EXIT")
+            elif pair in pending_exits:
+                signal_ms, reason = pending_exits[pair]
+                pos["exit_signal_ms"] = signal_ms
+                close(pair, exit_price(rows[pair][0][0], pos["side"], cfg), now, reason)
         month = pd.Timestamp(now, unit="ms", tz="UTC").strftime("%Y-%m")
         family = cfg.family if family_schedule is None else family_schedule.get(month)
         opportunities = []
@@ -358,7 +378,7 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                 if sig.family == "range_reversal" and sig.reference_price is not None:
                     mean_anchor = sig.reference_price*(1+sig.side*sig.target)
                     target = sig.side*(mean_anchor/price-1)
-                if target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01:
+                if target is not None and target <= 2*rate+2*cfg.slippage+cfg.spread_bps/10_000+.01:
                     counts["target_below_cost_buffer"] += 1
                     continue
                 reserved = sum(p["stake"] for p in positions.values())
@@ -378,9 +398,10 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                 positions[pair] = dict(family=sig.family, side=sig.side, stake=stake,
                     entry_ms=now, signal_ms=sig.signal_ms, entry_price=price,
                     entry_fee=entry_fee, stop_price=price*(1-sig.side*sig.stop),
-                    target_price=price*(1+sig.side*target), hold_bars=sig.hold_bars,
+                    target_price=None if target is None else price*(1+sig.side*target), hold_bars=sig.hold_bars,
                     initial_stop=sig.stop, peak_price=price)
                 positions[pair]["trailing"] = sig.trailing
+                positions[pair]["trailing_distance"] = sig.trailing_distance
                 counts["opened"] += 1
                 max_slots = max(max_slots, len(positions))
                 reserved += stake
@@ -403,11 +424,13 @@ def simulate(market, cfg, start=None, end=None, family_schedule=None, allowed_fa
                 if pos["side"] == 1:
                     pos["peak_price"] = max(pos["peak_price"], h)
                     if pos["peak_price"] >= pos["entry_price"]*(1+pos["initial_stop"]):
-                        pos["stop_price"] = max(pos["stop_price"], pos["peak_price"]*(1-max(.01, 3*atr)))
+                        distance = pos.get("trailing_distance") or max(.01, 3*atr)
+                        pos["stop_price"] = max(pos["stop_price"], pos["peak_price"]*(1-distance))
                 else:
                     pos["peak_price"] = min(pos["peak_price"], l)
                     if pos["peak_price"] <= pos["entry_price"]*(1-pos["initial_stop"]):
-                        pos["stop_price"] = min(pos["stop_price"], pos["peak_price"]*(1+max(.01, 3*atr)))
+                        distance = pos.get("trailing_distance") or max(.01, 3*atr)
+                        pos["stop_price"] = min(pos["stop_price"], pos["peak_price"]*(1+distance))
         for pair, (bar, _) in rows.items():
             last[pair] = bar[3]
         marked = equity(now+BAR-1)
