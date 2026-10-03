@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -20,10 +21,28 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_URL_TEMPLATE = (
-    "https://assets.kraken.com/marketing/institutions/"
-    "Kraken_OHLCVT_{quarter}.zip"
+ASSET_BASE = "https://assets.kraken.com/marketing/institutions"
+
+# Older Kraken incremental archives used a different filename convention.
+# Current official documentation exposes YYYYQn names for 2026, while older
+# mirrors/documentation reference Qn_YYYY names. Try both before using any
+# explicit fallback mirror.
+Q4_2025_MIRROR = (
+    "https://drive.usercontent.google.com/download"
+    "?id=1QbPHLP0TTGo-lqwKn8M-_Xo_oexXlEnB&export=download&confirm=t"
 )
+
+
+def _candidate_urls(quarter: str) -> list[str]:
+    year = quarter[:4]
+    qnum = quarter[-1]
+    urls = [
+        f"{ASSET_BASE}/Kraken_OHLCVT_{quarter}.zip",
+        f"{ASSET_BASE}/Kraken_OHLCVT_Q{qnum}_{year}.zip",
+    ]
+    if quarter == "2025Q4":
+        urls.append(Q4_2025_MIRROR)
+    return urls
 
 PAIR_ALIASES = {
     "BTC/USD": ("BTCUSD", "XBTUSD", "XXBTZUSD"),
@@ -77,40 +96,83 @@ def _find_member(
     return matches[0]
 
 
-def _download(url: str, target: Path) -> None:
+def _download(urls: list[str], target: Path) -> None:
     if target.exists() and target.stat().st_size > 0:
-        print(f"Using cached archive: {target} ({target.stat().st_size / 1024**2:.1f} MiB)")
-        return
+        if zipfile.is_zipfile(target):
+            print(
+                f"Using cached archive: {target} "
+                f"({target.stat().st_size / 1024**2:.1f} MiB)"
+            )
+            return
+        print(f"Cached file is not a valid ZIP; removing: {target}")
+        target.unlink()
 
     target.parent.mkdir(parents=True, exist_ok=True)
     partial = target.with_suffix(target.suffix + ".part")
-    if partial.exists():
-        partial.unlink()
 
-    print(f"Downloading official Kraken quarterly OHLCVT archive:")
-    print(f"  {url}")
-    req = urllib.request.Request(url, headers={"User-Agent": "SignalVaultResearch/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as response, partial.open("wb") as out:
-        total = int(response.headers.get("Content-Length") or 0)
-        done = 0
-        next_report = 25 * 1024 * 1024
-        while True:
-            chunk = response.read(1024 * 1024)
-            if not chunk:
-                break
-            out.write(chunk)
-            done += len(chunk)
-            if done >= next_report:
-                if total:
-                    pct = 100.0 * done / total
-                    print(f"  {done / 1024**2:.0f}/{total / 1024**2:.0f} MiB ({pct:.1f}%)")
-                else:
-                    print(f"  {done / 1024**2:.0f} MiB")
-                next_report += 25 * 1024 * 1024
+    last_error: Exception | None = None
+    for index, url in enumerate(urls, start=1):
+        if partial.exists():
+            partial.unlink()
 
-    partial.replace(target)
-    print(f"Archive saved: {target} ({target.stat().st_size / 1024**2:.1f} MiB)")
+        print("Downloading historical Kraken OHLCVT archive:")
+        print(f"  attempt {index}/{len(urls)}: {url}")
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "SignalVaultResearch/1.0"},
+        )
 
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response, partial.open("wb") as out:
+                total = int(response.headers.get("Content-Length") or 0)
+                done = 0
+                next_report = 25 * 1024 * 1024
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                    done += len(chunk)
+                    if done >= next_report:
+                        if total:
+                            pct = 100.0 * done / total
+                            print(
+                                f"  {done / 1024**2:.0f}/"
+                                f"{total / 1024**2:.0f} MiB ({pct:.1f}%)"
+                            )
+                        else:
+                            print(f"  {done / 1024**2:.0f} MiB")
+                        next_report += 25 * 1024 * 1024
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            print(f"  source unavailable: HTTP {exc.code}")
+            continue
+        except urllib.error.URLError as exc:
+            last_error = exc
+            print(f"  source unavailable: {exc.reason}")
+            continue
+
+        if not partial.exists() or partial.stat().st_size == 0:
+            last_error = RuntimeError("download returned no bytes")
+            print("  source returned no data")
+            continue
+
+        if not zipfile.is_zipfile(partial):
+            last_error = RuntimeError("downloaded response was not a valid ZIP")
+            print("  downloaded response was not a valid ZIP; trying next source")
+            partial.unlink(missing_ok=True)
+            continue
+
+        partial.replace(target)
+        print(
+            f"Archive saved: {target} "
+            f"({target.stat().st_size / 1024**2:.1f} MiB)"
+        )
+        return
+
+    raise RuntimeError(
+        f"Could not download a valid archive to {target}. Last error: {last_error}"
+    )
 
 def _convert_member(
     zf: zipfile.ZipFile,
@@ -216,10 +278,10 @@ def main() -> int:
     archive = Path(
         args.archive or outdir / f"Kraken_OHLCVT_{quarter}.zip"
     )
-    url = args.url or DEFAULT_URL_TEMPLATE.format(quarter=quarter)
+    urls = [args.url] if args.url else _candidate_urls(quarter)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    _download(url, archive)
+    _download(urls, archive)
 
     try:
         zf = zipfile.ZipFile(archive)
