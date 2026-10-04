@@ -43,7 +43,7 @@ renderSnapshot = function(d) {
   $('paperScanStats').textContent=`${c.cycles} cycles · last cycle ${shortTime(c.last_cycle)} · ${c.evidence}`;
   $('paperReleaseDiagnostics').innerHTML=c.diagnostics.map(v=>`<div><strong>${esc(v.market.toUpperCase())} · ${esc(v.pair)}</strong><span>${esc(v.reason||v.execution)}</span></div>`).join('');
   document.querySelector('.paper-release-links').innerHTML='<a href="/api/export">Export campaign</a><a href="#kalshi">Kalshi</a><a href="#system">Controls</a>';
-  $('healthGrid').innerHTML=[['Worker',c.status],['Heartbeat',shortTime(c.heartbeat)],['Crypto',c.providers.crypto?.status],['Stocks',c.providers.stocks?.status],['Kalshi',c.providers.kalshi?.status],['Last backup',c.last_backup?shortTime(c.last_backup*1000):'Pending'],['Maximum drawdown',pct(Math.max(0,...c.equity_curve.map(v=>v.drawdown)))],['Costs booked',money(p.fees)]]
+  $('healthGrid').innerHTML=[['Worker',c.status],['Heartbeat',shortTime(c.heartbeat)],['Crypto',c.providers.crypto?.status],['Stocks',c.providers.stocks?.status],['Kalshi',c.providers.kalshi?.status],['Last backup',c.backup_error||(c.last_backup?shortTime(c.last_backup*1000):'Pending')],['Maximum drawdown',pct(Math.max(0,...c.equity_curve.map(v=>v.drawdown)))],['Costs booked',money(p.fees)]]
     .map(([k,v])=>`<div class="health-item"><span>${esc(k)}</span><strong>${esc(v||'UNKNOWN')}</strong></div>`).join('');
   $('kalshiMode').textContent=c.providers.kalshi?.mode||'PUBLIC DATA / EXECUTION BLOCKED';
   $('kalshiStatus').textContent=c.providers.kalshi?.status||'BLOCKED';
@@ -72,7 +72,7 @@ renderInspector = function(t,openChart=true) {
     metric('Slippage assumption',pct(t.slippage_fraction)),metric('Trailing stop',price(t.trailing_stop))].join('');
   $('closePaperPosition').hidden=!t.is_open;
   $('orderEvidence').textContent=JSON.stringify({orders:t.orders,fills:t.fills,settlement:t.settlement,probability_evidence:t.contract?.estimate},null,2);
-  $('historyTimeline').innerHTML=(t.fills||[]).map(f=>`<div class="timeline-event"><strong>${esc(f.action.toUpperCase())} · ${qty(f.quantity)} @ ${price(f.price)}</strong><span>${shortTime(f.at*1000)} · order ${esc(f.order_id)} · fee ${money(f.fee)}</span></div>`).join('');
+  $('historyTimeline').innerHTML=(t.fills||[]).map(f=>`<div class="timeline-event"><strong>${esc(f.action.toUpperCase())} · ${qty(f.quantity)} @ ${price(f.price)}</strong><span>${shortTime(f.at*1000)} · ${esc(f.time_basis||"recorded execution")} · order ${esc(f.order_id)} · fee ${money(f.fee)}</span></div>`).join('');
   if(t.settlement)$('historyTimeline').innerHTML+=`<div class="timeline-event"><strong>Exchange settlement</strong><span>${esc(JSON.stringify(t.settlement))}</span></div>`;
   const group=document.querySelector('.tf-group');group.innerHTML=['1h','4h','1d'].map(tf=>`<button class="tf ${tf===cloudChart.timeframe?'active':''}" data-cloud-tf="${tf}">${tf}</button>`).join('')+'<span class="cloud-chart-nav"><button data-pan="-1" aria-label="Earlier candles">←</button><button data-zoom="-1" aria-label="Zoom in">＋</button><button data-zoom="1" aria-label="Zoom out">−</button><button data-pan="1" aria-label="Later candles">→</button></span>';
   group.querySelectorAll('[data-cloud-tf]').forEach(b=>b.addEventListener('click',()=>{cloudChart.timeframe=b.dataset.cloudTf;cloudChart.end=null;group.querySelectorAll('[data-cloud-tf]').forEach(x=>x.classList.toggle('active',x===b));fetchCandles(t);}));
@@ -89,14 +89,20 @@ fetchCandles = async function(t) {
     if(seq!==cloudChart.request||tradeId(state.selectedTrade)!==tradeId(t))return;
     if(!response.ok)throw Error(data.error||'Market data unavailable');
     state.candles=data.candles||[];
+    state.contractQuotes=data.quotes||[];
     $('candleState').textContent=t.market==='kalshi'?`Contract price / settlement · ${t.contract?.market?.title||t.pair} · closes ${shortTime(t.contract?.market?.close_time)} · ${t.settlement?'SETTLED':'Payout pending until exchange settlement'}`:`${state.candles.length} stored ${tf} bars · hover for OHLC · markers are recorded fills; off-chart fills remain in History`;
     drawCandles(state.candles,t);
   }catch(e){if(seq===cloudChart.request){$('candleState').textContent=e.message;drawCandles([],t);}}
 };
 drawCandles = function(rows,t) {
   if(t.market==='kalshi'){
-    const fills=t.fills||[];
-    $('candleChart').innerHTML=fills.length?fills.map((f,i)=>`<circle cx="${50+i/Math.max(fills.length-1,1)*770}" cy="${370-f.price*320}" r="5" fill="${f.action==='buy'?'#2ce390':'#ff506c'}"><title>${esc(f.action)} ${price(f.price)} · ${esc(shortTime(f.at*1000))}</title></circle>`).join('')+'<text x="20" y="20" fill="#8299b0">Recorded contract executions · $0 to $1</text>':'<text x="40" y="210" fill="#8299b0">No contract executions recorded</text>';
+    const fills=t.fills||[],quotes=state.contractQuotes||[],times=[...fills,...quotes].map(v=>v.at);
+    if(!times.length){$('candleChart').innerHTML='<text x="40" y="210" fill="#8299b0">No observed contract quotes or executions</text>';return;}
+    const first=Math.min(...times),last=Math.max(...times),x=at=>40+(at-first)/Math.max(1,last-first)*730,y=p=>370-p*320;
+    const line=field=>quotes.map(q=>`${x(q.at)},${y(q[field])}`).join(' ');
+    $('candleChart').innerHTML=['bid','ask'].map((field,i)=>`<polyline data-contract-quote="${field}" points="${line(field)}" fill="none" stroke="${i?'#8299b0':'#2ad8ff'}" stroke-width="1.5"/>`).join('')+
+      fills.map(f=>`<circle data-fill-marker="${esc(f.action)}" cx="${x(f.at)}" cy="${y(f.price)}" r="5" fill="${f.action==='buy'?'#2ce390':'#ff506c'}"><title>${esc(f.action)} ${price(f.price)} · ${esc(shortTime(f.at*1000))}</title></circle>`).join('')+
+      `<text x="20" y="20" fill="#8299b0">Observed YES bid (blue), ask (gray), executions · $0 to $1</text><text x="30" y="410" fill="#8299b0" font-size="10">${esc(shortTime(first*1000))} — ${esc(shortTime(last*1000))}</text>`;
     return;
   }
   if(!rows.length){$('candleChart').innerHTML='<text x="40" y="210" fill="#8299b0">No recorded bars in this range. No chart is fabricated.</text>';return;}

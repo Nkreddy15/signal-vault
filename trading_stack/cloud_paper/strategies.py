@@ -51,6 +51,11 @@ def probability_signal(market,quote,estimate,now,config):
         return None,"Unsupported contract type or market closed"
     if any(market.get(k) is not None for k in ("settlement_floor_dollars","settlement_cap_dollars")):
         return None,"Settlement-bound contracts unsupported"
+    schedule=market.get("verified_fee_schedule",{})
+    if schedule.get("type")!="quadratic" or schedule.get("multiplier")!=1 or not 0<=now-schedule.get("checked_at",0)<=90:
+        return None,"Standard contract fee schedule not freshly verified"
+    if market.get("settlement_bounds_type","default")!="default" or market.get("mve_collection_ticker"):
+        return None,"Nonstandard settlement unsupported"
     if not estimate: return None,"Missing independent probability estimate and calibration evidence"
     required=("probability","lower_bound","upper_bound","as_of","expires_at","source","model_version","calibration_report_sha256")
     if any(k not in estimate for k in required): return None,"Incomplete probability provenance"

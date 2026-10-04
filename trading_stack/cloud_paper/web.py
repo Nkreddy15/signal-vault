@@ -71,7 +71,7 @@ def snapshot(store,now):
         evidence=s["config"]["evidence"],status=status,started_at=iso(s["started_at"]),deadline=iso(s["deadline"]),elapsed_seconds=max(0,now-s["started_at"]),
         heartbeat=iso(s["heartbeat"]) if s["heartbeat"] else None,last_cycle=iso(s["last_cycle"]) if s["last_cycle"] else None,cycles=s["cycles"],
         paused=s["paused"],emergency=s["emergency"],halt=s["halt"],providers=providers,portfolio=pf,diagnostics=s["diagnostics"],
-        open_trades=opened,closed_trades=closed,equity_curve=curve,reconciliation=s["reconciliation"],last_backup=s.get("last_backup")))
+        open_trades=opened,closed_trades=closed,equity_curve=curve,reconciliation=s["reconciliation"],last_backup=s.get("last_backup"),backup_error=s.get("backup_error")))
 
 
 def create_app(directory=None,password=None):
@@ -133,6 +133,7 @@ def create_app(directory=None,password=None):
     def control():
         payload=request.get_json(); st=db()
         try:
+            if not isinstance(payload,dict): return {"error":"Invalid paper control"},400
             if payload.get("action")=="close" and payload.get("trade_id") not in st.read()["positions"]:
                 return {"error":"Open paper position not found"},404
             cid=st.command(payload.get("action"),request.headers.get("Idempotency-Key"),payload.get("trade_id"))
@@ -149,7 +150,8 @@ def create_app(directory=None,password=None):
         try:
             s=st.read();rows=st.candles(market,symbol,"1h",10000)
             if market=="kalshi":
-                return {"candles":[],"error":"Contract quote history is shown separately; no OHLC candles are fabricated.","kind":"contract"}
+                quotes=[dict(r) for r in reversed(st.db.execute("SELECT at,bid,ask FROM quotes WHERE market=? AND symbol=? ORDER BY at DESC LIMIT 1500",(market,symbol)).fetchall())]
+                return {"candles":[],"quotes":quotes,"kind":"contract","error":None}
             if tf!="1h":
                 seconds={"4h":14400,"1d":86400}[tf];groups={}
                 for r in rows: groups.setdefault(int(r["time"]//seconds)*seconds,[]).append(r)

@@ -166,7 +166,7 @@
           <div id="cryptoTradeTable" class="table-scroll"></div>
         </article>
         <article class="panel performance-panel">
-          <div class="panel-header compact"><div><h2>{% if cloud_campaign %}Portfolio Equity{% else %}Crypto Performance{% endif %}</h2><p>{% if cloud_campaign %}Persistent campaign history · after modeled costs{% else %}Open P&amp;L over time (current session){% endif %}</p></div><span class="mini-badge">PAPER</span></div>
+          <div class="panel-header compact"><div><h2>{% if cloud_campaign %}Portfolio Equity{% else %}Crypto Performance{% endif %}</h2><p>{% if cloud_campaign %}Persistent campaign history · after modeled costs{% else %}Open P&amp;L over time (current session){% endif %}</p></div><span class="mini-badge">{% if cloud_campaign %}PAPER{% else %}LIVE{% endif %}</span></div>
           <div class="performance-chart-wrap">
             <svg id="performanceChart" class="performance-chart" viewBox="0 0 520 220" preserveAspectRatio="none"></svg>
             <span id="performanceNow" class="chart-current">—</span>

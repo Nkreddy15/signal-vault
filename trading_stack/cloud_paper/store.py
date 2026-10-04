@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import os
+import shutil
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -43,6 +44,7 @@ class Store:
           CREATE TABLE IF NOT EXISTS commands(id INTEGER PRIMARY KEY, request_id TEXT UNIQUE NOT NULL, at REAL NOT NULL, action TEXT NOT NULL, trade_id TEXT, handled REAL);
           CREATE TABLE IF NOT EXISTS candles(market TEXT, symbol TEXT, timeframe TEXT, at REAL, payload TEXT NOT NULL, PRIMARY KEY(market,symbol,timeframe,at));
           CREATE TABLE IF NOT EXISTS equity(at REAL PRIMARY KEY, value REAL NOT NULL, cash REAL NOT NULL, exposure REAL NOT NULL, drawdown REAL NOT NULL);
+          CREATE TABLE IF NOT EXISTS quotes(market TEXT, symbol TEXT, at REAL, bid REAL NOT NULL, ask REAL NOT NULL, PRIMARY KEY(market,symbol,at));
         """)
         self.path.chmod(0o600)
         if not self.db.execute("SELECT 1 FROM state").fetchone():
@@ -108,6 +110,12 @@ class Store:
 
     def prepare(self, order, now):
         """Commit intent before network I/O. Atomic portfolio reservations."""
+        if order["action"] not in ("buy", "sell"):
+            raise ValueError("Only owned long buys/sells are supported")
+        number(order["quantity"], 1e-12); number(order["limit_price"], 1e-12)
+        number(order["reserve"]); number(order["fee_rate"])
+        if order["action"] == "buy" and order["reserve"]+1e-8 < order["quantity"]*order["limit_price"]:
+            raise ValueError("Order must reserve at least its full notional")
         with self.transaction():
             s = self.read()
             if order["id"] in s["orders"]:
@@ -158,6 +166,8 @@ class Store:
             s = self.read(); o = s["orders"][oid]
             if observation["client_id"] != oid:
                 raise ValueError("Provider order identity mismatch")
+            if o["provider_id"] and observation.get("provider_id") != o["provider_id"]:
+                raise ValueError("Provider order ID changed")
             fq = number(observation["filled_qty"]); fv = number(observation["filled_value"])
             fee = number(observation["fee"]); status = observation["status"]
             if fq > o["quantity"]+1e-8 or status not in TERMINAL | {"accepted", "partial", "pending_cancel", "unknown"}:
@@ -193,8 +203,17 @@ class Store:
                     p["proceeds"] += dv; p["exit_fee"] += df
             p = s["positions"].get(tid)
             if p and dq:
-                p["fills"].append(dict(order_id=oid, at=observation.get("filled_at") or now, observed_at=now,
-                                       action=o["action"], quantity=dq, price=dv/dq, fee=df))
+                receipts=observation.get("executions")
+                if receipts is not None:
+                    recorded={f.get("provider_fill_id") for f in p["fills"]}
+                    fresh=[f for f in receipts if f["provider_fill_id"] not in recorded]
+                    if abs(sum(f["quantity"] for f in fresh)-dq)>1e-8:
+                        raise ValueError("Execution receipts do not match incremental quantity")
+                    p["fills"].extend(dict(f,order_id=oid,observed_at=now,action=o["action"],time_basis="provider execution") for f in fresh)
+                else:
+                    p["fills"].append(dict(order_id=oid, at=observation.get("filled_at") or now, observed_at=now,
+                        time_basis="internal simulation execution" if o["market"]=="crypto" else "provider completed order" if observation.get("filled_at") else "cumulative fill observed; exact execution time unavailable",
+                        action=o["action"], quantity=dq, price=dv/dq, fee=df))
             if p and p["quantity"] <= 1e-9:
                 p.update(closed_at=now, exit_reason=o["reason"], exit_price=p["proceeds"]/p["bought_qty"],
                          net_pnl=p["proceeds"]-p["cost"]-p["entry_fee"]-p["exit_fee"])
@@ -221,6 +240,12 @@ class Store:
         dest = self.directory / "backups"; dest.mkdir(exist_ok=True, mode=0o700)
         name = dest / ("campaign-"+time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))+".sqlite3")
         if name.exists(): return name
+        # Only rotate this new campaign's own snapshots; never touch old V11/research files.
+        older=sorted(dest.glob("campaign-????????T??????Z.sqlite3"))
+        while len(older)>2 and (len(older)>=8 or sum(p.stat().st_size for p in older)>120*1024*1024):
+            older.pop(0).unlink()
+        if shutil.disk_usage(self.directory).free < self.path.stat().st_size+32*1024*1024:
+            raise OSError("Insufficient free persistent storage for verified backup")
         temp = name.with_suffix(".tmp")
         with sqlite3.connect(temp) as db:
             self.db.backup(db)

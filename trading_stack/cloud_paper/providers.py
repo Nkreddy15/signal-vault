@@ -208,6 +208,21 @@ class Kalshi:
         rows=self.call("/markets",{"status":"open","limit":30,"mve_filter":"exclude"})
         return rows.get("markets",[])
     def market(self,ticker): return self.call("/markets/"+quote(ticker,safe=""))["market"]
+    def entry_market(self,ticker,now):
+        market=self.market(ticker)
+        if timestamp(market["close_time"])<=now: raise ProviderError("Contract past closing time")
+        event=self.call("/events/"+quote(market["event_ticker"],safe=""))["event"]
+        series=self.call("/series/"+quote(event["series_ticker"],safe=""))["series"]
+        changes=self.call("/events/fee_changes",{"event_ticker":market["event_ticker"],"limit":1000})
+        if changes.get("cursor"): raise ProviderError("Fee schedule pagination needs review")
+        # This campaign supports the standard quadratic schedule only. Refuse
+        # overrides and scheduled changes rather than silently assuming a rate.
+        if series.get("fee_type")!="quadratic" or number(series.get("fee_multiplier",-1))!=1:
+            raise ProviderError("Unsupported contract fee schedule")
+        if changes.get("event_fee_changes"):
+            raise ProviderError("Event fee overrides require separate validation")
+        market["verified_fee_schedule"]={"type":"quadratic","multiplier":1,"checked_at":now}
+        return market
     def quote(self,ticker,now):
         data=self.call("/markets/"+quote(ticker,safe="")+"/orderbook",{"depth":20})
         book=data.get("orderbook_fp",{})
@@ -240,10 +255,35 @@ class Kalshi:
         book=raw.get("book_side")
         if book is not None and book!=("bid" if o["action"]=="buy" else "ask"): raise ProviderError("Contract direction mismatch")
         qty=number(raw["fill_count_fp"])
-        value=number(raw["taker_fill_cost_dollars"])+number(raw["maker_fill_cost_dollars"])
-        fee=number(raw["taker_fees_dollars"])+number(raw["maker_fees_dollars"])
+        # Canonical ask cost can describe buying NO. A sale of owned YES earns
+        # the YES-scale execution price, so do not infer proceeds from order cost.
+        executions=[];cursor=None;seen=set()
+        if qty:
+            for page in range(5):
+                params={"order_id":raw["order_id"],"ticker":o["symbol"],"limit":1000}
+                if cursor: params["cursor"]=cursor
+                data=self.call("/portfolio/fills",params,auth=True)
+                for f in data.get("fills",[]):
+                    if f["fill_id"] in seen: continue
+                    if f["order_id"]!=raw["order_id"] or f.get("ticker",f.get("market_ticker"))!=o["symbol"] or f.get("outcome_side")!=expected_outcome:
+                        raise ProviderError("Kalshi fill identity/direction mismatch")
+                    price=number(f["yes_price_dollars"],1e-12)
+                    if price>=1: raise ProviderError("Invalid binary execution price")
+                    seen.add(f["fill_id"])
+                    executions.append(dict(provider_fill_id=f["fill_id"],quantity=number(f["count_fp"],1e-12),
+                        price=price,fee=number(f["fee_cost"]),at=timestamp(f["created_time"])))
+                cursor=data.get("cursor")
+                if not cursor: break
+            if cursor: raise ProviderError("Fill pagination bound reached")
+            if abs(sum(f["quantity"] for f in executions)-qty)>1e-8:
+                raise ProviderError("Order/fill receipts not yet reconciled")
+        value=sum(f["quantity"]*f["price"] for f in executions)
+        fee=sum(f["fee"] for f in executions)
+        order_fee=number(raw["taker_fees_dollars"])+number(raw["maker_fees_dollars"])
+        if abs(fee-order_fee)>.011: raise ProviderError("Order and fill fee mismatch")
         status={"executed":"filled","resting":"partial" if qty else "accepted","canceled":"canceled"}[raw["status"]]
-        return dict(client_id=o["id"],provider_id=raw["order_id"],status=status,filled_qty=qty,filled_value=value,fee=fee)
+        return dict(client_id=o["id"],provider_id=raw["order_id"],status=status,filled_qty=qty,filled_value=value,fee=fee,
+                    executions=executions)
     def lookup(self,o):
         if o.get("provider_id"):
             raw=self.call("/portfolio/orders/"+quote(o["provider_id"],safe=""),{"market_ticker":o["symbol"]},auth=True)["order"]

@@ -161,7 +161,7 @@ class CampaignTests(unittest.TestCase):
         self.assertFalse(signals(rows,"crypto","BTC/USD",NOW,self.cfg)[0])
         self.assertFalse(signals(bars()[:-2]+bars()[-1:],"crypto","BTC/USD",NOW,self.cfg)[0])
     def test_probabilities_require_provenance_and_cost_cleared_lower_bound(self):
-        m=dict(market_type="binary",status="active",ticker="TEST");q=dict(ask=.4,ask_size=10)
+        m=dict(market_type="binary",status="active",ticker="TEST",verified_fee_schedule=dict(type="quadratic",multiplier=1,checked_at=NOW));q=dict(ask=.4,ask_size=10)
         self.assertIsNone(probability_signal(m,q,None,NOW,self.cfg)[0])
         e=dict(probability=.7,lower_bound=.6,upper_bound=.8,as_of=NOW,expires_at=NOW+300,source="fixture",model_version="fixture",calibration_report_sha256="a"*64)
         self.assertIsNotNone(probability_signal(m,q,e,NOW,self.cfg)[0])
@@ -181,6 +181,31 @@ class CampaignTests(unittest.TestCase):
     def test_stale_worker_is_not_healthy(self):
         app=create_app(self.tmp.name,"x"*40);self.assertEqual(app.test_client().get("/healthz").status_code,503)
         self.assertEqual(snapshot(self.store,time.time())["cloud"]["status"],"WORKER STALE")
+    def test_settlement_credits_receipt_once(self):
+        self.fill(order(market="kalshi",symbol="TEST",quantity=5,price=.4,fee=0))
+        class Demo:
+            def market(self,symbol):return {"status":"settled"}
+            def settlement(self,symbol):return [dict(settled_time=NOW+100,yes_count_fp="5.00",no_count_fp="0",market_result="yes",revenue=500)]
+        self.engine.kalshi=Demo();self.engine.settlements();self.engine.settlements()
+        self.assertEqual(self.store.read()["cash"],503);self.assertEqual(self.store.read()["realized"],3)
+        self.assertEqual(len(self.store.read()["closed"]),1)
+    def test_backup_rotation_keeps_verified_recent_snapshots(self):
+        for i in range(12):self.store.backup(NOW+i*3600)
+        backups=list((Path(self.tmp.name)/"backups").glob("*.sqlite3"));self.assertLessEqual(len(backups),8)
+        with sqlite3.connect(max(backups)) as conn:self.assertEqual(conn.execute("PRAGMA integrity_check").fetchone()[0],"ok")
+    def test_negative_orders_and_underreservation_refused(self):
+        for o in (order(quantity=-1),dict(order(),reserve=0)):
+            with self.assertRaises(ValueError):self.store.prepare(o,NOW)
+        self.assertFalse(self.store.read()["orders"])
+    def test_provider_success_does_not_hide_unknown_order_block(self):
+        self.engine.blocked.add("stocks");self.engine.provider("stocks","BLOCKED","Uncertain order")
+        self.engine.provider("stocks","ONLINE",last_success=NOW)
+        self.assertEqual(self.store.read()["providers"]["stocks"]["status"],"BLOCKED")
+    def test_exact_receipts_are_not_duplicated(self):
+        o=order();self.store.prepare(o,NOW)
+        seen=dict(obs(o),executions=[dict(provider_fill_id="fill-1",quantity=.5,price=100,fee=.2,at=NOW-2)])
+        self.store.observe("one",seen,NOW);self.store.observe("one",seen,NOW+2)
+        p=self.store.read()["positions"]["one"];self.assertEqual(len(p["fills"]),1);self.assertEqual(p["fills"][0]["at"],NOW-2)
 
 
 class AdapterTests(unittest.TestCase):
@@ -209,7 +234,10 @@ class AdapterTests(unittest.TestCase):
         headers=kwargs["headers"];key.public_key().verify(base64.b64decode(headers["KALSHI-ACCESS-SIGNATURE"]),(headers["KALSHI-ACCESS-TIMESTAMP"]+"POST"+path).encode(),padding.PSS(mgf=padding.MGF1(hashes.SHA256()),salt_length=32),hashes.SHA256())
         self.assertEqual(kwargs["body"]["side"],"bid");self.assertEqual(kwargs["body"]["count"],"1.00")
         raw=dict(order_id="test",client_order_id=o["id"],ticker="TEST",outcome_side="no",book_side="ask",fill_count_fp="1.00",taker_fill_cost_dollars="0.60",maker_fill_cost_dollars="0",taker_fees_dollars="0.02",maker_fees_dollars="0",status="executed")
-        self.assertEqual(a.parse(raw,dict(o,action="sell"))["filled_qty"],1)
+        a.call=lambda *args,**kwargs:dict(fills=[dict(fill_id="f1",order_id="test",ticker="TEST",outcome_side="no",count_fp="1.00",yes_price_dollars="0.40",fee_cost="0.02",created_time="2026-10-04T10:00:00Z")])
+        result=a.parse(raw,dict(o,action="sell"));self.assertEqual(result["filled_qty"],1)
+        self.assertEqual(result["filled_value"],.4);self.assertEqual(result["fee"],.02)
+        self.assertEqual(result["executions"][0]["provider_fill_id"],"f1")
     def test_quote_validation_and_no_fractional_short(self):
         with self.assertRaises(ProviderError):validate_quote(dict(bid=101,ask=100,at=NOW),NOW)
         with self.assertRaises(ProviderError):validate_quote(dict(bid=100,ask=101,at=NOW-100),NOW)
@@ -219,6 +247,33 @@ class AdapterTests(unittest.TestCase):
         with tempfile.NamedTemporaryFile(mode="w") as f:
             cfg=load_config();cfg["crypto_mode"]="live";json.dump(cfg,f);f.flush()
             with self.assertRaises(ValueError):load_config(f.name)
+    def test_kalshi_fee_override_blocks_entries(self):
+        a=Kalshi(environ={})
+        a.market=lambda ticker:dict(event_ticker="EVENT",close_time=NOW+1000)
+        def call(path,*args,**kwargs):
+            if path.startswith("/events/EVENT"):return {"event":{"series_ticker":"SERIES"}}
+            if path.startswith("/series/"):return {"series":{"fee_type":"quadratic","fee_multiplier":1}}
+            return {"event_fee_changes":[{"fee_multiplier_override":2}],"cursor":""}
+        a.call=call
+        with self.assertRaises(ProviderError):a.entry_market("TEST",NOW)
+
+
+class HistoricalTests(unittest.TestCase):
+    def test_ambiguous_bar_uses_stop_before_target_after_costs(self):
+        from trading_stack.cloud_paper.research import replay
+        cfg=load_config()
+        data={"BTC/USD":[dict(time=NOW,open=100,high=110,low=90,close=100,volume=10000)]}
+        candidates={NOW:[dict(symbol="BTC/USD",score=1,reference=100,stop_distance=2,target=104,
+                              lagged_volume_cap=1,signal="isolated",strategy="trend")]}
+        result=replay(data,candidates,cfg,NOW,NOW+3600)
+        self.assertEqual(result["closed_trades"],1);self.assertEqual(result["trades"][0]["reason"],"STOP")
+        self.assertLess(result["net_return"],0);self.assertGreater(result["fees_usd"],0)
+    def test_warmup_never_uses_future_hour(self):
+        from trading_stack.cloud_paper.research import precompute
+        cfg=load_config();rows=bars();before,_=precompute({"BTC/USD":rows},cfg)
+        last=rows[-1]["time"];rows[-1].update(close=999999,high=999999,low=1)
+        after,_=precompute({"BTC/USD":rows},cfg)
+        self.assertEqual(before,after)
 
 
 if __name__=="__main__":unittest.main()

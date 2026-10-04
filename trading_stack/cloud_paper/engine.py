@@ -7,6 +7,7 @@ import json
 import math
 import os
 import signal
+import shutil
 import time
 from pathlib import Path
 from .store import Store, TERMINAL, digest, portfolio, number
@@ -41,6 +42,8 @@ class Engine:
     def provider(self,market,status,reason=None,**extra):
         with self.store.transaction():
             s=self.store.read(); old=s["providers"].get(market,{})
+            if market in self.blocked and status in ("ONLINE","MARKET CLOSED"):
+                status="BLOCKED";reason=old.get("reason") or "Order reconciliation blocked"
             s["providers"][market]=dict(old,status=status,reason=reason,checked_at=self.clock(),**extra)
             self.store.save(s)
 
@@ -139,6 +142,8 @@ class Engine:
             self.blocked.add("kalshi"); self.provider("kalshi","UNAVAILABLE",type(e).__name__,mode=self.kalshi.mode)
         with self.store.transaction():
             s=self.store.read(); s["marks"].update(self.quotes); self.store.save(s)
+            self.store.db.executemany("INSERT OR IGNORE INTO quotes VALUES(?,?,?,?,?)",
+                [(key.split(":",1)[0],key.split(":",1)[1],q["at"],q["bid"],q["ask"]) for key,q in self.quotes.items() if key.startswith("kalshi:")])
 
     def settlements(self):
         for tid,p in list(self.store.read()["positions"].items()):
@@ -261,7 +266,7 @@ class Engine:
             for sym,estimate in sorted(self.estimates.items())[:10]:
                 try:
                     q=self.quotes.get("kalshi:"+sym)
-                    candidate,reason=probability_signal(self.kalshi.market(sym),q,estimate,now,self.cfg) if q else (None,"No valid contract quote")
+                    candidate,reason=probability_signal(self.kalshi.entry_market(sym,now),q,estimate,now,self.cfg) if q else (None,"No valid contract quote")
                     if candidate: candidates.append(candidate)
                 except Exception as e: candidate=None;reason=type(e).__name__
                 diagnostics.append(dict(market="kalshi",pair=sym,reason=reason,execution="CANDIDATE" if candidate else "WAITING"))
@@ -271,10 +276,17 @@ class Engine:
 
     def enter(self,c):
         now=self.clock(); s=self.store.read(); market=c["market"]; sym=c["symbol"]
+        if shutil.disk_usage(self.store.directory).free<32*1024*1024: return "Persistent storage low; entries blocked, exits active"
         if market in self.blocked: return "Provider or reconciliation blocked"
         # Bootstrap can take time. Refresh quotes before first entry; no historical-price fills.
         if market=="crypto": self.quotes.update({"crypto:"+k:v for k,v in self.crypto.quotes([sym],now).items()})
         elif market=="stocks": self.quotes.update({"stocks:"+k:v for k,v in self.stocks.quotes([sym],now).items()})
+        elif market=="kalshi":
+            fresh_market=self.kalshi.entry_market(sym,self.clock())
+            self.quotes["kalshi:"+sym]=self.kalshi.quote(sym,self.clock())
+            fresh,reason=probability_signal(fresh_market,self.quotes["kalshi:"+sym],self.estimates.get(sym),self.clock(),self.cfg)
+            if not fresh: return reason
+            c=fresh
         q=self.quotes.get(market+":"+sym)
         if not q: return "Current quote unavailable"
         validate_quote(q,self.clock(),self.cfg["max_quote_age_seconds"])
@@ -324,7 +336,10 @@ class Engine:
             pf=portfolio(s,now);self.store.save(s)
             self.store.db.execute("INSERT OR REPLACE INTO equity VALUES(?,?,?,?,?)",(now,pf["equity"],pf["cash"],pf["exposure"],pf["drawdown"]))
         if int(now//3600)!=int((s.get("last_backup") or 0)//3600):
-            self.store.backup(now); self.state_update(last_backup=now)
+            try:
+                self.store.backup(now); self.state_update(last_backup=now,backup_error=None)
+            except OSError:
+                self.state_update(backup_error="Persistent backup failed; inspect volume capacity")
         return dict(cycles=s["cycles"],equity=pf["equity"],open=len(s["positions"]),closed=len(s["closed"]),providers={k:v["status"] for k,v in s["providers"].items()})
 
 
