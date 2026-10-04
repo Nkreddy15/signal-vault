@@ -42,6 +42,108 @@ class V11Tests(unittest.TestCase):
     def tearDown(self):
         self.ledger.db.close();self.output.__exit__(None,None,None);self.temp.cleanup()
 
+    def test_immediate_mode_can_enter_on_first_late_cycle_at_observed_prices(self):
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        v.evaluate(self.ledger,features(now),quotes(now,99),now)
+        self.assertEqual(self.ledger.state['entries'],2)
+        self.assertEqual(self.ledger.state['entry_checks'],1)
+        for pos in self.ledger.state['positions'].values():
+            self.assertEqual(pos['open_ms'],now)
+            self.assertEqual(pos['open_rate'],99*(1-v.SPEC['slippage']))
+            self.assertLess(pos['signal_ms'],pos['open_ms'])
+            self.assertEqual(pos['entry_policy'],'V11-IMMEDIATE-1')
+
+    def test_immediate_policy_revisits_current_boundary_without_resetting_evidence(self):
+        now=NOW+3*3600000
+        v.evaluate(self.ledger,features(now),quotes(now),now)
+        before=json.loads(json.dumps(self.ledger.state))
+        v.activate_immediate(self.ledger,self.root,now)
+        for field in ('balance','deadline_ms','started_ms','boundary','entries','closed','fills'):
+            self.assertEqual(self.ledger.state[field],before[field])
+        rows=[json.loads(r[0]) for r in self.ledger.db.execute('SELECT payload FROM events')]
+        self.assertEqual(rows[-1]['kind'],'ENTRY_TIMING_AMENDMENT')
+        self.assertEqual(rows[-1]['original_deadline_ms'],before['deadline_ms'])
+        self.assertEqual(len(list(self.root.glob('ledger-before-immediate-*.sqlite3'))),1)
+        v.activate_immediate(self.ledger,self.root,now+1)
+        self.assertEqual(self.ledger.db.execute('SELECT count(*) FROM events').fetchone()[0],len(rows))
+        v.evaluate(self.ledger,features(now),quotes(now),now)
+        self.assertEqual(self.ledger.state['entries'],2)
+        result=v.publish(self.ledger,self.root,now)
+        self.assertEqual(result['entry_policy']['name'],'V11-IMMEDIATE-1')
+        self.assertEqual(result['next_evaluation_at'],v.iso(now+30000))
+        self.assertIn('do not validate late entries',result['note'])
+
+    def test_immediate_restart_cannot_reenter_same_signal_after_exit(self):
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        v.evaluate(self.ledger,features(now),quotes(now),now)
+        for pair in list(self.ledger.state['positions']):v.close(self.ledger,pair,quotes(now)[pair],now,'TEST_EXIT')
+        self.ledger.commit()
+        restored=v.Ledger(self.root/'ledger.sqlite3',now+30000)
+        try:
+            v.evaluate(restored,features(now+30000),quotes(now+30000),now+30000)
+            self.assertEqual(restored.state['entries'],2)
+            self.assertFalse(restored.state['positions'])
+            self.assertTrue(any('already traded' in row['execution'] for row in restored.state['diagnostics']))
+        finally:restored.db.close()
+
+    def test_immediate_deduplicates_earlier_original_policy_trades(self):
+        start(self.ledger)
+        for pair in list(self.ledger.state['positions']):v.close(self.ledger,pair,quotes()[pair],NOW,'TEST_EXIT')
+        self.ledger.commit()
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        v.evaluate(self.ledger,features(now),quotes(now),now)
+        self.assertEqual(self.ledger.state['entries'],2)
+        self.assertFalse(self.ledger.state['positions'])
+
+    def test_immediate_no_bear_signal_is_a_diagnostic_not_a_forced_entry(self):
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        frame=features(now);frame['BTC/USD']['close']=120
+        v.evaluate(self.ledger,frame,quotes(now),now)
+        self.assertFalse(self.ledger.state['positions'])
+        self.assertEqual(self.ledger.state['entry_checks'],1)
+        self.assertTrue(all('above/equal EMA21' in row['reason'] for row in self.ledger.state['diagnostics']))
+
+    def test_immediate_retains_quote_spread_drift_universe_and_risk_checks(self):
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        v.evaluate(self.ledger,dict(list(features(now).items())[:2]),quotes(now),now)
+        self.assertIsNone(self.ledger.state['boundary'])
+        v.evaluate(self.ledger,features(now),quotes(now-100000),now)
+        self.assertFalse(self.ledger.state['positions'])
+        wide=quotes(now)
+        for q in wide.values():q['ask']=q['bid']*1.01
+        v.evaluate(self.ledger,features(now),wide,now)
+        self.assertFalse(self.ledger.state['positions'])
+        v.evaluate(self.ledger,features(now),quotes(now,130),now)
+        self.assertFalse(self.ledger.state['positions'])
+        self.ledger.state['daily_halt']=True
+        v.evaluate(self.ledger,features(now),quotes(now),now)
+        self.assertFalse(self.ledger.state['positions'])
+        self.assertTrue(any(row['execution']=='DAILY_LOSS_LIMIT' for row in self.ledger.state['diagnostics']))
+
+    def test_immediate_activation_cannot_override_halt_or_deadline(self):
+        for reason,now in [('SESSION_LOSS_LIMIT',NOW),('USER_STOP',NOW),(None,self.ledger.state['deadline_ms'])]:
+            self.ledger.state['halt_reason']=reason
+            with self.assertRaisesRegex(ValueError,'halted/expired'):v.activate_immediate(self.ledger,self.root,now)
+        self.assertNotIn('entry_policy',self.ledger.state)
+
+    def test_runner_enters_immediately_from_current_cached_closed_features(self):
+        now=NOW+3*3600000
+        v.activate_immediate(self.ledger,self.root,now)
+        class Feed:
+            def fetch_tickers(self,pairs):return {p:dict(bid=100,ask=100.1) for p in pairs}
+            def fetch_ohlcv(self,*_args,**_kwargs):raise AssertionError('Current closed features should be cached')
+        runner=v.Runner(self.ledger,self.root,Feed());runner.frames=features(now)
+        with patch.object(v.time,'time',return_value=now/1000):result=runner.cycle()
+        self.assertEqual(result['status'],'RUNNING')
+        self.assertEqual(result['entry_checks'],1)
+        self.assertEqual(result['entries'],2)
+        self.assertTrue(all(t['open_ms']==now for t in self.ledger.state['positions'].values()))
+
     def test_new_account_and_resume_never_resets_or_inherits_v10(self):
         self.assertEqual(self.ledger.state['balance'],500)
         deadline=self.ledger.state['deadline_ms'];start(self.ledger);self.ledger.commit()

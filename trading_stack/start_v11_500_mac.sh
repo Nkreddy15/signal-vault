@@ -3,10 +3,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 RESUME_USER_STOP=0
+TRADE_NOW=0
 case "${1:-}" in
   '') ;;
   --resume-user-stop) RESUME_USER_STOP=1 ;;
-  *) echo 'Usage: bash trading_stack/start_v11_500_mac.sh [--resume-user-stop]' >&2; exit 2 ;;
+  --trade-now) RESUME_USER_STOP=1; TRADE_NOW=1 ;;
+  *) echo 'Usage: bash trading_stack/start_v11_500_mac.sh [--resume-user-stop|--trade-now]' >&2; exit 2 ;;
 esac
 [[ $# -le 1 ]] || { echo 'Unexpected extra arguments.' >&2; exit 2; }
 [[ -f .env ]] || { echo 'Missing trading_stack/.env from the existing installation.' >&2; exit 2; }
@@ -97,7 +99,7 @@ failed() {
 trap failed ERR
 dc stop crypto_final crypto_v10 crypto_v8_forward_lab crypto_v8_overnight
 echo 'Backing up old ledgers and checking that older synthetic campaigns are flat...'
-dc run --rm -T --no-deps --entrypoint python crypto_v11 - <<'PY'
+dc run --rm -T --no-deps --entrypoint python crypto_v11 - "$TRADE_NOW" <<'PY'
 import json,shutil,sqlite3,sys
 from pathlib import Path
 from datetime import datetime,timezone
@@ -125,16 +127,18 @@ for folder in ('paper-final-v9','paper-v10','v8-forward-lab','v8-overnight'):
 if held:raise SystemExit('Old synthetic positions remain in '+', '.join(held)+'. Cutover stopped; old services will resume. Let them exit before retrying. Backups retained.')
 target=root/'paper-v11-500';target.mkdir(exist_ok=True)
 (target/'activated').write_text('Selected isolated $500 / 48h synthetic failed-rebound trial. V1 entries vetoed.\n')
+if sys.argv[1]=='1':
+    (target/'trade-now').write_text('User requested immediate entry checks; new timing experiment, fresh quotes only.\n')
 print('Backups saved; older synthetic campaigns retained and flat. New account selected.')
 PY
 RESTORE_OLD=0
 dc up -d --no-deps --force-recreate crypto
-dc up -d --no-deps crypto_v11 dashboard
+dc up -d --no-deps --force-recreate crypto_v11 dashboard
 echo 'Waiting for a fresh runtime cycle and the $500 dashboard selection...'
 ok=0
 for attempt in {1..60}; do
-  if dc exec -T dashboard python - <<'PY'
-import json,time,urllib.request,urllib.error
+  if dc exec -T dashboard python - "$TRADE_NOW" <<'PY'
+import json,sys,time,urllib.request,urllib.error
 def get(path):
     with urllib.request.urlopen('http://127.0.0.1:8090'+path,timeout=15) as r:return json.load(r)
 try:
@@ -143,6 +147,8 @@ try:
         raise SystemExit('Waiting: V11 has not completed its first successful market cycle.')
     if time.time()*1000-(s.get('last_success_ms') or 0)>=120000:
         raise SystemExit('Waiting: V11 needs a fresh successful market cycle.')
+    if len(sys.argv)>1 and sys.argv[1]=='1' and ((s.get('entry_policy') or {}).get('name')!='V11-IMMEDIATE-1' or s.get('entry_checks',0)<1):
+        raise SystemExit('Waiting: immediate entry policy and first entry scan are not verified yet.')
     d=get('/api/snapshot')
     if d.get('paper_final',{}).get('version')!='V11-PAPER-500-1':
         raise SystemExit('Waiting: dashboard has not selected V11 yet.')
@@ -152,6 +158,8 @@ try:
 except (urllib.error.URLError,TimeoutError,ConnectionError) as exc:
     raise SystemExit('Waiting: dashboard connection is not ready ('+str(exc)+').')
 print('Fresh V11 cycle and $500 dashboard verified.')
+if (s.get('entry_policy') or {}).get('name')=='V11-IMMEDIATE-1':
+    print('Immediate entry checks verified. Checks:',s['entry_checks'],'| Total entries:',s['entries'])
 PY
   then ok=1; break; fi
   sleep 3
@@ -165,7 +173,7 @@ if [[ -x /usr/bin/caffeinate ]]; then
   fi
 fi
 echo 'VERIFIED: independent $500 simulated trial active. Original 48-hour deadline preserved on resume. No deposits or broker orders.'
-echo 'Daily signals at 00:00 UTC; initial historical signals are skipped. No forced trades.'
+echo 'Entry policy and current signal blockers: bash trading_stack/status_v11_500_mac.sh. No forced trades.'
 echo 'Mac and Docker must remain running. Status: bash trading_stack/status_v11_500_mac.sh'
 echo 'Dashboard: http://127.0.0.1:8090'
 open http://127.0.0.1:8090

@@ -131,5 +131,19 @@ class LauncherTests(unittest.TestCase):
             exec(block,{})
         self.assertIn('Fresh V11 cycle and $500 dashboard verified.',output.getvalue())
 
+    def test_trade_now_verification_requires_enabled_policy_and_actual_entry_scan(self):
+        block=blocks((ROOT/'start_v11_500_mac.sh').read_text())[-1]
+        state={'version':'V11-PAPER-500-1','status':'RUNNING','cycles':1,'last_success_ms':time.time()*1000,'entries':0}
+        dashboard={'paper_final':{'version':'V11-PAPER-500-1'},'crypto':{'starting_balance':500,'config':{'timeframe':'1d'}}}
+        for fields in ({},{'entry_policy':{'name':'V11-IMMEDIATE-1'},'entry_checks':0}):
+            with patch.object(sys,'argv',['-','1']),patch('urllib.request.urlopen',return_value=io.StringIO(json.dumps({**state,**fields}))):
+                with self.assertRaises(SystemExit) as error:exec(block,{})
+            self.assertIn('first entry scan',str(error.exception))
+        state.update(entry_policy={'name':'V11-IMMEDIATE-1'},entry_checks=1)
+        output=io.StringIO()
+        with patch.object(sys,'argv',['-','1']),patch('urllib.request.urlopen',side_effect=[io.StringIO(json.dumps(state)),io.StringIO(json.dumps(dashboard))]),contextlib.redirect_stdout(output):
+            exec(block,{})
+        self.assertIn('Immediate entry checks verified.',output.getvalue())
+
 
 if __name__=='__main__':unittest.main()

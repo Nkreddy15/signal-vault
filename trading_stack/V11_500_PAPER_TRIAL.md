@@ -60,6 +60,40 @@ The user's first Mac run confirms successful Docker image builds and fresh daily
 Both inline V11 imports now explicitly set the image source path first. Two launcher regression checks execute those actual import prefixes from an unrelated working directory with the project absent from `PYTHONPATH`, parse all inline Python, and exercise the old dashboard's 404 response. That 404 now explains the missing V11 deployment without a traceback. Rerun the original launcher after pulling the fix; no ledger deletion or account reset is needed. Full Mac startup still requires the fresh-cycle/dashboard verification printed by the launcher.
 # Restart for the night
 
+## Immediate entry checks — V11-IMMEDIATE-1
+
+The user requested entries to be evaluated immediately instead of waiting for
+the next midnight UTC window. Fetch/pull the current branch and run:
+
+```bash
+bash trading_stack/start_v11_500_mac.sh --trade-now
+```
+
+This explicit mode resumes a flat manual stop and enables a new, unvalidated
+entry-timing experiment. It evaluates current qualifying closed daily
+conditions on the first fresh public-price cycle and each later quote cycle.
+Fills use the actual newly observed bid/ask and current timestamps. It retains
+the original spread, price-drift, cash, position, fee, risk and deadline rules.
+It never opens a trade merely to make a trade counter increase.
+
+The ledger is backed up before activation. A timestamped `ENTRY_TIMING_AMENDMENT`
+event records the preceding entries/closed count, cash balance and original
+deadline. Existing balance and trade history remain; new trade rows identify
+`V11-IMMEDIATE-1`. Earlier daily-window research does not validate late entries
+and must not be presented as this experiment's performance. Repeated starts
+do not reset the campaign or enable repeat entries on the same asset/day
+signal, including any original-policy trades already closed.
+
+Status exposes `Entry mode: V11-IMMEDIATE-1`, immediate-check count, and the
+specific signal blocker for each asset. Startup verification requires both
+the enabled policy and at least one actual complete entry scan, even when no
+asset qualifies. Daily indicators remain daily indicators; this mode is not
+a newly backtested intraday strategy. The ordinary launcher retains the
+original schedule unless the account explicitly enabled immediate mode.
+
+Only the local Mac launch path is activated by this command. Cloud deployment
+remains unactivated, with a strict no-paid-testing user constraint.
+
 Open Docker Desktop, fetch/pull `phase-162-multimarket-reset`, then run:
 
 ```bash

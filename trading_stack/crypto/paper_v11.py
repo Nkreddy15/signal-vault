@@ -30,6 +30,11 @@ SPEC=dict(strategy='failed_rebound',starting_balance=500.,session_hours=48,risk_
 SPEC['taker_tiers']=[list(v) for v in m.TIERS]
 SPEC['signal_sha256']=hashlib.sha256(Path(b.__file__).read_bytes()).hexdigest()
 SPEC['indicators_sha256']=hashlib.sha256(Path(d.__file__).read_bytes()+Path(d.r.__file__).read_bytes()).hexdigest()
+IMMEDIATE_POLICY=dict(name='V11-IMMEDIATE-1',
+    decision='Evaluate current closed-day conditions on every fresh public quote cycle, including startup',
+    late_entry='Current observed bid/ask only; original spread/drift/cash/risk checks retained',
+    duplicate_rule='At most one entry per asset and closed daily signal, including earlier V11 fills',
+    evidence='Unvalidated timing amendment; original daily-entry backtest does not validate this mode')
 
 
 def has_held_positions(state):
@@ -50,6 +55,8 @@ class Ledger:
             self.state=json.loads(row[0])
             if self.state.get('version')!=VERSION or self.state.get('spec')!=SPEC:
                 raise ValueError('Existing account specification differs; no reset allowed')
+            if self.state.get('entry_policy') not in (None,IMMEDIATE_POLICY):
+                raise ValueError('Unknown experimental entry policy; no implicit migration allowed')
         else:
             self.state=dict(version=VERSION,spec=SPEC,started_ms=now,deadline_ms=now+48*3600000,
                 balance=500.,positions={},closed=[],fills=[],events=[],next_id=1,boundary=None,
@@ -128,6 +135,39 @@ def equity(state,now):
     return value
 
 
+def activate_immediate(ledger,directory,now):
+    """Explicitly record a timing experiment without rewriting earlier evidence."""
+    s=ledger.state
+    if s.get('entry_policy')==IMMEDIATE_POLICY:return
+    if s.get('halt_reason') or now>=s['deadline_ms']:
+        raise ValueError('Cannot activate immediate entries on a halted/expired account')
+    ledger.commit()
+    backup=Path(directory)/f'ledger-before-immediate-{now}.sqlite3'
+    with sqlite3.connect(backup) as dest:ledger.db.backup(dest)
+    s['entry_policy']=dict(IMMEDIATE_POLICY);s['entry_policy_activated_ms']=now;s['entry_checks']=0
+    ledger.event('ENTRY_TIMING_AMENDMENT',observed_ms=now,policy=IMMEDIATE_POLICY,
+        preceding_entries=s['entries'],preceding_closed=len(s['closed']),
+        balance_at_activation=s['balance'],original_deadline_ms=s['deadline_ms'])
+    ledger.commit()
+    print('V11-IMMEDIATE-1 enabled: evaluate entries on first fresh cycle. Account/deadline preserved.',flush=True)
+
+
+def wait_reason(row,btc):
+    if btc.age<29:return 'BTC indicators are not warmed up'
+    if not math.isfinite(btc.r28) or not math.isfinite(btc.ema21):return 'BTC indicators unavailable'
+    if btc.close>=btc.ema21:return f'BTC closed price {btc.close:.2f} is above/equal EMA21 {btc.ema21:.2f}'
+    if btc.r28>-.03:return f'BTC 28-day return {btc.r28:.2%}; bearish threshold is -3%'
+    if row.age<29:return 'Asset indicators are not warmed up'
+    if row.volume<=0:return 'No closed-day trading volume'
+    if not all(math.isfinite(x) for x in (row.r28,row.volatility,row.stop,row.prev_close,row.rebound2,row.low7)):
+        return 'Asset indicators unavailable'
+    if row.close>=row.ema21:return 'Asset closed price is above/equal EMA21'
+    if row.r28>-.03:return f'Asset 28-day return {row.r28:.2%}; threshold is -3%'
+    if row.rebound2<.03:return f'Previous two-day rebound {row.rebound2:.2%}; threshold is +3%'
+    if row.close>=row.prev_close:return 'Latest closed day has not reversed lower'
+    return 'Qualifies, but outside the top two ranked signals'
+
+
 def close(ledger,pair,q,now,reason):
     s=ledger.state;pos=s['positions'].pop(pair)
     row=trade_row(pos,q,fees(s,now).rate(now),now,reason)
@@ -184,19 +224,25 @@ def evaluate(ledger,frames,quotes,now):
         for pair,pos in s['positions'].items():
             if desired.get(pair,0)!=-1:pos['pending_exit']='BEAR_REGIME_OR_TREND_EXIT'
         s['last_daily_exit']=expected
+    immediate=s.get('entry_policy')==IMMEDIATE_POLICY
     first=s['boundary'] is None
-    if not first and s['boundary']>=expected:return
-    s['boundary']=expected
-    if not first:s['intervals_evaluated']+=1
+    new_day=first or s['boundary']<expected
+    if not new_day and not immediate:return
+    if new_day:
+        s['boundary']=expected
+        if not first or immediate:s['intervals_evaluated']+=1
+    if immediate:s['entry_checks']=s.get('entry_checks',0)+1
     s['diagnostics']=[dict(pair=p,side='SHORT' if p in choices else 'WAIT',regime='DAILY FAILED REBOUND',
-        reason='Closed-day failed rebound qualifies' if p in choices else 'No qualifying BTC regime/failed rebound',execution='WAITING') for p in PAIRS]
+        reason='Closed-day failed rebound qualifies' if p in choices else wait_reason(rows[p],rows['BTC/USD']),execution='WAITING') for p in PAIRS]
     diag={v['pair']:v for v in s['diagnostics']}
     for pair,(side,score,row) in sorted(choices.items(),key=lambda v:(-v[1][1],v[0])):
         q=quotes.get(pair);reason=None
-        if first:reason='Initial boundary only; no historical entry'
-        elif now-day>SPEC['entry_grace_ms']:reason='Missed daily entry window; no late fill'
+        signal_ms=expected+m.DAY-m.BAR
+        if first and not immediate:reason='Initial boundary only; no historical entry'
+        elif not immediate and now-day>SPEC['entry_grace_ms']:reason='Missed daily entry window; no late fill'
         elif s['halt_reason'] or s['daily_halt'] or s['drain']:reason=s['halt_reason'] or ('DAILY_LOSS_LIMIT' if s['daily_halt'] else 'DRAINING')
         elif pair in s['positions']:reason='Position already held'
+        elif immediate and any(t.get('pair')==pair and t.get('signal_ms')==signal_ms for t in s['closed']):reason='This closed-day signal was already traded; no repeat entry'
         elif len(s['positions'])>=m.slots(equity(s,now)):reason='Portfolio capacity'
         elif q is None or now-q['observed_ms']>SPEC['quote_max_age_ms']:reason='No fresh bid/ask'
         elif q['ask']/q['bid']-1>SPEC['max_spread']:reason='Spread above 0.20%'
@@ -209,7 +255,8 @@ def evaluate(ledger,frames,quotes,now):
         if stake<5:diag[pair]['execution']='Insufficient unreserved paper cash';continue
         price=q['bid']*(1-SPEC['slippage']);entry_fee=stake*rate;opening=stake*SPEC['opening_financing_rate']
         pos=dict(trade_id=f"v11-{s['next_id']}",pair=pair,is_short=True,stake_amount=stake,amount=stake/price,
-            open_rate=price,open_ms=now,open_date=iso(now),signal_ms=expected+m.DAY-m.BAR,
+            open_rate=price,open_ms=now,open_date=iso(now),signal_ms=signal_ms,
+            entry_policy=IMMEDIATE_POLICY['name'] if immediate else 'ORIGINAL_DAILY_WINDOW',
             entry_fee=entry_fee,opening_financing_fee=opening,rollover_paid=0.,next_rollover_ms=now+4*3600000,
             initial_stop=float(row.stop),stop_price=price*(1+row.stop),target_price=None,peak_price=price,
             enter_tag='failed_rebound',signal_reason='BTC bear regime, 2-day rebound followed by lower close',
@@ -218,7 +265,8 @@ def evaluate(ledger,frames,quotes,now):
         s['balance']-=entry_fee+opening;s['fills'].append([now,stake]);s['positions'][pair]=pos
         s['entries']+=1;s['next_id']+=1;diag[pair]['execution']='OPENED'
         ledger.event('OPEN',**pos);print(f'OPEN SYNTHETIC SHORT {pair} stake=${stake:.2f}',flush=True)
-    ledger.event('DAILY_SCAN',closed_day_ms=expected,first_scan=first,diagnostics=s['diagnostics'])
+    ledger.event('LIVE_ENTRY_SCAN' if immediate else 'DAILY_SCAN',observed_ms=now,
+        closed_day_ms=expected,first_scan=first,diagnostics=s['diagnostics'])
 
 
 def publish(ledger,directory,now):
@@ -226,7 +274,8 @@ def publish(ledger,directory,now):
     opened=[trade_row(pos,s['last_quotes'][p],rate,now) for p,pos in s['positions'].items() if p in s['last_quotes']]
     stale=any(t['mark_stale'] for t in opened) or len(opened)!=len(s['positions'])
     realized=sum(t['profit_abs'] for t in s['closed']);unrealized=sum(t['profit_abs'] for t in opened) if not stale else None
-    crypto=dict(bot_state=s['status'],config=dict(strategy=VERSION+' / failed-rebound shorts',timeframe='1d',
+    immediate=s.get('entry_policy')==IMMEDIATE_POLICY
+    crypto=dict(bot_state=s['status'],config=dict(strategy=(IMMEDIATE_POLICY['name'] if immediate else VERSION)+' / failed-rebound shorts',timeframe='1d',
         exchange='Kraken public quotes',runmode='SYNTHETIC PAPER',dry_run=True),open_trades=opened,
         closed_trades=list(reversed(s['closed'])),open_trade_count=len(s['positions']),closed_trade_count=len(s['closed']),
         closed_pnl_usd=realized-s['operating_cost_usd'],trade_realized_pnl_usd=realized,
@@ -235,10 +284,12 @@ def publish(ledger,directory,now):
         starting_balance=500.,cash_balance=s['balance'],operating_cost_usd=s['operating_cost_usd'],
         profit=dict(closed_trade_count=len(s['closed'])),errors=s['errors'])
     payload=dict(version=VERSION,status=s['status'],crypto=crypto,started_at=iso(s['started_ms']),
-        ends_at=iso(s['deadline_ms']),next_evaluation_at=iso((now//m.DAY+1)*m.DAY),
+        ends_at=iso(s['deadline_ms']),next_evaluation_at=iso(now+30000 if immediate else (now//m.DAY+1)*m.DAY),
+        entry_policy=s.get('entry_policy'),entry_checks=s.get('entry_checks',0),
         last_success_ms=s['last_success_ms'],heartbeat_ms=s['heartbeat_ms'],cycles=s['cycles'],
         intervals_evaluated=s['intervals_evaluated'],entries=s['entries'],diagnostics=s['diagnostics'],
-        note='$500 / 48h synthetic failed-rebound trial. Daily UTC signals; no forced entries or broker orders. Light illustrative borrowing, taker tiers, observed spread, 0.10% slippage per side, $0.10/day running allowance.',
+        note=('$500 synthetic V11-IMMEDIATE-1 timing experiment: entry checks start now and repeat on fresh quote cycles using latest closed daily conditions; historical daily-entry results do not validate late entries. Account totals include pre-amendment history. ' if immediate else '$500 / 48h synthetic failed-rebound trial. Daily UTC signals. ')+
+            'No forced entries or broker orders. Light illustrative borrowing, taker tiers, observed spread, 0.10% slippage per side, $0.10/day running allowance.',
         safety=dict(live_trading=False,crypto_max_open_trades=6,crypto_stake_usd='3% risk / cash limits',
             crypto_stoploss='6–20% ATR stop with quote-based trailing',crypto_roi_reference='No fixed profit target',
             crypto_drawdown_lock='50% peak / 20% UTC-day triggers; gaps may exceed them',session_hours=48))
@@ -293,6 +344,7 @@ def main():
     directory=Path(a.state_dir);directory.mkdir(parents=True,exist_ok=True)
     lock=(directory/'runtime.lock').open('a');fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     ledger=Ledger(directory/'ledger.sqlite3',int(time.time()*1000));runner=Runner(ledger,directory,exchange)
+    if (directory/'trade-now').exists():activate_immediate(ledger,directory,int(time.time()*1000))
     running=True
     def stop(*_):
         nonlocal running
