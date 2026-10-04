@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Signal Vault // Nikhil Reddy Control Room</title>
   <link rel="stylesheet" href="/static/dashboard.css">
+  {% if cloud_campaign %}<link rel="stylesheet" href="/static/cloud.css">{% endif %}
 </head>
 <body>
   <canvas id="starfield" aria-hidden="true"></canvas>
@@ -62,7 +63,7 @@
           <div class="status-cell"><span class="status-kicker">UPDATED</span><strong id="updatedAt">Connecting…</strong><small>10 second refresh</small></div>
           <div class="status-cell"><span class="status-kicker">CRYPTO ENGINE</span><strong id="cryptoTopStatus"><i class="light good"></i> Checking</strong><small id="cryptoTopMeta">Kraken · Dry Run</small></div>
           <div class="status-cell"><span class="status-kicker">STOCK BROKER</span><strong id="stockTopStatus"><i class="light good"></i> Checking</strong><small>Alpaca PAPER</small></div>
-          <a class="status-button" href="http://127.0.0.1:8080/dashboard" target="_blank" rel="noreferrer">Open FreqUI ↗</a>
+          {% if cloud_campaign %}<a class="status-button" href="/api/export">Export ledger ↓</a>{% else %}<a class="status-button" href="http://127.0.0.1:8080/dashboard" target="_blank" rel="noreferrer">Open FreqUI ↗</a>{% endif %}
         </section>
       </header>
 
@@ -78,15 +79,15 @@
           <div class="ring"><span id="cryptoRingText">0%</span></div>
         </article>
         <article class="kpi-card">
-          <span class="kpi-icon">▥</span><div class="kpi-title">Stock Equity (PAPER)</div>
+          <span class="kpi-icon">▥</span><div class="kpi-title">{% if cloud_campaign %}Total Portfolio Equity{% else %}Stock Equity (PAPER){% endif %}</div>
           <div id="stockEquity" class="kpi-number">—</div><div id="stockCash" class="kpi-foot">Available —</div>
         </article>
         <article class="kpi-card">
-          <span class="kpi-icon">↗</span><div class="kpi-title">Managed Stock P&amp;L</div>
+          <span class="kpi-icon">↗</span><div class="kpi-title">{% if cloud_campaign %}Net P&amp;L · All Markets{% else %}Managed Stock P&amp;L{% endif %}</div>
           <div id="stockPnl" class="kpi-number">—</div><div id="stockPnlSub" class="kpi-foot">No open positions</div>
         </article>
         <article class="kpi-card clickable-kpi" id="completedCryptoKpi" tabindex="0" role="button" aria-label="Show all completed crypto trades">
-          <span class="kpi-icon">▤</span><div class="kpi-title">Completed Crypto Trades</div>
+          <span class="kpi-icon">▤</span><div class="kpi-title">{% if cloud_campaign %}Completed Trades{% else %}Completed Crypto Trades{% endif %}</div>
           <div id="closedTrades" class="kpi-number">—</div><div id="closedTradesSub" class="kpi-foot">—</div>
         </article>
         <article class="kpi-card">
@@ -158,14 +159,14 @@
       <section class="activity-grid reveal" id="performance">
         <article class="panel">
           <div class="panel-header compact">
-            <div><h2>Crypto Trade Activity</h2><p>Live and recent trades from the crypto engine</p></div>
+            <div><h2>{% if cloud_campaign %}All Market Trade Activity{% else %}Crypto Trade Activity{% endif %}</h2><p>{% if cloud_campaign %}Recorded executions · mode labeled on every trade{% else %}Live and recent trades from the crypto engine{% endif %}</p></div>
             <div class="segmented"><button class="segment active" data-filter="open">Open Trades <span id="openCount">0</span></button><button class="segment" data-filter="closed">Closed Trades <span id="closedCount">0</span></button><button class="segment" data-filter="winners">Winners</button><button class="segment" data-filter="losers">Losers</button><button class="segment" data-filter="all">View All</button></div>
           </div>
           <div id="tradeSummary" class="trade-summary" aria-live="polite"></div>
           <div id="cryptoTradeTable" class="table-scroll"></div>
         </article>
         <article class="panel performance-panel">
-          <div class="panel-header compact"><div><h2>Crypto Performance</h2><p>Open P&amp;L over time (current session)</p></div><span class="mini-badge">LIVE</span></div>
+          <div class="panel-header compact"><div><h2>{% if cloud_campaign %}Portfolio Equity{% else %}Crypto Performance{% endif %}</h2><p>{% if cloud_campaign %}Persistent campaign history · after modeled costs{% else %}Open P&amp;L over time (current session){% endif %}</p></div><span class="mini-badge">{% if cloud_campaign %}PAPER{% else %}LIVE{% endif %}</span></div>
           <div class="performance-chart-wrap">
             <svg id="performanceChart" class="performance-chart" viewBox="0 0 520 220" preserveAspectRatio="none"></svg>
             <span id="performanceNow" class="chart-current">—</span>
@@ -183,9 +184,21 @@
           <div id="healthGrid" class="health-grid"></div>
           <details><summary>Safety configuration</summary><div id="safetyConfig"></div></details>
           <div id="runtimeErrors"></div>
+          {% if cloud_campaign %}
+          <div class="paper-controls"><button class="status-button" data-control="pause">Pause entries</button><button class="status-button" data-control="resume">Resume entries</button><button class="status-button danger" data-control="flatten">Emergency flatten</button></div>
+          <p class="paper-scan-stats">Pause stops new entries and cancels pending entries; protective exits remain active. Emergency flatten also queues exits for all campaign positions at the next valid executable price. Closed venues or failed providers can delay exits.</p>
+          <p id="controlMessage" role="status" class="paper-scan-stats"></p>
+          {% endif %}
         </article>
       </section>
 
+      {% if cloud_campaign %}
+      <section class="panel" id="kalshi">
+        <div class="panel-header compact"><div><h2>Kalshi Prediction Markets</h2><p id="kalshiMode">Checking demo access</p></div><span id="kalshiStatus" class="status-chip">CHECKING</span></div>
+        <div id="kalshiPositions" class="table-scroll"></div>
+        <details class="cloud-details"><summary>Discovery, settlement and entry blockers</summary><div id="kalshiDiscovery"></div></details>
+      </section>
+      {% endif %}
       <footer>NIKHIL'S TRADING VIEW · SIGNAL VAULT · PAPER PROOF BEFORE CAPITAL</footer>
     </main>
   </div>
@@ -225,7 +238,8 @@
       <div class="tab-panel" data-panel="execution">
         <div id="executionMetrics" class="detail-grid two-col"></div>
         <div class="explanation-card"><span>EXIT LOGIC</span><p id="exitLogic">—</p></div>
-        <div class="read-only-note">Read-only inspector. It does not expose force-entry, force-exit, or live-money controls.</div>
+        <div class="read-only-note">{% if cloud_campaign %}Paper/demo records only. Fees identify their source; no live-money execution is available.{% else %}Read-only inspector. It does not expose force-entry, force-exit, or live-money controls.{% endif %}</div>
+        {% if cloud_campaign %}<button id="closePaperPosition" class="status-button">Close this paper position</button><pre id="orderEvidence" class="cloud-evidence"></pre>{% endif %}
       </div>
 
       <div class="tab-panel" data-panel="history">
@@ -235,5 +249,6 @@
   </div>
 
   <script src="/static/dashboard.js"></script>
+  {% if cloud_campaign %}<script src="/static/cloud.js"></script>{% endif %}
 </body>
 </html>

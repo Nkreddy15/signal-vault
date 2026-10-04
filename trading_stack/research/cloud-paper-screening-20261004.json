@@ -1,0 +1,2282 @@
+{
+  "kind": "HISTORICAL SCREENING ONLY",
+  "config": {
+    "version": "SV-CLOUD-PAPER-1",
+    "evidence": "EXPERIMENTAL: no demonstrated out-of-sample edge",
+    "capital": 500.0,
+    "duration_hours": 168,
+    "cycle_seconds": 30,
+    "risk_per_trade": 0.01,
+    "max_position_fraction": 0.2,
+    "max_exposure_fraction": 0.8,
+    "max_positions": 6,
+    "daily_loss_fraction": 0.03,
+    "drawdown_fraction": 0.1,
+    "max_quote_age_seconds": 90,
+    "max_spread_fraction": 0.003,
+    "minimum_daily_volume_usd": 500000,
+    "minimum_order_usd": 5,
+    "slippage_fraction": 0.001,
+    "crypto_fee_fraction": 0.004,
+    "stock_fee_fraction": 0.0001,
+    "order_timeout_seconds": 120,
+    "max_hold_hours": 48,
+    "crypto_mode": "simulation",
+    "stocks_mode": "paper",
+    "kalshi_mode": "demo",
+    "crypto_symbols": [
+      "BTC/USD",
+      "ETH/USD",
+      "XRP/USD",
+      "SOL/USD",
+      "SUI/USD",
+      "DOGE/USD",
+      "ZEC/USD",
+      "PEPE/USD",
+      "ADA/USD",
+      "AVAX/USD",
+      "LINK/USD",
+      "RENDER/USD",
+      "BCH/USD",
+      "LTC/USD",
+      "PENGU/USD"
+    ],
+    "stock_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "META",
+      "GOOGL",
+      "JPM",
+      "V",
+      "AMD",
+      "TSLA",
+      "SH",
+      "PSQ"
+    ],
+    "strategies": [
+      "trend",
+      "breakout",
+      "range_reversion",
+      "inverse_trend",
+      "probability_edge"
+    ],
+    "kalshi_max_cost": 20,
+    "kalshi_minimum_edge": 0.05,
+    "strategy_source_sha256": "586642e089b52a5923ce8fff1ca4024fd0cec299c28c4ae74f40681f2c9b4589"
+  },
+  "config_hash": "83a6efaf9773477619972fca7e515a9986ab0a5d923e274a474adc705ceb7134",
+  "archive_sha256": "4de3fc95533e05a80fe57f189333c291f954c13c5bb07c7e1a9c76abf70fefcf",
+  "provenance": "All Q1/Q2 data was inspected in earlier Signal Vault research. Chronological partitions are reused; there is no untouched holdout. No parameters were selected from this run.",
+  "assumptions": [
+    "15-asset spot long-only portfolio; no leverage, borrow, funding or financing cost",
+    "Same frozen signal function; last 720 closed hourly bars; strict complete 15-minute-to-hour aggregation",
+    "Each chronological partition starts with $500; duration extended to partition length for screening; drawdown halts persist within partition",
+    "Next-hour open entry; 0.4% fee each side, 0.15% half-spread each side, 0.1% slippage each side",
+    "Entry quantity at most 1% of prior hour's volume; prior closed 24-hour notional at least $500,000",
+    "Historical venue eligibility, lot rules, order-book depth and executable spreads unavailable; assumed $5 minimum and eight quantity decimals",
+    "Adverse stop before target if both touched; stop gaps use worse opening price; trailing levels update for next bar",
+    "Loss controls and time exits evaluated hourly, unlike the prospective 30-second worker; historical fills are modeled, not executions",
+    "Residual positions marked after modeled exit costs; no terminal fills invented",
+    "Bootstrap trade-mean interval is descriptive IID only; serial/cross-asset dependence and reused data invalidate formal edge claims",
+    "No stock or prediction-market performance is inferred from crypto data; no calibrated Kalshi edge available"
+  ],
+  "dataset": {
+    "BTC/USD": {
+      "sha256": "581f04272ad399b1b0931fd9836b01c8eb6fd847b6ee5d157569dc1e304f4eaf",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "ETH/USD": {
+      "sha256": "6a8834e966e56afd68c9ebed04aaabbf6e628748487d4bd142cf885105eb53ce",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "XRP/USD": {
+      "sha256": "88877e6e3384ba8b7640b42a029e3d391f95fdc1d247d1d69b3574cb3f4cba13",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "SOL/USD": {
+      "sha256": "87c67026628814a67dc97283e9d86166b584d3e79fb1dddd849b35c346fe9577",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "SUI/USD": {
+      "sha256": "2f3eae558c7b191f5c48b5850f8ba69012c5fa059a2ac0698b91d5c1118c3577",
+      "quarter_hours": 17373,
+      "complete_hours": 4341,
+      "incomplete_hours_discarded": 3,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "DOGE/USD": {
+      "sha256": "b41e74e28190177ee92d48a35a9a9a512a0979e6ad5071352783066a639f33ae",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "ZEC/USD": {
+      "sha256": "17e84459c19dabc959ce27e82d19f8a0be566f03d58dcfe63971b8fab9188c8e",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "PEPE/USD": {
+      "sha256": "3ec5e3629a2005aaea1c18c31cdd591844502f803d3831d59f7827919acf8c46",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "ADA/USD": {
+      "sha256": "a02332594f247731a3b4d39f885b0c9e4eeb1321b04cd5e83769f40b9f387f39",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "AVAX/USD": {
+      "sha256": "a2b8fdb19c787bff7124a2012f959301aefcdf1ee99b1334f4edf0fbee4ea6e0",
+      "quarter_hours": 17354,
+      "complete_hours": 4322,
+      "incomplete_hours_discarded": 22,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "LINK/USD": {
+      "sha256": "f6d368eb612d6ef1109126199e291dccb5064c2a6adefce122160a269960f818",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "RENDER/USD": {
+      "sha256": "58f594b69c8712d5442ccc2a444e1dcdf777502a847b13981facce48bafbfde5",
+      "quarter_hours": 17329,
+      "complete_hours": 4300,
+      "incomplete_hours_discarded": 44,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "BCH/USD": {
+      "sha256": "b5320619164d7cf2cfbbe5d6d8059a2cdc3956a32a162c513d1bf84ed594435b",
+      "quarter_hours": 16591,
+      "complete_hours": 3689,
+      "incomplete_hours_discarded": 653,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-06-30T22:00:00Z"
+    },
+    "LTC/USD": {
+      "sha256": "49c0d5d5945c2ae87a214269411942fb684e3f8395e44486295ebad08ec25263",
+      "quarter_hours": 17375,
+      "complete_hours": 4343,
+      "incomplete_hours_discarded": 1,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "PENGU/USD": {
+      "sha256": "d38b2fedc6300140fb131a91925b269101b414dc6934c6b4a5d6350050d90b59",
+      "quarter_hours": 17270,
+      "complete_hours": 4245,
+      "incomplete_hours_discarded": 99,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    }
+  },
+  "signal_blockers": {
+    "No qualifying signal \u00b7 UPTREND": 9104,
+    "No qualifying signal \u00b7 RANGE": 18920,
+    "No qualifying signal \u00b7 BEARISH": 18895,
+    "Gap in indicator history": 8317,
+    "Volatility exceeds 10% stop-distance bound": 64,
+    "Below lagged daily volume": 156,
+    "Stale indicator history": 2
+  },
+  "periods": {
+    "reused_development": {
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-04-19T13:00:00Z",
+      "final_equity": 460.694696501758,
+      "net_return": -0.07861060699648392,
+      "maximum_drawdown": 0.10205666267155333,
+      "closed_trades": 37,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.025055261700234865,
+      "turnover_usd": 6209.195812532737,
+      "turnover_multiple": 12.418391625065475,
+      "fees_usd": 24.836783250130953,
+      "profit_factor": 0.30835736749860576,
+      "mean_trade_pnl": -1.0623054999524884,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.7378584675333566,
+        -0.3006433351420615
+      ],
+      "drawdown_halted": true,
+      "strategies": {
+        "trend": {
+          "closed_trades": 23,
+          "net_realized": -11.984620727187291
+        },
+        "breakout": {
+          "closed_trades": 12,
+          "net_realized": -24.45244318651352
+        },
+        "range_reversion": {
+          "closed_trades": 2,
+          "net_realized": -2.868239584541257
+        }
+      },
+      "blockers": {
+        "Minimum size or lagged liquidity cap": 318,
+        "Risk halt": 4199
+      },
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.14687476620702988,
+        "btc_buy_hold_max_drawdown": 0.3564296018568478
+      },
+      "curve_daily": [
+        {
+          "at": 1767312000,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1767398400,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1767484800,
+          "equity": 497.3283346716738,
+          "drawdown": 0.005343330656652379,
+          "exposure_fraction": 0.8014602859376797
+        },
+        {
+          "at": 1767571200,
+          "equity": 498.0571684033971,
+          "drawdown": 0.029233200702157514,
+          "exposure_fraction": 0.6208116552769022
+        },
+        {
+          "at": 1767657600,
+          "equity": 494.26383776166233,
+          "drawdown": 0.03662680866399037,
+          "exposure_fraction": 0.8002560122555206
+        },
+        {
+          "at": 1767744000,
+          "equity": 479.1822561439483,
+          "drawdown": 0.06602242756916665,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1767830400,
+          "equity": 463.5629360862993,
+          "drawdown": 0.09646615632460054,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1767916800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768003200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768089600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768176000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768262400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768348800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768435200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768521600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768608000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768694400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768780800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768867200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1768953600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769040000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769126400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769212800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769299200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769385600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769472000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769558400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769644800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769731200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769817600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769904000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1769990400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770076800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770163200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770249600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770336000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770422400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770508800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770595200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770681600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770768000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770854400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1770940800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771027200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771113600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771200000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771286400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771372800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771459200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771545600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771632000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771718400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771804800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771891200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1771977600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772064000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772150400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772236800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772323200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772409600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772496000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772582400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772668800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772755200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772841600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1772928000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773014400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773100800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773187200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773273600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773360000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773446400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773532800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773619200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773705600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773792000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773878400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1773964800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774051200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774137600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774224000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774310400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774396800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774483200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774569600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774656000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774742400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774828800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1774915200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775001600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775088000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775174400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775260800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775347200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775433600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775520000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775606400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775692800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775779200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775865600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1775952000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776038400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776124800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776211200,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776297600,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776384000,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776470400,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776556800,
+          "equity": 460.694696501758,
+          "drawdown": 0.10205666267155333,
+          "exposure_fraction": 0.0
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-03T12:00:00Z",
+          "exit_at": "2026-01-03T13:59:59Z",
+          "net_pnl": -0.8303332831536068,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-03T12:00:00Z",
+          "exit_at": "2026-01-04T03:59:59Z",
+          "net_pnl": 4.399899583631964,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-03T14:00:00Z",
+          "exit_at": "2026-01-04T08:59:59Z",
+          "net_pnl": 0.4181750078256101,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "SUI/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-03T12:00:00Z",
+          "exit_at": "2026-01-04T17:59:59Z",
+          "net_pnl": 4.718547432700689,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "PENGU/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-04T09:00:00Z",
+          "exit_at": "2026-01-04T18:59:59Z",
+          "net_pnl": 3.0717807497555043,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-04T18:00:00Z",
+          "exit_at": "2026-01-04T18:59:59Z",
+          "net_pnl": -2.427791091465835,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-03T13:00:00Z",
+          "exit_at": "2026-01-04T19:59:59Z",
+          "net_pnl": -0.3032921392129282,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-04T04:00:00Z",
+          "exit_at": "2026-01-04T19:59:59Z",
+          "net_pnl": -3.104140751873814,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-04T09:00:00Z",
+          "exit_at": "2026-01-04T19:59:59Z",
+          "net_pnl": -0.10943447111261406,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "SUI/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-04T19:00:00Z",
+          "exit_at": "2026-01-04T23:59:59Z",
+          "net_pnl": -2.8235214105651636,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-04T21:00:00Z",
+          "exit_at": "2026-01-05T01:59:59Z",
+          "net_pnl": 0.9340364094435643,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-04T22:00:00Z",
+          "exit_at": "2026-01-05T01:59:59Z",
+          "net_pnl": 0.09001476500404948,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-05T00:00:00Z",
+          "exit_at": "2026-01-05T01:59:59Z",
+          "net_pnl": 1.7412109732911034,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-04T22:00:00Z",
+          "exit_at": "2026-01-05T04:59:59Z",
+          "net_pnl": -2.902576419174963,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-05T02:00:00Z",
+          "exit_at": "2026-01-05T04:59:59Z",
+          "net_pnl": -2.115593504401744,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-05T02:00:00Z",
+          "exit_at": "2026-01-05T06:59:59Z",
+          "net_pnl": -2.052473757707304,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-04T19:00:00Z",
+          "exit_at": "2026-01-05T17:59:59Z",
+          "net_pnl": 0.511120840029534,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-05T08:00:00Z",
+          "exit_at": "2026-01-05T17:59:59Z",
+          "net_pnl": -3.5760597897267843,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-05T08:00:00Z",
+          "exit_at": "2026-01-05T18:59:59Z",
+          "net_pnl": 0.17906811017705415,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-05T08:00:00Z",
+          "exit_at": "2026-01-06T00:59:59Z",
+          "net_pnl": -0.2636140315508442,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PENGU/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-05T08:00:00Z",
+          "exit_at": "2026-01-06T00:59:59Z",
+          "net_pnl": 0.6615608395256913,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-05T19:00:00Z",
+          "exit_at": "2026-01-06T06:59:59Z",
+          "net_pnl": -0.05205650219662683,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-05T18:00:00Z",
+          "exit_at": "2026-01-06T07:59:59Z",
+          "net_pnl": -2.161957240779259,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-06T09:00:00Z",
+          "exit_at": "2026-01-06T15:59:59Z",
+          "net_pnl": 0.1388477926586944,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-05T18:00:00Z",
+          "exit_at": "2026-01-06T16:59:59Z",
+          "net_pnl": -3.729837539780334,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "SUI/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-06T01:00:00Z",
+          "exit_at": "2026-01-06T16:59:59Z",
+          "net_pnl": -4.946010648944323,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-01-06T01:00:00Z",
+          "exit_at": "2026-01-06T16:59:59Z",
+          "net_pnl": -3.922352008832206,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-06T16:00:00Z",
+          "exit_at": "2026-01-06T16:59:59Z",
+          "net_pnl": -2.271166059262768,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-06T07:00:00Z",
+          "exit_at": "2026-01-06T17:00:00Z",
+          "net_pnl": -0.08979571035412981,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T00:00:00Z",
+          "exit_at": "2026-01-07T01:59:59Z",
+          "net_pnl": -2.408811475999883,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T00:00:00Z",
+          "exit_at": "2026-01-07T09:59:59Z",
+          "net_pnl": -2.898759912734846,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T00:00:00Z",
+          "exit_at": "2026-01-07T13:00:00Z",
+          "net_pnl": -2.9355118102601523,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T00:00:00Z",
+          "exit_at": "2026-01-07T13:00:00Z",
+          "net_pnl": -2.5936302978387147,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T04:00:00Z",
+          "exit_at": "2026-01-07T13:00:00Z",
+          "net_pnl": -2.0267102488791693,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "SUI/USD",
+          "strategy": "trend",
+          "entry_at": "2026-01-07T10:00:00Z",
+          "exit_at": "2026-01-07T13:00:00Z",
+          "net_pnl": -2.7558963119362545,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-01-08T00:00:00Z",
+          "exit_at": "2026-01-08T02:59:59Z",
+          "net_pnl": 0.6593535165858526,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-01-08T05:00:00Z",
+          "exit_at": "2026-01-08T10:00:00Z",
+          "net_pnl": -3.5275931011271098,
+          "reason": "RISK_OR_TIME_EXIT"
+        }
+      ]
+    },
+    "reused_validation": {
+      "start": "2026-04-19T13:00:00Z",
+      "end": "2026-05-25T17:00:00Z",
+      "final_equity": 448.59986714609806,
+      "net_return": -0.10280026570780387,
+      "maximum_drawdown": 0.10280026570780387,
+      "closed_trades": 38,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.10060715399830059,
+      "turnover_usd": 6862.619147795132,
+      "turnover_multiple": 13.725238295590264,
+      "fees_usd": 27.450476591180532,
+      "profit_factor": 0.1355894447545969,
+      "mean_trade_pnl": -1.3526350751026854,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.8245084948450547,
+        -0.8203703362032231
+      ],
+      "drawdown_halted": true,
+      "strategies": {
+        "trend": {
+          "closed_trades": 28,
+          "net_realized": -32.80237374021726
+        },
+        "breakout": {
+          "closed_trades": 3,
+          "net_realized": -7.567398831510488
+        },
+        "range_reversion": {
+          "closed_trades": 7,
+          "net_realized": -11.0303602821743
+        }
+      },
+      "blockers": {
+        "Minimum size or lagged liquidity cap": 133,
+        "Risk halt": 1554
+      },
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": 0.013791663009955268,
+        "btc_buy_hold_max_drawdown": 0.09692238136968645
+      },
+      "curve_daily": [
+        {
+          "at": 1776643200,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776729600,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776816000,
+          "equity": 484.3751347366,
+          "drawdown": 0.031249730526800024,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1776902400,
+          "equity": 475.51599240532266,
+          "drawdown": 0.048968015189354674,
+          "exposure_fraction": 0.3492376423320713
+        },
+        {
+          "at": 1776988800,
+          "equity": 468.86243238885555,
+          "drawdown": 0.06227513522228889,
+          "exposure_fraction": 0.8010227111900395
+        },
+        {
+          "at": 1777075200,
+          "equity": 466.70522206188093,
+          "drawdown": 0.06658955587623816,
+          "exposure_fraction": 0.6012676801676005
+        },
+        {
+          "at": 1777161600,
+          "equity": 460.3857682178387,
+          "drawdown": 0.07922846356432267,
+          "exposure_fraction": 0.40140679066913915
+        },
+        {
+          "at": 1777248000,
+          "equity": 453.7380913506315,
+          "drawdown": 0.09252381729873693,
+          "exposure_fraction": 0.8004044298576957
+        },
+        {
+          "at": 1777334400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777420800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777507200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777593600,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777680000,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777766400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777852800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1777939200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778025600,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778112000,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778198400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778284800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778371200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778457600,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778544000,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778630400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778716800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778803200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778889600,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1778976000,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779062400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779148800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779235200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779321600,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779408000,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779494400,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779580800,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779667200,
+          "equity": 448.59986714609806,
+          "drawdown": 0.10280026570780387,
+          "exposure_fraction": 0.0
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "XRP/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T10:00:00Z",
+          "exit_at": "2026-04-21T12:59:59Z",
+          "net_pnl": -2.0245134637546016,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T14:00:00Z",
+          "exit_at": "2026-04-21T16:59:59Z",
+          "net_pnl": -3.7580154149959526,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T01:00:00Z",
+          "exit_at": "2026-04-21T17:59:59Z",
+          "net_pnl": -2.3893228146519476,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T08:00:00Z",
+          "exit_at": "2026-04-21T17:59:59Z",
+          "net_pnl": -2.2481120059960205,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T11:00:00Z",
+          "exit_at": "2026-04-21T17:59:59Z",
+          "net_pnl": -2.367394731027929,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-21T21:00:00Z",
+          "exit_at": "2026-04-21T22:00:00Z",
+          "net_pnl": -1.4402724355178407,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-21T21:00:00Z",
+          "exit_at": "2026-04-21T22:00:00Z",
+          "net_pnl": -1.3972343974557617,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-22T02:00:00Z",
+          "exit_at": "2026-04-22T19:59:59Z",
+          "net_pnl": -0.2817650344188962,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-04-22T03:00:00Z",
+          "exit_at": "2026-04-22T20:59:59Z",
+          "net_pnl": -3.413163615755977,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-22T04:00:00Z",
+          "exit_at": "2026-04-22T22:59:59Z",
+          "net_pnl": -0.6748069181620622,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-04-22T03:00:00Z",
+          "exit_at": "2026-04-22T23:59:59Z",
+          "net_pnl": -0.48656989670901396,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-22T00:00:00Z",
+          "exit_at": "2026-04-23T00:59:59Z",
+          "net_pnl": -2.8891499811696235,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-22T20:00:00Z",
+          "exit_at": "2026-04-23T00:59:59Z",
+          "net_pnl": -1.7170813920823633,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-23T01:00:00Z",
+          "exit_at": "2026-04-23T03:59:59Z",
+          "net_pnl": -2.388352348937005,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-23T01:00:00Z",
+          "exit_at": "2026-04-23T17:59:59Z",
+          "net_pnl": -3.4136472550567873,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-23T05:00:00Z",
+          "exit_at": "2026-04-23T17:59:59Z",
+          "net_pnl": -0.6373395300008866,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PENGU/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-23T02:00:00Z",
+          "exit_at": "2026-04-24T03:59:59Z",
+          "net_pnl": 1.3029337944598325,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-23T05:00:00Z",
+          "exit_at": "2026-04-24T04:59:59Z",
+          "net_pnl": -0.7900285431018119,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-23T19:00:00Z",
+          "exit_at": "2026-04-24T05:59:59Z",
+          "net_pnl": 1.4011065784889354,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-23T23:00:00Z",
+          "exit_at": "2026-04-24T09:59:59Z",
+          "net_pnl": -2.117897451192647,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-24T07:00:00Z",
+          "exit_at": "2026-04-24T22:59:59Z",
+          "net_pnl": -0.6131537402559246,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-24T07:00:00Z",
+          "exit_at": "2026-04-25T12:59:59Z",
+          "net_pnl": -0.8832194570402976,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-25T02:00:00Z",
+          "exit_at": "2026-04-25T16:59:59Z",
+          "net_pnl": -2.022949524788203,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-24T06:00:00Z",
+          "exit_at": "2026-04-25T17:59:59Z",
+          "net_pnl": 0.662257645686438,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-25T15:00:00Z",
+          "exit_at": "2026-04-25T18:59:59Z",
+          "net_pnl": -1.8812778600332507,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-25T17:00:00Z",
+          "exit_at": "2026-04-25T18:59:59Z",
+          "net_pnl": -1.8543443589716446,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PENGU/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-24T11:00:00Z",
+          "exit_at": "2026-04-26T11:00:00Z",
+          "net_pnl": 4.696208196359507,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-25T21:00:00Z",
+          "exit_at": "2026-04-26T12:59:59Z",
+          "net_pnl": -2.7150076528885307,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PENGU/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-04-26T11:00:00Z",
+          "exit_at": "2026-04-26T12:59:59Z",
+          "net_pnl": -3.667665319045497,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T10:00:00Z",
+          "exit_at": "2026-04-26T21:59:59Z",
+          "net_pnl": -0.6442318802031082,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T17:00:00Z",
+          "exit_at": "2026-04-26T21:59:59Z",
+          "net_pnl": -0.7872956702196205,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T15:00:00Z",
+          "exit_at": "2026-04-27T05:59:59Z",
+          "net_pnl": -1.8656156747713766,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T16:00:00Z",
+          "exit_at": "2026-04-27T05:59:59Z",
+          "net_pnl": -1.9315347595881036,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T22:00:00Z",
+          "exit_at": "2026-04-27T05:59:59Z",
+          "net_pnl": -0.8650006439339677,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-26T22:00:00Z",
+          "exit_at": "2026-04-27T05:59:59Z",
+          "net_pnl": -0.8261349101219793,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-04-27T09:00:00Z",
+          "exit_at": "2026-04-27T10:00:00Z",
+          "net_pnl": -2.0667821794260846,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-27T09:00:00Z",
+          "exit_at": "2026-04-27T10:00:00Z",
+          "net_pnl": -1.2857778415718144,
+          "reason": "RISK_OR_TIME_EXIT"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-04-27T09:00:00Z",
+          "exit_at": "2026-04-27T10:00:00Z",
+          "net_pnl": -1.117980366050233,
+          "reason": "RISK_OR_TIME_EXIT"
+        }
+      ]
+    },
+    "reused_test_not_holdout": {
+      "start": "2026-05-25T17:00:00Z",
+      "end": "2026-06-30T22:00:00Z",
+      "final_equity": 448.3732771266146,
+      "net_return": -0.10325344574677076,
+      "maximum_drawdown": 0.10325344574677076,
+      "closed_trades": 30,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.06485915083059864,
+      "turnover_usd": 5172.845375496807,
+      "turnover_multiple": 10.345690750993613,
+      "fees_usd": 20.69138150198721,
+      "profit_factor": 0.33529233208663867,
+      "mean_trade_pnl": -1.7208907624461778,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -2.9740003158204917,
+        -0.41109896472414675
+      ],
+      "drawdown_halted": true,
+      "strategies": {
+        "trend": {
+          "closed_trades": 19,
+          "net_realized": -29.42366031890286
+        },
+        "breakout": {
+          "closed_trades": 4,
+          "net_realized": -19.00435428978207
+        },
+        "range_reversion": {
+          "closed_trades": 7,
+          "net_realized": -3.1987082647004
+        }
+      },
+      "blockers": {
+        "Minimum size or lagged liquidity cap": 36,
+        "Risk halt": 1156
+      },
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.2559328678455014,
+        "btc_buy_hold_max_drawdown": 0.2601291913933854
+      },
+      "curve_daily": [
+        {
+          "at": 1779753600,
+          "equity": 488.70973086195045,
+          "drawdown": 0.02258053827609907,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779840000,
+          "equity": 491.37072240381906,
+          "drawdown": 0.017258555192361857,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1779926400,
+          "equity": 477.8682564946624,
+          "drawdown": 0.044263487010675284,
+          "exposure_fraction": 0.17791192566972613
+        },
+        {
+          "at": 1780012800,
+          "equity": 476.72859484338176,
+          "drawdown": 0.04654281031323648,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780099200,
+          "equity": 476.72859484338176,
+          "drawdown": 0.04654281031323648,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780185600,
+          "equity": 470.92629269248476,
+          "drawdown": 0.05814741461503048,
+          "exposure_fraction": 0.7991006726198754
+        },
+        {
+          "at": 1780272000,
+          "equity": 470.3244566565422,
+          "drawdown": 0.05935108668691558,
+          "exposure_fraction": 0.4015623269620012
+        },
+        {
+          "at": 1780358400,
+          "equity": 459.87186597087003,
+          "drawdown": 0.08025626805825992,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780444800,
+          "equity": 452.9599240739516,
+          "drawdown": 0.09408015185209684,
+          "exposure_fraction": 0.2648321634499507
+        },
+        {
+          "at": 1780531200,
+          "equity": 456.35214240534253,
+          "drawdown": 0.08729571518931489,
+          "exposure_fraction": 0.2654323583796151
+        },
+        {
+          "at": 1780617600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780704000,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780790400,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780876800,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1780963200,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781049600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781136000,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781222400,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781308800,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781395200,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781481600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781568000,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781654400,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781740800,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781827200,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1781913600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782000000,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782086400,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782172800,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782259200,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782345600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782432000,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782518400,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782604800,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782691200,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1782777600,
+          "equity": 448.3732771266146,
+          "drawdown": 0.10325344574677076,
+          "exposure_fraction": 0.0
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "AVAX/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-25T17:00:00Z",
+          "exit_at": "2026-05-25T19:59:59Z",
+          "net_pnl": -2.231790752997341,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-25T17:00:00Z",
+          "exit_at": "2026-05-25T19:59:59Z",
+          "net_pnl": -2.0164830460111602,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-05-25T17:00:00Z",
+          "exit_at": "2026-05-25T22:59:59Z",
+          "net_pnl": -5.020343647363362,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-25T17:00:00Z",
+          "exit_at": "2026-05-25T22:59:59Z",
+          "net_pnl": -2.021651691677704,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-26T00:00:00Z",
+          "exit_at": "2026-05-26T00:59:59Z",
+          "net_pnl": -1.9860144364172783,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "PEPE/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-05-26T03:00:00Z",
+          "exit_at": "2026-05-26T10:59:59Z",
+          "net_pnl": 0.8473466798293856,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "SUI/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-05-26T04:00:00Z",
+          "exit_at": "2026-05-26T10:59:59Z",
+          "net_pnl": 0.8686943291489655,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-26T00:00:00Z",
+          "exit_at": "2026-05-26T14:59:59Z",
+          "net_pnl": 7.4577714474081915,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-05-26T05:00:00Z",
+          "exit_at": "2026-05-26T17:59:59Z",
+          "net_pnl": -4.526806478100582,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-27T01:00:00Z",
+          "exit_at": "2026-05-27T07:59:59Z",
+          "net_pnl": -4.925306324689004,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-27T12:00:00Z",
+          "exit_at": "2026-05-27T17:59:59Z",
+          "net_pnl": -4.883732605342487,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-05-27T19:00:00Z",
+          "exit_at": "2026-05-28T01:59:59Z",
+          "net_pnl": -4.8330886304057685,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-30T01:00:00Z",
+          "exit_at": "2026-05-31T14:59:59Z",
+          "net_pnl": -2.7354507357948705,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-30T04:00:00Z",
+          "exit_at": "2026-05-31T14:59:59Z",
+          "net_pnl": -2.2709683404544165,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-30T07:00:00Z",
+          "exit_at": "2026-05-31T14:59:59Z",
+          "net_pnl": -2.381679817821194,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-30T12:00:00Z",
+          "exit_at": "2026-05-31T14:59:59Z",
+          "net_pnl": -0.9720688480587256,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-05-31T16:00:00Z",
+          "exit_at": "2026-05-31T21:59:59Z",
+          "net_pnl": 2.0076885064316343,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-31T16:00:00Z",
+          "exit_at": "2026-06-01T00:59:59Z",
+          "net_pnl": 5.69546770438393,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-06-01T01:00:00Z",
+          "exit_at": "2026-06-01T01:59:59Z",
+          "net_pnl": -4.774152829123622,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-05-31T22:00:00Z",
+          "exit_at": "2026-06-01T07:59:59Z",
+          "net_pnl": -3.646464023085116,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-01T05:00:00Z",
+          "exit_at": "2026-06-01T14:59:59Z",
+          "net_pnl": -4.706159917433737,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-06-01T17:00:00Z",
+          "exit_at": "2026-06-01T18:59:59Z",
+          "net_pnl": 1.4915045137378797,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-01T20:00:00Z",
+          "exit_at": "2026-06-01T22:59:59Z",
+          "net_pnl": -4.564445085293542,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-06-02T04:00:00Z",
+          "exit_at": "2026-06-02T06:59:59Z",
+          "net_pnl": -4.637418616677365,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-02T01:00:00Z",
+          "exit_at": "2026-06-02T07:59:59Z",
+          "net_pnl": -0.8367114752817741,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-02T10:00:00Z",
+          "exit_at": "2026-06-02T15:59:59Z",
+          "net_pnl": -4.542893471246032,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-02T09:00:00Z",
+          "exit_at": "2026-06-02T17:59:59Z",
+          "net_pnl": 6.727163632136126,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "range_reversion",
+          "entry_at": "2026-06-02T21:00:00Z",
+          "exit_at": "2026-06-03T02:59:59Z",
+          "net_pnl": 0.9459528146580851,
+          "reason": "TARGET"
+        },
+        {
+          "symbol": "ZEC/USD",
+          "strategy": "breakout",
+          "entry_at": "2026-06-02T18:00:00Z",
+          "exit_at": "2026-06-04T02:59:59Z",
+          "net_pnl": -4.572439196617722,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "RENDER/USD",
+          "strategy": "trend",
+          "entry_at": "2026-06-03T03:00:00Z",
+          "exit_at": "2026-06-04T02:59:59Z",
+          "net_pnl": -4.582242531226726,
+          "reason": "STOP"
+        }
+      ]
+    }
+  },
+  "conclusion": "Experimental only. Reused, assumption-dependent screening cannot establish out-of-sample profitability."
+}

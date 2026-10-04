@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY trading_stack/cloud_paper/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+COPY trading_stack/cloud_paper ./trading_stack/cloud_paper
+COPY trading_stack/dashboard/templates ./trading_stack/dashboard/templates
+COPY trading_stack/dashboard/static ./trading_stack/dashboard/static
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 SIGNAL_VAULT_MODE=paper
+EXPOSE 8090
+CMD ["python", "-m", "trading_stack.cloud_paper.supervisor"]

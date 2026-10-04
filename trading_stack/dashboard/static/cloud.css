@@ -1,0 +1,16 @@
+/* Functional additions use the accepted dashboard's type, palette and components. */
+.paper-controls { display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 6px; }
+.paper-controls .status-button, #closePaperPosition { cursor:pointer; font:inherit; padding:9px 12px; }
+.cloud-details { padding:0 20px 18px; color:var(--muted,#8299b0); overflow-wrap:anywhere; }
+.cloud-evidence { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; max-height:260px; overflow:auto; color:#95abc0; }
+.cloud-trade-button { cursor:pointer; width:100%; text-align:left; font:inherit; color:inherit; background:transparent; }
+.chart-toolbar { flex-wrap:wrap; gap:10px; }
+.tf-group { display:flex; flex-wrap:wrap; gap:6px; }
+.cloud-chart-nav { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.cloud-chart-nav button { cursor:pointer; color:#90b9d6; border:1px solid #24415d; border-radius:5px; background:#0b1728; padding:5px 9px; }
+#kalshi { margin-top:18px; }
+#kalshiPositions { padding:0 18px 12px; }
+#kalshiDiscovery { font-size:12px; padding-top:12px; }
+#paperReleaseMeta { overflow-wrap:anywhere; }
+.candle-chart { touch-action:pan-y; }
+@media(max-width:600px) { .paper-controls .status-button { flex:1 1 120px; } .cloud-details { padding:0 12px 12px; } }

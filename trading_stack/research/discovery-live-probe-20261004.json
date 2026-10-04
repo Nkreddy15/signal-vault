@@ -1,0 +1,86 @@
+{
+  "at": 1791127644.7033305,
+  "status": "COMPLETED",
+  "mode": "READ-ONLY LIVE DATA PROBE",
+  "diagnostics": [
+    {
+      "market": "dex",
+      "pair": "2Le24Rb7TejWx98Fohq8RmKvAEUkKBKyWqQnCVUw2EuS",
+      "reason": "Liquidity below threshold",
+      "execution": "QUOTE SIMULATION ONLY"
+    },
+    {
+      "market": "dex",
+      "pair": "2d1RrVaNKX2NyEQhKjENAQdU1X5JJr6Yvmj9kCfmpump",
+      "reason": "Liquidity below threshold",
+      "execution": "QUOTE SIMULATION ONLY"
+    },
+    {
+      "market": "dex",
+      "pair": "5L9cBN9KT5WQt4sKMnF6sgX6MxqyaWm3GpmvjKJseUBq",
+      "reason": "Liquidity below threshold",
+      "execution": "QUOTE SIMULATION ONLY"
+    },
+    {
+      "market": "dex",
+      "pair": "5rMw5qZScpF7d9BjbAY8tZuay5LootA5PcsU84EYpump",
+      "reason": "Liquidity below threshold",
+      "execution": "QUOTE SIMULATION ONLY"
+    },
+    {
+      "market": "dex",
+      "pair": "6LeriWoQRRr1ezJYCyi4JANiZ4aVS7tXL8q2TfoBpump",
+      "reason": "Liquidity below threshold",
+      "execution": "QUOTE SIMULATION ONLY"
+    }
+  ],
+  "observations": [
+    {
+      "mint": "2Le24Rb7TejWx98Fohq8RmKvAEUkKBKyWqQnCVUw2EuS",
+      "at": 1791127626.329863,
+      "pair": "2LqpUVoEcYT6Am7PTJ4PqjfE8YHC94pz8a1hfheEJQA9",
+      "price": 8.159e-05,
+      "liquidity": 24918.04,
+      "decision": "Liquidity below threshold",
+      "evidence": "{}"
+    },
+    {
+      "mint": "2d1RrVaNKX2NyEQhKjENAQdU1X5JJr6Yvmj9kCfmpump",
+      "at": 1791127630.893692,
+      "pair": "Bnx8q3hnem4P7gHEQaoFHXV8T5VEybnU2BYr9Dibk8H",
+      "price": 4.208e-05,
+      "liquidity": 17185.36,
+      "decision": "Liquidity below threshold",
+      "evidence": "{}"
+    },
+    {
+      "mint": "5L9cBN9KT5WQt4sKMnF6sgX6MxqyaWm3GpmvjKJseUBq",
+      "at": 1791127635.5597582,
+      "pair": "9hgCvFvoSswtTkTvxA8bvESJGZTtug2smcxYDBbXj8BC",
+      "price": 6.456e-06,
+      "liquidity": 5301.08,
+      "decision": "Liquidity below threshold",
+      "evidence": "{}"
+    },
+    {
+      "mint": "5rMw5qZScpF7d9BjbAY8tZuay5LootA5PcsU84EYpump",
+      "at": 1791127640.25739,
+      "pair": "FqJ66HiSHEEHkjmUUpkD4yrSDKo6myyssqBz4NVTzyJU",
+      "price": 1.698e-05,
+      "liquidity": 0.0,
+      "decision": "Liquidity below threshold",
+      "evidence": "{}"
+    },
+    {
+      "mint": "6LeriWoQRRr1ezJYCyi4JANiZ4aVS7tXL8q2TfoBpump",
+      "at": 1791127644.703056,
+      "pair": "EASxRsHebpXVc55ueSkWyWV8wptUSG4NCQNHaGEBLH82",
+      "price": 4.081e-05,
+      "liquidity": 16581.98,
+      "decision": "Liquidity below threshold",
+      "evidence": "{}"
+    }
+  ],
+  "orders": 0,
+  "live_transactions": 0
+}
