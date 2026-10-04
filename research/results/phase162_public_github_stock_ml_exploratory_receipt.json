@@ -1,0 +1,95 @@
+{
+  "kind": "PHASE162_PUBLIC_GITHUB_STOCK_ML_EXPLORATORY_RECEIPT",
+  "source_repository": "Tesan-Ai/trading-platform",
+  "source_commit": "45700f7bc960174b304561f1fc1026d9964086bf",
+  "source_files": {
+    "AAPL": "2c92e096bf56fc50923511790e0d65a214024440",
+    "AMD": "bfa97cc64fc4b3e1019509dcd32dbd416e800972",
+    "MSFT": "820d74365203d7b826a156f263450d6766d8b97f",
+    "NVDA": "aa28d85dec2a96b0e91222219123d4a4b53a887c",
+    "QQQ": "b05e9652e09395edd75ffe52a12d7a30ab76a82d",
+    "SPY": "ff39834962980c15766730e5281ecc7d6d865051"
+  },
+  "source_provenance": {
+    "repository_is_public": true,
+    "repository_readme_describes_paper_only_trading_platform": true,
+    "csv_market_data_origin_independently_verified": false,
+    "license_file_found_during_review": false,
+    "third_party_code_copied_into_signal_vault": false,
+    "only_public_ohlcv_data_and_high_level_architecture_were_inspected": true
+  },
+  "research_window": {
+    "first_common_full_core_hour": "2025-09-03|10",
+    "last_common_full_core_hour": "2026-06-03|15",
+    "common_full_xnys_like_core_hours": 1082,
+    "minimum_minutes_required_per_symbol_per_hour": 50
+  },
+  "portfolio_assumptions": {
+    "starting_cash_usd": 100,
+    "stake_usd": 15,
+    "max_simultaneous_positions": 4,
+    "round_trip_cost_bps": {
+      "low": 5,
+      "base": 13,
+      "high": 38
+    }
+  },
+  "feature_families": [
+    "1/3/6/12/24/48-core-hour returns",
+    "EMA 6/18 and 18/48 state",
+    "12/36-core-hour realized volatility",
+    "intrahour range",
+    "18-core-hour volume z-score",
+    "six-asset 24-core-hour cross-sectional rank",
+    "symbol identity"
+  ],
+  "chronological_design": {
+    "train_fraction": 0.60,
+    "validation_fraction": 0.20,
+    "descriptive_holdout_fraction": 0.20,
+    "purged_by_forecast_horizon": true,
+    "threshold_selected_on_validation_only": true
+  },
+  "results": {
+    "6_core_hours": {
+      "interpretation": "rejected: validation gains did not survive descriptive holdout",
+      "best_validation_models": ["ridge10","ridge50"]
+    },
+    "12_core_hours": {
+      "ridge10": {
+        "selected_threshold_abs_return": 0.003,
+        "validation_base": {"net_pnl_usd": 2.439409538898833, "trades": 65, "long": 41, "short": 24, "win_rate": 0.5076923076923077, "expectancy_usd_per_trade": 0.03752937752152051, "max_drawdown_usd": 2.0013924403154277},
+        "descriptive_holdout_low": {"net_pnl_usd": 2.973037144836362, "trades": 65, "long": 26, "short": 39, "win_rate": 0.49230769230769234, "expectancy_usd_per_trade": 0.0457390329974825, "max_drawdown_usd": 9.0936829465101},
+        "descriptive_holdout_base": {"net_pnl_usd": 2.193037144836365, "trades": 65, "long": 26, "short": 39, "win_rate": 0.47692307692307695, "expectancy_usd_per_trade": 0.033739032997482536, "max_drawdown_usd": 9.381682946510097},
+        "descriptive_holdout_high": {"net_pnl_usd": -0.2444628551636367, "trades": 65, "long": 26, "short": 39, "win_rate": 0.4153846153846154, "expectancy_usd_per_trade": -0.0037609670025174876, "max_drawdown_usd": 10.281682946510102}
+      },
+      "robust_irls_v1": {
+        "selected_threshold_abs_return": 0.005,
+        "validation_base": {"net_pnl_usd": 2.038001190972553, "trades": 35, "long": 25, "short": 10, "win_rate": 0.5714285714285714, "expectancy_usd_per_trade": 0.058228605456358655, "max_drawdown_usd": 1.9088960919940803},
+        "descriptive_holdout_low": {"net_pnl_usd": 2.4985678630105355, "trades": 47, "long": 14, "short": 33, "win_rate": 0.46808510638297873, "expectancy_usd_per_trade": 0.053161018361926285, "max_drawdown_usd": 8.909648065028989},
+        "descriptive_holdout_base": {"net_pnl_usd": 1.9345678630105363, "trades": 47, "long": 14, "short": 33, "win_rate": 0.425531914893617, "expectancy_usd_per_trade": 0.0411610183619263, "max_drawdown_usd": 9.125648065028997},
+        "descriptive_holdout_high": {"net_pnl_usd": 0.17206786301053706, "trades": 47, "long": 14, "short": 33, "win_rate": 0.40425531914893614, "expectancy_usd_per_trade": 0.0036610183619263203, "max_drawdown_usd": 9.88476044579842}
+      }
+    },
+    "24_core_hours": {
+      "interpretation": "rejected: validation gains did not survive descriptive holdout"
+    }
+  },
+  "candidate_for_cross_source_shadow_only": {
+    "horizon_core_hours": 12,
+    "models": ["ridge10","robust_irls_v1"],
+    "reason": "both were positive on validation and base-cost descriptive holdout; robust_irls_v1 remained slightly positive even at the high illustrative cost scenario",
+    "paper_executable": false,
+    "short_execution_authorized": false,
+    "requires_verified_alpaca_forward_shadow_before_any_paper_consideration": true
+  },
+  "limitations": [
+    "The public CSV data provenance was not independently verified as Alpaca/IEX/SIP or another named feed.",
+    "The public repository did not expose a license file in the reviewed root, so no third-party implementation code is copied.",
+    "Descriptive holdout results do not establish future profitability.",
+    "Short-side backtest results are research only; stock shortability/borrow preflight is not implemented."
+  ],
+  "broker_order_submission": "DISABLED",
+  "paper_activation_permitted": false,
+  "live_trading": "UNAVAILABLE"
+}

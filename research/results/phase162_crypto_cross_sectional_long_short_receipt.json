@@ -1,0 +1,83 @@
+{
+  "kind": "PHASE162_CRYPTO_CROSS_SECTIONAL_LONG_SHORT_ENSEMBLE_RECEIPT",
+  "source_artifact": {
+    "github_actions_run_id": 36927348918,
+    "artifact_id": 11194955159,
+    "artifact_digest_sha256": "433a848b87cf269812ed08232ee1a7d5815fbffbd4fe19bd71c15bd3d83e7572"
+  },
+  "assets": ["AVAX/USD","BTC/USD","ETH/USD","LINK/USD","LTC/USD","SOL/USD"],
+  "historical_hours_per_asset": 2160,
+  "horizon_hours": 48,
+  "forecast_ensemble": ["huber","ridge50","elasticnet_a0001_l25"],
+  "pre_holdout_selection": {
+    "rule": "rank average signed 48h return forecasts cross-sectionally; consider up to top-2 longs and bottom-2 shorts",
+    "minimum_absolute_forecast_return": 0.005,
+    "minimum_top_minus_bottom_forecast_spread": 0.015,
+    "shared_starting_cash_usd": 100,
+    "stake_usd": 15,
+    "max_simultaneous_positions": 4,
+    "selection_basis": "validation base-friction P&L and expectancy only",
+    "holdout_used_for_rule_selection": false
+  },
+  "validation_base_friction": {
+    "round_trip_cost_bps": 74,
+    "net_pnl_usd": 2.644786142161024,
+    "trade_count": 17,
+    "long_count": 11,
+    "short_count": 6,
+    "win_rate": 0.4117647058823529,
+    "expectancy_usd_per_trade": 0.15557565542123672,
+    "max_marked_drawdown_usd": 1.8253595085052865
+  },
+  "descriptive_holdout": {
+    "illustrative_low_friction": {
+      "round_trip_cost_bps": 42,
+      "net_pnl_usd": 5.392140382620767,
+      "trade_count": 14,
+      "long_count": 11,
+      "short_count": 3,
+      "win_rate": 0.5714285714285714,
+      "expectancy_usd_per_trade": 0.3851528844729119,
+      "max_marked_drawdown_usd": 2.438218033873156
+    },
+    "illustrative_base_friction": {
+      "round_trip_cost_bps": 74,
+      "net_pnl_usd": 4.7201403826207695,
+      "trade_count": 14,
+      "long_count": 11,
+      "short_count": 3,
+      "win_rate": 0.5714285714285714,
+      "expectancy_usd_per_trade": 0.3371528844729121,
+      "max_marked_drawdown_usd": 2.438218033873156
+    },
+    "illustrative_high_friction": {
+      "round_trip_cost_bps": 132,
+      "net_pnl_usd": 3.50214038262078,
+      "trade_count": 14,
+      "long_count": 11,
+      "short_count": 3,
+      "win_rate": 0.5714285714285714,
+      "expectancy_usd_per_trade": 0.2501528844729129,
+      "max_marked_drawdown_usd": 2.43821803387317
+    }
+  },
+  "passive_equal_weight_descriptive_holdout_base": {
+    "net_pnl_usd": 14.629553700557423,
+    "gross_exposure_usd": 90,
+    "max_marked_drawdown_usd": 7.651530016465159
+  },
+  "interpretation": {
+    "positive_validation_after_base_costs": true,
+    "positive_holdout_after_all_three_cost_scenarios": true,
+    "demonstrated_both_long_and_short_historical_signals": true,
+    "beat_passive_absolute_pnl": false,
+    "used_maximum_gross_exposure_usd": 60,
+    "descriptive_holdout_drawdown_lower_than_passive": true,
+    "future_alpha_established": false,
+    "execution_note": "Short-side results are research only until instrument/venue shortability and borrowing rules are explicitly preflighted."
+  },
+  "automatic_paper_promotion": false,
+  "short_execution_authorized": false,
+  "broker_order_submission": "DISABLED",
+  "live_trading": "UNAVAILABLE"
+}

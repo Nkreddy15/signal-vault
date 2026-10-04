@@ -1,0 +1,21 @@
+FROM freqtradeorg/freqtrade:stable@sha256:9d67afb8eb5f4e1210f4fb067efcbd5e005bd4f1c27f6f3888b8b9fc7f9b5199
+
+USER root
+RUN mkdir -p /freqtrade/data /freqtrade/user_data \
+    && chown -R ftuser:ftuser /freqtrade/data /freqtrade/user_data
+RUN python -m pip install --no-cache-dir --only-binary=:all: scikit-learn==1.9.1
+COPY --chown=ftuser:ftuser paper_final.py /freqtrade/user_data/paper_final.py
+COPY --chown=ftuser:ftuser multi_strategy_lab.py /freqtrade/user_data/multi_strategy_lab.py
+COPY --chown=ftuser:ftuser kraken_quarterly_ohlcv.py /freqtrade/user_data/kraken_quarterly_ohlcv.py
+COPY --chown=ftuser:ftuser audit_strategy_results.py /freqtrade/user_data/audit_strategy_results.py
+COPY --chown=ftuser:ftuser prepare_liquid_universe.py /freqtrade/user_data/prepare_liquid_universe.py
+COPY --chown=ftuser:ftuser forecast_edge_lab.py /freqtrade/user_data/forecast_edge_lab.py
+COPY --chown=ftuser:ftuser regime_swing_lab.py /freqtrade/user_data/regime_swing_lab.py
+COPY --chown=ftuser:ftuser export_research_bundle.py /freqtrade/user_data/export_research_bundle.py
+COPY --chown=ftuser:ftuser durable_trend_lab.py /freqtrade/user_data/durable_trend_lab.py
+COPY --chown=ftuser:ftuser financing_edge_lab.py /freqtrade/user_data/financing_edge_lab.py
+COPY --chown=ftuser:ftuser bear_regime_lab.py /freqtrade/user_data/bear_regime_lab.py
+COPY --chown=ftuser:ftuser equity_data_bundle.py /freqtrade/user_data/equity_data_bundle.py
+COPY --chown=ftuser:ftuser scalping_edge_lab.py /freqtrade/user_data/scalping_edge_lab.py
+USER ftuser
+ENTRYPOINT ["python", "/freqtrade/user_data/forecast_edge_lab.py"]

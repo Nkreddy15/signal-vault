@@ -36,6 +36,16 @@ from .all_market_forward_status import all_market_forward_status
 from .all_market_dashboard import build_dashboard_snapshot
 from .dashboard_snapshot_archive import archive_dashboard_snapshot
 from .six_crypto_shadow import inspect_six_crypto_shadow
+from .current_compact_crypto_snapshot import current_compact_crypto_snapshot
+from .current_compact_stock_snapshot import current_compact_stock_snapshot
+from .equity_cloud_sidecar import (
+    CHILD as EQUITY_CHILD,
+    KEY_ENV as EQUITY_KEY_ENV,
+    SECRET_ENV as EQUITY_SECRET_ENV,
+)
+from .equity_forward_archive_audit import load_current_equity_forward_segment
+from .equity_model_warmup import collect_stock_model_warmup
+from .current_portfolio_brain import build_current_portfolio_brain
 
 KALSHI_TOTAL_EVIDENCE_CAP_BYTES=8*1024*1024
 KALSHI_MAX_NEW_TICK_BUDGET_BYTES=1*1024*1024
@@ -148,6 +158,31 @@ def combined_all_markets_once(
         output["kalshi_status"]="SKIPPED_BTC_INTEGRITY_NOT_PROVEN"
         return output
 
+    try:
+        stock_root=btc_root/EQUITY_CHILD
+        if stock_root.exists():
+            _,_,stock_grid=load_current_equity_forward_segment(stock_root)
+            warmup=collect_stock_model_warmup(
+                stock_root=stock_root,
+                first_forward_open=stock_grid[0],
+                as_of=stamp,
+                key=str(env.get(EQUITY_KEY_ENV,"")),
+                secret=str(env.get(EQUITY_SECRET_ENV,"")),
+            )
+            output["stock_model_warmup_status"]=warmup.get("status")
+            output["stock_model_warmup_core_hours"]=warmup.get(
+                "warmup_core_hours_per_asset"
+            )
+            output["stock_model_warmup_network_requests"]=warmup.get(
+                "network_requests",0
+            )
+            output["stock_model_warmup_counts_as_prospective"]=False
+        else:
+            output["stock_model_warmup_status"]="NOT_STARTED"
+    except Exception as exc:
+        output["stock_model_warmup_status"]="FAILED_SAFE"
+        output["stock_model_warmup_failure_class"]=type(exc).__name__
+
     before=None
     try:
         before=fingerprint_btc_evidence_tree(
@@ -253,6 +288,41 @@ def combined_all_markets_once(
                 except Exception as exc:
                     output["current_btc_shadow_status"]="FAILED_SAFE"
                     output["current_btc_shadow_failure_class"]=type(exc).__name__
+                try:
+                    compact=current_compact_crypto_snapshot(
+                        root=btc_root/SIX_CRYPTO_BASENAME,
+                    )
+                    output["current_compact_crypto_model_status"]=compact.get("status")
+                    output["current_compact_crypto_model_snapshot"]=compact
+                    output["current_compact_crypto_model_order_submission"]="DISABLED"
+                except Exception as exc:
+                    output["current_compact_crypto_model_status"]="FAILED_SAFE"
+                    output["current_compact_crypto_model_failure_class"]=type(exc).__name__
+                try:
+                    stock_root=btc_root/EQUITY_CHILD
+                    if not stock_root.exists():
+                        output["current_compact_stock_model_status"]="NOT_STARTED"
+                    else:
+                        stock_compact=current_compact_stock_snapshot(
+                            root=stock_root,
+                        )
+                        output["current_compact_stock_model_status"]=stock_compact.get("status")
+                        output["current_compact_stock_model_snapshot"]=stock_compact
+                    output["current_compact_stock_model_order_submission"]="DISABLED"
+                except Exception as exc:
+                    output["current_compact_stock_model_status"]="FAILED_SAFE"
+                    output["current_compact_stock_model_failure_class"]=type(exc).__name__
+                try:
+                    brain=build_current_portfolio_brain(
+                        root=btc_root,
+                        as_of=stamp,
+                    )
+                    output["current_portfolio_brain_status"]="AVAILABLE"
+                    output["current_portfolio_brain"]=brain
+                    output["current_portfolio_brain_order_submission"]="DISABLED"
+                except Exception as exc:
+                    output["current_portfolio_brain_status"]="FAILED_SAFE"
+                    output["current_portfolio_brain_failure_class"]=type(exc).__name__
             except Exception as exc:
                 output["dashboard_snapshot_status"]="FAILED_SAFE"
                 output["dashboard_snapshot_failure_class"]=type(exc).__name__

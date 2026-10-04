@@ -1,0 +1,233 @@
+{
+  "aggregate_pnl_usd": {
+    "illustrative_base_friction": {
+      "donchian20": -5.407427,
+      "donchian55": -0.136537,
+      "mean_reversion": -17.426561,
+      "momentum24": 9.259511,
+      "passive_equal_weight": 39.189745,
+      "trend_stack": 10.969296
+    },
+    "illustrative_high_friction": {
+      "donchian20": -18.631427,
+      "donchian55": -8.227537,
+      "mean_reversion": -23.864561,
+      "momentum24": 2.647511,
+      "passive_equal_weight": 37.623745,
+      "trend_stack": 3.400296
+    },
+    "illustrative_low_friction": {
+      "donchian20": 1.888573,
+      "donchian55": 4.327463,
+      "mean_reversion": -13.874561,
+      "momentum24": 12.907511,
+      "passive_equal_weight": 40.053745,
+      "trend_stack": 15.145296
+    }
+  },
+  "assets": [
+    "AVAX/USD",
+    "BTC/USD",
+    "ETH/USD",
+    "LINK/USD",
+    "LTC/USD",
+    "SOL/USD"
+  ],
+  "causality_notes": [
+    "signals use only completed hourly bars",
+    "orders simulated at the next hourly open",
+    "6h trend filter is shifted one completed 6h bucket before use",
+    "no model/strategy is promoted automatically"
+  ],
+  "folds": {
+    "fold_1": {
+      "base": {
+        "donchian20": {
+          "expectancy_usd": 0.06575,
+          "long": 33,
+          "max_marked_drawdown_usd": 5.531994,
+          "net_pnl_usd": 3.090244,
+          "short": 14,
+          "trades": 47,
+          "win_rate": 0.212766
+        },
+        "donchian55": {
+          "expectancy_usd": 0.210189,
+          "long": 23,
+          "max_marked_drawdown_usd": 4.553302,
+          "net_pnl_usd": 5.6751,
+          "short": 4,
+          "trades": 27,
+          "win_rate": 0.333333
+        },
+        "mean_reversion": {
+          "expectancy_usd": -0.011297,
+          "long": 17,
+          "max_marked_drawdown_usd": 1.315571,
+          "net_pnl_usd": -0.248528,
+          "short": 5,
+          "trades": 22,
+          "win_rate": 0.590909
+        },
+        "momentum24": {
+          "expectancy_usd": 0.194296,
+          "long": 17,
+          "max_marked_drawdown_usd": 7.571603,
+          "net_pnl_usd": 4.6631,
+          "short": 7,
+          "trades": 24,
+          "win_rate": 0.333333
+        },
+        "passive_equal_weight": {
+          "exposure_usd": 90.0,
+          "net_pnl_usd": 20.345062
+        },
+        "trend_stack": {
+          "expectancy_usd": 0.153984,
+          "long": 30,
+          "max_marked_drawdown_usd": 6.879954,
+          "net_pnl_usd": 5.697419,
+          "short": 7,
+          "trades": 37,
+          "win_rate": 0.216216
+        }
+      },
+      "end_index_exclusive": 1520,
+      "start_index": 1200
+    },
+    "fold_2": {
+      "base": {
+        "donchian20": {
+          "expectancy_usd": -0.193092,
+          "long": 32,
+          "max_marked_drawdown_usd": 12.011754,
+          "net_pnl_usd": -11.585506,
+          "short": 28,
+          "trades": 60,
+          "win_rate": 0.15
+        },
+        "donchian55": {
+          "expectancy_usd": -0.259221,
+          "long": 18,
+          "max_marked_drawdown_usd": 9.338197,
+          "net_pnl_usd": -9.331939,
+          "short": 18,
+          "trades": 36,
+          "win_rate": 0.083333
+        },
+        "mean_reversion": {
+          "expectancy_usd": -0.178721,
+          "long": 15,
+          "max_marked_drawdown_usd": 6.639548,
+          "net_pnl_usd": -5.182918,
+          "short": 14,
+          "trades": 29,
+          "win_rate": 0.275862
+        },
+        "momentum24": {
+          "expectancy_usd": -0.159703,
+          "long": 15,
+          "max_marked_drawdown_usd": 4.604613,
+          "net_pnl_usd": -4.152275,
+          "short": 11,
+          "trades": 26,
+          "win_rate": 0.269231
+        },
+        "passive_equal_weight": {
+          "exposure_usd": 90.0,
+          "net_pnl_usd": 1.284066
+        },
+        "trend_stack": {
+          "expectancy_usd": -0.098704,
+          "long": 25,
+          "max_marked_drawdown_usd": 5.211947,
+          "net_pnl_usd": -2.467601,
+          "short": 0,
+          "trades": 25,
+          "win_rate": 0.2
+        }
+      },
+      "end_index_exclusive": 1840,
+      "start_index": 1520
+    },
+    "fold_3": {
+      "base": {
+        "donchian20": {
+          "expectancy_usd": 0.068619,
+          "long": 29,
+          "max_marked_drawdown_usd": 4.219019,
+          "net_pnl_usd": 3.087836,
+          "short": 16,
+          "trades": 45,
+          "win_rate": 0.288889
+        },
+        "donchian55": {
+          "expectancy_usd": 0.117343,
+          "long": 22,
+          "max_marked_drawdown_usd": 3.233959,
+          "net_pnl_usd": 3.520302,
+          "short": 8,
+          "trades": 30,
+          "win_rate": 0.366667
+        },
+        "mean_reversion": {
+          "expectancy_usd": -0.521527,
+          "long": 15,
+          "max_marked_drawdown_usd": 12.739171,
+          "net_pnl_usd": -11.995115,
+          "short": 8,
+          "trades": 23,
+          "win_rate": 0.304348
+        },
+        "momentum24": {
+          "expectancy_usd": 0.336488,
+          "long": 19,
+          "max_marked_drawdown_usd": 3.001753,
+          "net_pnl_usd": 8.748687,
+          "short": 7,
+          "trades": 26,
+          "win_rate": 0.461538
+        },
+        "passive_equal_weight": {
+          "exposure_usd": 90.0,
+          "net_pnl_usd": 17.560617
+        },
+        "trend_stack": {
+          "expectancy_usd": 0.309579,
+          "long": 25,
+          "max_marked_drawdown_usd": 3.397285,
+          "net_pnl_usd": 7.739478,
+          "short": 0,
+          "trades": 25,
+          "win_rate": 0.4
+        }
+      },
+      "end_index_exclusive": 2160,
+      "start_index": 1840
+    }
+  },
+  "historical_hours_per_asset": 2160,
+  "kind": "PHASE162_CRYPTO_STRATEGY_FAMILY_RESEARCH_RECEIPT",
+  "portfolio": {
+    "max_positions": 4,
+    "stake_usd": 15.0,
+    "starting_cash_usd": 100.0
+  },
+  "round_trip_cost_bps": {
+    "illustrative_base_friction": 74.0,
+    "illustrative_high_friction": 132.0,
+    "illustrative_low_friction": 42.0
+  },
+  "screening_conclusion": {
+    "momentum24_base_pnl_usd": 9.259511,
+    "passive_base_pnl_usd": 39.189745,
+    "reason": "Trend-stack and momentum24 were profitable in 2/3 folds and positive in aggregate, but neither beat passive equal-weight overall and both had a losing fold. No candidate is promoted.",
+    "strategy_promoted": false,
+    "trend_stack_base_pnl_usd": 10.969296
+  },
+  "source_artifact": {
+    "artifact_digest_sha256": "433a848b87cf269812ed08232ee1a7d5815fbffbd4fe19bd71c15bd3d83e7572",
+    "artifact_id": 11194955159,
+    "run_id": 36927348918
+  }
+}

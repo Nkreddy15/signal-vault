@@ -1,0 +1,3888 @@
+{
+  "version": "DURABLE-TREND-LAB-1",
+  "config": {
+    "family": "weekly_leader_28d",
+    "risk": "aggressive",
+    "mode": "synthetic_long_short",
+    "spread_bps": 15,
+    "execution": "trigger",
+    "slippage": 0.001,
+    "short_carry_per_day": 0.0003,
+    "starting_balance": 100,
+    "daily_operating_cost_usd": 0,
+    "fee_profile": "alpaca_rate_sensitivity"
+  },
+  "spec": {
+    "decision": "Closed UTC daily archive; next observed 15m opening execution",
+    "daily_input": "Aggregate observed Kraken trade-only intervals; do not add execution rows",
+    "selection": "Same January 1\u20137 formation universe; no subsequent winner selection",
+    "trend_hold_28d": "Original top-two 28d leader entry; retain until EMA21 direction breaks, not rank loss",
+    "weekly_leader_28d": "Original top-two entry/top-four retention on Monday UTC only; risk exits still apply every observed bar",
+    "channel_28d": "Break previous 28 daily highs/lows and EMA21; retain until EMA21 direction breaks",
+    "stop": "Unchanged: three daily ATRs, clipped at 6\u201320%; trailing starts after one initial stop-distance gain",
+    "fixed_take_profit": null,
+    "maximum_hold_days": 56,
+    "profit_ceiling": null,
+    "blend": "One shared account, one position per asset, at most 50% per family at entry"
+  },
+  "summary": {
+    "start_ms": 1772323200000,
+    "end_ms": 1782864000000,
+    "starting_balance": 100,
+    "ending_equity": 113.75004883521378,
+    "return_pct": 13.750048835213779,
+    "realized_pnl": 13.750048835213775,
+    "trades": 33,
+    "wins": 14,
+    "operating_cost_usd": 0.0,
+    "win_rate_pct": 42.42424242424242,
+    "profit_factor": 1.5056998332659999,
+    "max_drawdown_pct": 13.013468050003052,
+    "fees": 2.9166318128413944,
+    "short_carry": 0.8457095624703436,
+    "pending_positions": 0,
+    "ruined": false,
+    "halted": false,
+    "max_concurrent": 3,
+    "max_reserved_notional": 67.3783599550676,
+    "max_exposure_pct": 65.08493006101733,
+    "lowest_taker_fee_pct": 0.25,
+    "ambiguous_bars": 0,
+    "peak_equity": 119.57725917582249,
+    "recorded_fill_gross_pnl": 17.512390210525545,
+    "exit_reasons": {
+      "WEEKLY_RANK_EXIT": 20,
+      "STOP": 9,
+      "GAP_STOP": 1,
+      "WINDOW_END": 3
+    },
+    "median_hold_hours": 168.0,
+    "by_strategy": {
+      "channel_28d": {
+        "trades": 0,
+        "pnl": 0
+      },
+      "trend_hold_28d": {
+        "trades": 0,
+        "pnl": 0
+      },
+      "weekly_leader_28d": {
+        "trades": 33,
+        "pnl": 13.750048835213809
+      }
+    },
+    "diagnostics": {
+      "raw_signals": 56,
+      "opened": 33,
+      "occupied_or_capacity": 23,
+      "missing_held_candle": 394
+    }
+  },
+  "trades": [
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 14.492753623188404,
+      "entry_ms": 1772496000000,
+      "signal_ms": 1772495100000,
+      "entry_price": 3.51084788775e-06,
+      "entry_fee": 0.03623188405797101,
+      "stop_price": 4.2130174653e-06,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 3.126e-06,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1773099900000,
+      "pair": "PEPE/USD",
+      "exit_ms": 1773100800000,
+      "exit_price": 3.2717179495e-06,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 0.9871265830336333,
+      "exit_fee": 0.03376406760038693,
+      "carry": 0.030434782608695646,
+      "pnl": 0.8866958487665797
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 14.474868938382505,
+      "entry_ms": 1772496000000,
+      "signal_ms": 1772495100000,
+      "entry_price": 444.720709125,
+      "entry_fee": 0.03618717234595626,
+      "stop_price": 533.66485095,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 432.63,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1773704700000,
+      "pair": "BCH/USD",
+      "exit_ms": 1773705600000,
+      "exit_price": 479.51804900999997,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.132591588169443,
+      "exit_fee": 0.039018651316379875,
+      "carry": 0.06079444954120651,
+      "pnl": -1.2685918613729859
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 15.542921606284985,
+      "entry_ms": 1773100800000,
+      "signal_ms": 1773099900000,
+      "entry_price": 0.1444568660325,
+      "entry_fee": 0.03885730401571246,
+      "stop_price": 0.17154208410971247,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.18749692431454812,
+      "peak_price": 0.1444568660325,
+      "trailing": true,
+      "trailing_distance": 0.18749692431454812,
+      "exit_signal_ms": 1773704700000,
+      "pair": "CC/USD",
+      "exit_ms": 1773705600000,
+      "exit_price": 0.15486064844249997,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.119401097702726,
+      "exit_fee": 0.04165580675996928,
+      "carry": 0.032640135373198466,
+      "pnl": -1.2325543438516062
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.165904708328487,
+      "entry_ms": 1773705600000,
+      "signal_ms": 1773704700000,
+      "entry_price": 1.9353824489999998,
+      "entry_fee": 0.03791476177082122,
+      "stop_price": 1.5483059592,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 1.95,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1774309500000,
+      "pair": "RENDER/USD",
+      "exit_ms": 1774310400000,
+      "exit_price": 1.6870437675,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.9460137095729821,
+      "exit_fee": 0.03304972749688876,
+      "carry": 0,
+      "pnl": -2.0169781988406923
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 15.147254715326499,
+      "entry_ms": 1773705600000,
+      "signal_ms": 1773704700000,
+      "entry_price": 0.0518591264625,
+      "entry_fee": 0.03786813678831625,
+      "stop_price": 0.062230951755,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.042,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1774914300000,
+      "pair": "NIGHT/USD",
+      "exit_ms": 1774915200000,
+      "exit_price": 0.043596192639999996,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 2.4134761196912824,
+      "exit_fee": 0.031834446489088036,
+      "carry": 0.06361846980437129,
+      "pnl": 2.280155066609507
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 20.401571872308633,
+      "entry_ms": 1774310400000,
+      "signal_ms": 1774309500000,
+      "entry_price": 0.14457665612249998,
+      "entry_fee": 0.05100392968077158,
+      "stop_price": 0.16582055611763494,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.14693865915072046,
+      "peak_price": 0.13485,
+      "trailing": true,
+      "trailing_distance": 0.14693865915072046,
+      "exit_signal_ms": 1774914300000,
+      "pair": "CC/USD",
+      "exit_ms": 1774915200000,
+      "exit_price": 0.1478283581775,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.4588557721670287,
+      "exit_fee": 0.05215106911118915,
+      "carry": 0.04284330093184813,
+      "pnl": -0.6048540718908375
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 14.584927803469743,
+      "entry_ms": 1773100800000,
+      "signal_ms": 1773099900000,
+      "entry_price": 194.74765858047496,
+      "entry_fee": 0.03646231950867436,
+      "stop_price": 304.0,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 380.0,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "TAO/USD",
+      "exit_ms": 1774942199999,
+      "exit_price": 303.696,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 8.1592954980505,
+      "exit_fee": 0.05686055825380061,
+      "carry": 0,
+      "pnl": 8.065972620288026
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 15.454356665296476,
+      "entry_ms": 1774915200000,
+      "signal_ms": 1774914300000,
+      "entry_price": 0.0303468228,
+      "entry_fee": 0.03863589166324119,
+      "stop_price": 0.03641618736,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.0294,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1775519100000,
+      "pair": "USELESS/USD",
+      "exit_ms": 1775520000000,
+      "exit_price": 0.030653572949999996,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.1562149110790304,
+      "exit_fee": 0.039026428940938766,
+      "carry": 0.032454148997122595,
+      "pnl": -0.26633138068033296
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 15.435285320745738,
+      "entry_ms": 1774915200000,
+      "signal_ms": 1774914300000,
+      "entry_price": 0.0016531032419999999,
+      "entry_fee": 0.03858821330186434,
+      "stop_price": 0.0019837238903999996,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.001567,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1775519100000,
+      "pair": "PUMP/USD",
+      "exit_ms": 1775520000000,
+      "exit_price": 0.0016789342569999998,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.24118825522783818,
+      "exit_fee": 0.03919118393993394,
+      "carry": 0.032414099173566045,
+      "pnl": -0.35138175164320246
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.288714772084699,
+      "entry_ms": 1775520000000,
+      "signal_ms": 1775519100000,
+      "entry_price": 313.64114756975,
+      "entry_fee": 0.03822178693021175,
+      "stop_price": 250.9129180558,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 350.5481,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "TAO/USD",
+      "exit_ms": 1775798099999,
+      "exit_price": 250.6620051377442,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": -3.0699739262346073,
+      "exit_fee": 0.03054685211462523,
+      "carry": 0,
+      "pnl": -3.1387425652794443
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.269913755660523,
+      "entry_ms": 1775520000000,
+      "signal_ms": 1775519100000,
+      "entry_price": 1.8642581457499998,
+      "entry_fee": 0.03817478438915131,
+      "stop_price": 1.8072,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 2.259,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1776123900000,
+      "pair": "RENDER/USD",
+      "exit_ms": 1776124800000,
+      "exit_price": 1.91763969075,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 0.43724180052649525,
+      "exit_fee": 0.03926788889046754,
+      "carry": 0,
+      "pnl": 0.3597991272468764
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 14.940852871151433,
+      "entry_ms": 1776124800000,
+      "signal_ms": 1776123900000,
+      "entry_price": 369.42564158499994,
+      "entry_fee": 0.03735213217787858,
+      "stop_price": 295.540513268,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 381.07,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1776728700000,
+      "pair": "ZEC/USD",
+      "exit_ms": 1776729600000,
+      "exit_price": 311.7237617025,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -2.333663938470614,
+      "exit_fee": 0.03151797233170205,
+      "carry": 0,
+      "pnl": -2.4025340429801947
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.701937528879878,
+      "entry_ms": 1776124800000,
+      "signal_ms": 1776123900000,
+      "entry_price": 0.202253476425,
+      "entry_fee": 0.039254843822199695,
+      "stop_price": 0.16388106926972945,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.18972433914875064,
+      "peak_price": 0.2264,
+      "trailing": true,
+      "trailing_distance": 0.18972433914875064,
+      "exit_signal_ms": 1776728700000,
+      "pair": "WIF/USD",
+      "exit_ms": 1776729600000,
+      "exit_price": 0.19945049985,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.21760893238284762,
+      "exit_fee": 0.038710821491242574,
+      "carry": 0,
+      "pnl": -0.29557459769628985
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 15.25113585944127,
+      "entry_ms": 1775520000000,
+      "signal_ms": 1775519100000,
+      "entry_price": 0.040798508152499996,
+      "entry_fee": 0.038127839648603175,
+      "stop_price": 0.0372,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.031,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "NIGHT/USD",
+      "exit_ms": 1776760199999,
+      "exit_price": 0.0372951804225,
+      "reason": "GAP_STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 1.3096000219092312,
+      "exit_fee": 0.034853839593830094,
+      "carry": 0.06567520374176362,
+      "pnl": 1.1709431389250344
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 19.064927822986597,
+      "entry_ms": 1776729600000,
+      "signal_ms": 1776728700000,
+      "entry_price": 0.1588876864575,
+      "entry_fee": 0.04766231955746649,
+      "stop_price": 0.13460044394657036,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.1528579278383923,
+      "peak_price": 0.1595,
+      "trailing": true,
+      "trailing_distance": 0.1528579278383923,
+      "exit_signal_ms": 1777333500000,
+      "pair": "CC/USD",
+      "exit_ms": 1777334400000,
+      "exit_price": 0.1473118631775,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.3889826219093435,
+      "exit_fee": 0.044189863002693126,
+      "carry": 0,
+      "pnl": -1.4808348044695032
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 27.047349279379574,
+      "entry_ms": 1776729600000,
+      "signal_ms": 1776728700000,
+      "entry_price": 75981.091411225,
+      "entry_fee": 0.06761837319844893,
+      "stop_price": 68284.45352297611,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.10129675351191177,
+      "peak_price": 82790.9,
+      "trailing": true,
+      "trailing_distance": 0.10129675351191177,
+      "exit_signal_ms": 1778543100000,
+      "pair": "BTC/USD",
+      "exit_ms": 1778544000000,
+      "exit_price": 81587.63274795,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 1.9957870960679296,
+      "exit_fee": 0.07260784093861876,
+      "carry": 0,
+      "pnl": 1.8555608819308618
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 14.495179820173199,
+      "entry_ms": 1777334400000,
+      "signal_ms": 1777333500000,
+      "entry_price": 355.81184889249994,
+      "entry_fee": 0.036237949550432996,
+      "stop_price": 513.336,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 641.67,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1778543100000,
+      "pair": "ZEC/USD",
+      "exit_ms": 1778544000000,
+      "exit_price": 555.9557901974999,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 8.153529535804386,
+      "exit_fee": 0.05662177338994396,
+      "carry": 0,
+      "pnl": 8.06066981286401
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 25.835830855514818,
+      "entry_ms": 1777939200000,
+      "signal_ms": 1777938300000,
+      "entry_price": 0.11032190852182498,
+      "entry_fee": 0.06458957713878705,
+      "stop_price": 0.09783241966914745,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.11320950679716288,
+      "peak_price": 0.1172735,
+      "trailing": true,
+      "trailing_distance": 0.11320950679716288,
+      "exit_signal_ms": 1778543100000,
+      "pair": "DOGE/USD",
+      "exit_ms": 1778544000000,
+      "exit_price": 0.11108634171075,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 0.17901944259332223,
+      "exit_fee": 0.06503712574527036,
+      "carry": 0,
+      "pnl": 0.04939273970926482
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.894320524294931,
+      "entry_ms": 1778544000000,
+      "signal_ms": 1778543100000,
+      "entry_price": 0.0685197513,
+      "entry_fee": 0.03973580131073733,
+      "stop_price": 0.0688,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.086,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "USELESS/USD",
+      "exit_ms": 1778657399999,
+      "exit_price": 0.0687312,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 0.04904911866260096,
+      "exit_fee": 0.03985842410739383,
+      "carry": 0,
+      "pnl": -0.030545106755530203
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 29.20958558657149,
+      "entry_ms": 1778544000000,
+      "signal_ms": 1778543100000,
+      "entry_price": 97.53045301999998,
+      "entry_fee": 0.07302396396642873,
+      "stop_price": 87.77289061862567,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.10004631475846208,
+      "peak_price": 97.63,
+      "trailing": true,
+      "trailing_distance": 0.10004631475846208,
+      "pair": "SOL/USD",
+      "exit_ms": 1778914799999,
+      "exit_price": 87.68511772800704,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": -2.9485986677513805,
+      "exit_fee": 0.06565246729705028,
+      "carry": 0,
+      "pnl": -3.0872750990148594
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 15.414215566023442,
+      "entry_ms": 1779148800000,
+      "signal_ms": 1779147900000,
+      "entry_price": 564.566687685,
+      "entry_fee": 0.038535538915058606,
+      "stop_price": 550.8960000000001,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 688.62,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "ZEC/USD",
+      "exit_ms": 1779900299999,
+      "exit_price": 550.3451040000001,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.38828815336186057,
+      "exit_fee": 0.03756481853165395,
+      "carry": 0,
+      "pnl": -0.46438851080857313
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 16.2417825603772,
+      "entry_ms": 1780358400000,
+      "signal_ms": 1780357500000,
+      "entry_price": 0.03922855937,
+      "entry_fee": 0.040604456400943,
+      "stop_price": 0.031382847496,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.04065,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "NIGHT/USD",
+      "exit_ms": 1780667999999,
+      "exit_price": 0.031351464648504,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": -3.2613499381237396,
+      "exit_fee": 0.03245108155563365,
+      "carry": 0,
+      "pnl": -3.3344054760803163
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 22.889762898027207,
+      "entry_ms": 1779148800000,
+      "signal_ms": 1779147900000,
+      "entry_price": 377.3387835,
+      "entry_fee": 0.05722440724506802,
+      "stop_price": 228.77295013767505,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.13265150083015678,
+      "peak_price": 201.98,
+      "trailing": true,
+      "trailing_distance": 0.13265150083015678,
+      "pair": "BCH/USD",
+      "exit_ms": 1780824599999,
+      "exit_price": 229.0017230878127,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 8.998280299552896,
+      "exit_fee": 0.03472870649618578,
+      "carry": 0.13318980778341744,
+      "pnl": 8.773137378028226
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 23.271994681558745,
+      "entry_ms": 1779148800000,
+      "signal_ms": 1779147900000,
+      "entry_price": 2125.0861791075,
+      "entry_fee": 0.05817998670389686,
+      "stop_price": 1701.4040436824441,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.12993793370907814,
+      "peak_price": 1505.75,
+      "trailing": true,
+      "trailing_distance": 0.12993793370907814,
+      "pair": "ETH/USD",
+      "exit_ms": 1780870499999,
+      "exit_price": 1703.1054477261264,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 4.621145924798197,
+      "exit_fee": 0.04662712189190137,
+      "carry": 0.13912289312488782,
+      "pnl": 4.377215923077511
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 22.01858466897999,
+      "entry_ms": 1780963200000,
+      "signal_ms": 1780962300000,
+      "entry_price": 42.944747265000004,
+      "entry_fee": 0.055046461672449976,
+      "stop_price": 49.42589368758079,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.15091825742010884,
+      "peak_price": 41.23,
+      "trailing": true,
+      "trailing_distance": 0.15091825742010884,
+      "exit_signal_ms": 1781567100000,
+      "pair": "LTC/USD",
+      "exit_ms": 1781568000000,
+      "exit_price": 45.820079305,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.4742371536965388,
+      "exit_fee": 0.05873205455669133,
+      "carry": 0.046239027804857974,
+      "pnl": -1.634254697730538
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 16.770589088973722,
+      "entry_ms": 1780963200000,
+      "signal_ms": 1780962300000,
+      "entry_price": 6.7541645745,
+      "entry_fee": 0.041926472722434306,
+      "stop_price": 8.104997489399999,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 6.3,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1781567100000,
+      "pair": "AVAX/USD",
+      "exit_ms": 1781568000000,
+      "exit_price": 6.848969877749998,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.23540154621994216,
+      "exit_fee": 0.042514976587984164,
+      "carry": 0.03521823708684481,
+      "pnl": -0.3550612326172054
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 16.48536471680667,
+      "entry_ms": 1781568000000,
+      "signal_ms": 1781567100000,
+      "entry_price": 0.09005739242499998,
+      "entry_fee": 0.04121341179201668,
+      "stop_price": 0.0984,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.123,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "XPL/USD",
+      "exit_ms": 1781798399999,
+      "exit_price": 0.0983016,
+      "reason": "STOP",
+      "ambiguous_bar": false,
+      "gross_pnl": 1.5091350639329348,
+      "exit_fee": 0.044986249451849016,
+      "carry": 0,
+      "pnl": 1.4229354026890693
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 19.589315636301148,
+      "entry_ms": 1781568000000,
+      "signal_ms": 1781567100000,
+      "entry_price": 0.1654892239,
+      "entry_fee": 0.048973289090752874,
+      "stop_price": 0.13777720069862262,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.167455152355557,
+      "peak_price": 0.16692,
+      "trailing": true,
+      "trailing_distance": 0.167455152355557,
+      "exit_signal_ms": 1782171900000,
+      "pair": "CC/USD",
+      "exit_ms": 1782172800000,
+      "exit_price": 0.15189383412,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -1.60931555132493,
+      "exit_fee": 0.04495000021244055,
+      "carry": 0,
+      "pnl": -1.7032388406281234
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 16.465092142072976,
+      "entry_ms": 1781568000000,
+      "signal_ms": 1781567100000,
+      "entry_price": 0.001553278167,
+      "entry_fee": 0.04116273035518244,
+      "stop_price": 0.0018639338003999999,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.00134,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1782171900000,
+      "pair": "PUMP/USD",
+      "exit_ms": 1782172800000,
+      "exit_price": 0.0014575473412499998,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": 1.0147679277915747,
+      "exit_fee": 0.038625810535703506,
+      "carry": 0.034576693498353246,
+      "pnl": 0.9004026934023355
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 16.5993237755358,
+      "entry_ms": 1782172800000,
+      "signal_ms": 1782171900000,
+      "entry_price": 196.96485548249998,
+      "entry_fee": 0.041498309438839504,
+      "stop_price": 236.35782657899998,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 180.91,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "exit_signal_ms": 1782776700000,
+      "pair": "BCH/USD",
+      "exit_ms": 1782777600000,
+      "exit_price": 201.1415330925,
+      "reason": "WEEKLY_RANK_EXIT",
+      "ambiguous_bar": false,
+      "gross_pnl": -0.35199185044755943,
+      "exit_fee": 0.042378289064958406,
+      "carry": 0.034858579928625184,
+      "pnl": -0.47072702887998247
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 23.570089541351273,
+      "entry_ms": 1782172800000,
+      "signal_ms": 1782171900000,
+      "entry_price": 0.08222212092465,
+      "entry_fee": 0.05892522385337818,
+      "stop_price": 0.07901398741094214,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.138600625268455,
+      "peak_price": 0.0693957,
+      "trailing": true,
+      "trailing_distance": 0.138600625268455,
+      "pair": "DOGE/USD",
+      "exit_ms": 1782863999999,
+      "exit_price": 0.07212815767657499,
+      "reason": "WINDOW_END",
+      "ambiguous_bar": false,
+      "gross_pnl": 2.8935718868437807,
+      "exit_fee": 0.05169129413626873,
+      "carry": 0.05656821481740246,
+      "pnl": 2.7263871540367313
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": -1,
+      "stake": 16.871727709215666,
+      "entry_ms": 1782777600000,
+      "signal_ms": 1782776700000,
+      "entry_price": 0.145297393164,
+      "entry_fee": 0.04217931927303917,
+      "stop_price": 0.1743568717968,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.141911,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "ADA/USD",
+      "exit_ms": 1782863999999,
+      "exit_price": 0.14443542838725,
+      "reason": "WINDOW_END",
+      "ambiguous_bar": false,
+      "gross_pnl": 0.1000901302602607,
+      "exit_fee": 0.041929093947388515,
+      "carry": 0.005061518254182312,
+      "pnl": 0.010920198785650707
+    },
+    {
+      "family": "weekly_leader_28d",
+      "side": 1,
+      "stake": 16.850907267493156,
+      "entry_ms": 1782777600000,
+      "signal_ms": 1782776700000,
+      "entry_price": 0.10498347859999999,
+      "entry_fee": 0.04212726816873289,
+      "stop_price": 0.08398678288,
+      "target_price": null,
+      "hold_bars": 5376,
+      "initial_stop": 0.2,
+      "peak_price": 0.1052,
+      "trailing": true,
+      "trailing_distance": 0.2,
+      "pair": "XPL/USD",
+      "exit_ms": 1782863999999,
+      "exit_price": 0.08644851494999999,
+      "reason": "WINDOW_END",
+      "ambiguous_bar": false,
+      "gross_pnl": -2.9750486251510684,
+      "exit_fee": 0.03468964660585522,
+      "carry": 0,
+      "pnl": -3.0518655399256565
+    }
+  ],
+  "equity_curve": [
+    {
+      "ts": 1772409600000,
+      "equity": 100.0
+    },
+    {
+      "ts": 1772496000000,
+      "equity": 100.0
+    },
+    {
+      "ts": 1772582400000,
+      "equity": 100.03749815801818
+    },
+    {
+      "ts": 1772668800000,
+      "equity": 98.44793322807622
+    },
+    {
+      "ts": 1772755200000,
+      "equity": 99.36358593309427
+    },
+    {
+      "ts": 1772841600000,
+      "equity": 100.12371257519911
+    },
+    {
+      "ts": 1772928000000,
+      "equity": 100.66792778780349
+    },
+    {
+      "ts": 1773014400000,
+      "equity": 101.18552836788366
+    },
+    {
+      "ts": 1773100800000,
+      "equity": 100.80607312535068
+    },
+    {
+      "ts": 1773187200000,
+      "equity": 100.3960761084268
+    },
+    {
+      "ts": 1773273600000,
+      "equity": 99.86909756783467
+    },
+    {
+      "ts": 1773360000000,
+      "equity": 101.62406960167138
+    },
+    {
+      "ts": 1773446400000,
+      "equity": 102.22065708175181
+    },
+    {
+      "ts": 1773532800000,
+      "equity": 103.10417445688029
+    },
+    {
+      "ts": 1773619200000,
+      "equity": 105.5740335608946
+    },
+    {
+      "ts": 1773705600000,
+      "equity": 104.61672955113309
+    },
+    {
+      "ts": 1773792000000,
+      "equity": 103.61304243336333
+    },
+    {
+      "ts": 1773878400000,
+      "equity": 103.7661459744767
+    },
+    {
+      "ts": 1773964800000,
+      "equity": 105.01467741825637
+    },
+    {
+      "ts": 1774051200000,
+      "equity": 104.07869046217601
+    },
+    {
+      "ts": 1774137600000,
+      "equity": 103.87672570178464
+    },
+    {
+      "ts": 1774224000000,
+      "equity": 103.28594561291244
+    },
+    {
+      "ts": 1774310400000,
+      "equity": 104.69075360963281
+    },
+    {
+      "ts": 1774396800000,
+      "equity": 108.30757626671605
+    },
+    {
+      "ts": 1774483200000,
+      "equity": 109.62369374504841
+    },
+    {
+      "ts": 1774569600000,
+      "equity": 108.38317809899925
+    },
+    {
+      "ts": 1774656000000,
+      "equity": 107.32765976964639
+    },
+    {
+      "ts": 1774742400000,
+      "equity": 103.82892498053491
+    },
+    {
+      "ts": 1774828800000,
+      "equity": 104.92170893849519
+    },
+    {
+      "ts": 1774915200000,
+      "equity": 106.6380104020527
+    },
+    {
+      "ts": 1775001600000,
+      "equity": 105.2502553084988
+    },
+    {
+      "ts": 1775088000000,
+      "equity": 105.0636883553673
+    },
+    {
+      "ts": 1775174400000,
+      "equity": 104.83540186171297
+    },
+    {
+      "ts": 1775260800000,
+      "equity": 103.70865572665612
+    },
+    {
+      "ts": 1775347200000,
+      "equity": 105.00435979381562
+    },
+    {
+      "ts": 1775433600000,
+      "equity": 104.74703577016524
+    },
+    {
+      "ts": 1775520000000,
+      "equity": 105.47337815092855
+    },
+    {
+      "ts": 1775606400000,
+      "equity": 107.16814579092802
+    },
+    {
+      "ts": 1775692800000,
+      "equity": 106.82284569319313
+    },
+    {
+      "ts": 1775779200000,
+      "equity": 106.17694789845602
+    },
+    {
+      "ts": 1775865600000,
+      "equity": 103.28638322011405
+    },
+    {
+      "ts": 1775952000000,
+      "equity": 103.42667393130347
+    },
+    {
+      "ts": 1776038400000,
+      "equity": 103.31779527628588
+    },
+    {
+      "ts": 1776124800000,
+      "equity": 103.09382874239851
+    },
+    {
+      "ts": 1776211200000,
+      "equity": 102.84261750952624
+    },
+    {
+      "ts": 1776297600000,
+      "equity": 103.00789088093548
+    },
+    {
+      "ts": 1776384000000,
+      "equity": 103.99056476977195
+    },
+    {
+      "ts": 1776470400000,
+      "equity": 103.15720698648964
+    },
+    {
+      "ts": 1776556800000,
+      "equity": 101.51217627809558
+    },
+    {
+      "ts": 1776643200000,
+      "equity": 100.69667015389693
+    },
+    {
+      "ts": 1776729600000,
+      "equity": 101.52282330978717
+    },
+    {
+      "ts": 1776816000000,
+      "equity": 100.06162423603132
+    },
+    {
+      "ts": 1776902400000,
+      "equity": 100.82924337980971
+    },
+    {
+      "ts": 1776988800000,
+      "equity": 100.67465333690934
+    },
+    {
+      "ts": 1777075200000,
+      "equity": 100.59242543919517
+    },
+    {
+      "ts": 1777161600000,
+      "equity": 100.60963749228104
+    },
+    {
+      "ts": 1777248000000,
+      "equity": 100.83455113722685
+    },
+    {
+      "ts": 1777334400000,
+      "equity": 100.05019533325934
+    },
+    {
+      "ts": 1777420800000,
+      "equity": 98.76269975478317
+    },
+    {
+      "ts": 1777507200000,
+      "equity": 98.17969112821415
+    },
+    {
+      "ts": 1777593600000,
+      "equity": 99.32148205139086
+    },
+    {
+      "ts": 1777680000000,
+      "equity": 101.40561905905199
+    },
+    {
+      "ts": 1777766400000,
+      "equity": 101.65635631542226
+    },
+    {
+      "ts": 1777852800000,
+      "equity": 102.65694618658374
+    },
+    {
+      "ts": 1777939200000,
+      "equity": 103.52209143222409
+    },
+    {
+      "ts": 1778025600000,
+      "equity": 108.58074161593939
+    },
+    {
+      "ts": 1778112000000,
+      "equity": 109.71668305515257
+    },
+    {
+      "ts": 1778198400000,
+      "equity": 108.98662026659902
+    },
+    {
+      "ts": 1778284800000,
+      "equity": 111.04644834479552
+    },
+    {
+      "ts": 1778371200000,
+      "equity": 110.23657367938924
+    },
+    {
+      "ts": 1778457600000,
+      "equity": 111.48557193651385
+    },
+    {
+      "ts": 1778544000000,
+      "equity": 109.6625644531361
+    },
+    {
+      "ts": 1778630400000,
+      "equity": 110.90740200761898
+    },
+    {
+      "ts": 1778716800000,
+      "equity": 107.52853981925452
+    },
+    {
+      "ts": 1778803200000,
+      "equity": 107.83868928883271
+    },
+    {
+      "ts": 1778889600000,
+      "equity": 106.96490280242492
+    },
+    {
+      "ts": 1778976000000,
+      "equity": 106.55299141186464
+    },
+    {
+      "ts": 1779062400000,
+      "equity": 106.55299141186464
+    },
+    {
+      "ts": 1779148800000,
+      "equity": 106.55299141186464
+    },
+    {
+      "ts": 1779235200000,
+      "equity": 106.97004750796957
+    },
+    {
+      "ts": 1779321600000,
+      "equity": 109.32272505802634
+    },
+    {
+      "ts": 1779408000000,
+      "equity": 108.51264008626464
+    },
+    {
+      "ts": 1779494400000,
+      "equity": 108.26515768440738
+    },
+    {
+      "ts": 1779580800000,
+      "equity": 109.27455109987122
+    },
+    {
+      "ts": 1779667200000,
+      "equity": 110.8713730167945
+    },
+    {
+      "ts": 1779753600000,
+      "equity": 110.1840425291457
+    },
+    {
+      "ts": 1779840000000,
+      "equity": 108.78276240845312
+    },
+    {
+      "ts": 1779926400000,
+      "equity": 109.41896051715013
+    },
+    {
+      "ts": 1780012800000,
+      "equity": 111.66831100001691
+    },
+    {
+      "ts": 1780099200000,
+      "equity": 111.46625514582455
+    },
+    {
+      "ts": 1780185600000,
+      "equity": 111.284527209908
+    },
+    {
+      "ts": 1780272000000,
+      "equity": 111.49384703064621
+    },
+    {
+      "ts": 1780358400000,
+      "equity": 112.0281523286818
+    },
+    {
+      "ts": 1780444800000,
+      "equity": 114.08218965310353
+    },
+    {
+      "ts": 1780531200000,
+      "equity": 116.51156506078665
+    },
+    {
+      "ts": 1780617600000,
+      "equity": 116.69427339462447
+    },
+    {
+      "ts": 1780704000000,
+      "equity": 118.35325671760583
+    },
+    {
+      "ts": 1780790400000,
+      "equity": 118.0480986958785
+    },
+    {
+      "ts": 1780876800000,
+      "equity": 115.90455072608148
+    },
+    {
+      "ts": 1780963200000,
+      "equity": 115.90455072608148
+    },
+    {
+      "ts": 1781049600000,
+      "equity": 115.89692771816705
+    },
+    {
+      "ts": 1781136000000,
+      "equity": 117.18537189091603
+    },
+    {
+      "ts": 1781222400000,
+      "equity": 116.157335175908
+    },
+    {
+      "ts": 1781308800000,
+      "equity": 115.98073734019492
+    },
+    {
+      "ts": 1781395200000,
+      "equity": 114.98634995227708
+    },
+    {
+      "ts": 1781481600000,
+      "equity": 114.2214670116034
+    },
+    {
+      "ts": 1781568000000,
+      "equity": 113.90509865927443
+    },
+    {
+      "ts": 1781654400000,
+      "equity": 113.8213015016086
+    },
+    {
+      "ts": 1781740800000,
+      "equity": 118.15125511182865
+    },
+    {
+      "ts": 1781827200000,
+      "equity": 115.57006124921557
+    },
+    {
+      "ts": 1781913600000,
+      "equity": 115.5323547053933
+    },
+    {
+      "ts": 1782000000000,
+      "equity": 114.97673437185986
+    },
+    {
+      "ts": 1782086400000,
+      "equity": 114.15678951714203
+    },
+    {
+      "ts": 1782172800000,
+      "equity": 114.54594232220339
+    },
+    {
+      "ts": 1782259200000,
+      "equity": 115.45416845291352
+    },
+    {
+      "ts": 1782345600000,
+      "equity": 116.60301545233384
+    },
+    {
+      "ts": 1782432000000,
+      "equity": 116.72395250254755
+    },
+    {
+      "ts": 1782518400000,
+      "equity": 116.10012447666277
+    },
+    {
+      "ts": 1782604800000,
+      "equity": 116.5689377978191
+    },
+    {
+      "ts": 1782691200000,
+      "equity": 117.30993385306034
+    },
+    {
+      "ts": 1782777600000,
+      "equity": 116.44418056040205
+    },
+    {
+      "ts": 1782864000000,
+      "equity": 113.75004883521378
+    }
+  ],
+  "monthly_independent_100": [
+    {
+      "month": "2026-03",
+      "partial": false,
+      "start_ms": 1772323200000,
+      "end_ms": 1775001600000,
+      "starting_balance": 100,
+      "ending_equity": 105.2502553084988,
+      "return_pct": 5.250255308498786,
+      "realized_pnl": 5.250255308498794,
+      "trades": 9,
+      "wins": 3,
+      "operating_cost_usd": 0.0,
+      "win_rate_pct": 33.333333333333336,
+      "profit_factor": 1.8775922161085867,
+      "max_drawdown_pct": 8.027851007418862,
+      "fees": 0.7190433933774845,
+      "short_carry": 0.239598030747877,
+      "pending_positions": 0,
+      "ruined": false,
+      "halted": false,
+      "max_concurrent": 3,
+      "max_reserved_notional": 50.13375439110487,
+      "max_exposure_pct": 47.88948367961026,
+      "lowest_taker_fee_pct": 0.25,
+      "ambiguous_bars": 0,
+      "peak_equity": 112.26529082321603,
+      "recorded_fill_gross_pnl": 6.208896732624176,
+      "exit_reasons": {
+        "WEEKLY_RANK_EXIT": 6,
+        "STOP": 1,
+        "WINDOW_END": 2
+      },
+      "median_hold_hours": 168.0,
+      "by_strategy": {
+        "channel_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "trend_hold_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "weekly_leader_28d": {
+          "trades": 9,
+          "pnl": 5.250255308498814
+        }
+      },
+      "diagnostics": {
+        "raw_signals": 15,
+        "opened": 9,
+        "occupied_or_capacity": 6,
+        "missing_held_candle": 82
+      }
+    },
+    {
+      "month": "2026-04",
+      "partial": false,
+      "start_ms": 1775001600000,
+      "end_ms": 1777593600000,
+      "starting_balance": 100,
+      "ending_equity": 93.3935972607134,
+      "return_pct": -6.606402739286599,
+      "realized_pnl": -6.606402739286594,
+      "trades": 7,
+      "wins": 2,
+      "operating_cost_usd": 0.0,
+      "win_rate_pct": 28.571428571428573,
+      "profit_factor": 0.12929923583694042,
+      "max_drawdown_pct": 11.49853208168814,
+      "fees": 0.4959666481187076,
+      "short_carry": 0.03109405617614054,
+      "pending_positions": 0,
+      "ruined": false,
+      "halted": false,
+      "max_concurrent": 2,
+      "max_reserved_notional": 32.132681714391474,
+      "max_exposure_pct": 33.42875335559087,
+      "lowest_taker_fee_pct": 0.25,
+      "ambiguous_bars": 0,
+      "peak_equity": 103.36389205668942,
+      "recorded_fill_gross_pnl": -6.079342034991738,
+      "exit_reasons": {
+        "STOP": 1,
+        "WEEKLY_RANK_EXIT": 3,
+        "GAP_STOP": 1,
+        "WINDOW_END": 2
+      },
+      "median_hold_hours": 168.0,
+      "by_strategy": {
+        "channel_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "trend_hold_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "weekly_leader_28d": {
+          "trades": 7,
+          "pnl": -6.606402739286587
+        }
+      },
+      "diagnostics": {
+        "raw_signals": 15,
+        "opened": 7,
+        "occupied_or_capacity": 8,
+        "missing_held_candle": 9
+      }
+    },
+    {
+      "month": "2026-05",
+      "partial": false,
+      "start_ms": 1777593600000,
+      "end_ms": 1780272000000,
+      "starting_balance": 100,
+      "ending_equity": 100.12035221953451,
+      "return_pct": 0.12035221953450304,
+      "realized_pnl": 0.12035221953451014,
+      "trades": 6,
+      "wins": 2,
+      "operating_cost_usd": 0.0,
+      "win_rate_pct": 33.333333333333336,
+      "profit_factor": 1.0312845822143912,
+      "max_drawdown_pct": 7.444172363839707,
+      "fees": 0.5849159259432368,
+      "short_carry": 0.0809497277347538,
+      "pending_positions": 0,
+      "ruined": false,
+      "halted": false,
+      "max_concurrent": 3,
+      "max_reserved_notional": 60.993911866849984,
+      "max_exposure_pct": 60.1149870641535,
+      "lowest_taker_fee_pct": 0.25,
+      "ambiguous_bars": 0,
+      "peak_equity": 103.41804616171319,
+      "recorded_fill_gross_pnl": 0.7862178732124957,
+      "exit_reasons": {
+        "WEEKLY_RANK_EXIT": 1,
+        "STOP": 4,
+        "WINDOW_END": 1
+      },
+      "median_hold_hours": 188.37499986111112,
+      "by_strategy": {
+        "channel_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "trend_hold_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "weekly_leader_28d": {
+          "trades": 6,
+          "pnl": 0.12035221953450517
+        }
+      },
+      "diagnostics": {
+        "raw_signals": 12,
+        "opened": 6,
+        "occupied_or_capacity": 6,
+        "missing_held_candle": 19
+      }
+    },
+    {
+      "month": "2026-06",
+      "partial": false,
+      "start_ms": 1780272000000,
+      "end_ms": 1782864000000,
+      "starting_balance": 100,
+      "ending_equity": 106.38497361615451,
+      "return_pct": 6.38497361615451,
+      "realized_pnl": 6.384973616154511,
+      "trades": 11,
+      "wins": 6,
+      "operating_cost_usd": 0.0,
+      "win_rate_pct": 54.54545454545455,
+      "profit_factor": 1.9462049253606872,
+      "max_drawdown_pct": 5.080632668532026,
+      "fees": 0.9459156422496091,
+      "short_carry": 0.27742650628671695,
+      "pending_positions": 0,
+      "ruined": false,
+      "halted": false,
+      "max_concurrent": 3,
+      "max_reserved_notional": 53.58314170995385,
+      "max_exposure_pct": 49.27505253341622,
+      "lowest_taker_fee_pct": 0.25,
+      "ambiguous_bars": 0,
+      "peak_equity": 111.83488440467214,
+      "recorded_fill_gross_pnl": 7.608315764690822,
+      "exit_reasons": {
+        "STOP": 2,
+        "WEEKLY_RANK_EXIT": 6,
+        "WINDOW_END": 3
+      },
+      "median_hold_hours": 168.0,
+      "by_strategy": {
+        "channel_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "trend_hold_28d": {
+          "trades": 0,
+          "pnl": 0
+        },
+        "weekly_leader_28d": {
+          "trades": 11,
+          "pnl": 6.384973616154495
+        }
+      },
+      "diagnostics": {
+        "raw_signals": 14,
+        "opened": 11,
+        "occupied_or_capacity": 3,
+        "missing_held_candle": 86
+      }
+    }
+  ],
+  "input_manifest": [
+    {
+      "pair": "BTC/USD",
+      "bars": 17375,
+      "sha256": "5c8f83a3f4753e2dca2f9adc13a5b33f797c287995ff33f7aebe8848a2ddffbd"
+    },
+    {
+      "pair": "ETH/USD",
+      "bars": 17375,
+      "sha256": "3adc0c6eed0f229d212a62e9360c0c634d5ded25afc9898397190fec67a38112"
+    },
+    {
+      "pair": "XRP/USD",
+      "bars": 17375,
+      "sha256": "be4d912f5b77f5f185bfaf2cf593fbd6afc92d1f6baaf4d6dc83455f375ba5a3"
+    },
+    {
+      "pair": "SOL/USD",
+      "bars": 17375,
+      "sha256": "71b06cba5aa29acbd60cc952b81770addce8648b0c334976f3b6654a7bc7e137"
+    },
+    {
+      "pair": "SUI/USD",
+      "bars": 17373,
+      "sha256": "807917345702de0959c8b114104f9e76b156596c63f253b63c7f0d1e80eb3f81"
+    },
+    {
+      "pair": "DOGE/USD",
+      "bars": 17375,
+      "sha256": "92e13acd8088d9f0ccf7a7ab3d6e62838f3b82a5c71ef9543adc450c581b25d1"
+    },
+    {
+      "pair": "ZEC/USD",
+      "bars": 17375,
+      "sha256": "7347b6349dd5acd1595737d9c66d9f1bdf9af2b7be2b5ab5600ef6cee6b43958"
+    },
+    {
+      "pair": "PEPE/USD",
+      "bars": 17375,
+      "sha256": "1910bc5f8441bdce67c056983bad6cbc183acde746884d9a448feadf80b318ad"
+    },
+    {
+      "pair": "FARTCOIN/USD",
+      "bars": 17085,
+      "sha256": "813790aba49d00efc47d9919b23f947d46cba7b4a669ee551deb9948c7a90460"
+    },
+    {
+      "pair": "ADA/USD",
+      "bars": 17375,
+      "sha256": "cbfd48876e3245b0e24e0a1a153a43d1b35cfcfb47025e0af62429d73b41f448"
+    },
+    {
+      "pair": "AVAX/USD",
+      "bars": 17354,
+      "sha256": "f31606892b9ad058055f0a4fac3177d1f2e4e43a7f0b86646f0554e2b1feb822"
+    },
+    {
+      "pair": "TAO/USD",
+      "bars": 17375,
+      "sha256": "5dae77555f23bee11f532ee63424bc6b64148df8737ec11dcef40d873b9f134f"
+    },
+    {
+      "pair": "CC/USD",
+      "bars": 17334,
+      "sha256": "187db559ba82d1b77fbc802bb917b8034ae137579f6a05e1ac315408465a23d2"
+    },
+    {
+      "pair": "LINK/USD",
+      "bars": 17375,
+      "sha256": "72c2dc027e06042c232c7cbd99daad9eb7169569b425b08423610af5786dae30"
+    },
+    {
+      "pair": "NIGHT/USD",
+      "bars": 17281,
+      "sha256": "757ad3e5af9f6038e285c5bdf02c2d77c5c635d7665683a59c1f34c524420643"
+    },
+    {
+      "pair": "WIF/USD",
+      "bars": 16532,
+      "sha256": "dd2e326723b34ed79b02f2d7b94b09f3be179d446995448ba1b813862f2e0daf"
+    },
+    {
+      "pair": "RENDER/USD",
+      "bars": 17329,
+      "sha256": "19adc0772edf428d2cc3d9b3e5115c9b4521543ae88f2b1cae730e4f4be312d5"
+    },
+    {
+      "pair": "XMR/USD",
+      "bars": 17374,
+      "sha256": "056604b924f92a08c4f6ebb2abd368d6c9560b057839f513b95e89849b9e5a99"
+    },
+    {
+      "pair": "BCH/USD",
+      "bars": 16591,
+      "sha256": "8514887a90fe024915af100ed5625abfa473fcd721abe69ce1c96908f899538d"
+    },
+    {
+      "pair": "LTC/USD",
+      "bars": 17375,
+      "sha256": "70044f1b6580cdc3fdee4ab61f1858f8395820495ed6a937969c7e405eecbae1"
+    },
+    {
+      "pair": "USELESS/USD",
+      "bars": 16596,
+      "sha256": "8c2b6db90561ae5172e0c717529fdb23582d602af4e4e16ddb04925b64420fbf"
+    },
+    {
+      "pair": "XPL/USD",
+      "bars": 16384,
+      "sha256": "d8e96834852ef972d56486e291227eef2f1ddf3299485bb24e4077ec90818956"
+    },
+    {
+      "pair": "PENGU/USD",
+      "bars": 17270,
+      "sha256": "1086412afd53effc04eba3503e031e6dac4c3b0fc2d0722cdcad7f12f05cce57"
+    },
+    {
+      "pair": "PUMP/USD",
+      "bars": 16458,
+      "sha256": "c070e754fba2ecdf07366b6b0c28f66ca2da9529b724ee9b339550f9ada082bc"
+    }
+  ],
+  "universe": {
+    "kind": "FORMATION_LIQUIDITY_UNIVERSE",
+    "formation_start_ms": 1767225600000,
+    "formation_end_ms": 1767830400000,
+    "selected": [
+      {
+        "pair": "BTC/USD",
+        "member": "XBTUSD_15.csv",
+        "median_daily_usd_volume": 133706816.46474236,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "ETH/USD",
+        "member": "ETHUSD_15.csv",
+        "median_daily_usd_volume": 60712144.75069477,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "XRP/USD",
+        "member": "XRPUSD_15.csv",
+        "median_daily_usd_volume": 43539664.23976956,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "SOL/USD",
+        "member": "SOLUSD_15.csv",
+        "median_daily_usd_volume": 26457059.15207952,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "SUI/USD",
+        "member": "SUIUSD_15.csv",
+        "median_daily_usd_volume": 14533140.433316268,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "DOGE/USD",
+        "member": "XDGUSD_15.csv",
+        "median_daily_usd_volume": 14251907.426943155,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "ZEC/USD",
+        "member": "ZECUSD_15.csv",
+        "median_daily_usd_volume": 12077415.43304795,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "PEPE/USD",
+        "member": "PEPEUSD_15.csv",
+        "median_daily_usd_volume": 8276830.068327091,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "FARTCOIN/USD",
+        "member": "FARTCOINUSD_15.csv",
+        "median_daily_usd_volume": 6603951.015607874,
+        "formation_bars": 671,
+        "active_bars": 671,
+        "coverage": 0.9985119047619048
+      },
+      {
+        "pair": "ADA/USD",
+        "member": "ADAUSD_15.csv",
+        "median_daily_usd_volume": 6022977.910100499,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "AVAX/USD",
+        "member": "AVAXUSD_15.csv",
+        "median_daily_usd_volume": 4083680.374834031,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "TAO/USD",
+        "member": "TAOUSD_15.csv",
+        "median_daily_usd_volume": 3972505.7734256,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "CC/USD",
+        "member": "CCUSD_15.csv",
+        "median_daily_usd_volume": 3949353.16332507,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "LINK/USD",
+        "member": "LINKUSD_15.csv",
+        "median_daily_usd_volume": 3600910.3817022145,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "NIGHT/USD",
+        "member": "NIGHTUSD_15.csv",
+        "median_daily_usd_volume": 3329618.899461637,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "WIF/USD",
+        "member": "WIFUSD_15.csv",
+        "median_daily_usd_volume": 3189756.104688597,
+        "formation_bars": 664,
+        "active_bars": 664,
+        "coverage": 0.9880952380952381
+      },
+      {
+        "pair": "RENDER/USD",
+        "member": "RENDERUSD_15.csv",
+        "median_daily_usd_volume": 2989072.995681,
+        "formation_bars": 670,
+        "active_bars": 670,
+        "coverage": 0.9970238095238095
+      },
+      {
+        "pair": "XMR/USD",
+        "member": "XMRUSD_15.csv",
+        "median_daily_usd_volume": 2748099.432837974,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "BCH/USD",
+        "member": "BCHUSD_15.csv",
+        "median_daily_usd_volume": 2502867.2618094366,
+        "formation_bars": 665,
+        "active_bars": 665,
+        "coverage": 0.9895833333333334
+      },
+      {
+        "pair": "LTC/USD",
+        "member": "LTCUSD_15.csv",
+        "median_daily_usd_volume": 2250106.5232323147,
+        "formation_bars": 672,
+        "active_bars": 672,
+        "coverage": 1.0
+      },
+      {
+        "pair": "USELESS/USD",
+        "member": "USELESSUSD_15.csv",
+        "median_daily_usd_volume": 2099479.018381434,
+        "formation_bars": 668,
+        "active_bars": 668,
+        "coverage": 0.9940476190476191
+      },
+      {
+        "pair": "XPL/USD",
+        "member": "XPLUSD_15.csv",
+        "median_daily_usd_volume": 2052231.317117555,
+        "formation_bars": 670,
+        "active_bars": 670,
+        "coverage": 0.9970238095238095
+      },
+      {
+        "pair": "PENGU/USD",
+        "member": "PENGUUSD_15.csv",
+        "median_daily_usd_volume": 1973243.9043030636,
+        "formation_bars": 661,
+        "active_bars": 661,
+        "coverage": 0.9836309523809523
+      },
+      {
+        "pair": "PUMP/USD",
+        "member": "PUMPUSD_15.csv",
+        "median_daily_usd_volume": 1928880.1833805835,
+        "formation_bars": 667,
+        "active_bars": 667,
+        "coverage": 0.9925595238095238
+      }
+    ],
+    "excluded": [
+      {
+        "pair": "A/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "G/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "M/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "Q/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "S/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "T/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "U/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "W/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "2/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "B2/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "B3/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ES/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FF/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "IN/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "IR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "L3/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MF/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PI/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "QI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TX/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "UP/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "US/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "YB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ACA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ACH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ACT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ACU/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ADI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ADX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AIN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AIO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AKE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AMI/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "APE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "APR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "APU/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ARC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ATH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AXS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BAL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BGB/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "BIO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BKS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BMB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BMT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BNC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BNT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BOB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BOS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BTR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BTT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "C98/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CCD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CFG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CFX/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "CHR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COW/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CQT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CTC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CVC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CVX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CXT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DAG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DBR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DMC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DRV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DYM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EDU/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ELX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ENJ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ENS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EPT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ESP/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ETC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EUL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EWT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FHE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FIS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FUN/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "FXS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GFI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GMT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GMX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GNO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GST/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GTC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GUN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HDX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HFT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HNT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HSK/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "IAG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "IMX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "INX/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "JOE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JST/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JTO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JUP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KAT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "KNC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KSM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LCX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LDO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LIT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LPT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LRC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LSK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MET/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MEW/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MIM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MIR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MLN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MNT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MOG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MYX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NIL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NMR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NOS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NOT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NPC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OGN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OMG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OMI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OOB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OPN/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "OXT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PEP/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "PHA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PRO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PTB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RAD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RAY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RBC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RED/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "REN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "REQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RLC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RLS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RPL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RSC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RSR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RVV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SBR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SCA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SGB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SKR/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SKY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SNX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SPK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SRM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SSV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "STG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "STX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUP/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SXT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SYN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TAC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TEL/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "THQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TLM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TRU/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "UAI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "UFD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "UMA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VET/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VFY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VSN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VVV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WAL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WAR/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "WBT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "WCT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WFB/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "WIN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WLD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WOO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XAN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XL1/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XMN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XNY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XYO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "YFI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "YGG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZBT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZEX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZIG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZKP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZRC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZRO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZRX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AEVO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALCH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALCX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALEO/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ALLO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ANKR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ANON/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "API3/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ARPA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ASTR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AUDX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AUSD/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "BABY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BAND/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BDXN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BEAM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BERA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BERT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BICO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BLUE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BLUR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BOBA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BREV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BRL1/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CAKE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CAMP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CARV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CASH/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "CELO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CELR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CHEX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COMP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COPM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CORN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COTI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CTSI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DEEP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DENT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DOGS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DOLO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DOVU/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "DUAL/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "DUCK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DYDX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EDGE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EGLD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ENSO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EURQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EVAA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "FIDA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FIDD/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "FLUX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FRNT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FWOG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GAIA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GAIB/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GALA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GHST/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GIGA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GLMR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GOAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GWEI/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "HOLO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HYPE/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ICNT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "IDEX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "IDOS/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "INIT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JUNO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KAVA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KEEP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KGEN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KMNO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KULA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LAVA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LCAP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LION/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LMWR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LOFI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LQTY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MASK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MEME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MERL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "METH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MINA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MIRA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MOCA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MONA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "MOVR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MSOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MXNB/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "NANO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NODE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OBOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ODOS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OPEN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ORCA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OSMO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PACK/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "PACT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "PEAQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PERP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PIPE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PLAY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PNUT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "POLS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "POND/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "POWR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PRCL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PUPS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PYTH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "QTUM/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RARE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RARI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "REKT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RIZE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RNBW/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ROBO/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ROLL/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "RUJI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RUNE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SAFE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SAGA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SAMO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SCOR/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SCRT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SENT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SNEK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SOLV/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SOMI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SOON/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SOSO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUKU/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SYND/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TAKE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TBTC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TGBP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TNSR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TRAC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TREE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TRIA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "UNFI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "USAT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "USD1/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "USDQ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VELO/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "VINE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VOOI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VTHO/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "VULT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WARD/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "WAXL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WBTC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WELL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "WMTX/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XAUT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XBTA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "XION/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XTER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZAMA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "ZETA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZEUS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZORA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "1INCH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AIXBT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALICE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALPHA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ANIME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ATLAS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AUDIO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AVAAI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AZTEC/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "BASED/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "BILLY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BLESS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BLUAI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BODEN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CHECK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CLOUD/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CMETH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CPOOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CYBER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DEGEN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "DRIFT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ETHFI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ETHPY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "EUROP/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FIGHT/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "FLOCK/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "FOLKS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FORTH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GAME2/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GRASS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HMSTR/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HONEY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KAITO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LAYER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LINEA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LSETH/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "LSSOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "METIS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MULTI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NEIRO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "OCEAN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ORDER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PARTI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "POLIS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PONKE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PRIME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PROVE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "RAILS/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "RIVER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SAUCE/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SHAPE/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SIGMA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SONIC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SPACE/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "SPELL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "STORJ/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUPER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUSHI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SWEAT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SWELL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TOKEN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "TRUST/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "USDUC/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "USUAL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VANRY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XBTPY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "XRPRL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALKIMI/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ALTHEA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "APENFT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BADGER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CHEEMS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "COOKIE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "FOREST/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "KERNEL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MANTRA/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "MORPHO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "NOBODY/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PENDLE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PORTAL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PROMPT/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PUFFER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SAHARA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "STABLE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SUNDOG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "SWARMS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "UNITAS/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "UXLINK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VELVET/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "AUCTION/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "BIGTIME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CLANKER/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ELIZAOS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ESPORTS/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "HPOS10I/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JITOSOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MELANIA/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MOODENG/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "MUBARAK/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "ZEREBRO/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GOMINING/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "GRIFFAIN/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "PEPECOIN/USD",
+        "reason": "Formation data invalid: Empty or duplicate candles; refusing to silently repair inputs"
+      },
+      {
+        "pair": "BANANAS31/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "JAILSTOOL/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "VELODROME/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      },
+      {
+        "pair": "CHILLHOUSE/USD",
+        "reason": "Formation coverage/activity/liquidity below requirement"
+      }
+    ],
+    "archives": [
+      {
+        "path": "/freqtrade/data/v4-2026q1-ohlcv/Kraken_OHLCVT_2026Q1.zip",
+        "sha256": "9e0e2d35fcacb0281951ebd5863ec118fd1c30f551b22470021ffcd8c5e49ff4"
+      },
+      {
+        "path": "/freqtrade/data/v2-quarterly-ohlcv/Kraken_OHLCVT_2026Q2.zip",
+        "sha256": "13f1c914f04c047761ea83ef4574abfc4d9e13f03297e625f3efa40e958179f8"
+      }
+    ],
+    "missing_later_members": [],
+    "min_daily_usd": 100000,
+    "limitation": "Selection uses formation data only; published-archive omissions can still introduce survivorship bias. Later missing members do not remove an asset."
+  },
+  "limitations": [
+    "Unvalidated research. Q1/Q2 have already influenced development; this is not untouched validation.",
+    "No forecast calibration gate is reused. New fixed entry/exit hypotheses are explicitly different strategies.",
+    "Long-only results are cash-funded spot approximations. Synthetic shorts are separate experiments, not executable spot shorts.",
+    "Synthetic short carry is a 0.03%/day assumption; actual borrow, margin availability, funding and liquidation are not modeled.",
+    "Alpaca rate sensitivity uses Kraken data and simplified cash-fee accounting, not Alpaca venue or asset eligibility evidence.",
+    "Kraken archive intervals without trades are omitted. Closed daily OHLCV aggregates observed trades; a wholly absent day resets indicators. No synthetic execution quotes are added.",
+    "Daily rankings use only previously closed data; hold-rank buffers reduce forced turnover, but stops and exits still incur costs.",
+    "No account or per-trade profit target. Stops, trend exits, 28-day time exits and drawdown triggers can still realize losses.",
+    "Higher equity increases stake and capacity through the shared engine; it does not manufacture additional signals.",
+    "Trigger/extrema fills remain intrabar approximations, with gap and missing-data risks. No broker orders or activation."
+  ],
+  "strategy_sha256": "5dff73cb21eb78903b1d39af9c668863feccbc393ce3735cb6424eccea87bdc2",
+  "runner_sha256": "28051123a00d646fef62bc9b498b61717071f451085d08aca1231999e772caaf",
+  "accounting_sha256": "5029c534d3e80e2eafa76402f1e1049d26bb345fb44db636a81bcdb6edffbb7e"
+}

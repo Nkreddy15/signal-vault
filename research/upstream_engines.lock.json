@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "captured_utc": "2026-10-02",
+  "purpose": "Pinned upstream research/execution engines considered by Signal Vault Phase 162. This file is metadata only; it does not vendor or execute third-party code.",
+  "engines": [
+    {
+      "name": "freqtrade",
+      "repository": "freqtrade/freqtrade",
+      "commit": "f2ec745c785e1270bbf95076ffa64aa8f9667e0c",
+      "license": "GPL-3.0",
+      "roles": ["crypto_backtesting", "freqai_ml_research", "dry_run_execution"]
+    },
+    {
+      "name": "nautilus_trader",
+      "repository": "nautechsystems/nautilus_trader",
+      "commit": "224f599df710ecca2b9f4757ce07a06a86b3db70",
+      "license": "LGPL-3.0",
+      "roles": ["multi_asset_core_candidate", "simultaneous_strategies", "event_driven_execution"]
+    },
+    {
+      "name": "finrl_trading",
+      "repository": "AI4Finance-Foundation/FinRL-Trading",
+      "commit": "4409abe925c904e570be78ebfb5e77ac3491dff8",
+      "license_review_required": true,
+      "roles": ["ml_stock_selection", "drl_research", "portfolio_allocation"]
+    },
+    {
+      "name": "hummingbot",
+      "repository": "hummingbot/hummingbot",
+      "commit": "9af100d6822da7d2d0291a906c730ef172284ee2",
+      "license": "Apache-2.0",
+      "roles": ["crypto_market_making_research", "exchange_connector_reference"]
+    },
+    {
+      "name": "jesse",
+      "repository": "jesse-ai/jesse",
+      "commit": "417f8765225e3bfc12043d4b712f19fe15a3c078",
+      "license": "MIT",
+      "roles": ["crypto_long_short_research", "multi_timeframe_research", "ml_significance_monte_carlo"]
+    }
+  ],
+  "execution_policy": {
+    "auto_install": false,
+    "auto_live_trading": false,
+    "paper_or_offline_first": true,
+    "license_review_before_vendoring": true
+  }
+}

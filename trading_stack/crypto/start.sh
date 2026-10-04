@@ -7,43 +7,65 @@ set -euo pipefail
 : "${FREQTRADE__API_SERVER__WS_TOKEN:?FreqUI websocket token required}"
 
 PERSIST_DIR="${PERSIST_DIR:-/freqtrade/data}"
-mkdir -p "$PERSIST_DIR/marketdata" /freqtrade/user_data/strategies
+mkdir -p "$PERSIST_DIR" /freqtrade/user_data/strategies
 
-python - <<'PY'
-import pathlib
-import urllib.request
-url = "https://raw.githubusercontent.com/freqtrade/freqtrade-strategies/f3340ce11f5bdf62f598522e64d1f5638eaa13f5/user_data/strategies/Strategy001.py"
-dst = pathlib.Path("/freqtrade/user_data/strategies/Strategy001.py")
-if not dst.exists():
-    urllib.request.urlretrieve(url, dst)
-PY
+case "${FREQTRADE__DRY_RUN:-true}" in
+  false|False|FALSE|0|no|No|NO)
+    echo "Refusing to start: Signal Vault execution harness is PAPER/dry-run only." >&2
+    exit 2
+    ;;
+esac
 
-if [[ ! -f "$PERSIST_DIR/bootstrap-v1.done" ]]; then
-  echo "Downloading 30 days of Kraken spot data for the configured six-pair universe..."
-  freqtrade download-data \
-    --config /freqtrade/user_data/config.json \
-    --datadir "$PERSIST_DIR/marketdata" \
-    --days 30 \
-    --timeframes 5m
-
-  echo "Running one bootstrap backtest before dry-run..."
-  set +e
-  freqtrade backtesting \
-    --config /freqtrade/user_data/config.json \
-    --datadir "$PERSIST_DIR/marketdata" \
-    --strategy Strategy001 \
-    --export trades \
-    --export-filename "$PERSIST_DIR/bootstrap-backtest.json" \
-    > "$PERSIST_DIR/bootstrap-backtest.log" 2>&1
-  code=$?
-  set -e
-  echo "$code" > "$PERSIST_DIR/bootstrap-backtest-exit-code.txt"
-  touch "$PERSIST_DIR/bootstrap-v1.done"
+if [[ -n "${FREQTRADE__EXCHANGE__KEY:-}" || -n "${FREQTRADE__EXCHANGE__SECRET:-}" ]]; then
+  echo "Refusing to start: exchange credentials are not accepted by this PAPER-only harness." >&2
+  exit 2
 fi
 
-DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/tradesv3.sqlite}"
+python - <<'PY'
+import json
+from pathlib import Path
+
+cfg = json.loads(Path("/freqtrade/user_data/config.json").read_text())
+if cfg.get("dry_run") is not True:
+    raise SystemExit("Refusing to start: config.json must keep dry_run=true")
+exchange = cfg.get("exchange") or {}
+if exchange.get("key") or exchange.get("secret"):
+    raise SystemExit("Refusing to start: PAPER-only config must not contain exchange credentials")
+PY
+
+STRATEGY="${SIGNAL_VAULT_CRYPTO_STRATEGY:-SignalVaultPaperExecutionV1}"
+
+case "$STRATEGY" in
+  SignalVaultPaperExecutionV1)
+    DEFAULT_DB="signal-vault-execution-paper-v1.sqlite"
+    DESCRIPTION="V1 high-activity execution harness: 5m, six-pair universe"
+    ;;
+  SignalVaultPaperExecutionV2)
+    DEFAULT_DB="signal-vault-execution-paper-v2.sqlite"
+    DESCRIPTION="V2 cost-aware regime strategy: 15m, six-pair universe"
+    ;;
+  SignalVaultPaperEMA12x26V1)
+    DEFAULT_DB="signal-vault-ema12x26-paper-v1.sqlite"
+    DESCRIPTION="EMA 12x26 research adapter: 1h, six-pair universe"
+    ;;
+  *)
+    echo "Refusing to start: unsupported PAPER strategy '$STRATEGY'." >&2
+    exit 2
+    ;;
+esac
+
+DB_URL="${FREQTRADE_DB_URL:-sqlite:///$PERSIST_DIR/$DEFAULT_DB}"
+
+if [[ "$STRATEGY" == "SignalVaultPaperExecutionV2" && "$DB_URL" == *"paper-v1.sqlite"* ]]; then
+  echo "Refusing to start V2 against the V1 trade database." >&2
+  echo "Unset FREQTRADE_DB_URL or point it to a dedicated V2 PAPER database." >&2
+  exit 2
+fi
+
+echo "Starting Signal Vault PAPER strategy: $DESCRIPTION."
+echo "Purpose: collect PAPER evidence. No profitability claim and no live execution."
 
 exec freqtrade trade \
   --config /freqtrade/user_data/config.json \
-  --strategy Strategy001 \
+  --strategy "$STRATEGY" \
   --db-url "$DB_URL"
