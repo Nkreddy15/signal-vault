@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -22,6 +23,55 @@ def blocks(script):
 
 
 class LauncherTests(unittest.TestCase):
+    def resume_fixture(self,root,halt='USER_STOP',expired=False,held=False,enabled=True):
+        sys.path.insert(0,str(ROOT/'crypto'))
+        import paper_v11 as runtime
+        now=int(time.time()*1000)
+        ledger=runtime.Ledger(root/'ledger.sqlite3',now-(3*runtime.m.DAY if expired else 10000))
+        ledger.state.update(balance=498.75,entries=3,boundary=now//runtime.m.DAY*runtime.m.DAY-runtime.m.DAY,
+                            halt_reason=halt,status=halt or 'STOPPED')
+        if held:ledger.state['positions']={'BTC/USD':{'stake_amount':15}}
+        ledger.commit();ledger.db.close()
+        (root/'stop').write_text('user stop')
+        block=blocks((ROOT/'start_v11_500_mac.sh').read_text())[0]
+        block=block.replace('/freqtrade/user_data',str(ROOT/'crypto')).replace('/freqtrade/data/paper-v11-500/ledger.sqlite3',str(root/'ledger.sqlite3'))
+        scope={}
+        try:
+            with patch.object(sys,'argv',['-',str(int(enabled))]),contextlib.redirect_stdout(io.StringIO()):
+                exec(block,scope)
+        finally:
+            if 'lock' in scope:scope['lock'].close()
+
+    def test_manual_resume_preserves_balance_boundary_history_and_deadline(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);self.resume_fixture(root)
+            with sqlite3.connect(root/'ledger.sqlite3') as db:
+                s=json.loads(db.execute('SELECT payload FROM state WHERE id=1').fetchone()[0])
+                event=json.loads(db.execute('SELECT payload FROM events').fetchone()[0])
+            self.assertEqual(s['balance'],498.75);self.assertEqual(s['entries'],3)
+            self.assertIsNone(s['halt_reason']);self.assertFalse((root/'stop').exists())
+            self.assertEqual(event['deadline_ms'],s['deadline_ms'])
+            self.assertEqual(event['kind'],'USER_REQUESTED_RESUME')
+            backups=list(root.glob('ledger-before-resume-*.sqlite3'));self.assertEqual(len(backups),1)
+            with sqlite3.connect(backups[0]) as db:
+                before=json.loads(db.execute('SELECT payload FROM state WHERE id=1').fetchone()[0])
+            for field in ('started_ms','deadline_ms','balance','boundary','entries','closed','fills','next_id'):
+                self.assertEqual(s[field],before[field])
+            self.assertEqual(before['halt_reason'],'USER_STOP')
+
+    def test_resume_refuses_risk_halts_expired_trials_and_pending_positions(self):
+        for args,message in [({'halt':'SESSION_LOSS_LIMIT'},'risk/session'),({'expired':True},'deadline has passed'),
+                             ({'held':True},'unresolved positions'),({'enabled':False},'is halted')]:
+            with self.subTest(args=args),tempfile.TemporaryDirectory() as folder:
+                root=Path(folder)
+                with self.assertRaises(SystemExit) as error:self.resume_fixture(root,**args)
+                self.assertIn(message,str(error.exception))
+                self.assertTrue((root/'stop').exists())
+                with sqlite3.connect(root/'ledger.sqlite3') as db:
+                    s=json.loads(db.execute('SELECT payload FROM state WHERE id=1').fetchone()[0])
+                    count=db.execute('SELECT count(*) FROM events').fetchone()[0]
+                self.assertEqual(s['balance'],498.75);self.assertEqual(count,0)
+
     def test_both_stdin_imports_work_from_outside_the_source_directory(self):
         script=(ROOT/'start_v11_500_mac.sh').read_text();tested=0
         for block in blocks(script):

@@ -2,26 +2,53 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
+RESUME_USER_STOP=0
+case "${1:-}" in
+  '') ;;
+  --resume-user-stop) RESUME_USER_STOP=1 ;;
+  *) echo 'Usage: bash trading_stack/start_v11_500_mac.sh [--resume-user-stop]' >&2; exit 2 ;;
+esac
+[[ $# -le 1 ]] || { echo 'Unexpected extra arguments.' >&2; exit 2; }
 [[ -f .env ]] || { echo 'Missing trading_stack/.env from the existing installation.' >&2; exit 2; }
 docker info >/dev/null
 dc() { docker compose --env-file .env --profile '*' "$@"; }
 echo 'Building the isolated $500 / 48-hour failed-rebound paper trial...'
 dc build crypto crypto_v11 dashboard
-echo 'Preflight public daily history and bid/ask; no paper account created yet...'
+echo 'Preflight public daily history and bid/ask; no account balance or deadline changed...'
 dc run --rm -T --no-deps crypto_v11 --preflight
-dc run --rm -T --no-deps --entrypoint python crypto_v11 - <<'PY'
-import json, sqlite3, sys, time
+if [[ "$RESUME_USER_STOP" == 1 ]]; then dc stop crypto_v11; fi
+dc run --rm -T --no-deps --entrypoint python crypto_v11 - "$RESUME_USER_STOP" <<'PY'
+import fcntl, json, sqlite3, sys, time
 from pathlib import Path
 sys.path.insert(0, '/freqtrade/user_data')
 from paper_v11 import VERSION,SPEC
 p=Path('/freqtrade/data/paper-v11-500/ledger.sqlite3')
 if p.exists():
+    lock=(p.parent/'runtime.lock').open('a')
+    if sys.argv[1]=='1':fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     with sqlite3.connect(f'file:{p}?mode=ro',uri=True) as db:
         row=db.execute('SELECT payload FROM state WHERE id=1').fetchone()
     if not row:raise SystemExit('Existing V11 ledger is incomplete; no reset performed.')
     s=json.loads(row[0])
     if s.get('version')!=VERSION or s.get('spec')!=SPEC:raise SystemExit('Existing V11 specification differs; no reset performed.')
-    if s['deadline_ms']<=time.time()*1000 or s.get('halt_reason'):raise SystemExit('This V11 trial has ended. Its $500 balance and history will not be reset. Review status_v11_500_mac.sh.')
+    now=int(time.time()*1000)
+    if s['deadline_ms']<=now:raise SystemExit('This V11 deadline has passed. Balance and history will not be reset.')
+    if sys.argv[1]=='1':
+        if s.get('halt_reason') not in (None,'USER_STOP'):
+            raise SystemExit('Only a manual user stop can be resumed; risk/session halts are retained.')
+        markers=[p.parent/'stop',p.parent/'drain']
+        if s.get('halt_reason')=='USER_STOP' or any(marker.exists() for marker in markers) or s.get('drain'):
+            if s.get('positions'):raise SystemExit('Manual stop/drain has unresolved positions. Resume refused; let them close first.')
+            backup=p.parent/f'ledger-before-resume-{now}.sqlite3'
+            with sqlite3.connect(f'file:{p}?mode=ro',uri=True) as source,sqlite3.connect(backup) as dest:source.backup(dest)
+            event=dict(kind='USER_REQUESTED_RESUME',observed_ms=now,previous_halt=s.get('halt_reason'),deadline_ms=s['deadline_ms'])
+            s.update(halt_reason=None,status='STOPPED',drain=False)
+            with sqlite3.connect(p) as db:
+                db.execute('UPDATE state SET payload=? WHERE id=1',(json.dumps(s,allow_nan=False),))
+                db.execute('INSERT INTO events(payload) VALUES(?)',(json.dumps(event,allow_nan=False),))
+            for marker in markers:marker.unlink(missing_ok=True)
+            print('Manual stop released. Backup retained; original balance, signal boundary and deadline preserved.')
+    if s.get('halt_reason'):raise SystemExit('This V11 trial is halted. Its balance and history will not be reset. Review status_v11_500_mac.sh.')
     print('Resume original V11 balance, positions and deadline.')
 else:print('New independent $500 simulated account, 48 hours from first runtime start.')
 PY
@@ -137,7 +164,7 @@ if [[ -x /usr/bin/caffeinate ]]; then
     chmod 600 .caffeinate.pid
   fi
 fi
-echo 'VERIFIED: independent $500 simulated trial active for 48 hours. No deposits or broker orders.'
+echo 'VERIFIED: independent $500 simulated trial active. Original 48-hour deadline preserved on resume. No deposits or broker orders.'
 echo 'Daily signals at 00:00 UTC; initial historical signals are skipped. No forced trades.'
 echo 'Mac and Docker must remain running. Status: bash trading_stack/status_v11_500_mac.sh'
 echo 'Dashboard: http://127.0.0.1:8090'

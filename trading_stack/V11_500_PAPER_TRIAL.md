@@ -58,3 +58,19 @@ Primary references: [Kraken OHLC endpoint](https://docs.kraken.com/api/docs/rest
 The user's first Mac run confirms successful Docker image builds and fresh daily history/bid-ask preflight for all 15 assets. The next inline Python check failed with `ModuleNotFoundError: paper_v11`: Python launched from stdin did not include `/freqtrade/user_data` on its module search path. This occurred before account creation, old-entry pause, cutover and dashboard restart. The subsequent status 404 came from the older dashboard image still running.
 
 Both inline V11 imports now explicitly set the image source path first. Two launcher regression checks execute those actual import prefixes from an unrelated working directory with the project absent from `PYTHONPATH`, parse all inline Python, and exercise the old dashboard's 404 response. That 404 now explains the missing V11 deployment without a traceback. Rerun the original launcher after pulling the fix; no ledger deletion or account reset is needed. Full Mac startup still requires the fresh-cycle/dashboard verification printed by the launcher.
+# Restart for the night
+
+Open Docker Desktop, fetch/pull `phase-162-multimarket-reset`, then run:
+
+```bash
+bash trading_stack/start_v11_500_mac.sh --resume-user-stop
+```
+
+This explicit restart can release a manual `USER_STOP` only while the original
+trial deadline remains in the future and any stopped positions are fully
+closed. It saves a SQLite backup and records the resume event. It preserves
+the balance, trade history, signal boundary and deadline; it refuses risk
+halts and expired trials. Normal restart of an account that was merely powered
+off also works. Keep the lid open and Docker running for tonight. The launcher
+starts `caffeinate` to prevent idle sleep. Entries still require a qualifying
+new daily signal; a missed entry window is not filled retrospectively.
