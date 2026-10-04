@@ -212,7 +212,7 @@ class Store:
                     p["fills"].extend(dict(f,order_id=oid,observed_at=now,action=o["action"],time_basis="provider execution") for f in fresh)
                 else:
                     p["fills"].append(dict(order_id=oid, at=observation.get("filled_at") or now, observed_at=now,
-                        time_basis="internal simulation execution" if o["market"]=="crypto" else "provider completed order" if observation.get("filled_at") else "cumulative fill observed; exact execution time unavailable",
+                        time_basis="quote-derived simulated fill; no on-chain transaction" if o["market"]=="dex" else "internal simulation execution" if o["market"]=="crypto" else "provider completed order" if observation.get("filled_at") else "cumulative fill observed; exact execution time unavailable",
                         action=o["action"], quantity=dq, price=dv/dq, fee=df))
             if p and p["quantity"] <= 1e-9:
                 p.update(closed_at=now, exit_reason=o["reason"], exit_price=p["proceeds"]/p["bought_qty"],
@@ -262,7 +262,7 @@ def portfolio(s, now):
         mark=q["bid"] if q else p["entry_price"]
         value=p["quantity"]*mark
         rate=s["config"]["crypto_fee_fraction"] if p["market"]=="crypto" else s["config"]["stock_fee_fraction"]
-        exit_fee=math.ceil(100*.07*p["quantity"]*mark*(1-mark))/100 if p["market"]=="kalshi" else value*rate
+        exit_fee=s["config"]["dex_network_allowance_usd"] if p["market"]=="dex" else math.ceil(100*.07*p["quantity"]*mark*(1-mark))/100 if p["market"]=="kalshi" else value*rate
         market_value += value-exit_fee; exposure += value
         unrealized += p["proceeds"]+value-exit_fee-p["cost"]-p["entry_fee"]-p["exit_fee"]
     reserved=sum(o["reserve"] for o in s["orders"].values() if o["action"]=="buy" and o["status"] not in TERMINAL)

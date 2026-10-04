@@ -36,6 +36,10 @@ context.trade={...api.cloud.open_trades[0],fills:[{action:'buy',quantity:1,price
 context.rows=[{time:0,open:99,high:101,low:98,close:100,volume:1}];
 vm.runInContext('renderInspector(trade,false);drawCandles(rows,trade)',context);
 assert.match(el('candleChart').innerHTML,/data-fill-marker="buy"/);
+vm.runInContext("trade.market='dex';state.contractQuotes=[{at:50,bid:.000001,ask:.0000011},{at:100,bid:.0000012,ask:.0000013}];trade.fills=[{action:'buy',at:80,price:.0000011}];drawCandles([],trade)",context);
+assert.match(el('candleChart').innerHTML,/simulated fills/);
+assert.doesNotMatch(el('candleChart').innerHTML,/YES bid|data-contract-quote="ask"|NaN/);
+assert.match(el('candleChart').innerHTML,/data-fill-marker="buy"/);
 assert.doesNotMatch(el('candleChart').innerHTML,/data-fill-marker="sell"|NaN/);
 assert.match(el('executionMetrics').innerHTML,/Signal timestamp|Execution mode/);
 assert.match(el('orderEvidence').textContent,/filled/);

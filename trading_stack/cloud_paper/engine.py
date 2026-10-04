@@ -29,6 +29,10 @@ def load_config(path=None):
         c["strategy_pack_source_sha256"]=hashlib.sha256(Path(__file__).with_name("strategies_v2.py").read_bytes()).hexdigest()
     elif c.get("strategy_pack") is not None:
         raise ValueError("Unknown strategy pack")
+    if c.get("dex_enabled"):
+        c["discovery_source_sha256"]=hashlib.sha256(Path(__file__).with_name("discovery.py").read_bytes()).hexdigest()
+        if not 0<c["dex_order_usd"]<=10 or not c["dex_order_usd"]<=c["dex_sleeve_usd"]<=min(25,c["capital"]*.05):
+            raise ValueError("DEX simulation sleeve exceeds experimental bounds")
     return c
 
 
@@ -38,6 +42,10 @@ class Engine:
         self.crypto=crypto or Kraken(); self.stocks=stocks or Alpaca(); self.kalshi=kalshi or Kalshi()
         self.adapters={"stocks":self.stocks,"kalshi":self.kalshi}
         self.estimates=estimates or {}; self.history={}; self.history_at={}; self.quotes={}; self.blocked=set()
+        self.discovery=None
+        if self.cfg.get("dex_enabled"):
+            from .discovery import Discovery
+            self.discovery=Discovery(store,clock=clock)
 
     def state_update(self,**fields):
         with self.store.transaction():
@@ -55,7 +63,7 @@ class Engine:
         for oid,o in list(self.store.read()["orders"].items()):
             if o["status"] in TERMINAL: continue
             try:
-                if o["market"]=="crypto":
+                if o["market"] in ("crypto","dex"):
                     # An interrupted synthetic fill has no external side effect: cancel the intent.
                     self.store.order_status(oid,"canceled",self.clock())
                     continue
@@ -208,6 +216,7 @@ class Engine:
     def exits(self):
         self.risk(); s=self.store.read(); now=self.clock()
         for tid,p in list(s["positions"].items()):
+            if p["market"]=="dex": continue  # Exact-quantity quote-derived exits belong to Discovery.
             key=p["market"]+":"+p["symbol"]; q=self.quotes.get(key)
             if not q: continue
             try: validate_quote(q,now,self.cfg["max_quote_age_seconds"])
@@ -334,7 +343,21 @@ class Engine:
         self.state_update(heartbeat=now)
         self.store.apply_commands(now)
         self.recover(); self.market_data(); self.exits()
+        dex_diagnostics=[]
+        if self.discovery:
+            self.discovery.exits();self.risk()
+            if now-self.store.read().get("dex_last_scan",0)>=self.cfg["dex_scan_interval_seconds"]:
+                try:
+                    dex_diagnostics=self.discovery.scan()
+                    self.provider("dex","COLLECTING",mode="QUOTE-DERIVED INTERNAL SIMULATION",last_success=self.clock(),
+                        reason="Jupiter API key and verified RPC checks required for entries; social AI optional annotation")
+                except Exception as e:
+                    self.provider("dex","UNAVAILABLE",type(e).__name__,mode="QUOTE-DERIVED INTERNAL SIMULATION")
+                    dex_diagnostics=[dict(market="dex",pair="Discovery feed",reason=type(e).__name__,execution="BLOCKED")]
+                self.state_update(dex_last_scan=self.clock(),dex_diagnostics=dex_diagnostics)
+            else:dex_diagnostics=self.store.read().get("dex_diagnostics",[])
         candidates,diagnostics=self.candidates()
+        diagnostics+=dex_diagnostics
         for c in candidates:
             try: reason=self.enter(c)
             except Exception as e: reason="Entry blocked: "+type(e).__name__

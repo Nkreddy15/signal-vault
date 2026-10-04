@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-04T15:25:15.439144+00:00",
+  "mode": "READ-ONLY PROBE / NO LEDGER",
+  "jupiter_key_present": false,
+  "jev_key_present": false,
+  "wallet_required": false,
+  "discovery": "SUCCESS",
+  "profiles": 30,
+  "read_only_rpc": {
+    "status": "SUCCESS",
+    "slot": 453297355,
+    "owner": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+  }
+}

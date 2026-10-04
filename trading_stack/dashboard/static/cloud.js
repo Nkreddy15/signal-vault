@@ -43,7 +43,7 @@ renderSnapshot = function(d) {
   $('paperScanStats').textContent=`${c.cycles} cycles · last cycle ${shortTime(c.last_cycle)} · ${c.evidence}`;
   $('paperReleaseDiagnostics').innerHTML=c.diagnostics.map(v=>`<div><strong>${esc(v.market.toUpperCase())} · ${esc(v.pair)}</strong><span>${esc(v.reason||v.execution)}</span></div>`).join('');
   document.querySelector('.paper-release-links').innerHTML='<a href="/api/export">Export campaign</a><a href="#kalshi">Kalshi</a><a href="#system">Controls</a>';
-  $('healthGrid').innerHTML=[['Worker',c.status],['Heartbeat',shortTime(c.heartbeat)],['Crypto',c.providers.crypto?.status],['Stocks',c.providers.stocks?.status],['Kalshi',c.providers.kalshi?.status],['Last backup',c.backup_error||(c.last_backup?shortTime(c.last_backup*1000):'Pending')],['Maximum drawdown',pct(Math.max(0,...c.equity_curve.map(v=>v.drawdown)))],['Costs booked',money(p.fees)]]
+  $('healthGrid').innerHTML=[['Worker',c.status],['Heartbeat',shortTime(c.heartbeat)],['Crypto',c.providers.crypto?.status],['Stocks',c.providers.stocks?.status],['Kalshi',c.providers.kalshi?.status],...(c.providers.dex?[['New-token scanner',c.providers.dex.status]]:[]),['Last backup',c.backup_error||(c.last_backup?shortTime(c.last_backup*1000):'Pending')],['Maximum drawdown',pct(Math.max(0,...c.equity_curve.map(v=>v.drawdown)))],['Costs booked',money(p.fees)]]
     .map(([k,v])=>`<div class="health-item"><span>${esc(k)}</span><strong>${esc(v||'UNKNOWN')}</strong></div>`).join('');
   $('kalshiMode').textContent=c.providers.kalshi?.mode||'PUBLIC DATA / EXECUTION BLOCKED';
   $('kalshiStatus').textContent=c.providers.kalshi?.status||'BLOCKED';
@@ -90,19 +90,22 @@ fetchCandles = async function(t) {
     if(!response.ok)throw Error(data.error||'Market data unavailable');
     state.candles=data.candles||[];
     state.contractQuotes=data.quotes||[];
-    $('candleState').textContent=t.market==='kalshi'?`Contract price / settlement · ${t.contract?.market?.title||t.pair} · closes ${shortTime(t.contract?.market?.close_time)} · ${t.settlement?'SETTLED':'Payout pending until exchange settlement'}`:`${state.candles.length} stored ${tf} bars · hover for OHLC · markers are recorded fills; off-chart fills remain in History`;
+    $('candleState').textContent=t.market==='dex'?'Observed DEX exit quotes · simulated fill markers · no fabricated candlesticks':t.market==='kalshi'?`Contract price / settlement · ${t.contract?.market?.title||t.pair} · closes ${shortTime(t.contract?.market?.close_time)} · ${t.settlement?'SETTLED':'Payout pending until exchange settlement'}`:`${state.candles.length} stored ${tf} bars · hover for OHLC · markers are recorded fills; off-chart fills remain in History`;
     drawCandles(state.candles,t);
   }catch(e){if(seq===cloudChart.request){$('candleState').textContent=e.message;drawCandles([],t);}}
 };
 drawCandles = function(rows,t) {
-  if(t.market==='kalshi'){
+  if(t.market==='kalshi'||t.market==='dex'){
     const fills=t.fills||[],quotes=state.contractQuotes||[],times=[...fills,...quotes].map(v=>v.at);
     if(!times.length){$('candleChart').innerHTML='<text x="40" y="210" fill="#8299b0">No observed contract quotes or executions</text>';return;}
-    const first=Math.min(...times),last=Math.max(...times),x=at=>40+(at-first)/Math.max(1,last-first)*730,y=p=>370-p*320;
+    const first=Math.min(...times),last=Math.max(...times),x=at=>40+(at-first)/Math.max(1,last-first)*730;
+    const prices=[...fills.map(f=>f.price),...quotes.flatMap(q=>[q.bid,q.ask])];
+    const floor=t.market==='dex'?Math.min(...prices)*.95:0,ceiling=t.market==='dex'?Math.max(...prices)*1.05:1;
+    const y=p=>370-(p-floor)/Math.max(1e-12,ceiling-floor)*320;
     const line=field=>quotes.map(q=>`${x(q.at)},${y(q[field])}`).join(' ');
-    $('candleChart').innerHTML=['bid','ask'].map((field,i)=>`<polyline data-contract-quote="${field}" points="${line(field)}" fill="none" stroke="${i?'#8299b0':'#2ad8ff'}" stroke-width="1.5"/>`).join('')+
+    $('candleChart').innerHTML=(t.market==='dex'?['bid']:['bid','ask']).map((field,i)=>`<polyline data-contract-quote="${field}" points="${line(field)}" fill="none" stroke="${i?'#8299b0':'#2ad8ff'}" stroke-width="1.5"/>`).join('')+
       fills.map(f=>`<circle data-fill-marker="${esc(f.action)}" cx="${x(f.at)}" cy="${y(f.price)}" r="5" fill="${f.action==='buy'?'#2ce390':'#ff506c'}"><title>${esc(f.action)} ${price(f.price)} · ${esc(shortTime(f.at*1000))}</title></circle>`).join('')+
-      `<text x="20" y="20" fill="#8299b0">Observed YES bid (blue), ask (gray), executions · $0 to $1</text><text x="30" y="410" fill="#8299b0" font-size="10">${esc(shortTime(first*1000))} — ${esc(shortTime(last*1000))}</text>`;
+      `<text x="20" y="20" fill="#8299b0">${t.market==='dex'?'Observed exit quotes and simulated fills · USDC valued at $1':'Observed YES bid (blue), ask (gray), executions · $0 to $1'}</text><text x="30" y="410" fill="#8299b0" font-size="10">${esc(shortTime(first*1000))} — ${esc(shortTime(last*1000))}</text>`;
     return;
   }
   if(!rows.length){$('candleChart').innerHTML='<text x="40" y="210" fill="#8299b0">No recorded bars in this range. No chart is fabricated.</text>';return;}

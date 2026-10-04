@@ -20,7 +20,7 @@ def trade_view(p,s,now,closed=False):
     current=p.get("exit_price") if closed else q["bid"] if q else None
     stale=not closed and (not q or now-q["at"]>s["config"]["max_quote_age_seconds"])
     rate=s["config"]["crypto_fee_fraction"] if market=="crypto" else s["config"]["stock_fee_fraction"]
-    exit_fee=0 if closed or current is None else (math.ceil(100*.07*p["quantity"]*current*(1-current))/100 if market=="kalshi" else p["quantity"]*current*rate)
+    exit_fee=0 if closed or current is None else (s["config"]["dex_network_allowance_usd"] if market=="dex" else math.ceil(100*.07*p["quantity"]*current*(1-current))/100 if market=="kalshi" else p["quantity"]*current*rate)
     net=p.get("net_pnl") if closed else (None if stale else p["proceeds"]+p["quantity"]*current-exit_fee-p["cost"]-p["entry_fee"]-p["exit_fee"])
     return dict(trade_id=p["id"],pair=p["symbol"],market=market,mode=p["mode"],is_open=not closed,is_short=False,
         open_rate=p["entry_price"],current_rate=current,close_rate=p.get("exit_price"),amount=p["bought_qty"] if closed else p["quantity"],
@@ -29,7 +29,7 @@ def trade_view(p,s,now,closed=False):
         signal_time=iso(p["signal_at"]),signal_reason=p["reason"],exit_reason=p.get("exit_reason"),
         stop_price=p.get("stop"),target_price=p.get("target"),trailing_stop=p.get("stop") if p.get("stop")!=p.get("initial_stop") else None,
         fee_usd=p["entry_fee"]+p["exit_fee"]+exit_fee,paid_fees=p["entry_fee"]+p["exit_fee"],estimated_exit_fee=exit_fee,
-        fee_basis="Actual demo order fees" if market=="kalshi" else "Modeled cost allowance; paper fills do not prove live costs",
+        fee_basis="Quote outputs include route costs; fixed network allowance; USDC=$1 assumption; no actual fills" if market=="dex" else "Actual demo order fees" if market=="kalshi" else "Modeled cost allowance; paper fills do not prove live costs",
         slippage_fraction=s["config"]["slippage_fraction"],mark_stale=stale,
         target_rule="Settlement payout; no stock-style price target" if market=="kalshi" else "Frozen cost-aware target",
         exit_logic="Owner exit, campaign drain, or exchange-confirmed binary settlement" if market=="kalshi" else "Stop, target, trailing stop, time limit, daily/drawdown guard, owner exit or campaign drain",
@@ -144,14 +144,14 @@ def create_app(directory=None,password=None):
     @app.get("/api/candles")
     def candles():
         market=request.args.get("market","crypto");symbol=request.args.get("pair","");tf=request.args.get("timeframe","1h")
-        if market not in ("crypto","stocks","kalshi") or tf not in ("1h","4h","1d"):
+        if market not in ("crypto","stocks","kalshi","dex") or tf not in ("1h","4h","1d"):
             return {"error":"Unsupported market or timeframe","candles":[]},400
         st=db()
         try:
             s=st.read();rows=st.candles(market,symbol,"1h",10000)
-            if market=="kalshi":
+            if market in ("kalshi","dex"):
                 quotes=[dict(r) for r in reversed(st.db.execute("SELECT at,bid,ask FROM quotes WHERE market=? AND symbol=? ORDER BY at DESC LIMIT 1500",(market,symbol)).fetchall())]
-                return {"candles":[],"quotes":quotes,"kind":"contract","error":None}
+                return {"candles":[],"quotes":quotes,"kind":"quote_simulation" if market=="dex" else "contract","error":None}
             if tf!="1h":
                 seconds={"4h":14400,"1d":86400}[tf];groups={}
                 for r in rows: groups.setdefault(int(r["time"]//seconds)*seconds,[]).append(r)
@@ -173,5 +173,15 @@ def create_app(directory=None,password=None):
         try: path=st.backup(time.time())
         finally: st.db.close()
         return send_file(path,as_attachment=True,download_name=path.name,mimetype="application/vnd.sqlite3")
+
+    @app.get("/api/discoveries")
+    def discoveries():
+        st=db()
+        try:
+            exists=st.db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='discoveries'").fetchone()
+            rows=[dict(r) for r in st.db.execute("SELECT * FROM discoveries ORDER BY at DESC LIMIT 200")] if exists else []
+            return {"mode":"QUOTE-DERIVED INTERNAL SIMULATION; NO ON-CHAIN FILLS","observations":rows,
+                    "coverage":"Latest token profiles only; incomplete launch coverage","ai":"Optional annotations; never execution authority"}
+        finally:st.db.close()
 
     return app
