@@ -97,14 +97,18 @@ def replay(data,candidates,cfg,start,end):
             r=current[sym];reference=r["open"]
             if abs(reference/c["reference"]-1)>.03:blocks["Next open moved over 3%"]+=1;continue
             entry=reference*(1+friction);eq=equity()
+            target=c["target"] if c.get("target_anchored") else entry+c["target"]-c["reference"]
+            if cfg.get("strategy_pack")=="regime-v2" and target/entry-1<c["cost_break_even_fraction"]+.01:
+                blocks["Fresh entry price leaves insufficient target room after costs"]+=1;continue
             exposure=sum(p["qty"]*marks.get(s,p["entry"]) for s,p in positions.items())
             budget=min(cash,eq*cfg["max_position_fraction"],eq*cfg["max_exposure_fraction"]-exposure)
-            quantity=min(budget/(entry*(1+fee)),eq*cfg["risk_per_trade"]/(c["stop_distance"]+entry*(2*fee+2*cfg["slippage_fraction"])),c["lagged_volume_cap"])
+            spread_reserve=cfg["max_spread_fraction"] if cfg.get("strategy_pack")=="regime-v2" else 0
+            quantity=min(budget/(entry*(1+fee)),eq*cfg["risk_per_trade"]/(c["stop_distance"]+entry*(2*fee+2*cfg["slippage_fraction"]+spread_reserve)),c["lagged_volume_cap"])
             quantity=math.floor(max(0,quantity)*1e8)/1e8
             if quantity*entry<cfg["minimum_order_usd"]:blocks["Minimum size or lagged liquidity cap"]+=1;continue
             cost=quantity*entry*(1+fee);cash-=cost;fees+=quantity*entry*fee;turnover+=quantity*entry
             positions[sym]=dict(qty=quantity,entry=entry,cost=cost,at=t,strategy=c["strategy"],stop=entry-c["stop_distance"],
-                                target=entry+c["target"]-c["reference"],distance=c["stop_distance"],peak=entry)
+                                target=target,distance=c["stop_distance"],peak=entry)
             seen.add(c["signal"])
         for sym,p in list(positions.items()):
             if sym not in current:continue
@@ -130,7 +134,7 @@ def replay(data,candidates,cfg,start,end):
     if btc:
         for r in btc:
             value=cfg["capital"]*r["close"]*(1-friction)*(1-fee)/(btc[0]["open"]*(1+friction)*(1+fee));bp=max(bp,value);bdd=max(bdd,1-value/bp)
-    by_strategy={family:dict(closed_trades=sum(t["strategy"]==family for t in trades),net_realized=sum(t["net_pnl"] for t in trades if t["strategy"]==family)) for family in cfg["strategies"] if family in ("trend","breakout","range_reversion")}
+    by_strategy={family:dict(closed_trades=sum(t["strategy"]==family for t in trades),net_realized=sum(t["net_pnl"] for t in trades if t["strategy"]==family)) for family in cfg["strategies"] if family in ("trend","breakout","pullback","range_reversion")}
     return dict(start=iso(start),end=iso(end),final_equity=equity(),net_return=equity()/cfg["capital"]-1,
                 maximum_drawdown=max(r["drawdown"] for r in curve),closed_trades=len(trades),open_positions=len(positions),
                 mean_exposure_fraction=statistics.mean(r["exposure_fraction"] for r in curve),turnover_usd=turnover,

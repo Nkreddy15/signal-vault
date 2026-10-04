@@ -11,6 +11,9 @@ def ema(values,period):
 
 
 def signals(bars,market,symbol,now,config):
+    if config.get("strategy_pack")=="regime-v2":
+        from .strategies_v2 import signals as alternative
+        return alternative(bars,market,symbol,now,config)
     if len(bars)<60: return [],"Insufficient closed history (need 60 hourly bars)"
     if any(b["time"]+3600>now for b in bars): return [],"Unclosed candle refused"
     if any(bars[i]["time"]>=bars[i+1]["time"] for i in range(len(bars)-1)): return [],"Nonchronological history"

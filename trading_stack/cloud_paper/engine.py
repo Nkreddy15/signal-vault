@@ -25,6 +25,10 @@ def load_config(path=None):
     if not 1<=c["max_positions"]<=20 or not 10<=c["cycle_seconds"]<=300 or not 1<=c["duration_hours"]<=720:
         raise ValueError("Invalid campaign bounds")
     c["strategy_source_sha256"]=hashlib.sha256(Path(__file__).with_name("strategies.py").read_bytes()).hexdigest()
+    if c.get("strategy_pack")=="regime-v2":
+        c["strategy_pack_source_sha256"]=hashlib.sha256(Path(__file__).with_name("strategies_v2.py").read_bytes()).hexdigest()
+    elif c.get("strategy_pack") is not None:
+        raise ValueError("Unknown strategy pack")
     return c
 
 
@@ -300,7 +304,13 @@ class Engine:
         limit=q["ask"]*(1+self.cfg["slippage_fraction"])
         if market=="stocks": limit=rounded(limit,2,True)
         if market=="kalshi": limit=rounded(q["ask"],2,True);fee=.07*(1-limit)
-        risk_qty=pf["equity"]*self.cfg["risk_per_trade"]/(c["stop_distance"]+limit*(2*fee+2*self.cfg["slippage_fraction"]))
+        target=c.get("target")
+        if market!="kalshi" and self.cfg.get("strategy_pack")=="regime-v2":
+            target=c["target"] if c.get("target_anchored") else limit+c["target"]-c["reference"]
+            if target/limit-1<c["cost_break_even_fraction"]+.01:
+                return "Fresh entry price leaves insufficient target room after costs"
+        spread_reserve=self.cfg["max_spread_fraction"] if self.cfg.get("strategy_pack")=="regime-v2" else 0
+        risk_qty=pf["equity"]*self.cfg["risk_per_trade"]/(c["stop_distance"]+limit*(2*fee+2*self.cfg["slippage_fraction"]+spread_reserve))
         cost=min(pf["available_cash"],pf["equity"]*self.cfg["max_position_fraction"],
                  pf["equity"]*self.cfg["max_exposure_fraction"]-pf["exposure"]-pf["reserved"])
         quantity=min(risk_qty,max(0,cost)/(limit*(1+fee)))
@@ -315,7 +325,7 @@ class Engine:
         oid="svcp_"+digest([s["campaign_id"],c["signal"]])[:32]
         o=dict(c,id=oid,trade_id=oid,action="buy",quantity=quantity,limit_price=limit,reserve=reserve,fee_rate=fee,
                mode={"crypto":self.crypto.mode,"stocks":self.stocks.mode,"kalshi":self.kalshi.mode}[market])
-        if market!="kalshi": o.update(stop=limit-c["stop_distance"],target=limit+(c["target"]-c["reference"]))
+        if market!="kalshi": o.update(stop=limit-c["stop_distance"],target=target if self.cfg.get("strategy_pack")=="regime-v2" else limit+(c["target"]-c["reference"]))
         if self.store.prepare(o,now): self.send(oid); return "Order "+self.store.read()["orders"][oid]["status"]
         return "Duplicate signal, owned asset, or shared portfolio limit"
 
