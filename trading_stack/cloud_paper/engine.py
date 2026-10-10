@@ -27,12 +27,24 @@ def load_config(path=None):
     c["strategy_source_sha256"]=hashlib.sha256(Path(__file__).with_name("strategies.py").read_bytes()).hexdigest()
     if c.get("strategy_pack")=="regime-v2":
         c["strategy_pack_source_sha256"]=hashlib.sha256(Path(__file__).with_name("strategies_v2.py").read_bytes()).hexdigest()
+    elif c.get("strategy_pack")=="swing-v3":
+        if c.get("crypto_timeframe") != "4h" or c.get("bar_seconds") != 14400:
+            raise ValueError("Swing pack requires native complete 4h crypto bars")
+        files=["strategies_v3.py", "strategies_v2.py", "vendor/omniquant/regime.py", "vendor/omniquant/models.py"]
+        c["strategy_pack_source_sha256"]=digest({f:hashlib.sha256((Path(__file__).parent/f).read_bytes()).hexdigest() for f in files})
     elif c.get("strategy_pack") is not None:
         raise ValueError("Unknown strategy pack")
     if c.get("dex_enabled"):
         c["discovery_source_sha256"]=hashlib.sha256(Path(__file__).with_name("discovery.py").read_bytes()).hexdigest()
         if not 0<c["dex_order_usd"]<=10 or not c["dex_order_usd"]<=c["dex_sleeve_usd"]<=min(25,c["capital"]*.05):
             raise ValueError("DEX simulation sleeve exceeds experimental bounds")
+    if c.get("predictarb_enabled"):
+        if c.get("predictarb_mode") != "research":
+            raise ValueError("PredictArb is research-only until actual merge and execution are verified")
+        if not 1 <= c.get("predictarb_market_limit",0) <= 20 or c.get("predictarb_scan_interval_seconds",0) < 60:
+            raise ValueError("Invalid bounded PredictArb scan")
+    if not set(c.get("entry_markets",["crypto","stocks","kalshi"])).issubset({"crypto","stocks","kalshi"}):
+        raise ValueError("Unsupported entry market")
     return c
 
 
@@ -46,6 +58,10 @@ class Engine:
         if self.cfg.get("dex_enabled"):
             from .discovery import Discovery
             self.discovery=Discovery(store,clock=clock)
+        self.arbitrage=None
+        if self.cfg.get("predictarb_enabled"):
+            from .predictarb_bridge import PredictArb
+            self.arbitrage=PredictArb(store,clock=clock)
 
     def state_update(self,**fields):
         with self.store.transaction():
@@ -234,7 +250,9 @@ class Engine:
                     if timestamp(self.stocks.clock["next_close"])-now<900: reason=reason or "INVERSE_ETF_SESSION_EXIT"
                 peak=max(p.get("peak",0),q["bid"])
                 stop=p["stop"]
-                if peak>=p["entry_price"]+p["stop_distance"]: stop=max(stop,peak-p["stop_distance"])
+                activation=p.get("trailing_activation_multiple",1)
+                distance=p.get("trailing_distance_multiple",1)
+                if peak>=p["entry_price"]+activation*p["stop_distance"]: stop=max(stop,peak-distance*p["stop_distance"])
                 with self.store.transaction():
                     fresh=self.store.read(); fresh["positions"][tid].update(peak=peak,stop=stop); self.store.save(fresh)
             if not reason: continue
@@ -265,9 +283,10 @@ class Engine:
                 else:
                     try:
                         if key not in self.history or now-self.history_at[key]>=300:
-                            bars=adapter.bars(sym,now)
+                            tf=self.cfg.get("crypto_timeframe","1h") if market=="crypto" else "1h"
+                            bars=adapter.bars(sym,now,timeframe=tf) if tf!="1h" else adapter.bars(sym,now)
                             self.history[key]=bars;self.history_at[key]=now
-                            self.store.put_candles(market,sym,"1h",bars)
+                            self.store.put_candles(market,sym,tf,bars)
                             self.state_update(heartbeat=self.clock())
                         found,reason=signals(self.history[key],market,sym,now,self.cfg)
                         if market=="stocks" and self.history[key] and now-self.history[key][-1]["time"]>96*3600:
@@ -289,6 +308,8 @@ class Engine:
 
     def enter(self,c):
         now=self.clock(); s=self.store.read(); market=c["market"]; sym=c["symbol"]
+        if market not in self.cfg.get("entry_markets",["crypto","stocks","kalshi"]):
+            return "Research-only lane; entries not enabled in frozen campaign"
         if shutil.disk_usage(self.store.directory).free<32*1024*1024: return "Persistent storage low; entries blocked, exits active"
         if market in self.blocked: return "Provider or reconciliation blocked"
         # Bootstrap can take time. Refresh quotes before first entry; no historical-price fills.
@@ -314,11 +335,12 @@ class Engine:
         if market=="stocks": limit=rounded(limit,2,True)
         if market=="kalshi": limit=rounded(q["ask"],2,True);fee=.07*(1-limit)
         target=c.get("target")
-        if market!="kalshi" and self.cfg.get("strategy_pack")=="regime-v2":
+        cost_aware=self.cfg.get("strategy_pack") in ("regime-v2","swing-v3")
+        if market!="kalshi" and cost_aware:
             target=c["target"] if c.get("target_anchored") else limit+c["target"]-c["reference"]
             if target/limit-1<c["cost_break_even_fraction"]+.01:
                 return "Fresh entry price leaves insufficient target room after costs"
-        spread_reserve=self.cfg["max_spread_fraction"] if self.cfg.get("strategy_pack")=="regime-v2" else 0
+        spread_reserve=self.cfg["max_spread_fraction"] if cost_aware else 0
         risk_qty=pf["equity"]*self.cfg["risk_per_trade"]/(c["stop_distance"]+limit*(2*fee+2*self.cfg["slippage_fraction"]+spread_reserve))
         cost=min(pf["available_cash"],pf["equity"]*self.cfg["max_position_fraction"],
                  pf["equity"]*self.cfg["max_exposure_fraction"]-pf["exposure"]-pf["reserved"])
@@ -334,7 +356,7 @@ class Engine:
         oid="svcp_"+digest([s["campaign_id"],c["signal"]])[:32]
         o=dict(c,id=oid,trade_id=oid,action="buy",quantity=quantity,limit_price=limit,reserve=reserve,fee_rate=fee,
                mode={"crypto":self.crypto.mode,"stocks":self.stocks.mode,"kalshi":self.kalshi.mode}[market])
-        if market!="kalshi": o.update(stop=limit-c["stop_distance"],target=target if self.cfg.get("strategy_pack")=="regime-v2" else limit+(c["target"]-c["reference"]))
+        if market!="kalshi": o.update(stop=limit-c["stop_distance"],target=target if cost_aware else limit+(c["target"]-c["reference"]))
         if self.store.prepare(o,now): self.send(oid); return "Order "+self.store.read()["orders"][oid]["status"]
         return "Duplicate signal, owned asset, or shared portfolio limit"
 
@@ -357,6 +379,9 @@ class Engine:
                 self.state_update(dex_last_scan=self.clock(),dex_diagnostics=dex_diagnostics)
             else:dex_diagnostics=self.store.read().get("dex_diagnostics",[])
         candidates,diagnostics=self.candidates()
+        if self.arbitrage:
+            # This lane records research observations only; it cannot create a second account.
+            diagnostics+=self.arbitrage.tick()
         diagnostics+=dex_diagnostics
         for c in candidates:
             try: reason=self.enter(c)
@@ -395,6 +420,7 @@ def main():
             deadline=time.monotonic()+cfg["cycle_seconds"]
             while not stopping and time.monotonic()<deadline: time.sleep(.5)
     finally:
+        if engine.arbitrage: engine.arbitrage.close()
         store.backup(time.time());store.db.close();lock.close()
 
 

@@ -1,0 +1,6238 @@
+{
+  "kind": "RETROSPECTIVE RESEARCH; NO EXECUTED TRADES",
+  "config": {
+    "version": "SV-INTEGRATED-PAPER-3-20261009",
+    "evidence": "EXPERIMENTAL predeclared 4h hypotheses; no demonstrated prospective edge",
+    "capital": 500.0,
+    "duration_hours": 168,
+    "cycle_seconds": 30,
+    "risk_per_trade": 0.005,
+    "max_position_fraction": 0.2,
+    "max_exposure_fraction": 0.6,
+    "max_positions": 4,
+    "daily_loss_fraction": 0.02,
+    "drawdown_fraction": 0.1,
+    "max_quote_age_seconds": 90,
+    "max_spread_fraction": 0.003,
+    "minimum_daily_volume_usd": 500000,
+    "minimum_order_usd": 5,
+    "slippage_fraction": 0.001,
+    "crypto_fee_fraction": 0.008,
+    "stock_fee_fraction": 0.0001,
+    "order_timeout_seconds": 120,
+    "max_hold_hours": 336,
+    "crypto_mode": "simulation",
+    "stocks_mode": "paper",
+    "kalshi_mode": "demo",
+    "crypto_symbols": [
+      "BTC/USD",
+      "ETH/USD",
+      "SOL/USD",
+      "XRP/USD",
+      "DOGE/USD",
+      "ADA/USD"
+    ],
+    "stock_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "META",
+      "GOOGL",
+      "JPM",
+      "V",
+      "AMD",
+      "TSLA",
+      "SH",
+      "PSQ"
+    ],
+    "strategies": [
+      "slow_breakout",
+      "slow_pullback",
+      "range_reclaim",
+      "breakout",
+      "pullback",
+      "range_reversion",
+      "inverse_trend",
+      "probability_edge"
+    ],
+    "kalshi_max_cost": 20,
+    "kalshi_minimum_edge": 0.05,
+    "dex_enabled": true,
+    "dex_paper_entries": false,
+    "dex_order_usd": 10,
+    "dex_sleeve_usd": 25,
+    "dex_network_allowance_usd": 0.1,
+    "dex_scan_limit": 5,
+    "dex_scan_interval_seconds": 60,
+    "dex_min_liquidity_usd": 50000,
+    "dex_max_top10_fraction": 0.5,
+    "dex_max_price_impact_fraction": 0.02,
+    "dex_max_roundtrip_loss_fraction": 0.08,
+    "dex_slippage_bps": 100,
+    "dex_stop_fraction": 0.12,
+    "dex_target_fraction": 0.25,
+    "dex_max_hold_seconds": 3600,
+    "dex_ai_max_calls_per_day": 10,
+    "dex_max_sample_gap_seconds": 600,
+    "strategy_pack": "swing-v3",
+    "crypto_timeframe": "4h",
+    "bar_seconds": 14400,
+    "predictarb_enabled": true,
+    "predictarb_scan_interval_seconds": 120,
+    "predictarb_market_limit": 8,
+    "predictarb_mode": "research",
+    "entry_markets": [
+      "crypto"
+    ],
+    "strategy_source_sha256": "91d43b5f7e47eaac71052515f09174b516fbfc1f96ffde9b5759ae12dbc030ba",
+    "strategy_pack_source_sha256": "a07efdbb794b9e14839fe70bbfc021f44f0dccc75db56e00ca1f936866d54a56",
+    "discovery_source_sha256": "4504518b5a911598bd15e21b9ea953dcdfe5c964407f0feb97a59b5e1e11a141"
+  },
+  "config_hash": "a2aff9bba3b58fe796cf93d7ed0d1083bdef56b30c88cd8ff9311fffa494ed89",
+  "archive_sha256": "4de3fc95533e05a80fe57f189333c291f954c13c5bb07c7e1a9c76abf70fefcf",
+  "capture_sha256": "d101d26e9b41f20df05ca0650b6d861d49a15583ccbba7cdc36c0b5b625e29a8",
+  "captured_at": "2026-10-09T18:58:26.504105Z",
+  "dataset": {
+    "BTC/USD": {
+      "sha256": "581f04272ad399b1b0931fd9836b01c8eb6fd847b6ee5d157569dc1e304f4eaf",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "ETH/USD": {
+      "sha256": "6a8834e966e56afd68c9ebed04aaabbf6e628748487d4bd142cf885105eb53ce",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "SOL/USD": {
+      "sha256": "87c67026628814a67dc97283e9d86166b584d3e79fb1dddd849b35c346fe9577",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "XRP/USD": {
+      "sha256": "88877e6e3384ba8b7640b42a029e3d391f95fdc1d247d1d69b3574cb3f4cba13",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "DOGE/USD": {
+      "sha256": "b41e74e28190177ee92d48a35a9a9a512a0979e6ad5071352783066a639f33ae",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    },
+    "ADA/USD": {
+      "sha256": "a02332594f247731a3b4d39f885b0c9e4eeb1321b04cd5e83769f40b9f387f39",
+      "quarter_hours": 17375,
+      "complete_hours": 1085,
+      "incomplete_hours_discarded": 1,
+      "bar_seconds": 14400,
+      "start": "2026-01-01T00:00:00Z",
+      "end": "2026-07-01T00:00:00Z"
+    }
+  },
+  "assumptions": [
+    "Three frozen entry families combined in one $500 account per scenario; scenarios are independent, never summed",
+    "Next 4h open entries; lagged volume cap; 4h risk checks; adverse stop/target ordering; trailing update takes effect next bar",
+    "Kraken tier-1 scenario: 0.8% taker each side, 0.15% half-spread, 0.1% slippage each side; no maker fills or volume discounts assumed",
+    "Lower-fee scenario borrows published Alpaca 0.25% taker solely as cost sensitivity on Kraken data; no Alpaca fill, eligibility or spread claimed",
+    "No fees, gas or operating costs outside specified scenarios are silently counted as zero expected costs",
+    "Q1/Q2 archive was previously inspected. Newly fetched history is retrospective and NOT certified untouched; no prospective profitability claim",
+    "No parameters selected or changed from results; no automatic promotion; open positions valued after modeled liquidation costs",
+    "Book depth, availability, lot rules and actual historical spreads unverified; simulation is assumption-dependent"
+  ],
+  "scenarios": {
+    "kraken_tier1": {
+      "reused_archive": {
+        "start": "2026-01-21T00:00:00Z",
+        "end": "2026-07-01T00:00:00Z",
+        "final_equity": 498.6134807539355,
+        "net_return": -0.002773038492128954,
+        "maximum_drawdown": 0.0031540321174763353,
+        "closed_trades": 0,
+        "open_positions": 1,
+        "mean_exposure_fraction": 0.0003823307993692321,
+        "turnover_usd": 27.119462693176,
+        "turnover_multiple": 0.054238925386352,
+        "fees_usd": 0.216955701545408,
+        "profit_factor": null,
+        "mean_trade_pnl": null,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": null,
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "slow_pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reclaim": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": -0.35097280881543635,
+          "btc_buy_hold_max_drawdown": 0.354499212413515
+        },
+        "curve_daily": [
+          {
+            "at": 1769040000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769126400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769212800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769299200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769385600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769472000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769558400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769644800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769731200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769817600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769904000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769990400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770076800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770163200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770249600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770336000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770422400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770508800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770595200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770681600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770768000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770854400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770940800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771027200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771113600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771200000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771286400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771372800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771459200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771545600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771632000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771718400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771804800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771891200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771977600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772064000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772150400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772236800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772323200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772409600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772496000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772582400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772668800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772755200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772841600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772928000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773014400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773100800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773187200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773273600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773360000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773446400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773532800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773619200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773705600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773792000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773878400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773964800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774051200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774137600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774224000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774310400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774396800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774483200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774569600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774656000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774742400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774828800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774915200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775001600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775088000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775174400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775260800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775347200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775433600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775520000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775606400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775692800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775779200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775865600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775952000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776038400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776124800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776211200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776297600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776384000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776470400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776556800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776643200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776729600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776816000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776902400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776988800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777075200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777161600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777248000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777334400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777420800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777507200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777593600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777680000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777766400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777852800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777939200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778025600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778112000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778198400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778284800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778371200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778457600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778544000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778630400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778716800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778803200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778889600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778976000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779062400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779148800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779235200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779321600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779408000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779494400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779580800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779667200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779753600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779840000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779926400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780012800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780099200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780185600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780272000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780358400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780444800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780531200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780617600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780704000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780790400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780876800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780963200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781049600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781136000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781222400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781308800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781395200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781481600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781568000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781654400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781740800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781827200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781913600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782000000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782086400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782172800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782259200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782345600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782432000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782518400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782604800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782691200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782777600,
+            "equity": 499.13558312941143,
+            "drawdown": 0.0017288337411771604,
+            "exposure_fraction": 0.05359739362894488
+          },
+          {
+            "at": 1782864000,
+            "equity": 498.6134807539355,
+            "drawdown": 0.002773038492128954,
+            "exposure_fraction": 0.0525953175697266
+          }
+        ],
+        "trades": [],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 778,
+          "OmniQuant ranging; no uptrend": 672,
+          "Stale 4h history": 6,
+          "Gap or duplicate in 4h history": 4314,
+          "OmniQuant trending; uptrend": 4,
+          "OmniQuant ranging; uptrend": 2,
+          "4h volatility exceeds risk distance bound": 11,
+          "OmniQuant volatile regime or zero ATR": 2
+        },
+        "configuration_hash": "a2aff9bba3b58fe796cf93d7ed0d1083bdef56b30c88cd8ff9311fffa494ed89"
+      },
+      "new_public_capture": {
+        "start": "2026-07-01T16:00:00Z",
+        "end": "2026-10-09T16:00:00Z",
+        "final_equity": 486.67018895543015,
+        "net_return": -0.026659622089139745,
+        "maximum_drawdown": 0.04686597182578567,
+        "closed_trades": 39,
+        "open_positions": 0,
+        "mean_exposure_fraction": 0.16490612917956413,
+        "turnover_usd": 2794.4188769197153,
+        "turnover_multiple": 5.588837753839431,
+        "fees_usd": 22.355351015357734,
+        "profit_factor": 0.7183446984725109,
+        "mean_trade_pnl": -0.3417900267838445,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+          -1.0834901452623193,
+          0.405474151558703
+        ],
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 20,
+            "net_realized": 4.241230158471932
+          },
+          "slow_pullback": {
+            "closed_trades": 18,
+            "net_realized": -17.894655950387182
+          },
+          "range_reclaim": {
+            "closed_trades": 1,
+            "net_realized": 0.3236147473453137
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": 0.3493018954352973,
+          "btc_buy_hold_max_drawdown": 0.07537655862179504
+        },
+        "curve_daily": [
+          {
+            "at": 1782950400,
+            "equity": 499.4289726147747,
+            "drawdown": 0.0011420547704505957,
+            "exposure_fraction": 0.05478648312460868
+          },
+          {
+            "at": 1783036800,
+            "equity": 500.5662921434109,
+            "drawdown": 0.0011731054264978447,
+            "exposure_fraction": 0.056958133817831234
+          },
+          {
+            "at": 1783123200,
+            "equity": 501.15069940889475,
+            "drawdown": 7.680511122942768e-05,
+            "exposure_fraction": 0.058070194466505985
+          },
+          {
+            "at": 1783209600,
+            "equity": 499.6455132751788,
+            "drawdown": 0.003254023596180211,
+            "exposure_fraction": 0.17559701403825162
+          },
+          {
+            "at": 1783296000,
+            "equity": 499.36472944435076,
+            "drawdown": 0.0038141610259803116,
+            "exposure_fraction": 0.17512751189987621
+          },
+          {
+            "at": 1783382400,
+            "equity": 499.120927367174,
+            "drawdown": 0.004300523322865457,
+            "exposure_fraction": 0.17471941894869214
+          },
+          {
+            "at": 1783468800,
+            "equity": 495.4672408983224,
+            "drawdown": 0.011589285435421703,
+            "exposure_fraction": 0.221888382955597
+          },
+          {
+            "at": 1783555200,
+            "equity": 493.11810109972305,
+            "drawdown": 0.01627559919197985,
+            "exposure_fraction": 0.1251340031207276
+          },
+          {
+            "at": 1783641600,
+            "equity": 492.5565233085505,
+            "drawdown": 0.01739589425901611,
+            "exposure_fraction": 0.20385252665428857
+          },
+          {
+            "at": 1783728000,
+            "equity": 494.16284102685535,
+            "drawdown": 0.014191440941600408,
+            "exposure_fraction": 0.20647489763390575
+          },
+          {
+            "at": 1783814400,
+            "equity": 493.3125024155566,
+            "drawdown": 0.015887786784550162,
+            "exposure_fraction": 0.20508881688178662
+          },
+          {
+            "at": 1783900800,
+            "equity": 493.69487464857883,
+            "drawdown": 0.01512499001238432,
+            "exposure_fraction": 0.2057126873771817
+          },
+          {
+            "at": 1783987200,
+            "equity": 491.5156526327301,
+            "drawdown": 0.01947233371562196,
+            "exposure_fraction": 0.2021441163344628
+          },
+          {
+            "at": 1784073600,
+            "equity": 496.42591929606033,
+            "drawdown": 0.009676811871220492,
+            "exposure_fraction": 0.21014065639466678
+          },
+          {
+            "at": 1784160000,
+            "equity": 496.8428567228363,
+            "drawdown": 0.008845060776675573,
+            "exposure_fraction": 0.15529228961752264
+          },
+          {
+            "at": 1784246400,
+            "equity": 495.25173357513125,
+            "drawdown": 0.012019202349652147,
+            "exposure_fraction": 0.15254442328234502
+          },
+          {
+            "at": 1784332800,
+            "equity": 494.88037949561556,
+            "drawdown": 0.012760018938101303,
+            "exposure_fraction": 0.15190055234401548
+          },
+          {
+            "at": 1784419200,
+            "equity": 494.6796937067487,
+            "drawdown": 0.013160368280304424,
+            "exposure_fraction": 0.16405143118227183
+          },
+          {
+            "at": 1784505600,
+            "equity": 494.82435847897005,
+            "drawdown": 0.01287177561649,
+            "exposure_fraction": 0.16429892193505508
+          },
+          {
+            "at": 1784592000,
+            "equity": 495.8615434043498,
+            "drawdown": 0.010802688886615619,
+            "exposure_fraction": 0.16606909627280772
+          },
+          {
+            "at": 1784678400,
+            "equity": 495.9358903013894,
+            "drawdown": 0.01065437379418821,
+            "exposure_fraction": 0.33639187582419827
+          },
+          {
+            "at": 1784764800,
+            "equity": 495.87467034458547,
+            "drawdown": 0.010776501870991995,
+            "exposure_fraction": 0.3363086401936313
+          },
+          {
+            "at": 1784851200,
+            "equity": 489.6598805664054,
+            "drawdown": 0.023174425080571437,
+            "exposure_fraction": 0.2356492449744742
+          },
+          {
+            "at": 1784937600,
+            "equity": 485.94215523513884,
+            "drawdown": 0.030590938722461436,
+            "exposure_fraction": 0.18221189295659052
+          },
+          {
+            "at": 1785024000,
+            "equity": 486.3947776994106,
+            "drawdown": 0.02968799932221433,
+            "exposure_fraction": 0.182982754419503
+          },
+          {
+            "at": 1785110400,
+            "equity": 488.90776714029255,
+            "drawdown": 0.024674820883914483,
+            "exposure_fraction": 0.18723666672375056
+          },
+          {
+            "at": 1785196800,
+            "equity": 486.3081099580187,
+            "drawdown": 0.02986089334451847,
+            "exposure_fraction": 0.08684608450113224
+          },
+          {
+            "at": 1785283200,
+            "equity": 486.94411802840733,
+            "drawdown": 0.02859211684542662,
+            "exposure_fraction": 0.08805260737598367
+          },
+          {
+            "at": 1785369600,
+            "equity": 486.68622316456316,
+            "drawdown": 0.029106592931055664,
+            "exposure_fraction": 0.08756375459941926
+          },
+          {
+            "at": 1785456000,
+            "equity": 486.8729593770296,
+            "drawdown": 0.02873407168653419,
+            "exposure_fraction": 0.0879177742821663
+          },
+          {
+            "at": 1785542400,
+            "equity": 485.63166079072903,
+            "drawdown": 0.031210346042128023,
+            "exposure_fraction": 0.08555937581838408
+          },
+          {
+            "at": 1785628800,
+            "equity": 485.0763139245418,
+            "drawdown": 0.03231821099772847,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1785715200,
+            "equity": 485.93082733946704,
+            "drawdown": 0.030613536812771458,
+            "exposure_fraction": 0.06058730702248492
+          },
+          {
+            "at": 1785801600,
+            "equity": 486.56468194257275,
+            "drawdown": 0.029349056279104224,
+            "exposure_fraction": 0.061824890086074176
+          },
+          {
+            "at": 1785888000,
+            "equity": 486.45791128855444,
+            "drawdown": 0.02956205372822196,
+            "exposure_fraction": 0.061616649300934856
+          },
+          {
+            "at": 1785974400,
+            "equity": 486.22606204416604,
+            "drawdown": 0.030024571243813303,
+            "exposure_fraction": 0.06116414582189927
+          },
+          {
+            "at": 1786060800,
+            "equity": 487.73315905679306,
+            "drawdown": 0.0270180539360938,
+            "exposure_fraction": 0.06409787780104353
+          },
+          {
+            "at": 1786147200,
+            "equity": 487.68223530105814,
+            "drawdown": 0.027119642056638416,
+            "exposure_fraction": 0.06399904503506289
+          },
+          {
+            "at": 1786233600,
+            "equity": 487.4648477879056,
+            "drawdown": 0.027553309773646117,
+            "exposure_fraction": 0.06357690737610067
+          },
+          {
+            "at": 1786320000,
+            "equity": 486.60751328274375,
+            "drawdown": 0.029263611769256404,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1786406400,
+            "equity": 482.56561690056697,
+            "drawdown": 0.03732681627912471,
+            "exposure_fraction": 0.1643133285630109
+          },
+          {
+            "at": 1786492800,
+            "equity": 481.0407032027061,
+            "drawdown": 0.040368876204255666,
+            "exposure_fraction": 0.09648947814015023
+          },
+          {
+            "at": 1786579200,
+            "equity": 480.64299792812903,
+            "drawdown": 0.04116226095743947,
+            "exposure_fraction": 0.09573311011696134
+          },
+          {
+            "at": 1786665600,
+            "equity": 481.0226256902253,
+            "drawdown": 0.04040493914758214,
+            "exposure_fraction": 0.09645512490877997
+          },
+          {
+            "at": 1786752000,
+            "equity": 480.5044036657764,
+            "drawdown": 0.04143874352294297,
+            "exposure_fraction": 0.0954692331315408
+          },
+          {
+            "at": 1786838400,
+            "equity": 480.480300315802,
+            "drawdown": 0.041486827447378416,
+            "exposure_fraction": 0.09542332594232297
+          },
+          {
+            "at": 1786924800,
+            "equity": 480.0343883412762,
+            "drawdown": 0.042376380049433116,
+            "exposure_fraction": 0.09457321138464858
+          },
+          {
+            "at": 1787011200,
+            "equity": 480.8840314278727,
+            "drawdown": 0.04068142171308564,
+            "exposure_fraction": 0.09619166432757299
+          },
+          {
+            "at": 1787097600,
+            "equity": 481.5107185272063,
+            "drawdown": 0.03943123967776552,
+            "exposure_fraction": 0.09738175676218225
+          },
+          {
+            "at": 1787184000,
+            "equity": 488.85501145997245,
+            "drawdown": 0.024780063522333973,
+            "exposure_fraction": 0.19353276063683483
+          },
+          {
+            "at": 1787270400,
+            "equity": 492.40883151579635,
+            "drawdown": 0.017690525545126512,
+            "exposure_fraction": 0.24635154811951937
+          },
+          {
+            "at": 1787356800,
+            "equity": 504.39825631298,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.21118705416007377
+          },
+          {
+            "at": 1787443200,
+            "equity": 503.17645828607357,
+            "drawdown": 0.01453876680216859,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787529600,
+            "equity": 503.17645828607357,
+            "drawdown": 0.01453876680216859,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787616000,
+            "equity": 503.17645828607357,
+            "drawdown": 0.01453876680216859,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787702400,
+            "equity": 500.41832285248563,
+            "drawdown": 0.019940520999828126,
+            "exposure_fraction": 0.10196746843179218
+          },
+          {
+            "at": 1787788800,
+            "equity": 501.75432983349117,
+            "drawdown": 0.017323977508212463,
+            "exposure_fraction": 0.2243429137906184
+          },
+          {
+            "at": 1787875200,
+            "equity": 504.5674532386497,
+            "drawdown": 0.011814530445788285,
+            "exposure_fraction": 0.22872649592896796
+          },
+          {
+            "at": 1787961600,
+            "equity": 500.13229101449303,
+            "drawdown": 0.02050070874939436,
+            "exposure_fraction": 0.1500502324580347
+          },
+          {
+            "at": 1788048000,
+            "equity": 500.73286771847245,
+            "drawdown": 0.019324491043682612,
+            "exposure_fraction": 0.1510823610984599
+          },
+          {
+            "at": 1788134400,
+            "equity": 496.91005948769407,
+            "drawdown": 0.026811386051079578,
+            "exposure_fraction": 0.24535647383314524
+          },
+          {
+            "at": 1788220800,
+            "equity": 498.5622209353867,
+            "drawdown": 0.023575660231889062,
+            "exposure_fraction": 0.24789234783028016
+          },
+          {
+            "at": 1788307200,
+            "equity": 495.68227272767194,
+            "drawdown": 0.029215982360606185,
+            "exposure_fraction": 0.1471498784330367
+          },
+          {
+            "at": 1788393600,
+            "equity": 495.49536287296263,
+            "drawdown": 0.029582041648328117,
+            "exposure_fraction": 0.1468241727544758
+          },
+          {
+            "at": 1788480000,
+            "equity": 499.97969691247545,
+            "drawdown": 0.020799561307928593,
+            "exposure_fraction": 0.2487792517451671
+          },
+          {
+            "at": 1788566400,
+            "equity": 497.3305315516707,
+            "drawdown": 0.02598789975344351,
+            "exposure_fraction": 0.2447212558048934
+          },
+          {
+            "at": 1788652800,
+            "equity": 498.8850605716613,
+            "drawdown": 0.02294338513068095,
+            "exposure_fraction": 0.24710771077628746
+          },
+          {
+            "at": 1788739200,
+            "equity": 500.74271133723613,
+            "drawdown": 0.019305212509231562,
+            "exposure_fraction": 0.24994007412927122
+          },
+          {
+            "at": 1788825600,
+            "equity": 498.86924993360174,
+            "drawdown": 0.02297434995549197,
+            "exposure_fraction": 0.2470835137389855
+          },
+          {
+            "at": 1788912000,
+            "equity": 497.9423820879531,
+            "drawdown": 0.0247896024680907,
+            "exposure_fraction": 0.2713516320437242
+          },
+          {
+            "at": 1788998400,
+            "equity": 496.684893847071,
+            "drawdown": 0.027252368545844896,
+            "exposure_fraction": 0.14710096923602436
+          },
+          {
+            "at": 1789084800,
+            "equity": 494.7622627078092,
+            "drawdown": 0.03101780395579068,
+            "exposure_fraction": 0.14374547320400444
+          },
+          {
+            "at": 1789171200,
+            "equity": 493.02851034018784,
+            "drawdown": 0.03441332399278818,
+            "exposure_fraction": 0.2039019072181133
+          },
+          {
+            "at": 1789257600,
+            "equity": 493.2850025647476,
+            "drawdown": 0.03391098899726541,
+            "exposure_fraction": 0.20432135941556848
+          },
+          {
+            "at": 1789344000,
+            "equity": 491.98013189249514,
+            "drawdown": 0.036466552638341976,
+            "exposure_fraction": 0.20218290395488764
+          },
+          {
+            "at": 1789430400,
+            "equity": 494.54545643474665,
+            "drawdown": 0.031442414793000695,
+            "exposure_fraction": 0.16311924239312892
+          },
+          {
+            "at": 1789516800,
+            "equity": 491.95163190166886,
+            "drawdown": 0.03652236931188324,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789603200,
+            "equity": 491.95163190166886,
+            "drawdown": 0.03652236931188324,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789689600,
+            "equity": 491.95163190166886,
+            "drawdown": 0.03652236931188324,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789776000,
+            "equity": 490.6906186707289,
+            "drawdown": 0.038992039013589275,
+            "exposure_fraction": 0.1480468250041021
+          },
+          {
+            "at": 1789862400,
+            "equity": 489.44439790656423,
+            "drawdown": 0.04143273795899227,
+            "exposure_fraction": 0.20313270853510124
+          },
+          {
+            "at": 1789948800,
+            "equity": 489.3134216428417,
+            "drawdown": 0.04168925240485344,
+            "exposure_fraction": 0.2640943173991804
+          },
+          {
+            "at": 1790035200,
+            "equity": 500.50338394711764,
+            "drawdown": 0.019773930512867022,
+            "exposure_fraction": 0.28078405404236617
+          },
+          {
+            "at": 1790121600,
+            "equity": 500.5811848773345,
+            "drawdown": 0.019621558915641213,
+            "exposure_fraction": 0.21407338504467044
+          },
+          {
+            "at": 1790208000,
+            "equity": 494.4304797011891,
+            "drawdown": 0.031667594472564065,
+            "exposure_fraction": 0.20911097909352208
+          },
+          {
+            "at": 1790294400,
+            "equity": 495.7064522412772,
+            "drawdown": 0.029168627257037283,
+            "exposure_fraction": 0.2479484914482769
+          },
+          {
+            "at": 1790380800,
+            "equity": 498.88269290053535,
+            "drawdown": 0.022948022168183813,
+            "exposure_fraction": 0.2528040139154336
+          },
+          {
+            "at": 1790467200,
+            "equity": 497.86162041862934,
+            "drawdown": 0.02494777261483805,
+            "exposure_fraction": 0.25124985629335117
+          },
+          {
+            "at": 1790553600,
+            "equity": 498.1863215577057,
+            "drawdown": 0.02431185179687123,
+            "exposure_fraction": 0.251744769384229
+          },
+          {
+            "at": 1790640000,
+            "equity": 494.6865992008783,
+            "drawdown": 0.03116598945139626,
+            "exposure_fraction": 0.18840974264086707
+          },
+          {
+            "at": 1790726400,
+            "equity": 493.6243466946672,
+            "drawdown": 0.03324639016867925,
+            "exposure_fraction": 0.2868729079934613
+          },
+          {
+            "at": 1790812800,
+            "equity": 493.5545931461726,
+            "drawdown": 0.03338300112650028,
+            "exposure_fraction": 0.2867706256820762
+          },
+          {
+            "at": 1790899200,
+            "equity": 494.6504985138239,
+            "drawdown": 0.03123669193955536,
+            "exposure_fraction": 0.28837426022568663
+          },
+          {
+            "at": 1790985600,
+            "equity": 493.87837940800625,
+            "drawdown": 0.032748872077685065,
+            "exposure_fraction": 0.13250072934614948
+          },
+          {
+            "at": 1791072000,
+            "equity": 492.61735584224994,
+            "drawdown": 0.03521856201992646,
+            "exposure_fraction": 0.2941806004646142
+          },
+          {
+            "at": 1791158400,
+            "equity": 495.3943139232374,
+            "drawdown": 0.029779944036187778,
+            "exposure_fraction": 0.2981964754446918
+          },
+          {
+            "at": 1791244800,
+            "equity": 494.3726790352699,
+            "drawdown": 0.03178079594409233,
+            "exposure_fraction": 0.2967242923637458
+          },
+          {
+            "at": 1791331200,
+            "equity": 493.70021645311056,
+            "drawdown": 0.033097800733528304,
+            "exposure_fraction": 0.29575194390360426
+          },
+          {
+            "at": 1791417600,
+            "equity": 488.904700255271,
+            "drawdown": 0.04248972523301742,
+            "exposure_fraction": 0.19236846793094312
+          },
+          {
+            "at": 1791504000,
+            "equity": 486.67018895543015,
+            "drawdown": 0.04686597182578567,
+            "exposure_fraction": 0.0
+          }
+        ],
+        "trades": [
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-07T19:59:59Z",
+            "net_pnl": -2.424490667401326,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-07T00:00:00Z",
+            "exit_at": "2026-07-08T11:59:59Z",
+            "net_pnl": -2.360539472975489,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-01T16:00:00Z",
+            "exit_at": "2026-07-15T16:00:00Z",
+            "net_pnl": -0.3505623689050523,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-18T16:00:00Z",
+            "net_pnl": 0.2882389430664247,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-09T08:00:00Z",
+            "exit_at": "2026-07-23T08:00:00Z",
+            "net_pnl": 0.6729188858061619,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T08:00:00Z",
+            "exit_at": "2026-07-23T15:59:59Z",
+            "net_pnl": -2.346934101451154,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T04:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.3783364641437252,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-23T12:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.352983807308526,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-24T08:00:00Z",
+            "exit_at": "2026-07-27T23:59:59Z",
+            "net_pnl": -2.3141820314708497,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-18T20:00:00Z",
+            "exit_at": "2026-08-01T20:00:00Z",
+            "net_pnl": -1.3568149906746925,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-02T04:00:00Z",
+            "exit_at": "2026-08-09T23:59:59Z",
+            "net_pnl": 1.5311993582019596,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T08:00:00Z",
+            "exit_at": "2026-08-11T07:59:59Z",
+            "net_pnl": -2.325223267391827,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T04:00:00Z",
+            "exit_at": "2026-08-11T15:59:59Z",
+            "net_pnl": -2.2976327193691475,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-11T12:00:00Z",
+            "exit_at": "2026-08-19T23:59:59Z",
+            "net_pnl": 4.827849156179177,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-20T03:59:59Z",
+            "net_pnl": 1.9692002096978882,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-20T23:59:59Z",
+            "net_pnl": 1.8249877246955108,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-21T11:59:59Z",
+            "net_pnl": 4.754645780685522,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T16:00:00Z",
+            "exit_at": "2026-08-22T03:59:59Z",
+            "net_pnl": 6.541192279352735,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 2.1484964282066557,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-21T04:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 1.5624897343763209,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-22T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": -2.437060323102937,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-25T04:00:00Z",
+            "exit_at": "2026-08-28T19:59:59Z",
+            "net_pnl": -2.4029323355352687,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-30T16:00:00Z",
+            "exit_at": "2026-09-01T19:59:59Z",
+            "net_pnl": -2.366702319716815,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-25T00:00:00Z",
+            "exit_at": "2026-09-08T00:00:00Z",
+            "net_pnl": -0.24975272700920392,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T04:00:00Z",
+            "exit_at": "2026-09-09T04:00:00Z",
+            "net_pnl": -0.37270709094779164,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T20:00:00Z",
+            "exit_at": "2026-09-09T20:00:00Z",
+            "net_pnl": 0.961827976763896,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-08T12:00:00Z",
+            "exit_at": "2026-09-11T11:59:59Z",
+            "net_pnl": -2.4006479010157875,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "range_reclaim",
+            "entry_at": "2026-09-11T16:00:00Z",
+            "exit_at": "2026-09-14T23:59:59Z",
+            "net_pnl": 0.3236147473453137,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-03T12:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.3478510029239885,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-11T16:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.3696757313651347,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-20T16:00:00Z",
+            "exit_at": "2026-09-22T11:59:59Z",
+            "net_pnl": 3.4789485760281096,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-23T04:00:00Z",
+            "exit_at": "2026-09-23T15:59:59Z",
+            "net_pnl": -2.4199505422771352,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-19T04:00:00Z",
+            "exit_at": "2026-09-28T15:59:59Z",
+            "net_pnl": 0.6321452959402194,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T16:00:00Z",
+            "exit_at": "2026-10-02T16:00:00Z",
+            "net_pnl": 1.7870535446446212,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T20:00:00Z",
+            "exit_at": "2026-10-02T20:00:00Z",
+            "net_pnl": 0.6920628667612974,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-29T00:00:00Z",
+            "exit_at": "2026-10-07T03:59:59Z",
+            "net_pnl": -2.3357962716418754,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T11:59:59Z",
+            "net_pnl": -2.3639402878214035,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-24T16:00:00Z",
+            "exit_at": "2026-10-08T15:59:59Z",
+            "net_pnl": -2.412946819533877,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T15:59:59Z",
+            "net_pnl": -2.3390193083387416,
+            "reason": "STOP"
+          }
+        ],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 907,
+          "OmniQuant trending; uptrend": 801,
+          "OmniQuant ranging; uptrend": 900,
+          "OmniQuant ranging; no uptrend": 735,
+          "OmniQuant volatile regime or zero ATR": 24,
+          "4h volatility exceeds risk distance bound": 22
+        },
+        "configuration_hash": "a2aff9bba3b58fe796cf93d7ed0d1083bdef56b30c88cd8ff9311fffa494ed89"
+      }
+    },
+    "kraken_adverse_slippage": {
+      "reused_archive": {
+        "start": "2026-01-21T00:00:00Z",
+        "end": "2026-07-01T00:00:00Z",
+        "final_equity": 498.59111477841657,
+        "net_return": -0.0028177704431668893,
+        "maximum_drawdown": 0.0031902091579385505,
+        "closed_trades": 0,
+        "open_positions": 1,
+        "mean_exposure_fraction": 0.00037413918908807414,
+        "turnover_usd": 26.563591176065998,
+        "turnover_multiple": 0.053127182352132,
+        "fees_usd": 0.212508729408528,
+        "profit_factor": null,
+        "mean_trade_pnl": null,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": null,
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "slow_pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reclaim": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": -0.3522695777755738,
+          "btc_buy_hold_max_drawdown": 0.3551335311629007
+        },
+        "curve_daily": [
+          {
+            "at": 1769040000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769126400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769212800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769299200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769385600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769472000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769558400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769644800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769731200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769817600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769904000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769990400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770076800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770163200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770249600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770336000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770422400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770508800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770595200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770681600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770768000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770854400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770940800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771027200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771113600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771200000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771286400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771372800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771459200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771545600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771632000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771718400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771804800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771891200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771977600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772064000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772150400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772236800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772323200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772409600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772496000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772582400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772668800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772755200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772841600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772928000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773014400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773100800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773187200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773273600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773360000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773446400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773532800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773619200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773705600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773792000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773878400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773964800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774051200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774137600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774224000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774310400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774396800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774483200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774569600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774656000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774742400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774828800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774915200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775001600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775088000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775174400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775260800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775347200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775433600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775520000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775606400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775692800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775779200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775865600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775952000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776038400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776124800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776211200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776297600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776384000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776470400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776556800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776643200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776729600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776816000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776902400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776988800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777075200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777161600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777248000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777334400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777420800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777507200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777593600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777680000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777766400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777852800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777939200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778025600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778112000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778198400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778284800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778371200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778457600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778544000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778630400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778716800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778803200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778889600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778976000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779062400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779148800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779235200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779321600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779408000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779494400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779580800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779667200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779753600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779840000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779926400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780012800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780099200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780185600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780272000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780358400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780444800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780531200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780617600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780704000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780790400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780876800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780963200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781049600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781136000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781222400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781308800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781395200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781481600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781568000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781654400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781740800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781827200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781913600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782000000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782086400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782172800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782259200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782345600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782432000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782518400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782604800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782691200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782777600,
+            "equity": 499.1014937579185,
+            "drawdown": 0.0017970124841629742,
+            "exposure_fraction": 0.05245006664054826
+          },
+          {
+            "at": 1782864000,
+            "equity": 498.59111477841657,
+            "drawdown": 0.0028177704431668893,
+            "exposure_fraction": 0.051468234895049245
+          }
+        ],
+        "trades": [],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 778,
+          "OmniQuant ranging; no uptrend": 672,
+          "Stale 4h history": 6,
+          "Gap or duplicate in 4h history": 4314,
+          "OmniQuant trending; uptrend": 4,
+          "OmniQuant ranging; uptrend": 2,
+          "4h volatility exceeds risk distance bound": 11,
+          "OmniQuant volatile regime or zero ATR": 2
+        },
+        "configuration_hash": "f3d4ba9431c59feb21dcfefbd58d2a0b58e1cc92517bd4b0f32c988d0b4d9a0a"
+      },
+      "new_public_capture": {
+        "start": "2026-07-01T16:00:00Z",
+        "end": "2026-10-09T16:00:00Z",
+        "final_equity": 480.33632871176167,
+        "net_return": -0.03932734257647663,
+        "maximum_drawdown": 0.04914995117313037,
+        "closed_trades": 40,
+        "open_positions": 0,
+        "mean_exposure_fraction": 0.15419452728358182,
+        "turnover_usd": 2827.2067317518686,
+        "turnover_multiple": 5.6544134635037375,
+        "fees_usd": 22.61765385401492,
+        "profit_factor": 0.6140067285922247,
+        "mean_trade_pnl": -0.4915917822059641,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+          -1.2052624334365083,
+          0.2423063598897115
+        ],
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 20,
+            "net_realized": 2.9262251928245178
+          },
+          "slow_pullback": {
+            "closed_trades": 20,
+            "net_realized": -22.589896481063082
+          },
+          "range_reclaim": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": 0.34660596398647536,
+          "btc_buy_hold_max_drawdown": 0.07537655862179482
+        },
+        "curve_daily": [
+          {
+            "at": 1782950400,
+            "equity": 499.3878380675408,
+            "drawdown": 0.0012243238649183308,
+            "exposure_fraction": 0.053601411684919165
+          },
+          {
+            "at": 1783036800,
+            "equity": 500.49934948597803,
+            "drawdown": 0.0011466689540369224,
+            "exposure_fraction": 0.055728951066261946
+          },
+          {
+            "at": 1783123200,
+            "equity": 501.07049535329804,
+            "drawdown": 7.507439071230415e-05,
+            "exposure_fraction": 0.056818507798640464
+          },
+          {
+            "at": 1783209600,
+            "equity": 499.4882836370293,
+            "drawdown": 0.0034025432977123904,
+            "exposure_fraction": 0.1715338536114028
+          },
+          {
+            "at": 1783296000,
+            "equity": 499.2123040757479,
+            "drawdown": 0.003953187903171673,
+            "exposure_fraction": 0.17106943696633792
+          },
+          {
+            "at": 1783382400,
+            "equity": 498.9705897623959,
+            "drawdown": 0.004435465221432566,
+            "exposure_fraction": 0.1706622596435685
+          },
+          {
+            "at": 1783468800,
+            "equity": 495.35482471468595,
+            "drawdown": 0.011649773081352843,
+            "exposure_fraction": 0.21521899298407965
+          },
+          {
+            "at": 1783555200,
+            "equity": 493.1205796881095,
+            "drawdown": 0.016107621211287948,
+            "exposure_fraction": 0.1219867188103293
+          },
+          {
+            "at": 1783641600,
+            "equity": 492.5022100901889,
+            "drawdown": 0.01734141505346254,
+            "exposure_fraction": 0.1983176150160097
+          },
+          {
+            "at": 1783728000,
+            "equity": 494.0607305847544,
+            "drawdown": 0.014231797446833894,
+            "exposure_fraction": 0.20088314023993104
+          },
+          {
+            "at": 1783814400,
+            "equity": 493.2326446011392,
+            "drawdown": 0.01588402516115095,
+            "exposure_fraction": 0.199522022870529
+          },
+          {
+            "at": 1783900800,
+            "equity": 493.604280628407,
+            "drawdown": 0.015142523244635164,
+            "exposure_fraction": 0.20013344248966955
+          },
+          {
+            "at": 1783987200,
+            "equity": 491.4862305740153,
+            "drawdown": 0.01936853487799084,
+            "exposure_fraction": 0.19663642150793867
+          },
+          {
+            "at": 1784073600,
+            "equity": 496.256495302457,
+            "drawdown": 0.009850726649247021,
+            "exposure_fraction": 0.20447030689030382
+          },
+          {
+            "at": 1784160000,
+            "equity": 496.66222304984115,
+            "drawdown": 0.009041203674629239,
+            "exposure_fraction": 0.1507952385087766
+          },
+          {
+            "at": 1784246400,
+            "equity": 495.11857784069366,
+            "drawdown": 0.01212114156283195,
+            "exposure_fraction": 0.14811146712393228
+          },
+          {
+            "at": 1784332800,
+            "equity": 494.7577553671844,
+            "drawdown": 0.012841067877823686,
+            "exposure_fraction": 0.14748172879765575
+          },
+          {
+            "at": 1784419200,
+            "equity": 494.4843871467001,
+            "drawdown": 0.013386502239755349,
+            "exposure_fraction": 0.15887887375924867
+          },
+          {
+            "at": 1784505600,
+            "equity": 494.6239439946651,
+            "drawdown": 0.013108053266468911,
+            "exposure_fraction": 0.15911946823615333
+          },
+          {
+            "at": 1784592000,
+            "equity": 495.62657686999546,
+            "drawdown": 0.01110756315229755,
+            "exposure_fraction": 0.16084401287163105
+          },
+          {
+            "at": 1784678400,
+            "equity": 495.5398681636622,
+            "drawdown": 0.011280567563084598,
+            "exposure_fraction": 0.32553213027726663
+          },
+          {
+            "at": 1784764800,
+            "equity": 495.48121150309595,
+            "drawdown": 0.011397601496920484,
+            "exposure_fraction": 0.3254509107468898
+          },
+          {
+            "at": 1784851200,
+            "equity": 489.4461275108951,
+            "drawdown": 0.023439023797794167,
+            "exposure_fraction": 0.22829670855780856
+          },
+          {
+            "at": 1784937600,
+            "equity": 485.58360577516385,
+            "drawdown": 0.031145669708000034,
+            "exposure_fraction": 0.08272476310371879
+          },
+          {
+            "at": 1785024000,
+            "equity": 485.8630208625061,
+            "drawdown": 0.030588170414158955,
+            "exposure_fraction": 0.08325895315080503
+          },
+          {
+            "at": 1785110400,
+            "equity": 487.57281066358456,
+            "drawdown": 0.027176734704710936,
+            "exposure_fraction": 0.08651441940597623
+          },
+          {
+            "at": 1785196800,
+            "equity": 484.3377735625296,
+            "drawdown": 0.033631400115024634,
+            "exposure_fraction": 0.17734184062749112
+          },
+          {
+            "at": 1785283200,
+            "equity": 484.59708261219436,
+            "drawdown": 0.03311401712955386,
+            "exposure_fraction": 0.08554891780885185
+          },
+          {
+            "at": 1785369600,
+            "equity": 484.3479784052208,
+            "drawdown": 0.03361103903628615,
+            "exposure_fraction": 0.08507263936926521
+          },
+          {
+            "at": 1785456000,
+            "equity": 484.5283494891048,
+            "drawdown": 0.033251155993279546,
+            "exposure_fraction": 0.08541755142756748
+          },
+          {
+            "at": 1785542400,
+            "equity": 483.32936205930986,
+            "drawdown": 0.035643419960816325,
+            "exposure_fraction": 0.08311997268225174
+          },
+          {
+            "at": 1785628800,
+            "equity": 482.7929448595458,
+            "drawdown": 0.03671369935380542,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1785715200,
+            "equity": 483.5681537674239,
+            "drawdown": 0.03516697393238255,
+            "exposure_fraction": 0.05921126397355423
+          },
+          {
+            "at": 1785801600,
+            "equity": 484.18398253174473,
+            "drawdown": 0.03393824965517356,
+            "exposure_fraction": 0.060422604210624634
+          },
+          {
+            "at": 1785888000,
+            "equity": 484.0802482690169,
+            "drawdown": 0.0341452240843928,
+            "exposure_fraction": 0.06021877391841518
+          },
+          {
+            "at": 1785974400,
+            "equity": 483.85499245643643,
+            "drawdown": 0.034594662794527276,
+            "exposure_fraction": 0.05977586165961568
+          },
+          {
+            "at": 1786060800,
+            "equity": 485.3192299747099,
+            "drawdown": 0.03167316206162951,
+            "exposure_fraction": 0.06264758823795136
+          },
+          {
+            "at": 1786147200,
+            "equity": 485.2697544113628,
+            "drawdown": 0.03177187753147326,
+            "exposure_fraction": 0.06255083749520024
+          },
+          {
+            "at": 1786233600,
+            "equity": 485.0585490608809,
+            "drawdown": 0.03219328224110818,
+            "exposure_fraction": 0.062137598009516536
+          },
+          {
+            "at": 1786320000,
+            "equity": 484.2255958152367,
+            "drawdown": 0.03385522129624763,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1786406400,
+            "equity": 480.18214635621774,
+            "drawdown": 0.04192286087694075,
+            "exposure_fraction": 0.1587540658164319
+          },
+          {
+            "at": 1786492800,
+            "equity": 478.70728101975766,
+            "drawdown": 0.04486556662489494,
+            "exposure_fraction": 0.09286603861319832
+          },
+          {
+            "at": 1786579200,
+            "equity": 478.32674925116095,
+            "drawdown": 0.04562481765279991,
+            "exposure_fraction": 0.09213513779397532
+          },
+          {
+            "at": 1786665600,
+            "equity": 478.6899841211851,
+            "drawdown": 0.0449000780352542,
+            "exposure_fraction": 0.09283284105846268
+          },
+          {
+            "at": 1786752000,
+            "equity": 478.1941396954378,
+            "drawdown": 0.045889405132221395,
+            "exposure_fraction": 0.09188015661041606
+          },
+          {
+            "at": 1786838400,
+            "equity": 478.1710771640077,
+            "drawdown": 0.04593542034603382,
+            "exposure_fraction": 0.0918357976200602
+          },
+          {
+            "at": 1786924800,
+            "equity": 477.4717606719019,
+            "drawdown": 0.047330722418762905,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787011200,
+            "equity": 477.4717606719019,
+            "drawdown": 0.047330722418762905,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787097600,
+            "equity": 477.0044677428211,
+            "drawdown": 0.04826308251591249,
+            "exposure_fraction": 0.09550597636029295
+          },
+          {
+            "at": 1787184000,
+            "equity": 483.70437224629404,
+            "drawdown": 0.0348951857963139,
+            "exposure_fraction": 0.18663799301783482
+          },
+          {
+            "at": 1787270400,
+            "equity": 486.86079376219334,
+            "drawdown": 0.028597377102744015,
+            "exposure_fraction": 0.2386049136121276
+          },
+          {
+            "at": 1787356800,
+            "equity": 498.3650457450147,
+            "drawdown": 0.005643668991997641,
+            "exposure_fraction": 0.20585341122761638
+          },
+          {
+            "at": 1787443200,
+            "equity": 497.18410888805226,
+            "drawdown": 0.014151448972030911,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787529600,
+            "equity": 497.18410888805226,
+            "drawdown": 0.014151448972030911,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787616000,
+            "equity": 497.18410888805226,
+            "drawdown": 0.014151448972030911,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787702400,
+            "equity": 494.4207640986077,
+            "drawdown": 0.019630786320035343,
+            "exposure_fraction": 0.09947532454459232
+          },
+          {
+            "at": 1787788800,
+            "equity": 495.5983509251403,
+            "drawdown": 0.017295791605012822,
+            "exposure_fraction": 0.21903941099300742
+          },
+          {
+            "at": 1787875200,
+            "equity": 498.3131423242497,
+            "drawdown": 0.011912729034608271,
+            "exposure_fraction": 0.2233572794688008
+          },
+          {
+            "at": 1787961600,
+            "equity": 494.07402109983207,
+            "drawdown": 0.020318330585451627,
+            "exposure_fraction": 0.14687450797417784
+          },
+          {
+            "at": 1788048000,
+            "equity": 494.65347614125096,
+            "drawdown": 0.01916934995080044,
+            "exposure_fraction": 0.1478874848255403
+          },
+          {
+            "at": 1788134400,
+            "equity": 490.892761626314,
+            "drawdown": 0.026626335982941063,
+            "exposure_fraction": 0.23849078223906456
+          },
+          {
+            "at": 1788220800,
+            "equity": 492.4780000637023,
+            "drawdown": 0.023483023498500732,
+            "exposure_fraction": 0.2409793616007932
+          },
+          {
+            "at": 1788307200,
+            "equity": 489.7629205753236,
+            "drawdown": 0.02886665731079252,
+            "exposure_fraction": 0.144002027374018
+          },
+          {
+            "at": 1788393600,
+            "equity": 489.5839631071489,
+            "drawdown": 0.029221505660813718,
+            "exposure_fraction": 0.14368489269016424
+          },
+          {
+            "at": 1788480000,
+            "equity": 493.8153758179094,
+            "drawdown": 0.020831189045437237,
+            "exposure_fraction": 0.24212273312024005
+          },
+          {
+            "at": 1788566400,
+            "equity": 491.26827742473176,
+            "drawdown": 0.025881739164297257,
+            "exposure_fraction": 0.2381331667729398
+          },
+          {
+            "at": 1788652800,
+            "equity": 492.7748050473679,
+            "drawdown": 0.02289449953352729,
+            "exposure_fraction": 0.24049785115244754
+          },
+          {
+            "at": 1788739200,
+            "equity": 494.5649629317067,
+            "drawdown": 0.019344859621797772,
+            "exposure_fraction": 0.24328899869766363
+          },
+          {
+            "at": 1788825600,
+            "equity": 492.766670567896,
+            "drawdown": 0.022910629101342006,
+            "exposure_fraction": 0.24048512188982
+          },
+          {
+            "at": 1788912000,
+            "equity": 491.82381378354415,
+            "drawdown": 0.02478018602816945,
+            "exposure_fraction": 0.2639390286730164
+          },
+          {
+            "at": 1788998400,
+            "equity": 490.6109977794661,
+            "drawdown": 0.027185035416775083,
+            "exposure_fraction": 0.14256103955803423
+          },
+          {
+            "at": 1789084800,
+            "equity": 488.76957465170744,
+            "drawdown": 0.030836327342396608,
+            "exposure_fraction": 0.139286944815396
+          },
+          {
+            "at": 1789171200,
+            "equity": 487.65544381186976,
+            "drawdown": 0.03304549745558871,
+            "exposure_fraction": 0.15695838644432034
+          },
+          {
+            "at": 1789257600,
+            "equity": 487.80814457157646,
+            "drawdown": 0.03274271259177963,
+            "exposure_fraction": 0.15722592032849161
+          },
+          {
+            "at": 1789344000,
+            "equity": 486.90696894655105,
+            "drawdown": 0.03452962144158167,
+            "exposure_fraction": 0.15564462087894052
+          },
+          {
+            "at": 1789430400,
+            "equity": 488.20034510627784,
+            "drawdown": 0.03196503220752023,
+            "exposure_fraction": 0.15791229424820957
+          },
+          {
+            "at": 1789516800,
+            "equity": 485.8010663261995,
+            "drawdown": 0.03672247611324442,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789603200,
+            "equity": 485.8010663261995,
+            "drawdown": 0.03672247611324442,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789689600,
+            "equity": 485.8010663261995,
+            "drawdown": 0.03672247611324442,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789776000,
+            "equity": 484.45611779048227,
+            "drawdown": 0.039389326363364896,
+            "exposure_fraction": 0.14370251256979322
+          },
+          {
+            "at": 1789862400,
+            "equity": 483.2000403694915,
+            "drawdown": 0.041879957265129164,
+            "exposure_fraction": 0.19757233951513475
+          },
+          {
+            "at": 1789948800,
+            "equity": 483.01706245511104,
+            "drawdown": 0.04224277761384365,
+            "exposure_fraction": 0.2571174177815687
+          },
+          {
+            "at": 1790035200,
+            "equity": 493.7680832318089,
+            "drawdown": 0.020924963819506037,
+            "exposure_fraction": 0.27354519711634034
+          },
+          {
+            "at": 1790121600,
+            "equity": 493.8464705359978,
+            "drawdown": 0.020769532443337457,
+            "exposure_fraction": 0.20837663391771147
+          },
+          {
+            "at": 1790208000,
+            "equity": 487.89965011502477,
+            "drawdown": 0.032561269529125636,
+            "exposure_fraction": 0.20348144526596826
+          },
+          {
+            "at": 1790294400,
+            "equity": 489.0911784576279,
+            "drawdown": 0.030198630681534167,
+            "exposure_fraction": 0.24177047998271312
+          },
+          {
+            "at": 1790380800,
+            "equity": 492.15650273117063,
+            "drawdown": 0.024120509037096394,
+            "exposure_fraction": 0.24656528171504763
+          },
+          {
+            "at": 1790467200,
+            "equity": 491.1675737094825,
+            "drawdown": 0.026081420952163814,
+            "exposure_fraction": 0.2450249314287777
+          },
+          {
+            "at": 1790553600,
+            "equity": 491.4803293270438,
+            "drawdown": 0.025461269046890278,
+            "exposure_fraction": 0.2455127480317829
+          },
+          {
+            "at": 1790640000,
+            "equity": 488.10872701011994,
+            "drawdown": 0.03214669844690832,
+            "exposure_fraction": 0.18350698577359897
+          },
+          {
+            "at": 1790726400,
+            "equity": 487.0099561332871,
+            "drawdown": 0.03432541183994087,
+            "exposure_fraction": 0.2782446902404916
+          },
+          {
+            "at": 1790812800,
+            "equity": 486.94249078770235,
+            "drawdown": 0.03445918645582324,
+            "exposure_fraction": 0.2781430839590126
+          },
+          {
+            "at": 1790899200,
+            "equity": 487.98594174835995,
+            "drawdown": 0.032390164941974664,
+            "exposure_fraction": 0.27971143176444685
+          },
+          {
+            "at": 1790985600,
+            "equity": 487.25209158131287,
+            "drawdown": 0.03384529013789661,
+            "exposure_fraction": 0.1282907780102987
+          },
+          {
+            "at": 1791072000,
+            "equity": 485.89464120402226,
+            "drawdown": 0.036536929841621824,
+            "exposure_fraction": 0.2848119819700499
+          },
+          {
+            "at": 1791158400,
+            "equity": 488.548655322071,
+            "drawdown": 0.03127438036364716,
+            "exposure_fraction": 0.28876024641748366
+          },
+          {
+            "at": 1791244800,
+            "equity": 487.57485228259054,
+            "drawdown": 0.033205299510692066,
+            "exposure_fraction": 0.2873165531150068
+          },
+          {
+            "at": 1791331200,
+            "equity": 486.929301234681,
+            "drawdown": 0.03448533954781141,
+            "exposure_fraction": 0.2863563207953309
+          },
+          {
+            "at": 1791417600,
+            "equity": 482.3921394116195,
+            "drawdown": 0.04348191512028565,
+            "exposure_fraction": 0.18674756111425836
+          },
+          {
+            "at": 1791504000,
+            "equity": 480.33632871176167,
+            "drawdown": 0.047558308479227374,
+            "exposure_fraction": 0.0
+          }
+        ],
+        "trades": [
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-07T15:59:59Z",
+            "net_pnl": -2.4000448102028002,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-07T00:00:00Z",
+            "exit_at": "2026-07-08T11:59:59Z",
+            "net_pnl": -2.3172720806761262,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-01T16:00:00Z",
+            "exit_at": "2026-07-15T16:00:00Z",
+            "net_pnl": -0.3966997190390238,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-18T16:00:00Z",
+            "net_pnl": 0.21087569965565933,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-09T08:00:00Z",
+            "exit_at": "2026-07-23T08:00:00Z",
+            "net_pnl": 0.5763051304527238,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T08:00:00Z",
+            "exit_at": "2026-07-23T15:59:59Z",
+            "net_pnl": -2.3017709143556218,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T04:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.344707290772398,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-23T12:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.3132242212289,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-24T08:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.2701673534708817,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-27T20:00:00Z",
+            "exit_at": "2026-07-28T03:59:59Z",
+            "net_pnl": -2.2587263108380995,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-18T20:00:00Z",
+            "exit_at": "2026-08-01T20:00:00Z",
+            "net_pnl": -1.3916232699787443,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-02T04:00:00Z",
+            "exit_at": "2026-08-09T23:59:59Z",
+            "net_pnl": 1.432650955690896,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T08:00:00Z",
+            "exit_at": "2026-08-11T07:59:59Z",
+            "net_pnl": -2.2814191163672426,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T04:00:00Z",
+            "exit_at": "2026-08-11T15:59:59Z",
+            "net_pnl": -2.2439146625336335,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-11T12:00:00Z",
+            "exit_at": "2026-08-16T23:59:59Z",
+            "net_pnl": -2.2285013644339386,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-18T08:00:00Z",
+            "exit_at": "2026-08-19T23:59:59Z",
+            "net_pnl": 4.455644428714336,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-20T03:59:59Z",
+            "net_pnl": 1.7968247640287913,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-20T23:59:59Z",
+            "net_pnl": 1.6518854964789824,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-21T11:59:59Z",
+            "net_pnl": 4.478483760195566,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T16:00:00Z",
+            "exit_at": "2026-08-22T03:59:59Z",
+            "net_pnl": 6.267054366055895,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 1.9846082899505433,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-21T04:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 1.46064105209987,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-22T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": -2.3827939413737624,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-25T04:00:00Z",
+            "exit_at": "2026-08-28T19:59:59Z",
+            "net_pnl": -2.3393127901159474,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-30T16:00:00Z",
+            "exit_at": "2026-09-01T19:59:59Z",
+            "net_pnl": -2.294478437855183,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-25T00:00:00Z",
+            "exit_at": "2026-09-08T00:00:00Z",
+            "net_pnl": -0.27350266948658764,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T04:00:00Z",
+            "exit_at": "2026-09-09T04:00:00Z",
+            "net_pnl": -0.4211568947218751,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T20:00:00Z",
+            "exit_at": "2026-09-09T20:00:00Z",
+            "net_pnl": 0.8768118616409808,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-08T12:00:00Z",
+            "exit_at": "2026-09-11T11:59:59Z",
+            "net_pnl": -2.3445977456000833,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-03T12:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.2785887993309544,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-11T16:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.308217086383163,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-20T16:00:00Z",
+            "exit_at": "2026-09-22T11:59:59Z",
+            "net_pnl": 3.292668780690697,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-23T04:00:00Z",
+            "exit_at": "2026-09-23T15:59:59Z",
+            "net_pnl": -2.360896299007102,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-19T04:00:00Z",
+            "exit_at": "2026-09-28T15:59:59Z",
+            "net_pnl": 0.5560859263417655,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T16:00:00Z",
+            "exit_at": "2026-10-02T16:00:00Z",
+            "net_pnl": 1.6582729528681703,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T20:00:00Z",
+            "exit_at": "2026-10-02T20:00:00Z",
+            "net_pnl": 0.5805568613843235,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-29T00:00:00Z",
+            "exit_at": "2026-10-07T03:59:59Z",
+            "net_pnl": -2.261933919914725,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T07:59:59Z",
+            "net_pnl": -2.2666074211238296,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T11:59:59Z",
+            "net_pnl": -2.300668385765654,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-24T16:00:00Z",
+            "exit_at": "2026-10-08T15:59:59Z",
+            "net_pnl": -2.362216109911488,
+            "reason": "STOP"
+          }
+        ],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 907,
+          "OmniQuant trending; uptrend": 801,
+          "OmniQuant ranging; uptrend": 900,
+          "OmniQuant ranging; no uptrend": 737,
+          "OmniQuant volatile regime or zero ATR": 24,
+          "4h volatility exceeds risk distance bound": 22
+        },
+        "configuration_hash": "f3d4ba9431c59feb21dcfefbd58d2a0b58e1cc92517bd4b0f32c988d0b4d9a0a"
+      }
+    },
+    "hypothetical_alpaca_fee_on_kraken_data": {
+      "reused_archive": {
+        "start": "2026-01-21T00:00:00Z",
+        "end": "2026-07-01T00:00:00Z",
+        "final_equity": 496.38255951729644,
+        "net_return": -0.007234880965407142,
+        "maximum_drawdown": 0.007667823164402177,
+        "closed_trades": 1,
+        "open_positions": 1,
+        "mean_exposure_fraction": 0.0008787066495337838,
+        "turnover_usd": 114.62649386037782,
+        "turnover_multiple": 0.22925298772075564,
+        "fees_usd": 0.28656623465094455,
+        "profit_factor": 0.0,
+        "mean_trade_pnl": -2.3817078852490994,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": null,
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "slow_pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reclaim": {
+            "closed_trades": 1,
+            "net_realized": -2.3817078852490994
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": -0.3437938820365867,
+          "btc_buy_hold_max_drawdown": 0.354499212413515
+        },
+        "curve_daily": [
+          {
+            "at": 1769040000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769126400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769212800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769299200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769385600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769472000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769558400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769644800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769731200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769817600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769904000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1769990400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770076800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770163200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770249600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770336000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770422400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770508800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770595200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770681600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770768000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770854400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1770940800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771027200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771113600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771200000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771286400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771372800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771459200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771545600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771632000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771718400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771804800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771891200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1771977600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772064000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772150400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772236800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772323200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772409600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772496000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772582400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772668800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772755200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772841600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1772928000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773014400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773100800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773187200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773273600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773360000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773446400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773532800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773619200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773705600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773792000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773878400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1773964800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774051200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774137600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774224000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774310400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774396800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774483200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774569600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774656000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774742400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774828800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1774915200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775001600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775088000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775174400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775260800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775347200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775433600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775520000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775606400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775692800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775779200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775865600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1775952000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776038400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776124800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776211200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776297600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776384000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776470400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776556800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776643200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776729600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776816000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776902400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1776988800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777075200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777161600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777248000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777334400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777420800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777507200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777593600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777680000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777766400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777852800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1777939200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778025600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778112000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778198400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778284800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778371200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778457600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778544000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778630400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778716800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778803200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778889600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1778976000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779062400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779148800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779235200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779321600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779408000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779494400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779580800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779667200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779753600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779840000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1779926400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780012800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780099200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780185600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780272000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780358400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780444800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780531200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780617600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780704000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780790400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780876800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1780963200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781049600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781136000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781222400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781308800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781395200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781481600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781568000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781654400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781740800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781827200,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1781913600,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782000000,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782086400,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782172800,
+            "equity": 500.0,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782259200,
+            "equity": 499.69056316601944,
+            "drawdown": 0.0006188736679610951,
+            "exposure_fraction": 0.08623118557651036
+          },
+          {
+            "at": 1782345600,
+            "equity": 497.61829211475094,
+            "drawdown": 0.004763415770498103,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782432000,
+            "equity": 497.61829211475094,
+            "drawdown": 0.004763415770498103,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782518400,
+            "equity": 497.61829211475094,
+            "drawdown": 0.004763415770498103,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782604800,
+            "equity": 497.61829211475094,
+            "drawdown": 0.004763415770498103,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782691200,
+            "equity": 497.61829211475094,
+            "drawdown": 0.004763415770498103,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1782777600,
+            "equity": 496.97585067888235,
+            "drawdown": 0.006048298642235328,
+            "exposure_fraction": 0.060832812260599146
+          },
+          {
+            "at": 1782864000,
+            "equity": 496.38255951729644,
+            "drawdown": 0.007234880965407142,
+            "exposure_fraction": 0.05970429314120036
+          }
+        ],
+        "trades": [
+          {
+            "symbol": "ETH/USD",
+            "strategy": "range_reclaim",
+            "entry_at": "2026-06-23T20:00:00Z",
+            "exit_at": "2026-06-24T19:59:59Z",
+            "net_pnl": -2.3817078852490994,
+            "reason": "STOP"
+          }
+        ],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 778,
+          "OmniQuant ranging; no uptrend": 671,
+          "Stale 4h history": 6,
+          "Gap or duplicate in 4h history": 4314,
+          "OmniQuant trending; uptrend": 4,
+          "OmniQuant ranging; uptrend": 2,
+          "4h volatility exceeds risk distance bound": 11,
+          "OmniQuant volatile regime or zero ATR": 2
+        },
+        "configuration_hash": "f73937788f0d5a1c74e8099ce592470e7c7eb432e6edd91feaa13022e0ec6ced"
+      },
+      "new_public_capture": {
+        "start": "2026-07-01T16:00:00Z",
+        "end": "2026-10-09T16:00:00Z",
+        "final_equity": 502.3921075526176,
+        "net_return": 0.004784215105235079,
+        "maximum_drawdown": 0.044422008338806496,
+        "closed_trades": 39,
+        "open_positions": 0,
+        "mean_exposure_fraction": 0.1970465991536167,
+        "turnover_usd": 3429.6400187728445,
+        "turnover_multiple": 6.859280037545689,
+        "fees_usd": 8.574100046932113,
+        "profit_factor": 1.0510494618702917,
+        "mean_trade_pnl": 0.06133609109275649,
+        "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+          -0.852296587089102,
+          0.9824736502733116
+        ],
+        "drawdown_halted": false,
+        "strategies": {
+          "slow_breakout": {
+            "closed_trades": 20,
+            "net_realized": 15.02477454136509
+          },
+          "slow_pullback": {
+            "closed_trades": 18,
+            "net_realized": -13.260192406102039
+          },
+          "range_reclaim": {
+            "closed_trades": 1,
+            "net_realized": 0.6275254173544518
+          },
+          "breakout": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "pullback": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "range_reversion": {
+            "closed_trades": 0,
+            "net_realized": 0
+          },
+          "inverse_trend": {
+            "closed_trades": 0,
+            "net_realized": 0
+          }
+        },
+        "blockers": {},
+        "baselines": {
+          "cash_return": 0,
+          "btc_buy_hold_after_cost_return": 0.3642266006579147,
+          "btc_buy_hold_max_drawdown": 0.07537655862179482
+        },
+        "curve_daily": [
+          {
+            "at": 1782950400,
+            "equity": 499.6928709153316,
+            "drawdown": 0.000614258169336801,
+            "exposure_fraction": 0.06227246658932725
+          },
+          {
+            "at": 1783036800,
+            "equity": 500.9934470921036,
+            "drawdown": 0.0013401310451486292,
+            "exposure_fraction": 0.06471983081255567
+          },
+          {
+            "at": 1783123200,
+            "equity": 501.6617431583219,
+            "drawdown": 8.773967660702375e-05,
+            "exposure_fraction": 0.06597246392487043
+          },
+          {
+            "at": 1783209600,
+            "equity": 500.6597248725652,
+            "drawdown": 0.002283915595376773,
+            "exposure_fraction": 0.20169500573468818
+          },
+          {
+            "at": 1783296000,
+            "equity": 500.35033120113053,
+            "drawdown": 0.002900476159504284,
+            "exposure_fraction": 0.2011982671767463
+          },
+          {
+            "at": 1783382400,
+            "equity": 500.09732216863046,
+            "drawdown": 0.0034046732592195594,
+            "exposure_fraction": 0.20079159861542795
+          },
+          {
+            "at": 1783468800,
+            "equity": 496.38342524783013,
+            "drawdown": 0.010805737314544706,
+            "exposure_fraction": 0.2673597437707357
+          },
+          {
+            "at": 1783555200,
+            "equity": 493.5601769660106,
+            "drawdown": 0.016431914298834838,
+            "exposure_fraction": 0.14548385689967225
+          },
+          {
+            "at": 1783641600,
+            "equity": 493.3878933705897,
+            "drawdown": 0.016775241524275675,
+            "exposure_fraction": 0.2403415525135958
+          },
+          {
+            "at": 1783728000,
+            "equity": 495.31426412329904,
+            "drawdown": 0.012936364560497626,
+            "exposure_fraction": 0.243315526848626
+          },
+          {
+            "at": 1783814400,
+            "equity": 494.3183814296058,
+            "drawdown": 0.014920962346810174,
+            "exposure_fraction": 0.2417809549034947
+          },
+          {
+            "at": 1783900800,
+            "equity": 494.77151731119034,
+            "drawdown": 0.014017951908746995,
+            "exposure_fraction": 0.24247996535063793
+          },
+          {
+            "at": 1783987200,
+            "equity": 492.18620700079896,
+            "drawdown": 0.019169965445508197,
+            "exposure_fraction": 0.23847457162754152
+          },
+          {
+            "at": 1784073600,
+            "equity": 498.0272203515373,
+            "drawdown": 0.007529977885619821,
+            "exposure_fraction": 0.2474648335310003
+          },
+          {
+            "at": 1784160000,
+            "equity": 498.5170941094019,
+            "drawdown": 0.00655375610609954,
+            "exposure_fraction": 0.1852816523487755
+          },
+          {
+            "at": 1784246400,
+            "equity": 496.6079564421645,
+            "drawdown": 0.01035829092948748,
+            "exposure_fraction": 0.18213029105914777
+          },
+          {
+            "at": 1784332800,
+            "equity": 496.167196058076,
+            "drawdown": 0.011236639441913443,
+            "exposure_fraction": 0.18139929420216053
+          },
+          {
+            "at": 1784419200,
+            "equity": 496.47287619057215,
+            "drawdown": 0.010627479228453196,
+            "exposure_fraction": 0.19935833267235298
+          },
+          {
+            "at": 1784505600,
+            "equity": 496.65332162612924,
+            "drawdown": 0.010267887065415593,
+            "exposure_fraction": 0.19965104742910322
+          },
+          {
+            "at": 1784592000,
+            "equity": 497.9291649034909,
+            "drawdown": 0.007725383053679424,
+            "exposure_fraction": 0.2017146402482114
+          },
+          {
+            "at": 1784678400,
+            "equity": 499.1346611080766,
+            "drawdown": 0.005323066883130556,
+            "exposure_fraction": 0.41133213066198876
+          },
+          {
+            "at": 1784764800,
+            "equity": 499.0548240199672,
+            "drawdown": 0.005482166453121051,
+            "exposure_fraction": 0.41123715469209216
+          },
+          {
+            "at": 1784851200,
+            "equity": 491.9077219728374,
+            "drawdown": 0.019724931179438188,
+            "exposure_fraction": 0.2855969283654677
+          },
+          {
+            "at": 1784937600,
+            "equity": 487.92660670021417,
+            "drawdown": 0.027658508705323936,
+            "exposure_fraction": 0.22818219255504915
+          },
+          {
+            "at": 1785024000,
+            "equity": 488.4948930777278,
+            "drawdown": 0.026526026040500583,
+            "exposure_fraction": 0.2290859188273922
+          },
+          {
+            "at": 1785110400,
+            "equity": 491.64152624822236,
+            "drawdown": 0.020255406755670724,
+            "exposure_fraction": 0.23405209042106634
+          },
+          {
+            "at": 1785196800,
+            "equity": 488.36282560982494,
+            "drawdown": 0.02678921045579752,
+            "exposure_fraction": 0.10636760253226558
+          },
+          {
+            "at": 1785283200,
+            "equity": 489.1494258453762,
+            "drawdown": 0.025221671330884488,
+            "exposure_fraction": 0.1078127217867172
+          },
+          {
+            "at": 1785369600,
+            "equity": 488.83046737599176,
+            "drawdown": 0.025857292650819708,
+            "exposure_fraction": 0.10722730107222105
+          },
+          {
+            "at": 1785456000,
+            "equity": 489.06141845279535,
+            "drawdown": 0.02539705270622228,
+            "exposure_fraction": 0.10765126810076031
+          },
+          {
+            "at": 1785542400,
+            "equity": 487.5262087505399,
+            "drawdown": 0.028456422846818596,
+            "exposure_fraction": 0.10482547671513957
+          },
+          {
+            "at": 1785628800,
+            "equity": 486.8393684475725,
+            "drawdown": 0.029825160102171733,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1785715200,
+            "equity": 488.18518724636203,
+            "drawdown": 0.027143208677802177,
+            "exposure_fraction": 0.06935046270807778
+          },
+          {
+            "at": 1785801600,
+            "equity": 488.9181277809035,
+            "drawdown": 0.025682602753468564,
+            "exposure_fraction": 0.07075312957933146
+          },
+          {
+            "at": 1785888000,
+            "equity": 488.7946664384346,
+            "drawdown": 0.025928636858198573,
+            "exposure_fraction": 0.0705171497223894
+          },
+          {
+            "at": 1785974400,
+            "equity": 488.5265738691254,
+            "drawdown": 0.026462892471783683,
+            "exposure_fraction": 0.07000431589665479
+          },
+          {
+            "at": 1786060800,
+            "equity": 490.2692645187294,
+            "drawdown": 0.022990053725479465,
+            "exposure_fraction": 0.07332787937236195
+          },
+          {
+            "at": 1786147200,
+            "equity": 490.2103802185029,
+            "drawdown": 0.023107398521827638,
+            "exposure_fraction": 0.073215964221541
+          },
+          {
+            "at": 1786233600,
+            "equity": 489.9590100788652,
+            "drawdown": 0.023608329631313985,
+            "exposure_fraction": 0.07273790910403624
+          },
+          {
+            "at": 1786320000,
+            "equity": 488.96765463644147,
+            "drawdown": 0.02558390549877565,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1786406400,
+            "equity": 485.06715726983157,
+            "drawdown": 0.03335682743859236,
+            "exposure_fraction": 0.203280084604544
+          },
+          {
+            "at": 1786492800,
+            "equity": 483.8010371838343,
+            "drawdown": 0.03587995504768615,
+            "exposure_fraction": 0.12238982459208857
+          },
+          {
+            "at": 1786579200,
+            "equity": 483.29086954445984,
+            "drawdown": 0.03689661853040627,
+            "exposure_fraction": 0.12145811084436386
+          },
+          {
+            "at": 1786665600,
+            "equity": 483.7778477456809,
+            "drawdown": 0.035926167024173394,
+            "exposure_fraction": 0.12234751659798054
+          },
+          {
+            "at": 1786752000,
+            "equity": 483.11308385195053,
+            "drawdown": 0.03725091035014205,
+            "exposure_fraction": 0.12113296036406596
+          },
+          {
+            "at": 1786838400,
+            "equity": 483.08216460107934,
+            "drawdown": 0.03731252631879178,
+            "exposure_fraction": 0.12107638802417778
+          },
+          {
+            "at": 1786924800,
+            "equity": 482.51015845996255,
+            "drawdown": 0.03845242173881125,
+            "exposure_fraction": 0.12002849196138868
+          },
+          {
+            "at": 1787011200,
+            "equity": 483.6000620531716,
+            "drawdown": 0.03628045884390929,
+            "exposure_fraction": 0.1220230205113411
+          },
+          {
+            "at": 1787097600,
+            "equity": 484.4039625758223,
+            "drawdown": 0.034678443659016955,
+            "exposure_fraction": 0.12348841062718768
+          },
+          {
+            "at": 1787184000,
+            "equity": 495.0508674169236,
+            "drawdown": 0.013461262245440975,
+            "exposure_fraction": 0.24286320285697954
+          },
+          {
+            "at": 1787270400,
+            "equity": 501.24079913369064,
+            "drawdown": 0.0011259492007242855,
+            "exposure_fraction": 0.29988357688167433
+          },
+          {
+            "at": 1787356800,
+            "equity": 516.161724163585,
+            "drawdown": 0.0,
+            "exposure_fraction": 0.24581179527963248
+          },
+          {
+            "at": 1787443200,
+            "equity": 515.0976138280004,
+            "drawdown": 0.016695975301675214,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787529600,
+            "equity": 515.0976138280004,
+            "drawdown": 0.016695975301675214,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787616000,
+            "equity": 515.0976138280004,
+            "drawdown": 0.016695975301675214,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1787702400,
+            "equity": 512.5327376869371,
+            "drawdown": 0.02159223761129314,
+            "exposure_fraction": 0.11838708150879766
+          },
+          {
+            "at": 1787788800,
+            "equity": 514.8536943566744,
+            "drawdown": 0.017161609370671682,
+            "exposure_fraction": 0.2587317079841734
+          },
+          {
+            "at": 1787875200,
+            "equity": 518.1636562076042,
+            "drawdown": 0.010843003494341641,
+            "exposure_fraction": 0.2634988926696367
+          },
+          {
+            "at": 1787961600,
+            "equity": 512.8994044296087,
+            "drawdown": 0.020892283128661093,
+            "exposure_fraction": 0.1701498438314092
+          },
+          {
+            "at": 1788048000,
+            "equity": 513.6065475650563,
+            "drawdown": 0.01954237066069997,
+            "exposure_fraction": 0.17129930709882607
+          },
+          {
+            "at": 1788134400,
+            "equity": 509.6181212615768,
+            "drawdown": 0.0271561423636566,
+            "exposure_fraction": 0.2920850804379611
+          },
+          {
+            "at": 1788220800,
+            "equity": 511.64158522588644,
+            "drawdown": 0.023293417694537633,
+            "exposure_fraction": 0.2949046239579192
+          },
+          {
+            "at": 1788307200,
+            "equity": 508.09433669208147,
+            "drawdown": 0.03006499586973832,
+            "exposure_fraction": 0.16700162411501582
+          },
+          {
+            "at": 1788393600,
+            "equity": 507.86360679149493,
+            "drawdown": 0.03050545149169115,
+            "exposure_fraction": 0.16662090058998782
+          },
+          {
+            "at": 1788480000,
+            "equity": 513.8739187938629,
+            "drawdown": 0.019031967975235653,
+            "exposure_fraction": 0.29333495537496534
+          },
+          {
+            "at": 1788566400,
+            "equity": 510.67032831710605,
+            "drawdown": 0.02514751447499508,
+            "exposure_fraction": 0.28887034581895626
+          },
+          {
+            "at": 1788652800,
+            "equity": 512.4546014916073,
+            "drawdown": 0.021741396980857086,
+            "exposure_fraction": 0.291363843769193
+          },
+          {
+            "at": 1788739200,
+            "equity": 514.6636173566424,
+            "drawdown": 0.01752445997241503,
+            "exposure_fraction": 0.29442696129946866
+          },
+          {
+            "at": 1788825600,
+            "equity": 512.3756656037814,
+            "drawdown": 0.021892082936506352,
+            "exposure_fraction": 0.291253899069717
+          },
+          {
+            "at": 1788912000,
+            "equity": 511.5966428477171,
+            "drawdown": 0.023379211183280568,
+            "exposure_fraction": 0.3208442610921317
+          },
+          {
+            "at": 1788998400,
+            "equity": 510.1103535564369,
+            "drawdown": 0.026216487464024163,
+            "exposure_fraction": 0.17838011031583328
+          },
+          {
+            "at": 1789084800,
+            "equity": 507.7264431716494,
+            "drawdown": 0.030767292229864962,
+            "exposure_fraction": 0.17449882224511346
+          },
+          {
+            "at": 1789171200,
+            "equity": 506.42966341219795,
+            "drawdown": 0.03324280118658418,
+            "exposure_fraction": 0.24459316749124624
+          },
+          {
+            "at": 1789257600,
+            "equity": 506.73733973416864,
+            "drawdown": 0.03265545743352383,
+            "exposure_fraction": 0.2450548760477372
+          },
+          {
+            "at": 1789344000,
+            "equity": 505.1527244303464,
+            "drawdown": 0.03568043476600924,
+            "exposure_fraction": 0.24267094258340977
+          },
+          {
+            "at": 1789430400,
+            "equity": 508.2465995142104,
+            "drawdown": 0.029774331262114484,
+            "exposure_fraction": 0.19969602048220345
+          },
+          {
+            "at": 1789516800,
+            "equity": 504.96119730942587,
+            "drawdown": 0.036046053599768535,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789603200,
+            "equity": 504.96119730942587,
+            "drawdown": 0.036046053599768535,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789689600,
+            "equity": 504.96119730942587,
+            "drawdown": 0.036046053599768535,
+            "exposure_fraction": 0.0
+          },
+          {
+            "at": 1789776000,
+            "equity": 504.3695993703262,
+            "drawdown": 0.037175394173095566,
+            "exposure_fraction": 0.177315693229828
+          },
+          {
+            "at": 1789862400,
+            "equity": 503.2640680770138,
+            "drawdown": 0.03928581623866367,
+            "exposure_fraction": 0.24010739516759255
+          },
+          {
+            "at": 1789948800,
+            "equity": 503.4920406988367,
+            "drawdown": 0.03885062416915752,
+            "exposure_fraction": 0.31011782493748447
+          },
+          {
+            "at": 1790035200,
+            "equity": 517.022654965964,
+            "drawdown": 0.013021136498594377,
+            "exposure_fraction": 0.3283035603765318
+          },
+          {
+            "at": 1790121600,
+            "equity": 517.086848057668,
+            "drawdown": 0.012898594045016809,
+            "exposure_fraction": 0.25174986279155875
+          },
+          {
+            "at": 1790208000,
+            "equity": 510.08627211584803,
+            "drawdown": 0.026262458124372556,
+            "exposure_fraction": 0.2463400417657878
+          },
+          {
+            "at": 1790294400,
+            "equity": 511.8428089939083,
+            "drawdown": 0.022909288287510488,
+            "exposure_fraction": 0.28843628825753864
+          },
+          {
+            "at": 1790380800,
+            "equity": 515.5731338320886,
+            "drawdown": 0.01578822360317733,
+            "exposure_fraction": 0.29362097577151014
+          },
+          {
+            "at": 1790467200,
+            "equity": 514.4013204371299,
+            "drawdown": 0.01802517597205988,
+            "exposure_fraction": 0.29200040155963947
+          },
+          {
+            "at": 1790553600,
+            "equity": 514.7873961386216,
+            "drawdown": 0.017288170439664352,
+            "exposure_fraction": 0.29253514480572657
+          },
+          {
+            "at": 1790640000,
+            "equity": 510.6274004224619,
+            "drawdown": 0.025229462382425072,
+            "exposure_fraction": 0.22088103285960706
+          },
+          {
+            "at": 1790726400,
+            "equity": 509.91859561605264,
+            "drawdown": 0.02658254692437856,
+            "exposure_fraction": 0.3461445295646411
+          },
+          {
+            "at": 1790812800,
+            "equity": 509.840316011656,
+            "drawdown": 0.026731980057028815,
+            "exposure_fraction": 0.34604336765843063
+          },
+          {
+            "at": 1790899200,
+            "equity": 511.2482147456865,
+            "drawdown": 0.024044348714201247,
+            "exposure_fraction": 0.3478580844008391
+          },
+          {
+            "at": 1790985600,
+            "equity": 510.2393597138896,
+            "drawdown": 0.025970219047264487,
+            "exposure_fraction": 0.16221609118935124
+          },
+          {
+            "at": 1791072000,
+            "equity": 509.7671956363693,
+            "drawdown": 0.026871564394786662,
+            "exposure_fraction": 0.3594633797905254
+          },
+          {
+            "at": 1791158400,
+            "equity": 513.2581154139583,
+            "drawdown": 0.020207515921154218,
+            "exposure_fraction": 0.363854118408349
+          },
+          {
+            "at": 1791244800,
+            "equity": 511.95238895756376,
+            "drawdown": 0.022700103821506112,
+            "exposure_fraction": 0.3622188380145176
+          },
+          {
+            "at": 1791331200,
+            "equity": 511.12966275568294,
+            "drawdown": 0.024270660476820582,
+            "exposure_fraction": 0.3611841722138918
+          },
+          {
+            "at": 1791417600,
+            "equity": 505.0976377612393,
+            "drawdown": 0.035785593365051604,
+            "exposure_fraction": 0.23067801862848977
+          },
+          {
+            "at": 1791504000,
+            "equity": 502.3921075526176,
+            "drawdown": 0.040950359560161465,
+            "exposure_fraction": 0.0
+          }
+        ],
+        "trades": [
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-07T19:59:59Z",
+            "net_pnl": -2.4301212159866346,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-07T00:00:00Z",
+            "exit_at": "2026-07-08T11:59:59Z",
+            "net_pnl": -2.340709097456987,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-01T16:00:00Z",
+            "exit_at": "2026-07-15T16:00:00Z",
+            "net_pnl": -0.05501739501719172,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-04T16:00:00Z",
+            "exit_at": "2026-07-18T16:00:00Z",
+            "net_pnl": 0.8063007497771366,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-09T08:00:00Z",
+            "exit_at": "2026-07-23T08:00:00Z",
+            "net_pnl": 1.3346332103824778,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T08:00:00Z",
+            "exit_at": "2026-07-23T15:59:59Z",
+            "net_pnl": -2.332911007309548,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-07-21T04:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.3823815569066866,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-23T12:00:00Z",
+            "exit_at": "2026-07-24T15:59:59Z",
+            "net_pnl": -2.350926227324706,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-24T08:00:00Z",
+            "exit_at": "2026-07-27T23:59:59Z",
+            "net_pnl": -2.2985664883681665,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-07-18T20:00:00Z",
+            "exit_at": "2026-08-01T20:00:00Z",
+            "net_pnl": -1.110932524217155,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-02T04:00:00Z",
+            "exit_at": "2026-08-09T23:59:59Z",
+            "net_pnl": 2.1282861888689695,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T08:00:00Z",
+            "exit_at": "2026-08-11T07:59:59Z",
+            "net_pnl": -2.3313573805901413,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-10T04:00:00Z",
+            "exit_at": "2026-08-11T15:59:59Z",
+            "net_pnl": -2.282174325182062,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-11T12:00:00Z",
+            "exit_at": "2026-08-19T23:59:59Z",
+            "net_pnl": 6.850857391309567,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-20T03:59:59Z",
+            "net_pnl": 3.0897435488708567,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-20T23:59:59Z",
+            "net_pnl": 2.9710498346126712,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-19T16:00:00Z",
+            "exit_at": "2026-08-21T11:59:59Z",
+            "net_pnl": 6.822727521800687,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T16:00:00Z",
+            "exit_at": "2026-08-22T03:59:59Z",
+            "net_pnl": 8.20335791501767,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-20T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 3.1623114587478653,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-21T04:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": 2.1394711556201216,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-22T00:00:00Z",
+            "exit_at": "2026-08-22T07:59:59Z",
+            "net_pnl": -2.496027928648328,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-08-25T04:00:00Z",
+            "exit_at": "2026-08-28T19:59:59Z",
+            "net_pnl": -2.4502479883703714,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-30T16:00:00Z",
+            "exit_at": "2026-09-01T19:59:59Z",
+            "net_pnl": -2.39996436715591,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-25T00:00:00Z",
+            "exit_at": "2026-09-08T00:00:00Z",
+            "net_pnl": -0.09032666018696389,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T04:00:00Z",
+            "exit_at": "2026-09-09T04:00:00Z",
+            "net_pnl": -0.02024600490000239,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-08-26T20:00:00Z",
+            "exit_at": "2026-09-09T20:00:00Z",
+            "net_pnl": 1.4694143189118805,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-08T12:00:00Z",
+            "exit_at": "2026-09-11T11:59:59Z",
+            "net_pnl": -2.464771278451206,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "range_reclaim",
+            "entry_at": "2026-09-11T16:00:00Z",
+            "exit_at": "2026-09-14T23:59:59Z",
+            "net_pnl": 0.6275254173544518,
+            "reason": "TARGET"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-03T12:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.3832753854887727,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-11T16:00:00Z",
+            "exit_at": "2026-09-15T15:59:59Z",
+            "net_pnl": -2.424524570287673,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-20T16:00:00Z",
+            "exit_at": "2026-09-22T11:59:59Z",
+            "net_pnl": 4.53029862165539,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "XRP/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-23T04:00:00Z",
+            "exit_at": "2026-09-23T15:59:59Z",
+            "net_pnl": -2.5012875548345797,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "ADA/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-19T04:00:00Z",
+            "exit_at": "2026-09-28T15:59:59Z",
+            "net_pnl": 1.103227953091995,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T16:00:00Z",
+            "exit_at": "2026-10-02T16:00:00Z",
+            "net_pnl": 2.5563079555509347,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_breakout",
+            "entry_at": "2026-09-18T20:00:00Z",
+            "exit_at": "2026-10-02T20:00:00Z",
+            "net_pnl": 1.4552185742241832,
+            "reason": "RISK_OR_TIME_EXIT"
+          },
+          {
+            "symbol": "ETH/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-29T00:00:00Z",
+            "exit_at": "2026-10-07T03:59:59Z",
+            "net_pnl": -2.3833023552871566,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "SOL/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T11:59:59Z",
+            "net_pnl": -2.4385104999520237,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "DOGE/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-09-24T16:00:00Z",
+            "exit_at": "2026-10-08T15:59:59Z",
+            "net_pnl": -2.497773073700774,
+            "reason": "STOP"
+          },
+          {
+            "symbol": "BTC/USD",
+            "strategy": "slow_pullback",
+            "entry_at": "2026-10-03T04:00:00Z",
+            "exit_at": "2026-10-08T15:59:59Z",
+            "net_pnl": -2.393269377556315,
+            "reason": "STOP"
+          }
+        ],
+        "signal_blockers": {
+          "Need 120 complete 4h bars": 360,
+          "OmniQuant trending; no uptrend": 907,
+          "OmniQuant trending; uptrend": 801,
+          "OmniQuant ranging; uptrend": 900,
+          "OmniQuant ranging; no uptrend": 734,
+          "OmniQuant volatile regime or zero ATR": 24,
+          "4h volatility exceeds risk distance bound": 22
+        },
+        "configuration_hash": "f73937788f0d5a1c74e8099ce592470e7c7eb432e6edd91feaa13022e0ec6ced"
+      }
+    }
+  },
+  "conclusion": "No demonstrated prospective edge. These are all predeclared retrospective scenarios; do not deploy based on the best row."
+}
