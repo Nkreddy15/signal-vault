@@ -4,13 +4,18 @@ const {execFileSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const api=JSON.parse(execFileSync(process.env.PYTHON||'python',['-c',`
 import json
+from unittest.mock import patch
 from trading_stack.test_cloud_paper import CampaignTests,order,NOW
+from trading_stack.cloud_paper.engine import load_config
 from trading_stack.cloud_paper.web import snapshot
-c=CampaignTests();c.setUp()
+c=CampaignTests()
+with patch('trading_stack.test_cloud_paper.load_config',return_value=load_config('trading_stack/cloud_paper/campaign.integrated.json')):c.setUp()
 try:
  for market,symbol in [('crypto','BTC/USD'),('stocks','SPY'),('kalshi','TEST')]:
   c.fill(order(market,market=market,symbol=symbol,quantity=1 if market=='kalshi' else .5,price=.4 if market=='kalshi' else 100))
  s=c.store.read();s['heartbeat']=NOW;s['providers']={m:{'status':'FIXTURE','mode':'ISOLATED FIXTURE'} for m in ('crypto','stocks','kalshi')};c.store.save(s)
+ s['providers']['polymarket']={'status':'FIXTURE','mode':'READ-ONLY FIXTURE'};c.store.save(s)
+ c.store.db.execute('INSERT INTO arbitrage_observations(at,payload) VALUES(?,?)',(NOW,json.dumps({'slug':'ISOLATED <script> fixture','direction':'buy_complete_set','net_edge':'.023','status':'QUALIFIED_RESEARCH_ONLY'})))
  d=snapshot(c.store,NOW);d['cloud']['csrf_token']='isolated-csrf-fixture';print(json.dumps(d))
 finally:c.tearDown()
 `],{cwd:root,encoding:'utf8'}));
@@ -30,11 +35,16 @@ vm.runInContext('renderSnapshot(snapshot)',context);
 assert.equal(el('paperReleaseTitle').textContent,'CLOUD PAPER · RUNNING');
 assert.match(el('stockEquity').textContent,/\$/);
 assert.match(el('managedStockPositions').innerHTML,/SPY/);assert.match(el('kalshiPositions').innerHTML,/TEST/);
+assert.match(el('healthGrid').innerHTML,/OmniQuant regime.*PINNED REGIME DETECTOR/);
+assert.match(el('healthGrid').innerHTML,/PredictArb research.*FIXTURE/);
+assert.match(el('paperReleaseDiagnostics').innerHTML,/&lt;script&gt; fixture.*research only/);
+assert.doesNotMatch(el('paperReleaseDiagnostics').innerHTML,/<script>/);
 assert.equal(vm.runInContext("findTrade('stocks').market",context),'stocks');
 assert.equal(vm.runInContext("findTrade('kalshi').market",context),'kalshi');
 context.trade={...api.cloud.open_trades[0],fills:[{action:'buy',quantity:1,price:100,at:100},{action:'sell',quantity:1,price:101,at:90000}]};
 context.rows=[{time:0,open:99,high:101,low:98,close:100,volume:1}];
 vm.runInContext('renderInspector(trade,false);drawCandles(rows,trade)',context);
+assert.match(el('.tf-group').innerHTML,/tf active[^>]+data-cloud-tf="4h"/);
 assert.match(el('candleChart').innerHTML,/data-fill-marker="buy"/);
 vm.runInContext("trade.market='dex';state.contractQuotes=[{at:50,bid:.000001,ask:.0000011},{at:100,bid:.0000012,ask:.0000013}];trade.fills=[{action:'buy',at:80,price:.0000011}];drawCandles([],trade)",context);
 assert.match(el('candleChart').innerHTML,/simulated fills/);

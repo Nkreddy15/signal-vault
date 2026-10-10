@@ -11,6 +11,9 @@ def ema(values,period):
 
 
 def signals(bars,market,symbol,now,config):
+    if config.get("strategy_pack")=="swing-v3":
+        from .strategies_v3 import signals as alternative
+        return alternative(bars,market,symbol,now,config)
     if config.get("strategy_pack")=="regime-v2":
         from .strategies_v2 import signals as alternative
         return alternative(bars,market,symbol,now,config)

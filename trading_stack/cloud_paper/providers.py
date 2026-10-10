@@ -83,7 +83,7 @@ class Kraken:
         return data["result"]
     def load_assets(self):
         for key,a in self.get("AssetPairs").items():
-            name=a.get("wsname","").replace("XBT/","BTC/")
+            name=a.get("wsname","").replace("XBT/","BTC/").replace("XDG/","DOGE/")
             if name.endswith("/USD") and a.get("status")=="online": self.assets[name]=dict(a,key=key)
         return self.assets
     def quotes(self, symbols, now):

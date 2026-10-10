@@ -1,0 +1,281 @@
+{
+  "kind": "STAGED CLOUD RELEASE PREPARATION; NOT A DEPLOYMENT",
+  "checked_at": "2026-10-10T00:17:12.831Z",
+  "project": {
+    "id": "11cfaecd-9956-46a7-b94a-99a1dc4cd4c9",
+    "name": "signal-vault-forward-research"
+  },
+  "environment": {
+    "id": "628e903d-c28f-42c1-bf59-9f7d91574dd0",
+    "name": "production"
+  },
+  "staged": {
+    "patchId": "58aae766-9a56-49e5-bdbf-2b4abdcc4e56",
+    "status": "STAGED",
+    "changeCount": 29,
+    "message": null,
+    "createdAt": "2026-10-10T00:12:50.620Z",
+    "updatedAt": "2026-10-10T00:17:12.831Z"
+  },
+  "destructive": false,
+  "resources": [
+    {
+      "kind": "service",
+      "id": "469a640b-03af-4d3e-be47-441cacff16dd",
+      "name": "btcusd-hourly-get-research",
+      "action": "update",
+      "changes": [
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.source.branch",
+          "displayName": "Branch",
+          "type": "added",
+          "from": "",
+          "to": "signal-vault-integrated-20261009",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.source.commitSha",
+          "displayName": "Commit Sha",
+          "type": "added",
+          "from": "",
+          "to": "cf187641cd6b9701c9a4bb9182fc16cd0418cf61",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.source.image",
+          "displayName": "Image",
+          "type": "removed",
+          "from": "",
+          "to": "",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.source.repo",
+          "displayName": "Repo",
+          "type": "added",
+          "from": "",
+          "to": "Nkreddy15/signal-vault",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.build.dockerfilePath",
+          "displayName": "Dockerfile Path",
+          "type": "added",
+          "from": "",
+          "to": "trading_stack/Dockerfile.cloud-paper",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.cronSchedule",
+          "displayName": "Cron Schedule",
+          "type": "removed",
+          "from": "",
+          "to": "",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.drainingSeconds",
+          "displayName": "Draining Seconds",
+          "type": "added",
+          "from": "",
+          "to": "45",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.healthcheckPath",
+          "displayName": "Healthcheck Path",
+          "type": "added",
+          "from": "",
+          "to": "/healthz",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.healthcheckTimeout",
+          "displayName": "Healthcheck Timeout",
+          "type": "added",
+          "from": "",
+          "to": "300",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.limitOverride.containers.cpu",
+          "displayName": "CPU",
+          "type": "added",
+          "from": "",
+          "to": "0.5 vCPU",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.limitOverride.containers.memoryBytes",
+          "displayName": "Memory",
+          "type": "added",
+          "from": "",
+          "to": "500 MB",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.multiRegionConfig.us-west2.numReplicas",
+          "displayName": "Num Replicas",
+          "type": "added",
+          "from": "1",
+          "to": "1",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.overlapSeconds",
+          "displayName": "Overlap Seconds",
+          "type": "added",
+          "from": "",
+          "to": "0",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.restartPolicyType",
+          "displayName": "Restart Policy Type",
+          "type": "added",
+          "from": "",
+          "to": "ALWAYS",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.sleepApplication",
+          "displayName": "Sleep Application",
+          "type": "updated",
+          "from": "true",
+          "to": "true",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.deploy.startCommand",
+          "displayName": "Start Command",
+          "type": "added",
+          "from": "",
+          "to": "python -m trading_stack.cloud_paper.supervisor",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.volumeMounts.5ed6bb24-d163-4d7e-a02c-d0abe2e2d719.mountPath",
+          "displayName": "Mount Path",
+          "type": "added",
+          "from": "",
+          "to": "/data",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.PORT.encryptedValue",
+          "displayName": "PORT",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.RAILWAY_DOCKERFILE_PATH.encryptedValue",
+          "displayName": "RAILWAY_DOCKERFILE_PATH",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SIGNAL_VAULT_MODE.encryptedValue",
+          "displayName": "SIGNAL_VAULT_MODE",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_ALLOW_AI_CALLS.encryptedValue",
+          "displayName": "SV_ALLOW_AI_CALLS",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_ALLOW_NEW_CAMPAIGN.encryptedValue",
+          "displayName": "SV_ALLOW_NEW_CAMPAIGN",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_CONFIG.encryptedValue",
+          "displayName": "SV_CONFIG",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_DASHBOARD_PASSWORD.encryptedValue",
+          "displayName": "SV_DASHBOARD_PASSWORD",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_DASHBOARD_USER.encryptedValue",
+          "displayName": "SV_DASHBOARD_USER",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        },
+        {
+          "path": "services.469a640b-03af-4d3e-be47-441cacff16dd.variables.SV_STATE_DIR.encryptedValue",
+          "displayName": "SV_STATE_DIR",
+          "type": "added",
+          "from": "",
+          "to": "<redacted>",
+          "destructive": false
+        }
+      ]
+    },
+    {
+      "kind": "volume",
+      "id": "5ed6bb24-d163-4d7e-a02c-d0abe2e2d719",
+      "name": "signal-vault-integrated-paper-data",
+      "action": "create",
+      "changes": [
+        {
+          "path": "volumes.5ed6bb24-d163-4d7e-a02c-d0abe2e2d719.region",
+          "displayName": "Region",
+          "type": "added",
+          "from": "",
+          "to": "us-west2",
+          "destructive": false
+        },
+        {
+          "path": "volumes.5ed6bb24-d163-4d7e-a02c-d0abe2e2d719.sizeMB",
+          "displayName": "Size MB",
+          "type": "added",
+          "from": "",
+          "to": "500",
+          "destructive": false
+        },
+        {
+          "path": "volumes.5ed6bb24-d163-4d7e-a02c-d0abe2e2d719.isCreated",
+          "displayName": "Is Created",
+          "type": "added",
+          "from": "",
+          "to": "CREATED",
+          "destructive": false
+        }
+      ]
+    }
+  ],
+  "source_commit": "cf187641cd6b9701c9a4bb9182fc16cd0418cf61",
+  "active_new_campaign": false,
+  "private_dashboard_url": null,
+  "activation_blockers": [
+    "Railway rejected sleepApplication=false with a Free-plan sleep requirement; staged sleepApplication=true does not guarantee continuous protective monitoring",
+    "User's no-paid-testing requirement: available credit and hard spending protection remain unverified",
+    "No Docker build, Railway persistent-volume restart, public HTTPS/auth or connected broker execution verification has passed"
+  ],
+  "secrets": "Variable names only; values redacted. Dashboard password was generated and staged directly in Railway.",
+  "scope": "Only the previously empty research service and a separate unprovisioned volume are staged; existing hourly collector is unaffected"
+}

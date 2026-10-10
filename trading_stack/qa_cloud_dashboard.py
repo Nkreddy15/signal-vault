@@ -1,4 +1,5 @@
 """Loopback-only browser fixture, isolated temporary ledger; NEVER a campaign server."""
+import argparse
 import base64
 import json
 import tempfile
@@ -11,19 +12,34 @@ from trading_stack.test_cloud_paper import bars,order,obs
 
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--config',help='Optional campaign configuration for the isolated fixture')
+    parser.add_argument('--port',type=int,default=8090)
+    args=parser.parse_args()
     now=time.time();directory=tempfile.mkdtemp(prefix="sv-ui-fixture-")
-    cfg=load_config();cfg["evidence"]="ISOLATED EXECUTION FIXTURE — NOT CAMPAIGN PERFORMANCE"
+    cfg=load_config(args.config);cfg["evidence"]="ISOLATED EXECUTION FIXTURE — NOT CAMPAIGN PERFORMANCE"
     store=Store(directory,cfg,now-7200)
     for i,market,symbol in ((1,"crypto","BTC/USD"),(2,"crypto","ETH/USD"),(3,"stocks","SPY"),(4,"kalshi","DEMO-CONTRACT")):
         o=order("fixture-"+str(i),market=market,symbol=symbol,quantity=1 if market=="kalshi" else .5,price=.4 if market=="kalshi" else 100)
         o.update(signal_at=now-3600,mode="ISOLATED EXECUTION FIXTURE")
         if market=="kalshi":o.update(stop=None,target=None,stop_distance=.4,contract=dict(market=dict(title="Isolated binary contract fixture",close_time="2026-10-05T20:00:00Z")))
         store.prepare(o,now-3500);ob=obs(o);ob["filled_at"]=now-3500;store.observe(o["id"],ob,now-3500)
-        store.put_candles(market,symbol,"1h",bars(now+3600,93))
+        native=cfg.get('crypto_timeframe','1h') if market=='crypto' else '1h'
+        rows=bars(now+3600,93)
+        if native=='4h':
+            boundary=int(now//14400)*14400
+            rows=[dict(r,time=boundary-(len(rows)-j)*14400) for j,r in enumerate(rows)]
+        store.put_candles(market,symbol,native,rows)
     sell=order("fixture-exit",action="sell",tid="fixture-1",price=103)
     store.prepare(sell,now-100);ob=obs(sell);ob["filled_at"]=now-100;store.observe(sell["id"],ob,now-100)
     s=store.read();s.update(heartbeat=now,last_cycle=now,cycles=2)
     s["providers"]={m:dict(status="FIXTURE",mode="ISOLATED EXECUTION FIXTURE",reason="Browser verification only") for m in ("crypto","stocks","kalshi")}
+    if cfg.get('predictarb_enabled'):
+        s['providers']['polymarket']=dict(status='FIXTURE',mode='ISOLATED RESEARCH FIXTURE',reason='Browser verification only; not public data')
+        store.db.execute('CREATE TABLE arbitrage_observations(id INTEGER PRIMARY KEY,at REAL NOT NULL,payload TEXT NOT NULL)')
+        store.db.execute('INSERT INTO arbitrage_observations(at,payload) VALUES(?,?)',(now,json.dumps(dict(
+            slug='ISOLATED-FIXTURE-NOT-LIVE',direction='buy_complete_set',net_edge='0.023',
+            status='QUALIFIED_RESEARCH_ONLY',reason='Synthetic browser fixture; no execution or capital allocation'))))
     s["diagnostics"]=[dict(market="crypto",pair="BTC/USD",reason="ISOLATED EXECUTION FIXTURE — NOT CAMPAIGN PERFORMANCE",execution="TESTED")]
     s["marks"]={m+":"+sym:dict(bid=.45 if m=="kalshi" else 102,ask=.46 if m=="kalshi" else 102.01,at=now) for m,sym in (("crypto","BTC/USD"),("crypto","ETH/USD"),("stocks","SPY"),("kalshi","DEMO-CONTRACT"))}
     store.save(s)
@@ -38,7 +54,7 @@ def main():
         return original(environ,start_response)
     app.wsgi_app=fixture_auth
     print(json.dumps(dict(mode="ISOLATED FIXTURE",directory=directory)),flush=True)
-    app.run(host="127.0.0.1",port=8090,debug=False)
+    app.run(host="127.0.0.1",port=args.port,debug=False)
 
 
 if __name__=="__main__":main()

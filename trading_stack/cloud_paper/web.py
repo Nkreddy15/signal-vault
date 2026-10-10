@@ -53,7 +53,7 @@ def snapshot(store,now):
     if len(curve)>1500:
         stride=math.ceil(len(curve)/1499);curve=curve[::stride]+[curve[-1]]
     crypto=dict(bot_state=providers.get("crypto",{}).get("status","STARTING"),
-        config=dict(exchange="Kraken public data",runmode="INTERNAL SIMULATION",strategy="Trend / breakout / range",timeframe="1h"),
+        config=dict(exchange="Kraken public data",runmode="INTERNAL SIMULATION",strategy=s["config"].get("strategy_pack","Trend / breakout / range"),timeframe=s["config"].get("crypto_timeframe","1h")),
         starting_balance=s["config"]["capital"],marked_equity=pf["equity"],open_pnl_usd=None if any(t["mark_stale"] for t in cp) else sum(t["profit_abs"] or 0 for t in cp),
         closed_pnl_usd=sum(t["profit_abs"] or 0 for t in cc),open_exposure_usd=sum((t["current_rate"] or t["open_rate"])*t["amount"] for t in cp),
         open_trade_count=len(cp),closed_trade_count=len(cc),open_trades=cp,closed_trades=cc,profit=dict(closed_trade_count=len(cc)),
@@ -71,7 +71,11 @@ def snapshot(store,now):
         evidence=s["config"]["evidence"],status=status,started_at=iso(s["started_at"]),deadline=iso(s["deadline"]),elapsed_seconds=max(0,now-s["started_at"]),
         heartbeat=iso(s["heartbeat"]) if s["heartbeat"] else None,last_cycle=iso(s["last_cycle"]) if s["last_cycle"] else None,cycles=s["cycles"],
         paused=s["paused"],emergency=s["emergency"],halt=s["halt"],providers=providers,portfolio=pf,diagnostics=s["diagnostics"],
-        open_trades=opened,closed_trades=closed,equity_curve=curve,reconciliation=s["reconciliation"],last_backup=s.get("last_backup"),backup_error=s.get("backup_error")))
+        open_trades=opened,closed_trades=closed,equity_curve=curve,reconciliation=s["reconciliation"],last_backup=s.get("last_backup"),backup_error=s.get("backup_error"),
+        integrations=dict(omniquant="PINNED REGIME DETECTOR" if s["config"].get("strategy_pack")=="swing-v3" else "NOT SELECTED",
+            predictarb="READ-ONLY RESEARCH" if s["config"].get("predictarb_enabled") else "DISABLED",
+            ai="Optional Jev annotations require explicit paid-call switch; no AI order authority"),
+        opportunities=[json.loads(r[0]) for r in store.db.execute("SELECT payload FROM arbitrage_observations ORDER BY id DESC LIMIT 8")] if store.db.execute("SELECT 1 FROM sqlite_master WHERE name='arbitrage_observations'").fetchone() else []))
 
 
 def create_app(directory=None,password=None):
@@ -148,15 +152,18 @@ def create_app(directory=None,password=None):
             return {"error":"Unsupported market or timeframe","candles":[]},400
         st=db()
         try:
-            s=st.read();rows=st.candles(market,symbol,"1h",10000)
+            s=st.read();native=s["config"].get("crypto_timeframe","1h") if market=="crypto" else "1h"
+            if native=="4h" and tf=="1h":
+                return {"candles":[],"error":"This campaign stores native 4h bars; select 4h or 1d. No 1h bars are fabricated."},400
+            rows=st.candles(market,symbol,native,10000)
             if market in ("kalshi","dex"):
                 quotes=[dict(r) for r in reversed(st.db.execute("SELECT at,bid,ask FROM quotes WHERE market=? AND symbol=? ORDER BY at DESC LIMIT 1500",(market,symbol)).fetchall())]
                 return {"candles":[],"quotes":quotes,"kind":"quote_simulation" if market=="dex" else "contract","error":None}
-            if tf!="1h":
+            if tf!=native:
                 seconds={"4h":14400,"1d":86400}[tf];groups={}
                 for r in rows: groups.setdefault(int(r["time"]//seconds)*seconds,[]).append(r)
                 rows=[dict(time=t,open=rs[0]["open"],high=max(r["high"] for r in rs),low=min(r["low"] for r in rs),close=rs[-1]["close"],volume=sum(r["volume"] for r in rs))
-                      for t,rs in sorted(groups.items()) if t+seconds<=time.time()]
+                      for t,rs in sorted(groups.items()) if t+seconds<=time.time() and (market!="crypto" or [r["time"] for r in rs]==list(range(t,t+seconds,14400 if native=="4h" else 3600)))]
             tid=request.args.get("trade_id")
             p=s["positions"].get(tid) or next((p for p in s["closed"] if p["id"]==tid),None)
             if p and (p["market"]!=market or p["symbol"]!=symbol): return {"candles":[],"error":"Trade identity mismatch"},400
@@ -182,6 +189,15 @@ def create_app(directory=None,password=None):
             rows=[dict(r) for r in st.db.execute("SELECT * FROM discoveries ORDER BY at DESC LIMIT 200")] if exists else []
             return {"mode":"QUOTE-DERIVED INTERNAL SIMULATION; NO ON-CHAIN FILLS","observations":rows,
                     "coverage":"Latest token profiles only; incomplete launch coverage","ai":"Optional annotations; never execution authority"}
+        finally:st.db.close()
+
+    @app.get("/api/opportunities")
+    def opportunities():
+        st=db()
+        try:
+            exists=st.db.execute("SELECT 1 FROM sqlite_master WHERE name='arbitrage_observations'").fetchone()
+            rows=[dict(at=r[0],**json.loads(r[1])) for r in st.db.execute("SELECT at,payload FROM arbitrage_observations ORDER BY id DESC LIMIT 200")] if exists else []
+            return {"mode":"READ_ONLY_RESEARCH","capital_allocated":0,"provider":st.read()["providers"].get("polymarket",{}),"observations":rows}
         finally:st.db.close()
 
     return app

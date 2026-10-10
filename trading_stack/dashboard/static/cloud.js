@@ -41,12 +41,14 @@ renderSnapshot = function(d) {
   $('paperReleaseMeta').textContent=`Started ${shortTime(c.started_at)} · ${(c.elapsed_seconds/3600).toFixed(1)}h elapsed · ends ${shortTime(c.deadline)} · config ${c.config_hash.slice(0,12)}`;
   $('paperLegacyTitle').textContent='EXPERIMENTAL';$('paperLegacyMeta').textContent='No demonstrated edge · separate V11 ledger preserved';
   $('paperScanStats').textContent=`${c.cycles} cycles · last cycle ${shortTime(c.last_cycle)} · ${c.evidence}`;
-  $('paperReleaseDiagnostics').innerHTML=c.diagnostics.map(v=>`<div><strong>${esc(v.market.toUpperCase())} · ${esc(v.pair)}</strong><span>${esc(v.reason||v.execution)}</span></div>`).join('');
+  $('paperReleaseDiagnostics').innerHTML=c.diagnostics.map(v=>`<div><strong>${esc(v.market.toUpperCase())} · ${esc(v.pair)}</strong><span>${esc(v.reason||v.execution)}</span></div>`).join('')+(c.opportunities||[]).map(o=>`<details class="cloud-details"><summary>${esc(o.slug)} · ${esc(o.direction)} · ${pct(Number(o.net_edge))} modeled edge · research only</summary><pre class="cloud-evidence">${esc(JSON.stringify(o,null,2))}</pre></details>`).join('');
   document.querySelector('.paper-release-links').innerHTML='<a href="/api/export">Export campaign</a><a href="#kalshi">Kalshi</a><a href="#system">Controls</a>';
   $('healthGrid').innerHTML=[['Worker',c.status],['Heartbeat',shortTime(c.heartbeat)],['Crypto',c.providers.crypto?.status],['Stocks',c.providers.stocks?.status],['Kalshi',c.providers.kalshi?.status],...(c.providers.dex?[['New-token scanner',c.providers.dex.status]]:[]),['Last backup',c.backup_error||(c.last_backup?shortTime(c.last_backup*1000):'Pending')],['Maximum drawdown',pct(Math.max(0,...c.equity_curve.map(v=>v.drawdown)))],['Costs booked',money(p.fees)]]
     .map(([k,v])=>`<div class="health-item"><span>${esc(k)}</span><strong>${esc(v||'UNKNOWN')}</strong></div>`).join('');
   $('kalshiMode').textContent=c.providers.kalshi?.mode||'PUBLIC DATA / EXECUTION BLOCKED';
   $('kalshiStatus').textContent=c.providers.kalshi?.status||'BLOCKED';
+  if(c.providers.polymarket)$('healthGrid').innerHTML+=`<div class="health-item"><span>PredictArb research</span><strong>${esc(c.providers.polymarket.status)}</strong></div>`;
+  if(c.integrations?.omniquant)$('healthGrid').innerHTML+=`<div class="health-item"><span>OmniQuant regime</span><strong>${esc(c.integrations.omniquant)}</strong></div>`;
   $('kalshiPositions').innerHTML=c.open_trades.filter(t=>t.market==='kalshi').map(tradeButton).join('')||'<div class="empty">No open prediction contracts.</div>';
   $('kalshiDiscovery').textContent=[c.providers.kalshi?.reason||'',...c.diagnostics.filter(d=>d.market==='kalshi').map(d=>d.reason),...(c.providers.kalshi?.discovery||[]).map(m=>`${m.ticker}: ${m.title} · ${m.status} · closes ${shortTime(m.close_time)}`)].join(' | ');
   document.querySelectorAll('[data-cloud-trade]').forEach(el=>el.addEventListener('click',()=>openTrade(el.dataset.cloudTrade)));
@@ -65,6 +67,7 @@ function drawCloudEquity(rows) {
 }
 renderInspector = function(t,openChart=true) {
   if(!state.snapshot?.cloud)return legacyInspector(t,openChart);
+  if(t.market==='crypto'&&state.snapshot.crypto?.config?.timeframe==='4h'&&cloudChart.timeframe==='1h')cloudChart.timeframe='4h';
   legacyInspector(t,false);
   $('detailSide').textContent=`${t.market==='kalshi'?'YES contract':'Long'} · ${t.mode}`;
   $('executionMetrics').innerHTML += [metric('Execution mode',esc(t.mode)),metric('Signal timestamp',shortTime(t.signal_time)),

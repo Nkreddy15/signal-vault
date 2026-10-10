@@ -20,7 +20,8 @@ from .store import digest
 from .strategies import signals
 
 
-def load_archive(path,symbols):
+def load_archive(path,symbols,bar_seconds=3600):
+    if bar_seconds not in (3600,14400): raise ValueError("Unsupported archive interval")
     data={};manifest={}
     with zipfile.ZipFile(path) as archive:
         for symbol in symbols:
@@ -31,29 +32,30 @@ def load_archive(path,symbols):
                 t=int(row["ts"])//1000;count+=1
                 r={k:float(row[k]) for k in ("open","high","low","close","volume")};r["time"]=t
                 if not all(math.isfinite(r[k]) and r[k]>0 for k in ("open","high","low","close")): continue
-                groups.setdefault(t//3600*3600,[]).append(r)
+                groups.setdefault(t//bar_seconds*bar_seconds,[]).append(r)
             hours=[]
             for t,rs in sorted(groups.items()):
                 rs.sort(key=lambda r:r["time"])
-                if [r["time"] for r in rs]!=[t+i*900 for i in range(4)]:continue
+                if [r["time"] for r in rs]!=[t+i*900 for i in range(bar_seconds//900)]:continue
                 hours.append(dict(time=t,open=rs[0]["open"],high=max(r["high"] for r in rs),low=min(r["low"] for r in rs),
                                   close=rs[-1]["close"],volume=sum(r["volume"] for r in rs)))
             data[symbol]=hours
             manifest[symbol]=dict(sha256=hashlib.sha256(raw).hexdigest(),quarter_hours=count,complete_hours=len(hours),
-                                 incomplete_hours_discarded=len(groups)-len(hours),start=iso(hours[0]["time"]),end=iso(hours[-1]["time"]+3600))
+                                 incomplete_hours_discarded=len(groups)-len(hours),bar_seconds=bar_seconds,start=iso(hours[0]["time"]),end=iso(hours[-1]["time"]+bar_seconds))
     return data,manifest
 
 
 def precompute(data,cfg):
     candidates={};blocks=Counter()
+    step=cfg.get("bar_seconds",3600); daily=86400//step
     for symbol,rows in data.items():
         for i,r in enumerate(rows):
             if i<60:continue
             history=rows[max(0,i-720):i]
             found,reason=signals(history,"crypto",symbol,r["time"],cfg)
             if not found:blocks[reason]+=1;continue
-            lagged=history[-24:]
-            if len(lagged)<24 or lagged[-1]["time"]-lagged[0]["time"]!=23*3600:
+            lagged=history[-daily:]
+            if len(lagged)<daily or lagged[-1]["time"]-lagged[0]["time"]!=(daily-1)*step:
                 blocks["Incomplete lagged daily liquidity"]+=1;continue
             if sum(b["close"]*b["volume"] for b in lagged)<cfg["minimum_daily_volume_usd"]:
                 blocks["Below lagged daily volume"]+=1;continue
@@ -70,6 +72,7 @@ def bootstrap_means(values):
 
 
 def replay(data,candidates,cfg,start,end):
+    step=cfg.get("bar_seconds",3600)
     fee=cfg["crypto_fee_fraction"];friction=cfg["slippage_fraction"]+cfg["max_spread_fraction"]/2
     indexed={sym:{r["time"]:r for r in rows} for sym,rows in data.items()}
     cash=cfg["capital"];peak=cash;day_equity=cash;daily_halt=False;halt=False
@@ -81,11 +84,11 @@ def replay(data,candidates,cfg,start,end):
         cash+=gross-cost;turnover+=gross;fees+=cost
         trades.append(dict(symbol=sym,strategy=p["strategy"],entry_at=iso(p["at"]),exit_at=iso(t),
                            net_pnl=gross-cost-p["cost"],reason=reason))
-    for t in range(start,end,3600):
+    for t in range(start,end,step):
         current={sym:rows[t] for sym,rows in indexed.items() if t in rows}
         # Opening-price marks precede decisions; a missing bar blocks new risk.
         for sym,r in current.items():marks[sym]=r["open"]
-        if t==start or t//86400!=(t-3600)//86400:day_equity=equity();daily_halt=False
+        if t==start or t//86400!=(t-step)//86400:day_equity=equity();daily_halt=False
         for sym,p in list(positions.items()):
             if sym in current and (halt or daily_halt or t-p["at"]>=cfg["max_hold_hours"]*3600):
                 sell(sym,current[sym]["open"],t,"RISK_OR_TIME_EXIT")
@@ -98,33 +101,33 @@ def replay(data,candidates,cfg,start,end):
             if abs(reference/c["reference"]-1)>.03:blocks["Next open moved over 3%"]+=1;continue
             entry=reference*(1+friction);eq=equity()
             target=c["target"] if c.get("target_anchored") else entry+c["target"]-c["reference"]
-            if cfg.get("strategy_pack")=="regime-v2" and target/entry-1<c["cost_break_even_fraction"]+.01:
+            if cfg.get("strategy_pack") in ("regime-v2","swing-v3") and target/entry-1<c["cost_break_even_fraction"]+.01:
                 blocks["Fresh entry price leaves insufficient target room after costs"]+=1;continue
             exposure=sum(p["qty"]*marks.get(s,p["entry"]) for s,p in positions.items())
             budget=min(cash,eq*cfg["max_position_fraction"],eq*cfg["max_exposure_fraction"]-exposure)
-            spread_reserve=cfg["max_spread_fraction"] if cfg.get("strategy_pack")=="regime-v2" else 0
+            spread_reserve=cfg["max_spread_fraction"] if cfg.get("strategy_pack") in ("regime-v2","swing-v3") else 0
             quantity=min(budget/(entry*(1+fee)),eq*cfg["risk_per_trade"]/(c["stop_distance"]+entry*(2*fee+2*cfg["slippage_fraction"]+spread_reserve)),c["lagged_volume_cap"])
             quantity=math.floor(max(0,quantity)*1e8)/1e8
             if quantity*entry<cfg["minimum_order_usd"]:blocks["Minimum size or lagged liquidity cap"]+=1;continue
             cost=quantity*entry*(1+fee);cash-=cost;fees+=quantity*entry*fee;turnover+=quantity*entry
             positions[sym]=dict(qty=quantity,entry=entry,cost=cost,at=t,strategy=c["strategy"],stop=entry-c["stop_distance"],
-                                target=target,distance=c["stop_distance"],peak=entry)
+                                target=target,distance=c["stop_distance"],peak=entry,activation=c.get("trailing_activation_multiple",1),trail=c.get("trailing_distance_multiple",1))
             seen.add(c["signal"])
         for sym,p in list(positions.items()):
             if sym not in current:continue
             r=current[sym]
             # Stop first if both levels occur; no favorable intrabar path invented.
-            if r["low"]<=p["stop"]:sell(sym,min(r["open"],p["stop"]),t+3599,"STOP")
-            elif r["high"]>=p["target"]:sell(sym,p["target"],t+3599,"TARGET")
+            if r["low"]<=p["stop"]:sell(sym,min(r["open"],p["stop"]),t+step-1,"STOP")
+            elif r["high"]>=p["target"]:sell(sym,p["target"],t+step-1,"TARGET")
             else:
                 p["peak"]=max(p["peak"],r["high"])
-                if p["peak"]>=p["entry"]+p["distance"]:p["stop"]=max(p["stop"],p["peak"]-p["distance"])
+                if p["peak"]>=p["entry"]+p["activation"]*p["distance"]:p["stop"]=max(p["stop"],p["peak"]-p["trail"]*p["distance"])
             marks[sym]=r["close"]
         eq=equity();peak=max(peak,eq);dd=1-eq/peak
         if eq<=day_equity*(1-cfg["daily_loss_fraction"]):daily_halt=True
         if dd>=cfg["drawdown_fraction"]:halt=True
         exposure=sum(p["qty"]*marks.get(s,p["entry"]) for s,p in positions.items())
-        curve.append(dict(at=t+3600,equity=eq,drawdown=dd,exposure_fraction=exposure/eq))
+        curve.append(dict(at=t+step,equity=eq,drawdown=dd,exposure_fraction=exposure/eq))
     # End marks include modeled liquidation cost; no invented terminal fills.
     wins=sum(max(0,t["net_pnl"]) for t in trades);losses=-sum(min(0,t["net_pnl"]) for t in trades)
     pnl=[t["net_pnl"] for t in trades]
@@ -134,7 +137,7 @@ def replay(data,candidates,cfg,start,end):
     if btc:
         for r in btc:
             value=cfg["capital"]*r["close"]*(1-friction)*(1-fee)/(btc[0]["open"]*(1+friction)*(1+fee));bp=max(bp,value);bdd=max(bdd,1-value/bp)
-    by_strategy={family:dict(closed_trades=sum(t["strategy"]==family for t in trades),net_realized=sum(t["net_pnl"] for t in trades if t["strategy"]==family)) for family in cfg["strategies"] if family in ("trend","breakout","pullback","range_reversion")}
+    by_strategy={family:dict(closed_trades=sum(t["strategy"]==family for t in trades),net_realized=sum(t["net_pnl"] for t in trades if t["strategy"]==family)) for family in cfg["strategies"] if family!="probability_edge"}
     return dict(start=iso(start),end=iso(end),final_equity=equity(),net_return=equity()/cfg["capital"]-1,
                 maximum_drawdown=max(r["drawdown"] for r in curve),closed_trades=len(trades),open_positions=len(positions),
                 mean_exposure_fraction=statistics.mean(r["exposure_fraction"] for r in curve),turnover_usd=turnover,

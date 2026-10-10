@@ -190,6 +190,8 @@ class Store:
                         opened_at=now, strategy=o["strategy"], signal_at=o["signal_at"], reason=o["reason"],
                         stop=o.get("stop"), initial_stop=o.get("stop"), target=o.get("target"), peak=0,
                         stop_distance=o.get("stop_distance"), contract=o.get("contract"), fills=[]))
+                    p.setdefault("trailing_activation_multiple",o.get("trailing_activation_multiple",1))
+                    p.setdefault("trailing_distance_multiple",o.get("trailing_distance_multiple",1))
                     p["quantity"] += dq; p["bought_qty"] += dq; p["cost"] += dv
                     p["entry_price"] = p["cost"]/p["bought_qty"]
                 if tid in s["positions"]: s["positions"][tid]["entry_fee"] += df
