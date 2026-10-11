@@ -1,0 +1,19 @@
+{
+  "kind": "RETROSPECTIVE SCREENING; NO EXECUTED TRADES",
+  "configuration_hash": "96456cacb3b6cd068a1f7d2c85802879bea45a177f71a58998db538208bcc2aa",
+  "start": "2026-10-05T16:00:00Z",
+  "end": "2026-10-11T22:00:00Z",
+  "capture_sha256": "da2b6c161c97519647cf3d765e04a2bf459c2c6af690a42854aba2babd6d65b6",
+  "metrics": {
+    "net_return": -0.02397467703187317,
+    "closed_trades": 5,
+    "final_equity": 488.0126614840634,
+    "maximum_drawdown": 0.028584971888758304,
+    "profit_factor": 0.0007754119012504357
+  },
+  "limits": [
+    "Short retrospective native 15m sample, not an untouched holdout.",
+    "Same fees and risk as the prior 4h campaign; no thresholds tuned from these results.",
+    "No live broker profit claimed."
+  ]
+}

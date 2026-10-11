@@ -69,10 +69,14 @@ def snapshot(store,now):
                     protective_exits="ACTIVE WHILE ENTRIES PAUSED; require valid quote and open venue"),
         crypto=crypto,stocks=stocks,cloud=dict(campaign_id=s["campaign_id"],version=s["config"]["version"],config_hash=s["config_hash"],
         evidence=s["config"]["evidence"],status=status,started_at=iso(s["started_at"]),deadline=iso(s["deadline"]),elapsed_seconds=max(0,now-s["started_at"]),
+        config_revisions=[dict(at=iso(r["at"]),reason=r["reason"],from_hash=r["from_hash"],to_hash=r["to_hash"],
+            from_version=r["from_config"]["version"],to_version=r["to_config"]["version"],
+            from_timeframe=r["from_config"]["crypto_timeframe"],to_timeframe=r["to_config"]["crypto_timeframe"],
+            equity_at_revision=r["equity_at_revision"]) for r in s.get("config_revisions",[])],
         heartbeat=iso(s["heartbeat"]) if s["heartbeat"] else None,last_cycle=iso(s["last_cycle"]) if s["last_cycle"] else None,cycles=s["cycles"],
         paused=s["paused"],emergency=s["emergency"],halt=s["halt"],providers=providers,portfolio=pf,diagnostics=s["diagnostics"],
         open_trades=opened,closed_trades=closed,equity_curve=curve,reconciliation=s["reconciliation"],last_backup=s.get("last_backup"),backup_error=s.get("backup_error"),
-        integrations=dict(omniquant="PINNED REGIME DETECTOR" if s["config"].get("strategy_pack")=="swing-v3" else "NOT SELECTED",
+        integrations=dict(omniquant="PINNED REGIME DETECTOR" if s["config"].get("strategy_pack") in ("swing-v3","intraday-v1") else "NOT SELECTED",
             predictarb="READ-ONLY RESEARCH" if s["config"].get("predictarb_enabled") else "DISABLED",
             ai="Optional Jev annotations require explicit paid-call switch; no AI order authority"),
         opportunities=[json.loads(r[0]) for r in store.db.execute("SELECT payload FROM arbitrage_observations ORDER BY id DESC LIMIT 8")] if store.db.execute("SELECT 1 FROM sqlite_master WHERE name='arbitrage_observations'").fetchone() else []))
@@ -148,22 +152,23 @@ def create_app(directory=None,password=None):
     @app.get("/api/candles")
     def candles():
         market=request.args.get("market","crypto");symbol=request.args.get("pair","");tf=request.args.get("timeframe","1h")
-        if market not in ("crypto","stocks","kalshi","dex") or tf not in ("1h","4h","1d"):
+        if market not in ("crypto","stocks","kalshi","dex") or tf not in ("15m","1h","4h","1d"):
             return {"error":"Unsupported market or timeframe","candles":[]},400
         st=db()
         try:
             s=st.read();native=s["config"].get("crypto_timeframe","1h") if market=="crypto" else "1h"
-            if native=="4h" and tf=="1h":
-                return {"candles":[],"error":"This campaign stores native 4h bars; select 4h or 1d. No 1h bars are fabricated."},400
+            intervals={"15m":900,"1h":3600,"4h":14400,"1d":86400}
+            if market in ("crypto","stocks") and intervals[tf]<intervals[native]:
+                return {"candles":[],"error":f"This campaign stores native {native} bars; smaller bars are not fabricated."},400
             rows=st.candles(market,symbol,native,10000)
             if market in ("kalshi","dex"):
                 quotes=[dict(r) for r in reversed(st.db.execute("SELECT at,bid,ask FROM quotes WHERE market=? AND symbol=? ORDER BY at DESC LIMIT 1500",(market,symbol)).fetchall())]
                 return {"candles":[],"quotes":quotes,"kind":"quote_simulation" if market=="dex" else "contract","error":None}
             if tf!=native:
-                seconds={"4h":14400,"1d":86400}[tf];groups={}
+                seconds=intervals[tf];groups={}
                 for r in rows: groups.setdefault(int(r["time"]//seconds)*seconds,[]).append(r)
                 rows=[dict(time=t,open=rs[0]["open"],high=max(r["high"] for r in rs),low=min(r["low"] for r in rs),close=rs[-1]["close"],volume=sum(r["volume"] for r in rs))
-                      for t,rs in sorted(groups.items()) if t+seconds<=time.time() and (market!="crypto" or [r["time"] for r in rs]==list(range(t,t+seconds,14400 if native=="4h" else 3600)))]
+                      for t,rs in sorted(groups.items()) if t+seconds<=time.time() and (market!="crypto" or [r["time"] for r in rs]==list(range(t,t+seconds,intervals[native])))]
             tid=request.args.get("trade_id")
             p=s["positions"].get(tid) or next((p for p in s["closed"] if p["id"]==tid),None)
             if p and (p["market"]!=market or p["symbol"]!=symbol): return {"candles":[],"error":"Trade identity mismatch"},400
