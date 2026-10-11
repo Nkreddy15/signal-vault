@@ -21,7 +21,7 @@ from .strategies import signals
 
 
 def load_archive(path,symbols,bar_seconds=3600):
-    if bar_seconds not in (3600,14400): raise ValueError("Unsupported archive interval")
+    if bar_seconds not in (900,3600,14400): raise ValueError("Unsupported archive interval")
     data={};manifest={}
     with zipfile.ZipFile(path) as archive:
         for symbol in symbols:
@@ -101,11 +101,11 @@ def replay(data,candidates,cfg,start,end):
             if abs(reference/c["reference"]-1)>.03:blocks["Next open moved over 3%"]+=1;continue
             entry=reference*(1+friction);eq=equity()
             target=c["target"] if c.get("target_anchored") else entry+c["target"]-c["reference"]
-            if cfg.get("strategy_pack") in ("regime-v2","swing-v3") and target/entry-1<c["cost_break_even_fraction"]+.01:
+            if cfg.get("strategy_pack") in ("regime-v2","swing-v3","intraday-v1") and target/entry-1<c["cost_break_even_fraction"]+.01:
                 blocks["Fresh entry price leaves insufficient target room after costs"]+=1;continue
             exposure=sum(p["qty"]*marks.get(s,p["entry"]) for s,p in positions.items())
             budget=min(cash,eq*cfg["max_position_fraction"],eq*cfg["max_exposure_fraction"]-exposure)
-            spread_reserve=cfg["max_spread_fraction"] if cfg.get("strategy_pack") in ("regime-v2","swing-v3") else 0
+            spread_reserve=cfg["max_spread_fraction"] if cfg.get("strategy_pack") in ("regime-v2","swing-v3","intraday-v1") else 0
             quantity=min(budget/(entry*(1+fee)),eq*cfg["risk_per_trade"]/(c["stop_distance"]+entry*(2*fee+2*cfg["slippage_fraction"]+spread_reserve)),c["lagged_volume_cap"])
             quantity=math.floor(max(0,quantity)*1e8)/1e8
             if quantity*entry<cfg["minimum_order_usd"]:blocks["Minimum size or lagged liquidity cap"]+=1;continue

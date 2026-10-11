@@ -1,12 +1,13 @@
 """One durable worker, one private web process. Provider restarts failed replicas."""
 import os
+import fcntl
 from pathlib import Path
 import signal
 import subprocess
 import sys
 import time
 from .engine import load_config
-from .store import Store
+from .store import Store, digest
 
 
 def settings(env=None):
@@ -23,10 +24,30 @@ def settings(env=None):
     return directory
 
 
+def initialize_store(directory, config, environ=None, now=None):
+    """Revise only under an explicit prior-hash permission and worker lock."""
+    environ=os.environ if environ is None else environ
+    directory=Path(directory)
+    directory.mkdir(parents=True,exist_ok=True)
+    with (directory/"worker.lock").open("a+") as lock:
+        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        store=Store(directory) if (directory/"campaign.sqlite3").exists() else Store(directory,config,now)
+        try:
+            if store.read()["config_hash"]!=digest(config):
+                expected=environ.get("SV_CONFIG_REVISION_FROM")
+                if not expected: raise ValueError("Frozen configuration changed; explicit revision permission required")
+                store.backup(time.time() if now is None else now)
+                store.revise_crypto_interval(config,expected,now)
+            return store
+        except BaseException:
+            store.db.close()
+            raise
+
+
 def main():
     directory=settings(); os.umask(0o077)
     cfg=load_config(os.environ.get("SV_CONFIG"))
-    store=Store(directory,cfg);store.backup(time.time());store.db.close()
+    store=initialize_store(directory,cfg);store.backup(time.time());store.db.close()
     env=dict(os.environ,SV_STATE_DIR=str(directory))
     children=[];stopping=False
     def stop(*_):

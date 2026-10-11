@@ -32,6 +32,11 @@ def load_config(path=None):
             raise ValueError("Swing pack requires native complete 4h crypto bars")
         files=["strategies_v3.py", "strategies_v2.py", "vendor/omniquant/regime.py", "vendor/omniquant/models.py"]
         c["strategy_pack_source_sha256"]=digest({f:hashlib.sha256((Path(__file__).parent/f).read_bytes()).hexdigest() for f in files})
+    elif c.get("strategy_pack")=="intraday-v1":
+        if c.get("crypto_timeframe") != "15m" or c.get("bar_seconds") != 900:
+            raise ValueError("Intraday pack requires native complete 15m crypto bars")
+        files=["strategies_intraday.py", "strategies_v2.py", "vendor/omniquant/regime.py", "vendor/omniquant/models.py"]
+        c["strategy_pack_source_sha256"]=digest({f:hashlib.sha256((Path(__file__).parent/f).read_bytes()).hexdigest() for f in files})
     elif c.get("strategy_pack") is not None:
         raise ValueError("Unknown strategy pack")
     if c.get("dex_enabled"):
@@ -282,8 +287,10 @@ class Engine:
                 elif key not in self.quotes: reason="No valid current quote or unsupported venue asset"
                 else:
                     try:
-                        if key not in self.history or now-self.history_at[key]>=300:
-                            tf=self.cfg.get("crypto_timeframe","1h") if market=="crypto" else "1h"
+                        tf=self.cfg.get("crypto_timeframe","1h") if market=="crypto" else "1h"
+                        step={"15m":900,"1h":3600,"4h":14400}[tf]
+                        new_crypto_bar=market=="crypto" and self.history.get(key) and self.history[key][-1]["time"]<int(now//step)*step-step
+                        if key not in self.history or now-self.history_at[key]>=300 or new_crypto_bar:
                             bars=adapter.bars(sym,now,timeframe=tf) if tf!="1h" else adapter.bars(sym,now)
                             self.history[key]=bars;self.history_at[key]=now
                             self.store.put_candles(market,sym,tf,bars)
@@ -335,7 +342,7 @@ class Engine:
         if market=="stocks": limit=rounded(limit,2,True)
         if market=="kalshi": limit=rounded(q["ask"],2,True);fee=.07*(1-limit)
         target=c.get("target")
-        cost_aware=self.cfg.get("strategy_pack") in ("regime-v2","swing-v3")
+        cost_aware=self.cfg.get("strategy_pack") in ("regime-v2","swing-v3","intraday-v1")
         if market!="kalshi" and cost_aware:
             target=c["target"] if c.get("target_anchored") else limit+c["target"]-c["reference"]
             if target/limit-1<c["cost_break_even_fraction"]+.01:

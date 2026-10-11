@@ -38,7 +38,7 @@ renderSnapshot = function(d) {
   $('managedStockPositions').innerHTML=c.open_trades.filter(t=>t.market==='stocks').map(t=>tradeButton(t)).join('') || `<div class="empty">${esc(c.providers.stocks?.reason||c.providers.stocks?.status||'Awaiting broker connection')}</div>`;
   $('paperReleaseBar').hidden=false;
   $('paperReleaseTitle').textContent=`CLOUD PAPER · ${c.status}`;
-  $('paperReleaseMeta').textContent=`Started ${shortTime(c.started_at)} · ${(c.elapsed_seconds/3600).toFixed(1)}h elapsed · ends ${shortTime(c.deadline)} · config ${c.config_hash.slice(0,12)}`;
+  $('paperReleaseMeta').textContent=`Started ${shortTime(c.started_at)} · ${(c.elapsed_seconds/3600).toFixed(1)}h elapsed · ends ${shortTime(c.deadline)} · ${d.crypto.config.timeframe} candles · ${(c.config_revisions||[]).length} revisions · config ${c.config_hash.slice(0,12)}`;
   $('paperLegacyTitle').textContent='EXPERIMENTAL';$('paperLegacyMeta').textContent='No demonstrated edge · separate V11 ledger preserved';
   $('paperScanStats').textContent=`${c.cycles} cycles · last cycle ${shortTime(c.last_cycle)} · ${c.evidence}`;
   $('paperReleaseDiagnostics').innerHTML=c.diagnostics.map(v=>`<div><strong>${esc(v.market.toUpperCase())} · ${esc(v.pair)}</strong><span>${esc(v.reason||v.execution)}</span></div>`).join('')+(c.opportunities||[]).map(o=>`<details class="cloud-details"><summary>${esc(o.slug)} · ${esc(o.direction)} · ${pct(Number(o.net_edge))} modeled edge · research only</summary><pre class="cloud-evidence">${esc(JSON.stringify(o,null,2))}</pre></details>`).join('');
@@ -67,7 +67,9 @@ function drawCloudEquity(rows) {
 }
 renderInspector = function(t,openChart=true) {
   if(!state.snapshot?.cloud)return legacyInspector(t,openChart);
-  if(t.market==='crypto'&&state.snapshot.crypto?.config?.timeframe==='4h'&&cloudChart.timeframe==='1h')cloudChart.timeframe='4h';
+  const native=state.snapshot.crypto?.config?.timeframe;
+  if(t.market==='crypto'&&['15m','4h'].includes(native)&&cloudChart.timeframe==='1h')cloudChart.timeframe=native;
+  if(t.market==='stocks'&&cloudChart.timeframe==='15m')cloudChart.timeframe='1h';
   legacyInspector(t,false);
   $('detailSide').textContent=`${t.market==='kalshi'?'YES contract':'Long'} · ${t.mode}`;
   $('executionMetrics').innerHTML += [metric('Execution mode',esc(t.mode)),metric('Signal timestamp',shortTime(t.signal_time)),
@@ -77,7 +79,8 @@ renderInspector = function(t,openChart=true) {
   $('orderEvidence').textContent=JSON.stringify({orders:t.orders,fills:t.fills,settlement:t.settlement,probability_evidence:t.contract?.estimate},null,2);
   $('historyTimeline').innerHTML=(t.fills||[]).map(f=>`<div class="timeline-event"><strong>${esc(f.action.toUpperCase())} · ${qty(f.quantity)} @ ${price(f.price)}</strong><span>${shortTime(f.at*1000)} · ${esc(f.time_basis||"recorded execution")} · order ${esc(f.order_id)} · fee ${money(f.fee)}</span></div>`).join('');
   if(t.settlement)$('historyTimeline').innerHTML+=`<div class="timeline-event"><strong>Exchange settlement</strong><span>${esc(JSON.stringify(t.settlement))}</span></div>`;
-  const group=document.querySelector('.tf-group');group.innerHTML=['1h','4h','1d'].map(tf=>`<button class="tf ${tf===cloudChart.timeframe?'active':''}" data-cloud-tf="${tf}">${tf}</button>`).join('')+'<span class="cloud-chart-nav"><button data-pan="-1" aria-label="Earlier candles">←</button><button data-zoom="-1" aria-label="Zoom in">＋</button><button data-zoom="1" aria-label="Zoom out">−</button><button data-pan="1" aria-label="Later candles">→</button></span>';
+  const timeframes=t.market==='crypto'&&native==='15m'?['15m','1h','4h','1d']:['1h','4h','1d'];
+  const group=document.querySelector('.tf-group');group.innerHTML=timeframes.map(tf=>`<button class="tf ${tf===cloudChart.timeframe?'active':''}" data-cloud-tf="${tf}">${tf}</button>`).join('')+'<span class="cloud-chart-nav"><button data-pan="-1" aria-label="Earlier candles">←</button><button data-zoom="-1" aria-label="Zoom in">＋</button><button data-zoom="1" aria-label="Zoom out">−</button><button data-pan="1" aria-label="Later candles">→</button></span>';
   group.querySelectorAll('[data-cloud-tf]').forEach(b=>b.addEventListener('click',()=>{cloudChart.timeframe=b.dataset.cloudTf;cloudChart.end=null;group.querySelectorAll('[data-cloud-tf]').forEach(x=>x.classList.toggle('active',x===b));fetchCandles(t);}));
   group.querySelectorAll('[data-zoom]').forEach(b=>b.addEventListener('click',()=>{cloudChart.count=Math.max(15,Math.min(300,cloudChart.count+Number(b.dataset.zoom)*20));drawCandles(state.candles,t);}));
   group.querySelectorAll('[data-pan]').forEach(b=>b.addEventListener('click',()=>{cloudChart.end=Math.max(Math.min(cloudChart.count,state.candles.length),Math.min(state.candles.length,(cloudChart.end??state.candles.length)+Number(b.dataset.pan)*20));drawCandles(state.candles,t);}));
@@ -119,7 +122,7 @@ drawCandles = function(rows,t) {
   let out='';for(let i=0;i<=5;i++){const yy=20+i*70;out+=`<line x1="24" x2="788" y1="${yy}" y2="${yy}" stroke="#16304a"/><text x="797" y="${yy+4}" fill="#8299b0" font-size="10">${price(hi-i*(hi-lo)/5)}</text>`;}
   visible.forEach((r,i)=>{const c=r.close>=r.open?'#2ce390':'#ff506c';out+=`<g><title>${esc(shortTime(r.time*1000))} O ${price(r.open)} H ${price(r.high)} L ${price(r.low)} C ${price(r.close)} V ${qty(r.volume)}</title><line x1="${x(i)}" x2="${x(i)}" y1="${y(r.high)}" y2="${y(r.low)}" stroke="${c}"/><rect x="${x(i)-width/2}" y="${Math.min(y(r.open),y(r.close))}" width="${width}" height="${Math.max(1,Math.abs(y(r.open)-y(r.close)))}" fill="${c}"/></g>`;});
   [[t.open_rate,'Entry','#2ad8ff'],[t.stop_price,'Stop','#ff506c'],[t.target_price,'Target','#2ce390']].forEach(([v,label,color])=>{if(v!=null)out+=`<line x1="24" x2="788" y1="${y(v)}" y2="${y(v)}" stroke="${color}" stroke-dasharray="4 4"/><text x="710" y="${y(v)-4}" fill="${color}" font-size="10">${label}</text>`;});
-  const seconds={'1h':3600,'4h':14400,'1d':86400}[cloudChart.timeframe];
+  const seconds={'15m':900,'1h':3600,'4h':14400,'1d':86400}[cloudChart.timeframe];
   (t.fills||[]).forEach(f=>{const i=visible.findIndex(r=>r.time<=f.at&&f.at<r.time+seconds);if(i<0)return;out+=`<circle data-fill-marker="${esc(f.action)}" cx="${x(i)}" cy="${y(f.price)}" r="5" fill="${f.action==='buy'?'#2ce390':'#ff506c'}" stroke="#fff"><title>${esc(f.action.toUpperCase())} ${qty(f.quantity)} @ ${price(f.price)} · ${esc(shortTime(f.at*1000))}</title></circle>`;});
   out+=`<text x="24" y="410" fill="#8299b0" font-size="10">${esc(shortTime(visible[0].time*1000))}</text><text x="590" y="410" fill="#8299b0" font-size="10">${esc(shortTime(visible.at(-1).time*1000))}</text>`;
   $('candleChart').innerHTML=out;

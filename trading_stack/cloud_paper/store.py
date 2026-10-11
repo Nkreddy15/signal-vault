@@ -81,6 +81,38 @@ class Store:
     def event(self, kind, payload, now):
         self.db.execute("INSERT INTO events(at,kind,payload) VALUES(?,?,?)", (now, kind, encoded(payload)))
 
+    def revise_crypto_interval(self, config, expected_hash, now=None):
+        """Explicit flat-account revision; caller holds the exclusive worker lock."""
+        now=time.time() if now is None else now
+        with self.transaction():
+            s=self.read()
+            if s["config_hash"]==digest(config): return False
+            if not isinstance(expected_hash,str) or s["config_hash"]!=expected_hash:
+                raise ValueError("Configuration revision does not match the expected prior hash")
+            if s["positions"] or any(o["status"] not in TERMINAL for o in s["orders"].values()):
+                raise ValueError("Configuration revision requires no open positions or pending orders")
+            if self.db.execute("SELECT 1 FROM commands WHERE handled IS NULL").fetchone():
+                raise ValueError("Handle existing owner commands before revising configuration")
+            old=s["config"]
+            if (old.get("strategy_pack"),old.get("crypto_timeframe"),old.get("bar_seconds"))!=("swing-v3","4h",14400):
+                raise ValueError("Only the explicit 4h to 15m revision is supported")
+            if (config.get("strategy_pack"),config.get("crypto_timeframe"),config.get("bar_seconds"))!=("intraday-v1","15m",900):
+                raise ValueError("Revision target must be the native 15m intraday pack")
+            allowed={"version","evidence","strategy_pack","crypto_timeframe","bar_seconds","strategy_source_sha256","strategy_pack_source_sha256"}
+            changed={k for k in set(old)|set(config) if old.get(k)!=config.get(k)}
+            if changed-allowed:
+                raise ValueError("Interval revision cannot alter capital, costs, risk or other campaign settings")
+            if config["version"]==old["version"]:
+                raise ValueError("A configuration revision requires a distinct version")
+            revision=dict(at=now,reason="User requested native 15m instead of 4h candles",
+                from_hash=s["config_hash"],to_hash=digest(config),from_config=copy.deepcopy(old),
+                to_config=copy.deepcopy(config),equity_at_revision=portfolio(s,now)["equity"],
+                cash_at_revision=s["cash"],campaign_id=s["campaign_id"])
+            s.setdefault("config_revisions",[]).append(revision)
+            s["config"]=copy.deepcopy(config);s["config_hash"]=digest(config)
+            self.save(s);self.event("CONFIGURATION_REVISION",revision,now)
+        return True
+
     def command(self, action, request_id, trade_id=None, now=None):
         if action not in ("pause", "resume", "flatten", "close"):
             raise ValueError("Unknown paper control")
