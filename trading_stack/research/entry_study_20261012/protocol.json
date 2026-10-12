@@ -1,0 +1,118 @@
+{
+  "kind": "FIXED LOW-COST VENUE ENTRY STUDY; PREDECLARED BEFORE NEW HISTORY RESULTS",
+  "universe": [
+    "BTC/USD",
+    "ETH/USD",
+    "SOL/USD",
+    "XRP/USD",
+    "DOGE/USD",
+    "ADA/USD"
+  ],
+  "data_venue": "Binance.US public spot market data; USD pairs only",
+  "interval_seconds": 300,
+  "capital": 500,
+  "fee_per_side": 0.0002,
+  "fee_basis": "Published Advanced Spot taker rate, no BNB discounts; conditional execution model, not verified account fees",
+  "slippage_per_side": 0.001,
+  "maximum_spread_fraction": 0.0005,
+  "net_profit_target_fraction": 0.003,
+  "max_positions": 4,
+  "risk_per_trade": 0.005,
+  "max_exposure_fraction": 0.6,
+  "daily_loss_fraction": 0.02,
+  "drawdown_fraction": 0.1,
+  "holding_cap_hours": 1,
+  "cooldown_bars": 2,
+  "fixed_hypotheses": [
+    "EMA20/50 trend continuation with higher-interval confirmation, volume and a bounded distance from EMA9",
+    "Breakout retest after a volume-confirmed range break",
+    "VWAP range recovery in a low-ADX regime"
+  ],
+  "model_family": "Regularized classifier with calibration restricted to development data; pure JSON inference if supported",
+  "training_interval": [
+    "2026-05-01",
+    "2026-08-15"
+  ],
+  "calibration_interval": [
+    "2026-08-16",
+    "2026-08-31"
+  ],
+  "reserved_validation_interval": [
+    "2026-09-01",
+    "2026-09-30"
+  ],
+  "validation_handling": "Do not inspect reserved outcomes until features, risk/exit rules and calibration threshold are frozen; acknowledge potential overlap with older project research",
+  "separation": "Independent research capital; no resets, fills or manual controls in active paper account",
+  "promotion_gate": [
+    "Positive net return and positive mean closed-trade P&L in calibration and reserved validation",
+    "At least 100 total non-overlapping closed validation trades across assets",
+    "Positive result under double modeled spread/slippage",
+    "No drawdown/daily-risk breach or stale/missing-bar exploitation",
+    "Only a prospective internal paper experiment can follow; no real-money orders"
+  ],
+  "user_requested_at": "2026-10-12T15:15:23Z",
+  "declared_at": "2026-10-12T15:25:08.605928+00:00",
+  "feature_columns": [
+    "return1",
+    "return3",
+    "return12",
+    "return36",
+    "ema9_gap",
+    "ema20_gap",
+    "ema20_50_gap",
+    "ema20_slope",
+    "rsi14",
+    "rsi_change",
+    "adx14",
+    "atr_fraction",
+    "volume_ratio",
+    "band_z",
+    "vwap_gap",
+    "higher_trend_gap",
+    "higher_slope",
+    "candle_body_atr",
+    "close_location",
+    "taker_buy_ratio",
+    "utc_hour_sin",
+    "utc_hour_cos",
+    "is_weekend",
+    "family_trend",
+    "family_retest",
+    "family_range"
+  ],
+  "classifier": {
+    "type": "StandardScaler + LogisticRegression",
+    "C": 0.5,
+    "class_weight": null,
+    "max_iter": 1000,
+    "random_state": 20261012,
+    "calibration": "Raw probability used for ranking; no calibrated-probability claim without observed calibration checks"
+  },
+  "threshold_candidates": [
+    null,
+    0.55,
+    0.65,
+    0.75,
+    0.85
+  ],
+  "stop_distance_rule": "max(0.2% of reference, 1.25 x ATR14); reject distance >3%",
+  "selection_rule": "Freeze one candidate before reserved validation; calibration requires positive base and stressed net result and >=20 closed trades; choose highest stressed net return, then fewer trades as tie break",
+  "known_live_data_issue": "api.binance.us returned an HTML Site Unavailable page locally. No low-fee execution or fee change may be promoted unless a native live quote/depth/candle preflight succeeds.",
+  "live_api_probe_records": [
+    "exchangeInfo",
+    "ticker/24hr BTCUSD",
+    "klines BTCUSD",
+    "time"
+  ],
+  "development_iterations": [
+    {
+      "iteration": 1,
+      "result": "99 usable early development training events; no model fitted or reserved outcomes opened"
+    },
+    {
+      "iteration": 2,
+      "changed_at": "2026-10-12T16:01:34.932449+00:00",
+      "reason": "Extend history for sample size and include ongoing confirmed trend states rather than only crossings; no reserved validation data used"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "status": "REJECTED_IN_DEVELOPMENT",
+  "threshold": null,
+  "model_sha256": "5ff7783beeb88eeaab400dff40674e276f604ef52df8e63ff0ade05785d85a6a",
+  "protocol_sha256": "111fc660edf4ac990a7ba1497ba047616ec51780b6af35dcd95be250cff5b562",
+  "feature_source_sha256": "5105b27c50145c5a6338a9b2614f796a6f73b282f739f8bb1f3c5d6e6245cbe9",
+  "research_source_sha256": "56adae1fdae9e2c790e6cba7a7cea25362e32a28a53e59c28d9a310137a824be",
+  "manifest_sha256": "52be3ce632733bb5bd13edbe913eb3fbcf87667494659e7aac3eafaafe30ec4a",
+  "frozen_at": "2026-10-12T17:00:08.289946+00:00",
+  "selection_only_used_development": true
+}

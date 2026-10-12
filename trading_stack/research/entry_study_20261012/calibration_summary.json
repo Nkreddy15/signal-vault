@@ -1,0 +1,259 @@
+{
+  "kind": "DEVELOPMENT SELECTION ONLY; NOT RESERVED VALIDATION",
+  "candidates": [
+    {
+      "threshold": null,
+      "eligible_for_reserved_validation": false,
+      "base": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 455.7198302988244,
+        "net_return": -0.0885603394023512,
+        "closed_trades": 285,
+        "open_positions": 0,
+        "net_realized": -44.280169701175645,
+        "mean_trade_pnl": -0.15536901649535315,
+        "wins": 125,
+        "losses": 160,
+        "modeled_fees": 8.147312944468403,
+        "maximum_drawdown": 0.08861762253085503,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.3727010383581828,
+        "blocks": {
+          "cooldown": 51,
+          "size_or_volume": 2,
+          "risk_halt": 6
+        },
+        "trade_ledger_sha256": "eb45c3fa107473161161d00ab410a1f75aeb9041437d29900161f914d3dc352f",
+        "daily_equity_sha256": "46f6dcf3cc2bd023bddad026bfbf226b72c4bb3e08c1c81b99b2157742228edf"
+      },
+      "stress": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 449.98498857453205,
+        "net_return": -0.10003002285093587,
+        "closed_trades": 167,
+        "open_positions": 0,
+        "net_realized": -50.01501142546798,
+        "mean_trade_pnl": -0.29949108638004784,
+        "wins": 61,
+        "losses": 106,
+        "modeled_fees": 4.835037522123881,
+        "maximum_drawdown": 0.10003002285093587,
+        "drawdown_halted": true,
+        "held_missing_bars": 0,
+        "profit_factor": 0.20123319047698116,
+        "blocks": {
+          "cooldown": 25,
+          "risk_halt": 194,
+          "size_or_volume": 2
+        },
+        "trade_ledger_sha256": "9216b190d23621fbd9105034f175c8d1711ff660e987a16edc489be4aaceb034",
+        "daily_equity_sha256": "9c61fdfa84ce932bd29097a3cec6d46fb8f223927d40c201e468f5af05ee71f9"
+      }
+    },
+    {
+      "threshold": 0.55,
+      "eligible_for_reserved_validation": false,
+      "base": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.7094753317871,
+        "net_return": -0.004581049336425891,
+        "closed_trades": 7,
+        "open_positions": 0,
+        "net_realized": -2.2905246682129228,
+        "mean_trade_pnl": -0.32721780974470327,
+        "wins": 4,
+        "losses": 3,
+        "modeled_fees": 0.2791808212674596,
+        "maximum_drawdown": 0.005774239460727082,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.34348055294522506,
+        "blocks": {
+          "model_filter": 488,
+          "cooldown": 3
+        },
+        "trade_ledger_sha256": "b62e30df470db55860b3289506dbda4938dd57fb05db631242e5bfe202187abd",
+        "daily_equity_sha256": "039e1538737f70bc990dd208d008ec781debc39ad9687a8b5eccb6bf35130de6"
+      },
+      "stress": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.24064899937514,
+        "net_return": -0.005518702001249709,
+        "closed_trades": 6,
+        "open_positions": 0,
+        "net_realized": -2.7593510006249455,
+        "mean_trade_pnl": -0.45989183343749096,
+        "wins": 3,
+        "losses": 3,
+        "modeled_fees": 0.2392393743098994,
+        "maximum_drawdown": 0.006710768178796012,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.24581989762665724,
+        "blocks": {
+          "model_filter": 489,
+          "cooldown": 2
+        },
+        "trade_ledger_sha256": "d83d5d392453951d588a367087be9d6b6d01990ad4b9f683cf99a318008c114f",
+        "daily_equity_sha256": "f91924edc55f00b91dfd8d0d3f9ba9b15b146e335f9ee8986810e29fc2e08d66"
+      }
+    },
+    {
+      "threshold": 0.65,
+      "eligible_for_reserved_validation": false,
+      "base": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.7094753317871,
+        "net_return": -0.004581049336425891,
+        "closed_trades": 7,
+        "open_positions": 0,
+        "net_realized": -2.2905246682129228,
+        "mean_trade_pnl": -0.32721780974470327,
+        "wins": 4,
+        "losses": 3,
+        "modeled_fees": 0.2791808212674596,
+        "maximum_drawdown": 0.005774239460727082,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.34348055294522506,
+        "blocks": {
+          "model_filter": 488,
+          "cooldown": 3
+        },
+        "trade_ledger_sha256": "b62e30df470db55860b3289506dbda4938dd57fb05db631242e5bfe202187abd",
+        "daily_equity_sha256": "039e1538737f70bc990dd208d008ec781debc39ad9687a8b5eccb6bf35130de6"
+      },
+      "stress": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.24064899937514,
+        "net_return": -0.005518702001249709,
+        "closed_trades": 6,
+        "open_positions": 0,
+        "net_realized": -2.7593510006249455,
+        "mean_trade_pnl": -0.45989183343749096,
+        "wins": 3,
+        "losses": 3,
+        "modeled_fees": 0.2392393743098994,
+        "maximum_drawdown": 0.006710768178796012,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.24581989762665724,
+        "blocks": {
+          "model_filter": 489,
+          "cooldown": 2
+        },
+        "trade_ledger_sha256": "d83d5d392453951d588a367087be9d6b6d01990ad4b9f683cf99a318008c114f",
+        "daily_equity_sha256": "f91924edc55f00b91dfd8d0d3f9ba9b15b146e335f9ee8986810e29fc2e08d66"
+      }
+    },
+    {
+      "threshold": 0.75,
+      "eligible_for_reserved_validation": false,
+      "base": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.7094753317871,
+        "net_return": -0.004581049336425891,
+        "closed_trades": 7,
+        "open_positions": 0,
+        "net_realized": -2.2905246682129228,
+        "mean_trade_pnl": -0.32721780974470327,
+        "wins": 4,
+        "losses": 3,
+        "modeled_fees": 0.2791808212674596,
+        "maximum_drawdown": 0.005774239460727082,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.34348055294522506,
+        "blocks": {
+          "model_filter": 488,
+          "cooldown": 3
+        },
+        "trade_ledger_sha256": "b62e30df470db55860b3289506dbda4938dd57fb05db631242e5bfe202187abd",
+        "daily_equity_sha256": "039e1538737f70bc990dd208d008ec781debc39ad9687a8b5eccb6bf35130de6"
+      },
+      "stress": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.24064899937514,
+        "net_return": -0.005518702001249709,
+        "closed_trades": 6,
+        "open_positions": 0,
+        "net_realized": -2.7593510006249455,
+        "mean_trade_pnl": -0.45989183343749096,
+        "wins": 3,
+        "losses": 3,
+        "modeled_fees": 0.2392393743098994,
+        "maximum_drawdown": 0.006710768178796012,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.24581989762665724,
+        "blocks": {
+          "model_filter": 489,
+          "cooldown": 2
+        },
+        "trade_ledger_sha256": "d83d5d392453951d588a367087be9d6b6d01990ad4b9f683cf99a318008c114f",
+        "daily_equity_sha256": "f91924edc55f00b91dfd8d0d3f9ba9b15b146e335f9ee8986810e29fc2e08d66"
+      }
+    },
+    {
+      "threshold": 0.85,
+      "eligible_for_reserved_validation": false,
+      "base": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.7094753317871,
+        "net_return": -0.004581049336425891,
+        "closed_trades": 7,
+        "open_positions": 0,
+        "net_realized": -2.2905246682129228,
+        "mean_trade_pnl": -0.32721780974470327,
+        "wins": 4,
+        "losses": 3,
+        "modeled_fees": 0.2791808212674596,
+        "maximum_drawdown": 0.005774239460727082,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.34348055294522506,
+        "blocks": {
+          "model_filter": 488,
+          "cooldown": 3
+        },
+        "trade_ledger_sha256": "b62e30df470db55860b3289506dbda4938dd57fb05db631242e5bfe202187abd",
+        "daily_equity_sha256": "039e1538737f70bc990dd208d008ec781debc39ad9687a8b5eccb6bf35130de6"
+      },
+      "stress": {
+        "start": "2026-08-16T00:00:00Z",
+        "end": "2026-09-01T00:00:00Z",
+        "final_equity": 497.24064899937514,
+        "net_return": -0.005518702001249709,
+        "closed_trades": 6,
+        "open_positions": 0,
+        "net_realized": -2.7593510006249455,
+        "mean_trade_pnl": -0.45989183343749096,
+        "wins": 3,
+        "losses": 3,
+        "modeled_fees": 0.2392393743098994,
+        "maximum_drawdown": 0.006710768178796012,
+        "drawdown_halted": false,
+        "held_missing_bars": 0,
+        "profit_factor": 0.24581989762665724,
+        "blocks": {
+          "model_filter": 489,
+          "cooldown": 2
+        },
+        "trade_ledger_sha256": "d83d5d392453951d588a367087be9d6b6d01990ad4b9f683cf99a318008c114f",
+        "daily_equity_sha256": "f91924edc55f00b91dfd8d0d3f9ba9b15b146e335f9ee8986810e29fc2e08d66"
+      }
+    }
+  ],
+  "selected": null,
+  "eligible": false
+}

@@ -90,7 +90,7 @@ def snapshot(store,now):
         opportunities=[json.loads(r[0]) for r in store.db.execute("SELECT payload FROM arbitrage_observations ORDER BY id DESC LIMIT 8")] if store.db.execute("SELECT 1 FROM sqlite_master WHERE name='arbitrage_observations'").fetchone() else []))
 
 
-def create_app(directory=None,password=None):
+def create_app(directory=None,password=None,venue_probe=None):
     directory=Path(directory or os.environ.get("SV_STATE_DIR",".data/cloud-paper"))
     password=password or os.environ.get("SV_DASHBOARD_PASSWORD","")
     if len(password)<32: raise ValueError("SV_DASHBOARD_PASSWORD must contain at least 32 characters")
@@ -100,6 +100,9 @@ def create_app(directory=None,password=None):
     app.config["MAX_CONTENT_LENGTH"]=4096
     token=hmac.new(password.encode(),b"Signal Vault paper control CSRF v1",hashlib.sha256).hexdigest()
     failures={}
+    from .venue_probe import VenueProbe
+    probe=venue_probe or VenueProbe()
+    app.extensions['signal_vault_venue_probe']=probe
 
     @app.before_request
     def authenticate():
@@ -138,6 +141,10 @@ def create_app(directory=None,password=None):
 
     @app.get("/")
     def index(): return render_template("index.html",cloud_campaign=True)
+
+    @app.get('/api/research/venue-health')
+    def research_venue_health():
+        return probe.state()
 
     @app.get("/api/snapshot")
     def state():
