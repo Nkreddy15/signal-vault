@@ -39,3 +39,11 @@ An isolated copy of the live account also closed the exact four owned quantities
 Before rollout at 14:11 UTC the actual cloud account had four open positions, zero closes, equity $495.66 and modeled net P&L -$4.34. Deployment and actual fills must be checked separately after rollout; the historical and copied-account results above never count toward cloud P&L.
 
 Kraken's current cross-platform lowest-volume taker rate was verified against https://www.kraken.com/features/fee-schedule and https://support.kraken.com/articles/cross-platform-fee-tier-changes . This is a conservative modeled allowance, not verification of an actual account's execution venue or tier.
+
+## Verified actual cloud result
+
+Railway deployment `54066c0c-5824-4273-aa7b-dc534bde2bce` succeeded with runtime commit `d3ed10dc30fa3eb2dfc26c4aa7db9c8e8ea7c5ed`. At 14:24:43 UTC, the unchanged account had four closed positions, no open positions, cash/equity $494.5677009214, realized/net P&L -$5.4322990786, and $3.1128907901 in total modeled paid fees. All four sells were filled for the exact prior owned quantities and had `INTRADAY_TIME_EXIT` reasons. No owner close or flatten command was used; a concurrent resume control is retained in the ledger.
+
+The account identity, start, October 18 deadline, original entry prices/brackets, prior fees and financial history all reconciled. SQLite integrity was `ok`; no pending orders remained. Health, authenticated candles/opportunities/static assets returned 200, while an unauthenticated snapshot returned 401. The paper worker was online with one replica; the separate collector cron remained successful and no services had recent failures. The one-time revision variable was cleared without another deploy.
+
+`exit_cloud_proof_20261012.json` contains the redacted reconciliation. The source is pinned to the runtime commit; later documentation/evidence commits do not redeploy it. Crypto remains simulation, other trading lanes remain blocked/read-only, and no profitability is claimed.

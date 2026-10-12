@@ -1,0 +1,118 @@
+{
+  "kind": "ACTUAL CLOUD PAPER SIMULATION; NOT REAL EXCHANGE FILLS",
+  "verified_at": "2026-10-12T14:24:43.982871Z",
+  "deployed_commit": "d3ed10dc30fa3eb2dfc26c4aa7db9c8e8ea7c5ed",
+  "deployment_id": "54066c0c-5824-4273-aa7b-dc534bde2bce",
+  "campaign_id": "dd085ed44ec11817",
+  "started_at": "2026-10-11T21:30:37.095113Z",
+  "deadline": "2026-10-18T21:30:37.095113Z",
+  "config_hash": "7f22184414f971da37b293ea406dbeed87fc8210b8e79654e9204e85afdc2b23",
+  "status": "RUNNING",
+  "portfolio": {
+    "available_cash": 494.56770092135093,
+    "cash": 494.56770092135093,
+    "drawdown": 0.010864598157298122,
+    "equity": 494.56770092135093,
+    "exposure": 0,
+    "fees": 3.1128907900919884,
+    "marks_stale": false,
+    "net_pnl": -5.432299078649066,
+    "realized": -5.432299078649088,
+    "reserved": 0,
+    "turnover": 389.11134876149856,
+    "unrealized": 0
+  },
+  "exact_prior_quantities_closed": true,
+  "original_entries_and_brackets_preserved": true,
+  "original_identity_deadline_and_fee_history_preserved": true,
+  "configuration_revisions": 2,
+  "control_actions_in_export": [
+    "resume"
+  ],
+  "manual_close_or_flatten_commands": 0,
+  "closed_trades": [
+    {
+      "pair": "SOL/USD",
+      "net_pnl": -1.5372647162490722,
+      "reason": "INTRADAY_TIME_EXIT",
+      "entry_at": 1791757826.5176086,
+      "exit_at": 1791814969.5621014,
+      "sold_quantity": 0.43987427
+    },
+    {
+      "pair": "BTC/USD",
+      "net_pnl": -1.2900574705011807,
+      "reason": "INTRADAY_TIME_EXIT",
+      "entry_at": 1791757826.2831693,
+      "exit_at": 1791814969.7616773,
+      "sold_quantity": 0.00058547
+    },
+    {
+      "pair": "ETH/USD",
+      "net_pnl": -0.9342746932157182,
+      "reason": "INTRADAY_TIME_EXIT",
+      "entry_at": 1791757023.0465865,
+      "exit_at": 1791814969.973281,
+      "sold_quantity": 0.01936085
+    },
+    {
+      "pair": "XRP/USD",
+      "net_pnl": -1.670702198683117,
+      "reason": "INTRADAY_TIME_EXIT",
+      "entry_at": 1791757826.7495606,
+      "exit_at": 1791814970.1833239,
+      "sold_quantity": 34.63165495
+    }
+  ],
+  "endpoints": [
+    {
+      "path": "/healthz",
+      "status": 200,
+      "bytes": 36
+    },
+    {
+      "path": "/api/snapshot",
+      "status": 401
+    },
+    {
+      "path": "/api/candles?market=crypto&pair=BTC%2FUSD&timeframe=15m",
+      "status": 200,
+      "bytes": 80469
+    },
+    {
+      "path": "/api/opportunities",
+      "status": 200,
+      "bytes": 385
+    },
+    {
+      "path": "/static/cloud.js",
+      "status": 200,
+      "bytes": 16354
+    }
+  ],
+  "providers": {
+    "crypto": {
+      "status": "ONLINE",
+      "reason": null
+    },
+    "dex": {
+      "status": "COLLECTING",
+      "reason": "Jupiter API key and verified RPC checks required for entries; social AI optional annotation"
+    },
+    "kalshi": {
+      "status": "BLOCKED",
+      "reason": "Set KALSHI_DEMO_KEY_ID and KALSHI_DEMO_PRIVATE_KEY_PEM; independent probability evidence also required"
+    },
+    "polymarket": {
+      "status": "UNAVAILABLE",
+      "reason": "Gamma rejected the pagination offset (HTTP 422); next bounded scan restarts at the first page; coverage remains limited"
+    },
+    "stocks": {
+      "status": "BLOCKED",
+      "reason": "Set ALPACA_PAPER_KEY_ID and ALPACA_PAPER_SECRET"
+    }
+  },
+  "predictarb_offset": 0,
+  "integrity_check": "ok",
+  "backup_error": null
+}
