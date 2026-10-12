@@ -4,6 +4,7 @@ import math
 import time
 from decimal import Decimal,ROUND_DOWN
 from urllib.parse import urlencode
+from urllib.error import HTTPError
 from urllib.request import Request,build_opener
 from .providers import NoRedirect,ProviderError,validate_quote
 
@@ -20,6 +21,7 @@ def public_json(path,params=None):
             raw=r.read(2000001)
         if len(raw)>2000000:raise ProviderError('Native public feed response exceeds bound')
         data=json.loads(raw)
+    except HTTPError as e:raise ProviderError(f'Native public feed HTTP {e.code}') from None
     except (ValueError,UnicodeError):raise ProviderError('Native public feed returned non-JSON data') from None
     except ProviderError:raise
     except Exception:raise ProviderError('Native public feed is unavailable') from None

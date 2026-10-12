@@ -1,0 +1,279 @@
+{
+  "source": "Official Binance.US monthly spot 5m archives",
+  "files": [
+    {
+      "symbol": "ADAUSD",
+      "month": "2026-05",
+      "file": "ADAUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ADAUSD/5m/ADAUSD-5m-2026-05.zip",
+      "sha256": "e29997d1f94e11035f321f80ca0a74c3861e890da772020509d917a817d11a63",
+      "bytes": 122037,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ADAUSD",
+      "month": "2026-06",
+      "file": "ADAUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ADAUSD/5m/ADAUSD-5m-2026-06.zip",
+      "sha256": "f703d37b924611689e97fc8333c20eec3448c6909807b4a83afba8ed476db96d",
+      "bytes": 164029,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ADAUSD",
+      "month": "2026-07",
+      "file": "ADAUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ADAUSD/5m/ADAUSD-5m-2026-07.zip",
+      "sha256": "8276b352f1a9c376df56a337c1824ed50449d629ea094801d803b0652199418e",
+      "bytes": 139601,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ADAUSD",
+      "month": "2026-08",
+      "file": "ADAUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ADAUSD/5m/ADAUSD-5m-2026-08.zip",
+      "sha256": "63dcec78c2cabae16e26ce282eed820c475705e01fa6789c3fb1f0f4229f1531",
+      "bytes": 159505,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ADAUSD",
+      "month": "2026-09",
+      "file": "ADAUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ADAUSD/5m/ADAUSD-5m-2026-09.zip",
+      "sha256": "d744390450cfddf9fc297ed97a5073ccdb2215e91caf1844c17405743a0fc3c2",
+      "bytes": 181928,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    },
+    {
+      "symbol": "BTCUSD",
+      "month": "2026-05",
+      "file": "BTCUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/BTCUSD/5m/BTCUSD-5m-2026-05.zip",
+      "sha256": "8a03cdec047907b4e50353088ee20a7866a8a1810bc19a2157b1b3d903555b6c",
+      "bytes": 298238,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "BTCUSD",
+      "month": "2026-06",
+      "file": "BTCUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/BTCUSD/5m/BTCUSD-5m-2026-06.zip",
+      "sha256": "2ade54a9d47f18a3fb566a83b491e1db398a15c0e89b75a244dee0a6b23cfb76",
+      "bytes": 305539,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "BTCUSD",
+      "month": "2026-07",
+      "file": "BTCUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/BTCUSD/5m/BTCUSD-5m-2026-07.zip",
+      "sha256": "824c1cfae76daea78db507cb0b0e216a6f2fef8ad4f3ed46f863c019941579ec",
+      "bytes": 322308,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "BTCUSD",
+      "month": "2026-08",
+      "file": "BTCUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/BTCUSD/5m/BTCUSD-5m-2026-08.zip",
+      "sha256": "aaae0f399ed722d50821d78270e59ad0c6fc5180b3ab5a6b4ed47f7e8fbb74a2",
+      "bytes": 303583,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "BTCUSD",
+      "month": "2026-09",
+      "file": "BTCUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/BTCUSD/5m/BTCUSD-5m-2026-09.zip",
+      "sha256": "c917337a870bdca6bd71b6e48c6d6c864e60b114d730a4c7b9e66e112582dbce",
+      "bytes": 303870,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "month": "2026-05",
+      "file": "DOGEUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/DOGEUSD/5m/DOGEUSD-5m-2026-05.zip",
+      "sha256": "3dccf8af3d0745375ad9085595737ff156bf577b20bb95167020b0c4e390e49d",
+      "bytes": 134557,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "month": "2026-06",
+      "file": "DOGEUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/DOGEUSD/5m/DOGEUSD-5m-2026-06.zip",
+      "sha256": "20bab11108bf75270d0df1aa0dddbf1a234606f664ec190fb0aebb9067460604",
+      "bytes": 121045,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "month": "2026-07",
+      "file": "DOGEUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/DOGEUSD/5m/DOGEUSD-5m-2026-07.zip",
+      "sha256": "2e1eba23bd8946ca50cfd7f8b4e226704cc15ea7c5088d95a2a40d2b81164901",
+      "bytes": 125388,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "month": "2026-08",
+      "file": "DOGEUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/DOGEUSD/5m/DOGEUSD-5m-2026-08.zip",
+      "sha256": "b1581009c6b933d074be083d690928b541960284789ea6831235709f4b277768",
+      "bytes": 165188,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "month": "2026-09",
+      "file": "DOGEUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/DOGEUSD/5m/DOGEUSD-5m-2026-09.zip",
+      "sha256": "125bec70a5ab87c2b2bf6d5ef2da81a5a464bb5569287a004b427c834f8fd057",
+      "bytes": 184090,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    },
+    {
+      "symbol": "ETHUSD",
+      "month": "2026-05",
+      "file": "ETHUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ETHUSD/5m/ETHUSD-5m-2026-05.zip",
+      "sha256": "e8109d9ff5d436313bf972239792d7b313a86e149453550893a5e40682fb991f",
+      "bytes": 196710,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ETHUSD",
+      "month": "2026-06",
+      "file": "ETHUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ETHUSD/5m/ETHUSD-5m-2026-06.zip",
+      "sha256": "fce6e455637f2f035bba6eb51e3445255de71c595269979f25e47c7da5179973",
+      "bytes": 247748,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ETHUSD",
+      "month": "2026-07",
+      "file": "ETHUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ETHUSD/5m/ETHUSD-5m-2026-07.zip",
+      "sha256": "c8f3926d8b151171f06187fcaa7766fdc9b6f36d2f010bf0be5130c95c244047",
+      "bytes": 283799,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ETHUSD",
+      "month": "2026-08",
+      "file": "ETHUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ETHUSD/5m/ETHUSD-5m-2026-08.zip",
+      "sha256": "3af7236897202883c6a740bc076d3cef0f787f3740cdbb6a16c30db0a98d3f7e",
+      "bytes": 227678,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "ETHUSD",
+      "month": "2026-09",
+      "file": "ETHUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/ETHUSD/5m/ETHUSD-5m-2026-09.zip",
+      "sha256": "9152a7341bc90a8371487bf32fa753934c98b389f65e199f416bf90bb4934848",
+      "bytes": 253581,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    },
+    {
+      "symbol": "SOLUSD",
+      "month": "2026-05",
+      "file": "SOLUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/SOLUSD/5m/SOLUSD-5m-2026-05.zip",
+      "sha256": "6167ab1aff78e232b4f37c1e8ae1966f3f4cc6c53c5d417da04cf93e74a0b510",
+      "bytes": 162577,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "SOLUSD",
+      "month": "2026-06",
+      "file": "SOLUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/SOLUSD/5m/SOLUSD-5m-2026-06.zip",
+      "sha256": "040acd560ea3e30d4c3dbc18f72cec7d27ba434420309d6e4b13389bc09561ef",
+      "bytes": 206857,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "SOLUSD",
+      "month": "2026-07",
+      "file": "SOLUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/SOLUSD/5m/SOLUSD-5m-2026-07.zip",
+      "sha256": "d057cb1001d5d5533d68aad03fef9a651a42695d63af48d3efcb35cd670e0418",
+      "bytes": 203257,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "SOLUSD",
+      "month": "2026-08",
+      "file": "SOLUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/SOLUSD/5m/SOLUSD-5m-2026-08.zip",
+      "sha256": "dcf2834029de1ac64cd0e31d8ab7bb776516de37c7d6f9129e69f0b28046b3df",
+      "bytes": 199147,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "SOLUSD",
+      "month": "2026-09",
+      "file": "SOLUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/SOLUSD/5m/SOLUSD-5m-2026-09.zip",
+      "sha256": "bd9ad5ed76f245037884eb6dff9feade0c69fa2707ff451de7b2072d0972f04b",
+      "bytes": 223213,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    },
+    {
+      "symbol": "XRPUSD",
+      "month": "2026-05",
+      "file": "XRPUSD-5m-2026-05.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/XRPUSD/5m/XRPUSD-5m-2026-05.zip",
+      "sha256": "43b9b4eb534a32238e64149655e8e1035a3197a24cf4e22950d93e9cdf8f5b0c",
+      "bytes": 128898,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "XRPUSD",
+      "month": "2026-06",
+      "file": "XRPUSD-5m-2026-06.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/XRPUSD/5m/XRPUSD-5m-2026-06.zip",
+      "sha256": "e0148d680a7c25f55a317a38e392921bab422c8f780cc69c067d0d6c72c2e1f2",
+      "bytes": 176754,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "XRPUSD",
+      "month": "2026-07",
+      "file": "XRPUSD-5m-2026-07.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/XRPUSD/5m/XRPUSD-5m-2026-07.zip",
+      "sha256": "5002101ec62a27e105c3468881e9a544f094a508845712c48dd7358dc31557a4",
+      "bytes": 150119,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "XRPUSD",
+      "month": "2026-08",
+      "file": "XRPUSD-5m-2026-08.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/XRPUSD/5m/XRPUSD-5m-2026-08.zip",
+      "sha256": "c1efaa93d0162021dfe3e6155c79eb7cac9b500b345a3d60f5fc53be299f8ff7",
+      "bytes": 203749,
+      "role": "DEVELOPMENT"
+    },
+    {
+      "symbol": "XRPUSD",
+      "month": "2026-09",
+      "file": "XRPUSD-5m-2026-09.zip",
+      "source": "https://data.binance.us/public_data/spot/monthly/klines/XRPUSD/5m/XRPUSD-5m-2026-09.zip",
+      "sha256": "2b32ad5643519985c207d251fb7e7d368408bd8dd6c1cab8c8a22812b2e1f032",
+      "bytes": 234855,
+      "role": "RESERVED VALIDATION; DO NOT INSPECT OUTCOMES"
+    }
+  ],
+  "errors": [],
+  "protocol_sha256": "111fc660edf4ac990a7ba1497ba047616ec51780b6af35dcd95be250cff5b562",
+  "download_protocol_sha256": "2b4429cf86ad5e0623563ed1365e4ef834349af4b1864ab629ed70b022504a50",
+  "protocol_revision_note": "Feature/model/threshold details were fixed before development outcomes were inspected; reserved September archives remain unopened."
+}

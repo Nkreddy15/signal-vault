@@ -1,0 +1,45 @@
+{
+  "kind": "FIXED RESEARCH HYPOTHESES; NOT ACTIVE TRADING",
+  "declared_at": "2026-10-12T16:18:13.940300+00:00",
+  "source_events": "iteration2/development_events.json.gz",
+  "training_period": [
+    "2026-05-01T00:00:00Z",
+    "2026-08-16T00:00:00Z"
+  ],
+  "calibration_period": [
+    "2026-08-16T00:00:00Z",
+    "2026-09-01T00:00:00Z"
+  ],
+  "reserved_period": [
+    "2026-09-01T00:00:00Z",
+    "2026-10-01T00:00:00Z"
+  ],
+  "fixed_grid": {
+    "pullback_atr": [
+      0.5,
+      1.0,
+      1.5
+    ],
+    "hold_minutes": [
+      30,
+      60
+    ]
+  },
+  "pending_expiry_minutes": 10,
+  "maximum_stop_distance": ".75 ATR capped at .3% of limit price; initial executable bid anchor",
+  "target_net_fraction": 0.003,
+  "entry_fee": 0.0002,
+  "entry_slippage": "A passive limit cannot execute above its limit; all hypothetical fills use that price, including favorable gaps. Published zero maker fee is not assumed.",
+  "fill_guard": "Trade-through of limit by halfspread plus 5bp base/10bp stress, no target exit on the entry bar; stop always active.",
+  "exit_slippage_per_side": 0.001,
+  "maximum_spread_fraction": 0.0005,
+  "stress": "Double exit slippage, spread and trade-through guard; same fees and patient rule.",
+  "selection_rule": "Training and calibration positive after all costs in base and stress; minimum 100 training and 20 calibration closes, no held missing bars or drawdown halt; choose highest stress calibration return, then fewer calibration fills.",
+  "reserved_gate": "At least 100 closed trades, positive return and positive mean trade in base and stress; no held missing bars or drawdown halt.",
+  "limitations": [
+    "Native archive OHLC does not prove queue position, order-book liquidity or a real limit fill.",
+    "Six declared development variants add selection bias; earlier market-order model failed.",
+    "Reserved month may overlap earlier project research; not claimed independently untouched.",
+    "No real broker orders or live fee eligibility assumed."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "REJECTED_IN_DEVELOPMENT",
+  "selected": null,
+  "feature_source_sha256": "5105b27c50145c5a6338a9b2614f796a6f73b282f739f8bb1f3c5d6e6245cbe9",
+  "events_sha256": "45fc869d6ba47c2761b9a1ce709bf56e37ffcc3d06368a1bf3c0fb2696374bf0",
+  "protocol_sha256": "eef2322a9db793daea3203712a15b9f53d185c832eeed37c312d2803c6ec1090",
+  "research_source_sha256": "dd611207f8c0ea14c50ffc8e93e3fcaf59f0ae6780d5932f129d147e3aa824e4",
+  "dependencies_sha256": "08939d1465c52c695891391d77d401558de9f4f8b987217956c0a57c5c0c69d2",
+  "frozen_at": "2026-10-12T16:20:17.091482+00:00"
+}

@@ -1,0 +1,45 @@
+{
+  "mode": "PAPER ONLY",
+  "deployment_id": "58e5a6e2-b98c-4cda-ba9f-0c841b7b686e",
+  "deployed_commit": "7b6d2e18e7226c7d232ec2310d9af0873f7a1c9f",
+  "status": "SUCCESS",
+  "replicas": "1/1",
+  "same_identity": true,
+  "same_ledger": true,
+  "account": {
+    "campaign_id": "dd085ed44ec11817",
+    "config_hash": "7f22184414f971da37b293ea406dbeed87fc8210b8e79654e9204e85afdc2b23",
+    "started_at": "2026-10-11T21:30:37.095113Z",
+    "deadline": "2026-10-18T21:30:37.095113Z",
+    "portfolio": {
+      "available_cash": 494.56770092135093,
+      "cash": 494.56770092135093,
+      "drawdown": 0.010864598157298122,
+      "equity": 494.56770092135093,
+      "exposure": 0,
+      "fees": 3.1128907900919884,
+      "marks_stale": false,
+      "net_pnl": -5.432299078649066,
+      "realized": -5.432299078649088,
+      "reserved": 0,
+      "turnover": 389.11134876149856,
+      "unrealized": 0
+    },
+    "status": "RUNNING"
+  },
+  "venue_probe": {
+    "checked_at": 1791822069.9837365,
+    "mode": "READ_ONLY_PUBLIC_PREFLIGHT",
+    "orders_submitted": 0,
+    "reason": "Native public feed is unavailable",
+    "state": "UNAVAILABLE",
+    "venue": "Binance.US"
+  },
+  "verification": {
+    "python_tests": 152,
+    "python_result": "PASS",
+    "cloud_dashboard_dom": "PASS",
+    "final_dashboard_dom": "PASS",
+    "visual_browser_qa": false
+  }
+}
