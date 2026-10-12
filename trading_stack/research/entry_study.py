@@ -198,7 +198,7 @@ def fit():
     save(ROOT/'calibration_results.json',dict(kind='DEVELOPMENT SELECTION ONLY; NOT RESERVED VALIDATION',candidates=summaries,selected=selected['threshold'] if selected else None,eligible=bool(selected)))
     freeze=dict(status='FROZEN_FOR_RESERVED_VALIDATION' if selected else 'REJECTED_IN_DEVELOPMENT',threshold=selected['threshold'] if selected else None,
         model_sha256=hashed(ROOT/'model.json'),protocol_sha256=hashed(ROOT/'protocol.json'),feature_source_sha256=model['feature_source_sha256'],
-        research_source_sha256=hashed(__file__),frozen_at=datetime.now(timezone.utc).isoformat(),selection_only_used_development=True)
+        research_source_sha256=hashed(__file__),manifest_sha256=hashed(ROOT/'manifest.json'),frozen_at=datetime.now(timezone.utc).isoformat(),selection_only_used_development=True)
     save(ROOT/'frozen_selection.json',freeze)
     print(json.dumps({'selection':freeze['status'],'threshold':freeze['threshold'],'training_rows':len(training),'training_targets':int(y.sum())}),flush=True)
 
@@ -206,6 +206,7 @@ def fit():
 def validate():
     selection=json.loads((ROOT/'frozen_selection.json').read_text())
     if selection['status']!='FROZEN_FOR_RESERVED_VALIDATION':raise ValueError('No development candidate qualifies; reserved outcomes stay closed')
+    if selection['manifest_sha256']!=hashed(ROOT/'manifest.json'):raise ValueError('Frozen archive identities changed before validation')
     if selection['model_sha256']!=hashed(ROOT/'model.json') or selection['protocol_sha256']!=hashed(ROOT/'protocol.json') or selection['research_source_sha256']!=hashed(__file__) or selection['feature_source_sha256']!=hashed(Path(__file__).parents[1]/'cloud_paper/entry_model.py'):raise ValueError('Frozen study changed before validation')
     save(ROOT/'validation_started.json',dict(at=datetime.now(timezone.utc).isoformat(),selection_sha256=hashed(ROOT/'frozen_selection.json')))
     payload=prepare(['2026-08','2026-09'],'validation_events.json.gz');events=payload['events'];rows={s:load_symbol(s,['2026-08','2026-09']) for s in SYMBOLS}

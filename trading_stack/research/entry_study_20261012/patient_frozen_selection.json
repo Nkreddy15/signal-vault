@@ -4,7 +4,9 @@
   "feature_source_sha256": "5105b27c50145c5a6338a9b2614f796a6f73b282f739f8bb1f3c5d6e6245cbe9",
   "events_sha256": "45fc869d6ba47c2761b9a1ce709bf56e37ffcc3d06368a1bf3c0fb2696374bf0",
   "protocol_sha256": "eef2322a9db793daea3203712a15b9f53d185c832eeed37c312d2803c6ec1090",
-  "research_source_sha256": "dd611207f8c0ea14c50ffc8e93e3fcaf59f0ae6780d5932f129d147e3aa824e4",
-  "dependencies_sha256": "08939d1465c52c695891391d77d401558de9f4f8b987217956c0a57c5c0c69d2",
-  "frozen_at": "2026-10-12T16:20:17.091482+00:00"
+  "cost_settings_protocol_sha256": "111fc660edf4ac990a7ba1497ba047616ec51780b6af35dcd95be250cff5b562",
+  "manifest_sha256": "52be3ce632733bb5bd13edbe913eb3fbcf87667494659e7aac3eafaafe30ec4a",
+  "research_source_sha256": "3e0b5ed7b6e10e5ccced196054c1d90885ed761f54ccd88fda9e22d762efa23f",
+  "dependencies_sha256": "56adae1fdae9e2c790e6cba7a7cea25362e32a28a53e59c28d9a310137a824be",
+  "frozen_at": "2026-10-12T17:00:13.443573+00:00"
 }

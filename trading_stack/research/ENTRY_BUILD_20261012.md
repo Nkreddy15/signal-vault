@@ -45,7 +45,7 @@ Before evaluation, six patient-entry hypotheses were declared: 0.5, 1.0 or 1.5 A
 
 All patient variants also lost money in the earlier training period. Every frozen selection is `REJECTED_IN_DEVELOPMENT`. Consequently neither reserved-validation command was run. Reserved history may overlap earlier project research; it is not claimed to be independently untouched. Historical candle trade-through does not prove a real limit fill or queue priority.
 
-`entry_study_20261012/entry_build_evidence_20261012.json.gz` preserves complete protocols, archive identities, the rejected model, all proposal labels, complete trade ledgers, equity curves and frozen selections. Its SHA-256 is `6d94eb00b4fd7856482a5ed15d41e85e996b7f73199bbfaaa05a9def1c3892ca`. Archives are reproducible from pinned URLs/checksums; the restore command excludes reserved data by default. Raw archives are not included in the runtime image.
+`entry_study_20261012/entry_build_evidence_20261012.json.gz` preserves complete protocols, archive identities, the rejected model, all proposal labels, complete trade ledgers, equity curves and frozen selections. Its SHA-256 is `bcaadafadf2cfe85bf1f18ebb0818279332271c336587d15a487f7f35b5bbb49`. Archives are reproducible from pinned URLs/checksums; the restore command excludes reserved data by default. Raw archives are not included in the runtime image.
 
 ## Reproduce
 
@@ -59,7 +59,7 @@ python -m trading_stack.research.patient_study develop
 python -m unittest trading_stack.test_entry_model -v
 ```
 
-The source and protocol hashes gate reuse of cached events. Model refitting stops if reserved validation has opened. `entry_study validate` and `patient_study validate` refuse to inspect reserved outcomes when development qualification fails. Full portfolio regression: 152 Python tests; cloud and final dashboard DOM harnesses passed. Browser visual inspection was not performed. Test results do not establish profitable trading.
+The source and protocol hashes gate reuse of cached events. Frozen validation also checks archive identities and patient cost settings before opening any reserved data. Model refitting stops if reserved validation has opened. `entry_study validate` and `patient_study validate` refuse to inspect reserved outcomes when development qualification fails. Full portfolio regression: 153 Python tests; cloud and final dashboard DOM harnesses passed. Browser visual inspection was not performed. Test results do not establish profitable trading.
 
 ## Sources
 

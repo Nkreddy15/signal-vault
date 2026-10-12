@@ -17,6 +17,7 @@ from trading_stack.cloud_paper.store import Store
 from trading_stack.cloud_paper.web import create_app
 from trading_stack.research.entry_study import levels,outcome,simulate
 from trading_stack.research.patient_study import replay
+from trading_stack.research import patient_study,entry_study
 
 NOW=1786838400
 
@@ -119,6 +120,17 @@ class NativeDataTests(unittest.TestCase):
 
 
 class PatientEntryTests(unittest.TestCase):
+    def test_changed_cost_settings_or_archive_identity_cannot_open_reserved_data(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);freeze=dict(status='FROZEN_FOR_RESERVED_VALIDATION',protocol_sha256='ok',research_source_sha256='ok',dependencies_sha256='ok',feature_source_sha256='ok',events_sha256='ok',cost_settings_protocol_sha256='ok',manifest_sha256='ok')
+            (root/'patient_frozen_selection.json').write_text(json.dumps(freeze));(root/'frozen_selection.json').write_text(json.dumps(freeze))
+            for filename in ('protocol.json','manifest.json'):
+                with patch.object(patient_study,'ROOT',root),patch.object(patient_study,'hashed',side_effect=lambda p:'changed' if Path(p).name==filename else 'ok'),patch.object(patient_study,'save') as save:
+                    with self.assertRaisesRegex(ValueError,'Frozen patient study changed'):patient_study.validate()
+                    save.assert_not_called()
+            with patch.object(entry_study,'ROOT',root),patch.object(entry_study,'hashed',return_value='changed'),patch.object(entry_study,'save') as save:
+                with self.assertRaisesRegex(ValueError,'archive identities changed'):entry_study.validate()
+                save.assert_not_called()
     def event(self,symbol='BTCUSD'):
         features=[0.]*len(FEATURES);features[FEATURES.index('atr_fraction')]=.01
         return dict(symbol=symbol,at=NOW,score=3,family='trend_continuation',features=features,reference=100.,lagged_volume_cap=1.,outcome={'label':1})

@@ -101,7 +101,7 @@ def develop():
     freeze=dict(status='FROZEN_FOR_RESERVED_VALIDATION' if selected else 'REJECTED_IN_DEVELOPMENT',
         selected={k:selected[k] for k in ['pullback_atr','hold_minutes']} if selected else None,
         feature_source_sha256=payload['feature_source_sha256'],events_sha256=hashed(ROOT/'development_events.json.gz'),
-        protocol_sha256=hashed(ROOT/'patient_protocol.json'),research_source_sha256=hashed(__file__),
+        protocol_sha256=hashed(ROOT/'patient_protocol.json'),cost_settings_protocol_sha256=hashed(ROOT/'protocol.json'),manifest_sha256=hashed(ROOT/'manifest.json'),research_source_sha256=hashed(__file__),
         dependencies_sha256=hashed(Path(__file__).with_name('entry_study.py')),frozen_at=datetime.now(timezone.utc).isoformat())
     save(ROOT/'patient_frozen_selection.json',freeze);print(json.dumps(freeze),flush=True)
 
@@ -110,7 +110,8 @@ def validate():
     freeze=json.loads((ROOT/'patient_frozen_selection.json').read_text())
     if freeze['status']!='FROZEN_FOR_RESERVED_VALIDATION':raise ValueError('No patient candidate qualifies; reserved outcomes stay closed')
     for key,path in [('protocol_sha256',ROOT/'patient_protocol.json'),('research_source_sha256',__file__),('dependencies_sha256',Path(__file__).with_name('entry_study.py')),
-        ('feature_source_sha256',Path(__file__).parents[1]/'cloud_paper/entry_model.py'),('events_sha256',ROOT/'development_events.json.gz')]:
+        ('feature_source_sha256',Path(__file__).parents[1]/'cloud_paper/entry_model.py'),('events_sha256',ROOT/'development_events.json.gz'),
+        ('cost_settings_protocol_sha256',ROOT/'protocol.json'),('manifest_sha256',ROOT/'manifest.json')]:
         if freeze[key]!=hashed(path):raise ValueError('Frozen patient study changed')
     save(ROOT/'patient_validation_started.json',dict(at=datetime.now(timezone.utc).isoformat(),freeze_sha256=hashed(ROOT/'patient_frozen_selection.json')))
     from .entry_study import prepare
