@@ -86,7 +86,9 @@ class NativeDataTests(unittest.TestCase):
         def transport(path,params=None):
             self.calls.append(path)
             if path=='exchangeInfo':return {'symbols':[{'symbol':'BTCUSD','baseAsset':'BTC','quoteAsset':'USD','status':'TRADING','isSpotTradingAllowed':True,'filters':[{'filterType':'LOT_SIZE','stepSize':'0.000001','minQty':'0.000001'},{'filterType':'MIN_NOTIONAL','minNotional':'5'}]}]}
-            if path=='ticker/24hr':return [{'symbol':'BTCUSD','bidPrice':'99','askPrice':'100','closeTime':NOW*1000,'quoteVolume':'1000000'}]
+            if path=='ticker/24hr':
+                if params is not None:raise ProviderError('Unexpected native ticker query')
+                return [{'symbol':'BTCUSD','bidPrice':'99','askPrice':'100','closeTime':NOW*1000,'quoteVolume':'1000000'}]
             if path=='depth':return {'asks':[['100','0.1'],['100.05','0.9']],'bids':[['99','1']]}
             raise AssertionError(path)
         self.feed=BinancePublic(transport,clock=lambda:NOW);self.feed.load_assets()

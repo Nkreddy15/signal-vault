@@ -21,7 +21,7 @@ def public_json(path,params=None):
             raw=r.read(2000001)
         if len(raw)>2000000:raise ProviderError('Native public feed response exceeds bound')
         data=json.loads(raw)
-    except HTTPError as e:raise ProviderError(f'Native public feed HTTP {e.code}') from None
+    except HTTPError as e:raise ProviderError(f'Native public feed {path} HTTP {e.code}') from None
     except (ValueError,UnicodeError):raise ProviderError('Native public feed returned non-JSON data') from None
     except ProviderError:raise
     except Exception:raise ProviderError('Native public feed is unavailable') from None
@@ -52,7 +52,9 @@ class BinancePublic:
         if not self.assets:self.load_assets()
         selected={self.assets[s]['key']:s for s in symbols if s in self.assets}
         if not selected:return {}
-        raw=self.http('ticker/24hr',{'symbols':json.dumps(list(selected))})
+        # The documented all-market form avoids array-query parser differences.
+        # This bounded read costs 40 request-weight units and is cached by the probe.
+        raw=self.http('ticker/24hr')
         if isinstance(raw,dict):raw=[raw]
         if not isinstance(raw,list):raise ProviderError('Invalid native ticker response')
         out={}
