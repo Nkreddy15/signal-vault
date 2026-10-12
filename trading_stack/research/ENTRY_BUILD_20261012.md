@@ -1,6 +1,6 @@
 # Entry build: 12 October 2026
 
-The new entry strategies remain research only. No candidate passed the declared development gate. The authenticated native-feed probe was deployed successfully on Railway, but Binance.US public data was unavailable there. The active account is still the same paper campaign, with $494.56770092135 equity, four closed trades, no open positions and net P&L of -$5.43229907865 at the deployment verification.
+The new entry strategies remain research only. No candidate passed the declared development gate. The authenticated native-feed probe was deployed successfully on Railway. Its first request returned HTTP 400; switching to the documented all-market ticker query fixed it. The final check passed with six fresh pairs, 999 closed native candles and observed depth for approximately $49.43 of BTC at the current ask. This is a read-only estimate, not an exchange fill. The active account is still the same paper campaign, with $494.56770092135 equity, four closed trades, no open positions and net P&L of -$5.43229907865 at the deployment verification.
 
 ## Build
 
@@ -68,4 +68,4 @@ The source and protocol hashes gate reuse of cached events. Frozen validation al
 - [Official API documentation](https://docs.binance.us/).
 - [Official historical data and checksum documentation](https://www.binance.us/institutions/market-history).
 
-Promotion requires positive development and reserved historical results under both cost cases, enough closed trades, clean risk/data checks, verified live native data and explicit internal-paper execution metadata. No research result permits real-money trading.
+Promotion requires positive development and reserved historical results under both cost cases, enough closed trades, clean risk/data checks, verified live native data and explicit internal-paper execution metadata. The native feed gate now passes; the profitability gate still fails. No research result permits real-money trading.

@@ -1,9 +1,11 @@
 {
+  "verified_at": "2026-10-12T17:35:10.311978+00:00",
   "mode": "PAPER ONLY",
-  "deployment_id": "58e5a6e2-b98c-4cda-ba9f-0c841b7b686e",
-  "deployed_commit": "7b6d2e18e7226c7d232ec2310d9af0873f7a1c9f",
+  "deployment_id": "d8927e1c-3574-4370-823c-c85fcd6d1c3f",
+  "deployed_commit": "bb424c4683131ad86a374fdca01393bb6d79b1cf",
   "status": "SUCCESS",
   "replicas": "1/1",
+  "pending_platform_work": false,
   "same_identity": true,
   "same_ledger": true,
   "account": {
@@ -28,18 +30,43 @@
     "status": "RUNNING"
   },
   "venue_probe": {
-    "checked_at": 1791822069.9837365,
+    "ask": 82388.93,
+    "assets": 53,
+    "bid": 82388.84,
+    "checked_at": 1791826326.0625496,
+    "estimated_50_usd_sweep": {
+      "estimated_price": 82388.93,
+      "levels": [
+        {
+          "price": 82388.93,
+          "quantity": 0.0006
+        }
+      ],
+      "mode": "INTERNAL ESTIMATE; NOT AN EXCHANGE FILL",
+      "observed_at": 1791826312.4338083,
+      "quantity": 0.0006
+    },
+    "fresh_pairs": [
+      "ADA/USD",
+      "BTC/USD",
+      "DOGE/USD",
+      "ETH/USD",
+      "SOL/USD",
+      "XRP/USD"
+    ],
     "mode": "READ_ONLY_PUBLIC_PREFLIGHT",
+    "native_bars": 999,
     "orders_submitted": 0,
-    "reason": "Native public feed is unavailable",
-    "state": "UNAVAILABLE",
+    "state": "READY",
     "venue": "Binance.US"
   },
   "verification": {
-    "python_tests": 152,
+    "python_tests": 153,
     "python_result": "PASS",
     "cloud_dashboard_dom": "PASS",
     "final_dashboard_dom": "PASS",
     "visual_browser_qa": false
-  }
+  },
+  "strategy_promoted": false,
+  "reserved_outcomes_opened": false
 }
