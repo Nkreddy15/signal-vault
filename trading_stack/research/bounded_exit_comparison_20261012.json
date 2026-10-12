@@ -1,0 +1,660 @@
+{
+  "kind": "FIXED EXIT-ONLY RETROSPECTIVE COMPARISON; NO EXECUTED TRADES",
+  "start": "2026-10-05T16:15:00Z",
+  "end": "2026-10-12T13:30:00Z",
+  "results": {
+    "prior_15m_long_hold": {
+      "start": "2026-10-05T16:15:00Z",
+      "end": "2026-10-12T13:30:00Z",
+      "final_equity": 486.4675331480633,
+      "net_return": -0.027064933703873417,
+      "maximum_drawdown": 0.028584971888758304,
+      "closed_trades": 5,
+      "open_positions": 4,
+      "mean_exposure_fraction": 0.20719136669089747,
+      "turnover_usd": 674.4519258909805,
+      "turnover_multiple": 1.3489038517819611,
+      "fees_usd": 5.395615407127845,
+      "profit_factor": 0.0007754119012504357,
+      "mean_trade_pnl": -1.8836621935938525,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -2.358387178160375,
+        -0.937282435764456
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "slow_breakout": {
+          "closed_trades": 3,
+          "net_realized": -4.701029654215148
+        },
+        "slow_pullback": {
+          "closed_trades": 2,
+          "net_realized": -4.717281313754114
+        },
+        "range_reclaim": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "breakout": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "pullback": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "range_reversion": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "inverse_trend": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.052613914451692056,
+        "btc_buy_hold_max_drawdown": 0.07329414856552685
+      },
+      "curve_daily": [
+        {
+          "at": 1791244800,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791331200,
+          "equity": 494.0613207036689,
+          "drawdown": 0.011877358592662146,
+          "exposure_fraction": 0.39204000790741905
+        },
+        {
+          "at": 1791417600,
+          "equity": 490.57438029433433,
+          "drawdown": 0.018851239411331377,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791504000,
+          "equity": 490.57438029433433,
+          "drawdown": 0.018851239411331377,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791590400,
+          "equity": 488.4286236321409,
+          "drawdown": 0.023142752735718197,
+          "exposure_fraction": 0.19616766396783136
+        },
+        {
+          "at": 1791676800,
+          "equity": 487.9352453661514,
+          "drawdown": 0.02412950926769719,
+          "exposure_fraction": 0.395547035855049
+        },
+        {
+          "at": 1791763200,
+          "equity": 488.59800888431414,
+          "drawdown": 0.0228039822313717,
+          "exposure_fraction": 0.39625672814622764
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T01:00:00Z",
+          "exit_at": "2026-10-07T01:44:59Z",
+          "holding_hours": 24.74972222222222,
+          "net_pnl": -2.3563889967639042,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T00:15:00Z",
+          "exit_at": "2026-10-07T02:14:59Z",
+          "holding_hours": 25.99972222222222,
+          "net_pnl": -2.36089231699021,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-06T12:15:00Z",
+          "exit_at": "2026-10-07T02:14:59Z",
+          "holding_hours": 13.999722222222223,
+          "net_pnl": -2.356881130028775,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-06T15:00:00Z",
+          "exit_at": "2026-10-07T02:14:59Z",
+          "holding_hours": 11.249722222222223,
+          "net_pnl": -2.351457261882807,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-10T00:00:00Z",
+          "exit_at": "2026-10-11T00:14:59Z",
+          "holding_hours": 24.24972222222222,
+          "net_pnl": 0.007308737696433809,
+          "reason": "STOP"
+        }
+      ],
+      "signal_blockers": {
+        "Need 120 complete 15m bars": 360,
+        "OmniQuant trending; no uptrend": 1453,
+        "OmniQuant ranging; no uptrend": 1298,
+        "OmniQuant trending; uptrend": 462,
+        "OmniQuant ranging; uptrend": 627
+      },
+      "configuration_hash": "96456cacb3b6cd068a1f7d2c85802879bea45a177f71a58998db538208bcc2aa"
+    },
+    "bounded_intraday_exits": {
+      "start": "2026-10-05T16:15:00Z",
+      "end": "2026-10-12T13:30:00Z",
+      "final_equity": 456.49613051630797,
+      "net_return": -0.08700773896738401,
+      "maximum_drawdown": 0.08700773896738401,
+      "closed_trades": 42,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.07744973960187011,
+      "turnover_usd": 3930.8678115247826,
+      "turnover_multiple": 7.861735623049565,
+      "fees_usd": 31.446942492198275,
+      "profit_factor": 0.006611702129739168,
+      "mean_trade_pnl": -1.0358064162783862,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.1524470219838894,
+        -0.9193687506531143
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "slow_breakout": {
+          "closed_trades": 10,
+          "net_realized": -10.39026880450308
+        },
+        "slow_pullback": {
+          "closed_trades": 32,
+          "net_realized": -33.11360067918914
+        },
+        "range_reclaim": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "breakout": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "pullback": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "range_reversion": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "inverse_trend": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {
+        "Intraday re-entry cooldown": 5,
+        "Risk halt": 33
+      },
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.052613914451692056,
+        "btc_buy_hold_max_drawdown": 0.07329414856552685
+      },
+      "curve_daily": [
+        {
+          "at": 1791244800,
+          "equity": 500.0,
+          "drawdown": 0.0,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791331200,
+          "equity": 489.9108965582581,
+          "drawdown": 0.020178206883483818,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791417600,
+          "equity": 489.9108965582581,
+          "drawdown": 0.020178206883483818,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791504000,
+          "equity": 489.9108965582581,
+          "drawdown": 0.020178206883483818,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791590400,
+          "equity": 486.19963115932956,
+          "drawdown": 0.02760073768134086,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791676800,
+          "equity": 476.1633195646704,
+          "drawdown": 0.04767336087065921,
+          "exposure_fraction": 0.0
+        },
+        {
+          "at": 1791763200,
+          "equity": 465.9660048770354,
+          "drawdown": 0.06806799024592924,
+          "exposure_fraction": 0.0
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T00:15:00Z",
+          "exit_at": "2026-10-06T02:45:00Z",
+          "holding_hours": 2.5,
+          "net_pnl": -1.193394172923533,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T01:00:00Z",
+          "exit_at": "2026-10-06T03:45:00Z",
+          "holding_hours": 2.75,
+          "net_pnl": -1.9677159646152376,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T07:30:00Z",
+          "exit_at": "2026-10-06T09:14:59Z",
+          "holding_hours": 1.7497222222222222,
+          "net_pnl": 0.1463300637615106,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-06T12:15:00Z",
+          "exit_at": "2026-10-06T16:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.3446517496504313,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T15:00:00Z",
+          "exit_at": "2026-10-06T18:30:00Z",
+          "holding_hours": 3.5,
+          "net_pnl": -1.7417144009161163,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-06T15:00:00Z",
+          "exit_at": "2026-10-06T19:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.3639146164655358,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-06T15:00:00Z",
+          "exit_at": "2026-10-06T19:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.6181625599298641,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-06T20:00:00Z",
+          "exit_at": "2026-10-06T20:15:00Z",
+          "holding_hours": 0.25,
+          "net_pnl": -1.005880041002591,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-09T10:30:00Z",
+          "exit_at": "2026-10-09T14:00:00Z",
+          "holding_hours": 3.5,
+          "net_pnl": -1.7177563893660235,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-09T11:00:00Z",
+          "exit_at": "2026-10-09T15:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.7280108743832372,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-09T15:30:00Z",
+          "exit_at": "2026-10-09T19:30:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.2654981351793069,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-10T00:00:00Z",
+          "exit_at": "2026-10-10T01:44:59Z",
+          "holding_hours": 1.7497222222222222,
+          "net_pnl": 0.14321897475030454,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-10T00:30:00Z",
+          "exit_at": "2026-10-10T04:30:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.7877484999868756,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-10T02:00:00Z",
+          "exit_at": "2026-10-10T06:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9197567620901737,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T04:00:00Z",
+          "exit_at": "2026-10-10T08:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9161836837019948,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T04:15:00Z",
+          "exit_at": "2026-10-10T08:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9238563194078324,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T06:45:00Z",
+          "exit_at": "2026-10-10T10:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.2660245273235375,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T08:00:00Z",
+          "exit_at": "2026-10-10T12:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.0706941250570523,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-10T08:15:00Z",
+          "exit_at": "2026-10-10T12:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.2358282111471652,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T09:00:00Z",
+          "exit_at": "2026-10-10T13:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9728838537641948,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T10:45:00Z",
+          "exit_at": "2026-10-10T13:00:00Z",
+          "holding_hours": 2.25,
+          "net_pnl": -0.9840279129441711,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-10T12:45:00Z",
+          "exit_at": "2026-10-10T13:00:00Z",
+          "holding_hours": 0.25,
+          "net_pnl": -1.1025266739864605,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T01:30:00Z",
+          "exit_at": "2026-10-11T03:15:00Z",
+          "holding_hours": 1.75,
+          "net_pnl": -1.188256966733256,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T00:15:00Z",
+          "exit_at": "2026-10-11T04:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.1168698132448611,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T01:30:00Z",
+          "exit_at": "2026-10-11T04:30:00Z",
+          "holding_hours": 3.0,
+          "net_pnl": -1.0436342101668004,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T04:45:00Z",
+          "exit_at": "2026-10-11T06:30:00Z",
+          "holding_hours": 1.75,
+          "net_pnl": -1.0462658718570168,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T08:30:00Z",
+          "exit_at": "2026-10-11T12:30:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9204711024347887,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T14:30:00Z",
+          "exit_at": "2026-10-11T18:30:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.5432320437264053,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-11T15:45:00Z",
+          "exit_at": "2026-10-11T19:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.7944426327499201,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-11T16:45:00Z",
+          "exit_at": "2026-10-11T20:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.3313579220551333,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T20:15:00Z",
+          "exit_at": "2026-10-11T21:15:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.0472120436506387,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-11T21:00:00Z",
+          "exit_at": "2026-10-11T21:15:00Z",
+          "holding_hours": 0.25,
+          "net_pnl": -1.1655720810164212,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "XRP/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T00:45:00Z",
+          "exit_at": "2026-10-12T04:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.7703026151424268,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T02:00:00Z",
+          "exit_at": "2026-10-12T06:00:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.4631147680242691,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T02:15:00Z",
+          "exit_at": "2026-10-12T06:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9063601116897573,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T02:15:00Z",
+          "exit_at": "2026-10-12T06:15:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.7875060400972558,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_breakout",
+          "entry_at": "2026-10-12T04:45:00Z",
+          "exit_at": "2026-10-12T08:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.1376248251782854,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T06:45:00Z",
+          "exit_at": "2026-10-12T10:00:00Z",
+          "holding_hours": 3.25,
+          "net_pnl": -1.1794360136101218,
+          "reason": "INTRADAY_TREND_INVALIDATED"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T06:45:00Z",
+          "exit_at": "2026-10-12T10:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -0.9545371857205822,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "SOL/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T06:45:00Z",
+          "exit_at": "2026-10-12T10:45:00Z",
+          "holding_hours": 4.0,
+          "net_pnl": -1.208223373161161,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ETH/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T10:00:00Z",
+          "exit_at": "2026-10-12T11:00:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.0200214433621468,
+          "reason": "RISK_EXIT"
+        },
+        {
+          "symbol": "ADA/USD",
+          "strategy": "slow_pullback",
+          "entry_at": "2026-10-12T10:45:00Z",
+          "exit_at": "2026-10-12T11:00:00Z",
+          "holding_hours": 0.25,
+          "net_pnl": -1.0427479847414531,
+          "reason": "RISK_EXIT"
+        }
+      ],
+      "signal_blockers": {
+        "Need 120 complete 15m bars": 360,
+        "OmniQuant trending; no uptrend": 1453,
+        "OmniQuant ranging; no uptrend": 1298,
+        "OmniQuant trending; uptrend": 462,
+        "OmniQuant ranging; uptrend": 627
+      },
+      "configuration_hash": "7f22184414f971da37b293ea406dbeed87fc8210b8e79654e9204e85afdc2b23"
+    }
+  },
+  "configuration_hash": "7f22184414f971da37b293ea406dbeed87fc8210b8e79654e9204e85afdc2b23",
+  "parameters_selected_before_results": true,
+  "limits": [
+    "Overlapping short retrospective history; not an untouched holdout.",
+    "Same entry strategies, capital, risk and modeled Kraken costs in both independent $500 scenarios.",
+    "No parameter search, winner selection or synthetic forward P&L."
+  ]
+}

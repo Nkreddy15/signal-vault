@@ -87,8 +87,12 @@ class PredictArb:
                     s=self.store.read();s["providers"]["polymarket"]=status;s["predictarb_offset"]=result["next_offset"];self.store.save(s)
             except Exception as error:
                 with self.store.transaction():
-                    s=self.store.read();s["providers"]["polymarket"]=dict(status="UNAVAILABLE",mode="READ-ONLY PUBLIC BOOKS",checked_at=now,
-                        reason="Public scan failed: "+type(error).__name__+ (" HTTP "+str(error.code) if hasattr(error,"code") else ""));self.store.save(s)
+                    s=self.store.read()
+                    failed_url=urlsplit(getattr(error,"url",""))
+                    reset=getattr(error,"code",None)==422 and failed_url.netloc=="gamma-api.polymarket.com" and failed_url.path=="/markets" and s.get("predictarb_offset",0)>0
+                    if reset:s["predictarb_offset"]=0
+                    s["providers"]["polymarket"]=dict(status="UNAVAILABLE",mode="READ-ONLY PUBLIC BOOKS",checked_at=now,
+                        reason="Gamma rejected the pagination offset (HTTP 422); next bounded scan restarts at the first page; coverage remains limited" if reset else "Public scan failed: "+type(error).__name__+ (" HTTP "+str(error.code) if hasattr(error,"code") else ""));self.store.save(s)
             self.future=None
         s=self.store.read()
         if self.future is None and now-s.get("predictarb_last_scan",0)>=self.cfg["predictarb_scan_interval_seconds"]:

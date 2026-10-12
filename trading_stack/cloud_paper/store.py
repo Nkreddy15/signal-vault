@@ -123,6 +123,36 @@ class Store:
                             (request_id, now or time.time(), action, trade_id))
         return self.db.execute("SELECT id FROM commands WHERE request_id=?", (request_id,)).fetchone()[0]
 
+    def revise_intraday_exits(self, config, expected_hash, now=None):
+        """Explicit simulation-only exit revision; financial history and levels stay intact."""
+        now=time.time() if now is None else now
+        with self.transaction():
+            s=self.read()
+            if s["config_hash"]==digest(config): return False
+            if s["config_hash"]!=expected_hash:
+                raise ValueError("Exit revision does not match the expected prior configuration")
+            if any(o["status"] not in TERMINAL for o in s["orders"].values()) or self.db.execute("SELECT 1 FROM commands WHERE handled IS NULL").fetchone():
+                raise ValueError("Handle pending orders and owner commands before revising exits")
+            old=s["config"]
+            if old.get("strategy_pack")!="intraday-v1" or old.get("crypto_exit_policy") is not None or config.get("crypto_exit_policy")!="bounded-v1":
+                raise ValueError("Only the declared first bounded intraday exit revision is supported")
+            if old["crypto_mode"]!="simulation" or any(p["market"]!="crypto" for p in s["positions"].values()):
+                raise ValueError("This exit revision is limited to owned crypto simulation positions")
+            allowed={"version","evidence","crypto_exit_policy","crypto_max_hold_hours","crypto_exit_confirmation_bars","crypto_reentry_cooldown_bars","crypto_net_take_profit_fraction","exit_source_sha256"}
+            changed={k for k in set(old)|set(config) if old.get(k)!=config.get(k)}
+            if changed-allowed or config["version"]==old["version"]:
+                raise ValueError("Exit revision cannot change entries, costs, risk, capital or the campaign deadline")
+            if not 0<config["crypto_max_hold_hours"]<=old["max_hold_hours"]:
+                raise ValueError("Exit revision may only shorten the holding cap")
+            revision=dict(at=now,reason="Correct intraday holding: bounded time, confirmed trend failure and net-of-cost profit exits",
+                from_hash=s["config_hash"],to_hash=digest(config),from_config=copy.deepcopy(old),to_config=copy.deepcopy(config),
+                equity_at_revision=portfolio(s,now)["equity"],cash_at_revision=s["cash"],campaign_id=s["campaign_id"],
+                existing_position_ids=list(s["positions"]),existing_position_rules="Original entries/stops/targets retained; new exit policy applies prospectively, overdue positions close on fresh executable quotes")
+            s.setdefault("config_revisions",[]).append(revision)
+            s["config"]=copy.deepcopy(config);s["config_hash"]=digest(config)
+            self.save(s);self.event("CONFIGURATION_REVISION",revision,now)
+        return True
+
     def apply_commands(self, now):
         with self.transaction():
             s = self.read()

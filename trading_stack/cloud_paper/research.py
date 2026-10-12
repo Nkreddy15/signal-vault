@@ -13,11 +13,16 @@ import random
 import statistics
 import zipfile
 from collections import Counter
+from datetime import datetime
 from pathlib import Path
 from .engine import load_config
 from .providers import iso
 from .store import digest
 from .strategies import signals
+
+
+def datetime_from_iso(value):
+    return datetime.fromisoformat(value.replace('Z','+00:00')).timestamp()
 
 
 def load_archive(path,symbols,bar_seconds=3600):
@@ -82,7 +87,7 @@ def replay(data,candidates,cfg,start,end):
         nonlocal cash,turnover,fees
         p=positions.pop(sym);price=reference*(1-friction);gross=p["qty"]*price;cost=gross*fee
         cash+=gross-cost;turnover+=gross;fees+=cost
-        trades.append(dict(symbol=sym,strategy=p["strategy"],entry_at=iso(p["at"]),exit_at=iso(t),
+        trades.append(dict(symbol=sym,strategy=p["strategy"],entry_at=iso(p["at"]),exit_at=iso(t),holding_hours=(t-p["at"])/3600,
                            net_pnl=gross-cost-p["cost"],reason=reason))
     for t in range(start,end,step):
         current={sym:rows[t] for sym,rows in indexed.items() if t in rows}
@@ -90,11 +95,21 @@ def replay(data,candidates,cfg,start,end):
         for sym,r in current.items():marks[sym]=r["open"]
         if t==start or t//86400!=(t-step)//86400:day_equity=equity();daily_halt=False
         for sym,p in list(positions.items()):
-            if sym in current and (halt or daily_halt or t-p["at"]>=cfg["max_hold_hours"]*3600):
-                sell(sym,current[sym]["open"],t,"RISK_OR_TIME_EXIT")
+            if sym not in current:continue
+            bounded=cfg.get("crypto_exit_policy")=="bounded-v1"
+            cap=cfg["crypto_max_hold_hours"] if bounded else cfg["max_hold_hours"]
+            if halt or daily_halt or t-p["at"]>=cap*3600:
+                sell(sym,current[sym]["open"],t,"RISK_EXIT" if halt or daily_halt else "INTRADAY_TIME_EXIT" if bounded else "RISK_OR_TIME_EXIT")
+            elif bounded:
+                from .exits_intraday import trend_invalidated
+                history=[r for r in data[sym] if r["time"]<t][-120:]
+                if trend_invalidated(p["strategy"],p["at"],history,t,cfg["crypto_exit_confirmation_bars"]):
+                    sell(sym,current[sym]["open"],t,"INTRADAY_TREND_INVALIDATED")
         for c in sorted(candidates.get(t,[]),key=lambda c:(-c["score"],c["symbol"])):
             sym=c["symbol"]
             if halt or daily_halt:blocks["Risk halt"]+=1;continue
+            if cfg.get("crypto_exit_policy")=="bounded-v1" and any(trade["symbol"]==sym and t-datetime_from_iso(trade["exit_at"])<cfg["crypto_reentry_cooldown_bars"]*step for trade in trades):
+                blocks["Intraday re-entry cooldown"]+=1;continue
             if any(sym not in current for sym in positions):blocks["Missing held-asset bar"]+=1;continue
             if sym in positions or c["signal"] in seen or len(positions)>=cfg["max_positions"]:continue
             r=current[sym];reference=r["open"]
@@ -116,9 +131,11 @@ def replay(data,candidates,cfg,start,end):
         for sym,p in list(positions.items()):
             if sym not in current:continue
             r=current[sym]
+            net_target=(p["cost"]+p["cost"]/(1+fee)*cfg["crypto_net_take_profit_fraction"])/(p["qty"]*(1-friction)*(1-fee)) if cfg.get("crypto_exit_policy")=="bounded-v1" else None
+            target=min(p["target"],net_target) if net_target is not None else p["target"]
             # Stop first if both levels occur; no favorable intrabar path invented.
             if r["low"]<=p["stop"]:sell(sym,min(r["open"],p["stop"]),t+step-1,"STOP")
-            elif r["high"]>=p["target"]:sell(sym,p["target"],t+step-1,"TARGET")
+            elif r["high"]>=target:sell(sym,target,t+step-1,"INTRADAY_NET_TARGET" if net_target is not None and target==net_target else "TARGET")
             else:
                 p["peak"]=max(p["peak"],r["high"])
                 if p["peak"]>=p["entry"]+p["activation"]*p["distance"]:p["stop"]=max(p["stop"],p["peak"]-p["trail"]*p["distance"])
