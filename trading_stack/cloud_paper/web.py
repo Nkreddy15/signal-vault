@@ -22,17 +22,25 @@ def trade_view(p,s,now,closed=False):
     rate=s["config"]["crypto_fee_fraction"] if market=="crypto" else s["config"]["stock_fee_fraction"]
     exit_fee=0 if closed or current is None else (s["config"]["dex_network_allowance_usd"] if market=="dex" else math.ceil(100*.07*p["quantity"]*current*(1-current))/100 if market=="kalshi" else p["quantity"]*current*rate)
     net=p.get("net_pnl") if closed else (None if stale else p["proceeds"]+p["quantity"]*current-exit_fee-p["cost"]-p["entry_fee"]-p["exit_fee"])
+    bounded=market=="crypto" and s["config"].get("crypto_exit_policy")=="bounded-v1"
+    active_target=p.get("active_target",p.get("target"))
+    if bounded:
+        from .exits_intraday import net_target_bid
+        net_target=net_target_bid(p,s["config"])
+        if net_target is not None: active_target=min(active_target,net_target) if active_target is not None else net_target
     return dict(trade_id=p["id"],pair=p["symbol"],market=market,mode=p["mode"],is_open=not closed,is_short=False,
         open_rate=p["entry_price"],current_rate=current,close_rate=p.get("exit_price"),amount=p["bought_qty"] if closed else p["quantity"],
         stake_amount=p["cost"],profit_abs=net,profit_ratio=net/p["cost"] if net is not None and p["cost"] else None,
         open_date=iso(p["opened_at"]),close_date=iso(p["closed_at"]) if closed else None,enter_tag=p["strategy"],
         signal_time=iso(p["signal_at"]),signal_reason=p["reason"],exit_reason=p.get("exit_reason"),
-        stop_price=p.get("stop"),target_price=p.get("target"),trailing_stop=p.get("stop") if p.get("stop")!=p.get("initial_stop") else None,
+        stop_price=p.get("stop"),target_price=active_target,original_target_price=p.get("target"),trailing_stop=p.get("stop") if p.get("stop")!=p.get("initial_stop") else None,
+        time_exit_at=iso(p["opened_at"]+s["config"]["crypto_max_hold_hours"]*3600) if bounded else None,
+        net_take_profit_fraction=s["config"].get("crypto_net_take_profit_fraction") if bounded else None,
         fee_usd=p["entry_fee"]+p["exit_fee"]+exit_fee,paid_fees=p["entry_fee"]+p["exit_fee"],estimated_exit_fee=exit_fee,
         fee_basis="Quote outputs include route costs; fixed network allowance; USDC=$1 assumption; no actual fills" if market=="dex" else "Actual demo order fees" if market=="kalshi" else "Modeled cost allowance; paper fills do not prove live costs",
         slippage_fraction=s["config"]["slippage_fraction"],mark_stale=stale,
-        target_rule="Settlement payout; no stock-style price target" if market=="kalshi" else "Frozen cost-aware target",
-        exit_logic="Owner exit, campaign drain, or exchange-confirmed binary settlement" if market=="kalshi" else "Stop, target, trailing stop, time limit, daily/drawdown guard, owner exit or campaign drain",
+        target_rule="Settlement payout; no stock-style price target" if market=="kalshi" else "Net profit threshold includes modeled entry/exit fees and exit slippage; original bracket retained" if bounded else "Frozen cost-aware target",
+        exit_logic="Owner exit, campaign drain, or exchange-confirmed binary settlement" if market=="kalshi" else f"Stop, net-of-cost profit exit, {s['config']['crypto_max_hold_hours']}h cap, {s['config']['crypto_exit_confirmation_bars']} closed 15m bars confirming trend failure, daily/drawdown guard or owner exit" if bounded else "Stop, target, trailing stop, time limit, daily/drawdown guard, owner exit or campaign drain",
         contract=p.get("contract"),settlement=p.get("settlement"),fills=p["fills"],
         orders=[o for o in s["orders"].values() if o["trade_id"]==p["id"]])
 

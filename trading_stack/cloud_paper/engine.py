@@ -39,6 +39,16 @@ def load_config(path=None):
         c["strategy_pack_source_sha256"]=digest({f:hashlib.sha256((Path(__file__).parent/f).read_bytes()).hexdigest() for f in files})
     elif c.get("strategy_pack") is not None:
         raise ValueError("Unknown strategy pack")
+    if c.get("crypto_exit_policy") is not None:
+        if c["crypto_exit_policy"]!="bounded-v1" or c.get("strategy_pack")!="intraday-v1":
+            raise ValueError("Unsupported intraday exit policy")
+        if not 0<number(c.get("crypto_max_hold_hours",0))<=8 or c.get("crypto_exit_confirmation_bars") not in (2,3,4):
+            raise ValueError("Invalid bounded intraday exit settings")
+        if not isinstance(c.get("crypto_reentry_cooldown_bars"),int) or not 1<=c["crypto_reentry_cooldown_bars"]<=16:
+            raise ValueError("Invalid intraday re-entry cooldown")
+        if not .001<=number(c.get("crypto_net_take_profit_fraction",0))<=.02:
+            raise ValueError("Invalid net-of-cost profit exit threshold")
+        c["exit_source_sha256"]=hashlib.sha256(Path(__file__).with_name("exits_intraday.py").read_bytes()).hexdigest()
     if c.get("dex_enabled"):
         c["discovery_source_sha256"]=hashlib.sha256(Path(__file__).with_name("discovery.py").read_bytes()).hexdigest()
         if not 0<c["dex_order_usd"]<=10 or not c["dex_order_usd"]<=c["dex_sleeve_usd"]<=min(25,c["capital"]*.05):
@@ -250,7 +260,16 @@ class Engine:
                 if p["stop"] is not None and q["bid"]<=p["stop"]: reason=reason or "PROTECTIVE_STOP"
                 if p["target"] is not None and q["bid"]>=p["target"]: reason=reason or "TARGET"
                 hold=6 if p["symbol"] in ("SH","PSQ") else self.cfg["max_hold_hours"]
+                if p["market"]=="crypto" and self.cfg.get("crypto_exit_policy")=="bounded-v1":
+                    hold=self.cfg["crypto_max_hold_hours"]
                 if now-p["opened_at"]>=hold*3600: reason=reason or "TIME_EXIT"
+                if p["market"]=="crypto" and self.cfg.get("crypto_exit_policy")=="bounded-v1":
+                    from .exits_intraday import reason as intraday_reason
+                    if reason=="TIME_EXIT": reason="INTRADAY_TIME_EXIT"
+                    if not reason:
+                        try: history=self.closed_history("crypto",p["symbol"],now)
+                        except Exception: history=[]  # Quote-driven stops/time exits remain available.
+                        reason=intraday_reason(p,history,q["bid"],self.cfg,now)
                 if p["symbol"] in ("SH","PSQ") and self.stocks.clock.get("next_close"):
                     if timestamp(self.stocks.clock["next_close"])-now<900: reason=reason or "INVERSE_ETF_SESSION_EXIT"
                 peak=max(p.get("peak",0),q["bid"])
@@ -259,7 +278,14 @@ class Engine:
                 distance=p.get("trailing_distance_multiple",1)
                 if peak>=p["entry_price"]+activation*p["stop_distance"]: stop=max(stop,peak-distance*p["stop_distance"])
                 with self.store.transaction():
-                    fresh=self.store.read(); fresh["positions"][tid].update(peak=peak,stop=stop); self.store.save(fresh)
+                    fresh=self.store.read(); fresh["positions"][tid].update(peak=peak,stop=stop)
+                    if p["market"]=="crypto" and self.cfg.get("crypto_exit_policy")=="bounded-v1":
+                        from .exits_intraday import net_target_bid
+                        active_target=net_target_bid(p,self.cfg)
+                        if p.get("target") is not None: active_target=min(p["target"],active_target)
+                        fresh["positions"][tid].update(active_target=active_target,exit_policy="bounded-v1",
+                            time_exit_at=p["opened_at"]+self.cfg["crypto_max_hold_hours"]*3600)
+                    self.store.save(fresh)
             if not reason: continue
             if pending:
                 for o in pending:
@@ -277,6 +303,19 @@ class Engine:
                    limit_price=limit,reserve=0,fee_rate=fee,signal="exit",strategy=p["strategy"],signal_at=now,reason=reason)
             if self.store.prepare(o,now): self.send(oid)
 
+    def closed_history(self,market,symbol,now):
+        key=market+":"+symbol
+        tf=self.cfg.get("crypto_timeframe","1h") if market=="crypto" else "1h"
+        step={"15m":900,"1h":3600,"4h":14400}[tf]
+        new_crypto_bar=market=="crypto" and self.history.get(key) and self.history[key][-1]["time"]<int(now//step)*step-step
+        if key not in self.history or now-self.history_at[key]>=300 or new_crypto_bar:
+            adapter=self.crypto if market=="crypto" else self.stocks
+            bars=adapter.bars(symbol,now,timeframe=tf) if tf!="1h" else adapter.bars(symbol,now)
+            self.history[key]=bars;self.history_at[key]=now
+            self.store.put_candles(market,symbol,tf,bars)
+            self.state_update(heartbeat=self.clock())
+        return self.history[key]
+
     def candidates(self):
         candidates=[]; diagnostics=[]; now=self.clock()
         for market,adapter,symbols in (("crypto",self.crypto,self.cfg["crypto_symbols"]),("stocks",self.stocks,self.cfg["stock_symbols"])):
@@ -287,15 +326,7 @@ class Engine:
                 elif key not in self.quotes: reason="No valid current quote or unsupported venue asset"
                 else:
                     try:
-                        tf=self.cfg.get("crypto_timeframe","1h") if market=="crypto" else "1h"
-                        step={"15m":900,"1h":3600,"4h":14400}[tf]
-                        new_crypto_bar=market=="crypto" and self.history.get(key) and self.history[key][-1]["time"]<int(now//step)*step-step
-                        if key not in self.history or now-self.history_at[key]>=300 or new_crypto_bar:
-                            bars=adapter.bars(sym,now,timeframe=tf) if tf!="1h" else adapter.bars(sym,now)
-                            self.history[key]=bars;self.history_at[key]=now
-                            self.store.put_candles(market,sym,tf,bars)
-                            self.state_update(heartbeat=self.clock())
-                        found,reason=signals(self.history[key],market,sym,now,self.cfg)
+                        found,reason=signals(self.closed_history(market,sym,now),market,sym,now,self.cfg)
                         if market=="stocks" and self.history[key] and now-self.history[key][-1]["time"]>96*3600:
                             found=[];reason="Stale stock history"
                         if found: candidates.append(found[0])
@@ -317,6 +348,10 @@ class Engine:
         now=self.clock(); s=self.store.read(); market=c["market"]; sym=c["symbol"]
         if market not in self.cfg.get("entry_markets",["crypto","stocks","kalshi"]):
             return "Research-only lane; entries not enabled in frozen campaign"
+        if market=="crypto" and self.cfg.get("crypto_exit_policy")=="bounded-v1":
+            closed=[p for p in s["closed"] if p["market"]==market and p["symbol"]==sym]
+            if closed and now-max(p["closed_at"] for p in closed)<self.cfg["crypto_reentry_cooldown_bars"]*900:
+                return "Intraday re-entry cooldown after the last actual exit"
         if shutil.disk_usage(self.store.directory).free<32*1024*1024: return "Persistent storage low; entries blocked, exits active"
         if market in self.blocked: return "Provider or reconciliation blocked"
         # Bootstrap can take time. Refresh quotes before first entry; no historical-price fills.

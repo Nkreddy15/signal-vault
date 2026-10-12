@@ -37,7 +37,8 @@ def initialize_store(directory, config, environ=None, now=None):
                 expected=environ.get("SV_CONFIG_REVISION_FROM")
                 if not expected: raise ValueError("Frozen configuration changed; explicit revision permission required")
                 store.backup(time.time() if now is None else now)
-                store.revise_crypto_interval(config,expected,now)
+                if config.get("crypto_exit_policy")=="bounded-v1": store.revise_intraday_exits(config,expected,now)
+                else: store.revise_crypto_interval(config,expected,now)
             return store
         except BaseException:
             store.db.close()

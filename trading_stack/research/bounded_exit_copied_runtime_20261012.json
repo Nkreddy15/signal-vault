@@ -1,0 +1,13 @@
+{
+  "mode": "ISOLATED COPIED ACCOUNT TEST; NOT A CLOUD RESULT",
+  "before_cash": 302.71889844677196,
+  "after_cash": 494.42027078393255,
+  "realized": -5.579729216067469,
+  "closed_trades": 4,
+  "closed_reasons": {
+    "INTRADAY_TIME_EXIT": 4
+  },
+  "deadline_retained": true,
+  "campaign_id_retained": true,
+  "prior_fee_history_retained": true
+}

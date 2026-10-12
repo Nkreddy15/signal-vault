@@ -74,7 +74,8 @@ renderInspector = function(t,openChart=true) {
   $('detailSide').textContent=`${t.market==='kalshi'?'YES contract':'Long'} · ${t.mode}`;
   $('executionMetrics').innerHTML += [metric('Execution mode',esc(t.mode)),metric('Signal timestamp',shortTime(t.signal_time)),
     metric('Fee source',esc(t.fee_basis)),metric('Booked fees',money(t.paid_fees)),metric('Estimated exit fee',money(t.estimated_exit_fee)),
-    metric('Slippage assumption',pct(t.slippage_fraction)),metric('Trailing stop',price(t.trailing_stop))].join('');
+    metric('Slippage assumption',pct(t.slippage_fraction)),metric('Trailing stop',price(t.trailing_stop)),
+    ...(t.time_exit_at?[metric('Time exit at',shortTime(t.time_exit_at)),metric('Exit rule',esc(t.exit_logic)),metric('Net profit exit threshold',pct(t.net_take_profit_fraction))]:[])].join('');
   $('closePaperPosition').hidden=!t.is_open;
   $('orderEvidence').textContent=JSON.stringify({orders:t.orders,fills:t.fills,settlement:t.settlement,probability_evidence:t.contract?.estimate},null,2);
   $('historyTimeline').innerHTML=(t.fills||[]).map(f=>`<div class="timeline-event"><strong>${esc(f.action.toUpperCase())} · ${qty(f.quantity)} @ ${price(f.price)}</strong><span>${shortTime(f.at*1000)} · ${esc(f.time_basis||"recorded execution")} · order ${esc(f.order_id)} · fee ${money(f.fee)}</span></div>`).join('');
