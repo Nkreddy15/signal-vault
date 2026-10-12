@@ -1,0 +1,415 @@
+{
+  "kind": "FIXED RETROSPECTIVE NATIVE 5M SCALP SCREEN; NO ACCOUNT WRITES",
+  "capture_sha256": "ba781974343ef99f526451776b72b5dce890cbdaaa4ffb618d24646bea431fcd",
+  "configuration": {
+    "version": "SV-SCALP-5M-RESEARCH-20261012",
+    "evidence": "Fixed experimental scalping hypotheses; performance unknown",
+    "capital": 500.0,
+    "duration_hours": 168,
+    "cycle_seconds": 30,
+    "risk_per_trade": 0.005,
+    "max_position_fraction": 0.2,
+    "max_exposure_fraction": 0.6,
+    "max_positions": 4,
+    "daily_loss_fraction": 0.02,
+    "drawdown_fraction": 0.1,
+    "max_quote_age_seconds": 90,
+    "max_spread_fraction": 0.003,
+    "minimum_daily_volume_usd": 500000,
+    "minimum_order_usd": 5,
+    "slippage_fraction": 0.001,
+    "crypto_fee_fraction": 0.008,
+    "stock_fee_fraction": 0.0001,
+    "order_timeout_seconds": 120,
+    "max_hold_hours": 336,
+    "crypto_mode": "simulation",
+    "stocks_mode": "paper",
+    "kalshi_mode": "demo",
+    "crypto_symbols": [
+      "BTC/USD",
+      "ETH/USD",
+      "SOL/USD",
+      "XRP/USD",
+      "DOGE/USD",
+      "ADA/USD",
+      "LTC/USD",
+      "BCH/USD",
+      "LINK/USD",
+      "AVAX/USD",
+      "DOT/USD",
+      "UNI/USD",
+      "SUI/USD",
+      "NEAR/USD",
+      "ATOM/USD",
+      "HBAR/USD",
+      "XLM/USD",
+      "AAVE/USD",
+      "OP/USD",
+      "ARB/USD"
+    ],
+    "stock_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "META",
+      "GOOGL",
+      "JPM",
+      "V",
+      "AMD",
+      "TSLA",
+      "SH",
+      "PSQ"
+    ],
+    "strategies": [
+      "scalp_pullback",
+      "scalp_rebound",
+      "scalp_range"
+    ],
+    "kalshi_max_cost": 20,
+    "kalshi_minimum_edge": 0.05,
+    "dex_enabled": true,
+    "dex_paper_entries": false,
+    "dex_order_usd": 10,
+    "dex_sleeve_usd": 25,
+    "dex_network_allowance_usd": 0.1,
+    "dex_scan_limit": 5,
+    "dex_scan_interval_seconds": 60,
+    "dex_min_liquidity_usd": 50000,
+    "dex_max_top10_fraction": 0.5,
+    "dex_max_price_impact_fraction": 0.02,
+    "dex_max_roundtrip_loss_fraction": 0.08,
+    "dex_slippage_bps": 100,
+    "dex_stop_fraction": 0.12,
+    "dex_target_fraction": 0.25,
+    "dex_max_hold_seconds": 3600,
+    "dex_ai_max_calls_per_day": 10,
+    "dex_max_sample_gap_seconds": 600,
+    "strategy_pack": "scalp-v1",
+    "crypto_timeframe": "5m",
+    "bar_seconds": 300,
+    "predictarb_enabled": true,
+    "predictarb_scan_interval_seconds": 120,
+    "predictarb_market_limit": 8,
+    "predictarb_mode": "research",
+    "entry_markets": [
+      "crypto"
+    ],
+    "crypto_exit_policy": "bounded-v1",
+    "crypto_max_hold_hours": 1,
+    "crypto_exit_confirmation_bars": 2,
+    "crypto_reentry_cooldown_bars": 2,
+    "crypto_net_take_profit_fraction": 0.003,
+    "strategy_source_sha256": "58f4ba82108313499e62cca1a3b05f021495549c5b87eda8d0dca994b152a0e2",
+    "strategy_pack_source_sha256": "25d18937040f2edce0bd3625d07413b4a72c18077a11b2fa32e80b062a06c5e3",
+    "exit_source_sha256": "830a14cb328a7ad757a728c634faa0eaf240f4443137dd6c99c92e9807b145d5",
+    "discovery_source_sha256": "4504518b5a911598bd15e21b9ea953dcdfe5c964407f0feb97a59b5e1e11a141"
+  },
+  "configuration_hash": "e1fff86f4f84efb8587d21c98d04af1a026b5db33c4bf9ed1cd8136b12508503",
+  "parameters_fixed_before_results": true,
+  "observed_start": "2026-10-11T02:50:00Z",
+  "observed_end": "2026-10-12T14:50:00Z",
+  "signal_blocks": {
+    "No confirmed 5m pullback, rebound or range recovery": 2810,
+    "Insufficient closed-bar volume confirmation": 5572,
+    "Scalp pattern lacks headroom after fees": 250
+  },
+  "results": {
+    "all": {
+      "start": "2026-10-11T02:50:00Z",
+      "end": "2026-10-12T14:50:00Z",
+      "final_equity": 491.7456935246566,
+      "net_return": -0.01650861295068684,
+      "maximum_drawdown": 0.01650861295068684,
+      "closed_trades": 8,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.012698308045182407,
+      "turnover_usd": 908.5594415828987,
+      "turnover_multiple": 1.8171188831657974,
+      "fees_usd": 7.2684755326631905,
+      "profit_factor": 0.0,
+      "mean_trade_pnl": -1.03178830941792,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.5590808234316977,
+        -0.5369137886580235
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 1,
+          "net_realized": -0.30252610806650715
+        },
+        "scalp_rebound": {
+          "closed_trades": 7,
+          "net_realized": -7.951780367276854
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.028947982783185888,
+        "btc_buy_hold_max_drawdown": 0.028947982783185888
+      },
+      "curve_daily": [
+        {
+          "at": 1791763200,
+          "equity": 497.41558036563276,
+          "drawdown": 0.00516883926873446,
+          "exposure_fraction": 0.02592982205737345
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T18:30:00Z",
+          "exit_at": "2026-10-11T18:34:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.9765965258308142,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T21:35:00Z",
+          "exit_at": "2026-10-11T22:35:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.3471508090932929,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T23:50:00Z",
+          "exit_at": "2026-10-12T00:19:59Z",
+          "holding_hours": 0.49972222222222223,
+          "net_pnl": -0.30252610806650715,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T01:25:00Z",
+          "exit_at": "2026-10-12T01:34:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.775243056101619,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T07:50:00Z",
+          "exit_at": "2026-10-12T08:09:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -2.418400869044362,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:30:00Z",
+          "exit_at": "2026-10-12T09:30:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.4345141864498174,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T13:49:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.508689057866512,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BCH/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T14:35:00Z",
+          "exit_at": "2026-10-12T14:39:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.4911858628904362,
+          "reason": "STOP"
+        }
+      ]
+    },
+    "first_half": {
+      "start": "2026-10-11T02:50:00Z",
+      "end": "2026-10-11T20:50:00Z",
+      "final_equity": 498.0234034741692,
+      "net_return": -0.003953193051661641,
+      "maximum_drawdown": 0.003953193051661641,
+      "closed_trades": 1,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.0,
+      "turnover_usd": 158.34236093415103,
+      "turnover_multiple": 0.31668472186830204,
+      "fees_usd": 1.2667388874732082,
+      "profit_factor": 0.0,
+      "mean_trade_pnl": -1.9765965258308142,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": null,
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 0,
+          "net_realized": 0
+        },
+        "scalp_rebound": {
+          "closed_trades": 1,
+          "net_realized": -1.9765965258308142
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.013915724846311983,
+        "btc_buy_hold_max_drawdown": 0.024152285586533928
+      },
+      "curve_daily": [],
+      "trades": [
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T18:30:00Z",
+          "exit_at": "2026-10-11T18:34:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.9765965258308142,
+          "reason": "STOP"
+        }
+      ]
+    },
+    "later_half": {
+      "start": "2026-10-11T20:50:00Z",
+      "end": "2026-10-12T14:50:00Z",
+      "final_equity": 493.7055872935981,
+      "net_return": -0.012588825412803817,
+      "maximum_drawdown": 0.012588825412803817,
+      "closed_trades": 7,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.025392329523171435,
+      "turnover_usd": 752.5208552963584,
+      "turnover_multiple": 1.5050417105927167,
+      "fees_usd": 6.020166842370867,
+      "profit_factor": 0.0,
+      "mean_trade_pnl": -0.899201815200262,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.4704621626577086,
+        -0.4534117377069321
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 1,
+          "net_realized": -0.30252610806650715
+        },
+        "scalp_rebound": {
+          "closed_trades": 6,
+          "net_realized": -5.991886598335327
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.035661683506523656,
+        "btc_buy_hold_max_drawdown": 0.035661683506523656
+      },
+      "curve_daily": [
+        {
+          "at": 1791763200,
+          "equity": 499.3907990905641,
+          "drawdown": 0.0012184018188717838,
+          "exposure_fraction": 0.0258272629590578
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T21:35:00Z",
+          "exit_at": "2026-10-11T22:35:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.34852860999278334,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T23:50:00Z",
+          "exit_at": "2026-10-12T00:19:59Z",
+          "holding_hours": 0.49972222222222223,
+          "net_pnl": -0.30252610806650715,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T01:25:00Z",
+          "exit_at": "2026-10-12T01:34:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.775243056101619,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T07:50:00Z",
+          "exit_at": "2026-10-12T08:09:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -2.4280200500307103,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:30:00Z",
+          "exit_at": "2026-10-12T09:30:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.4402199614532663,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T13:49:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.508689057866512,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BCH/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T14:35:00Z",
+          "exit_at": "2026-10-12T14:39:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.4911858628904362,
+          "reason": "STOP"
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Approximately 36 hours after 24h liquidity warmup; insufficient to establish a durable edge.",
+    "Chronological halves are descriptive; recent market data was previously observed in this conversation. Neither is an untouched holdout.",
+    "Same $500 independent portfolio, 0.8% fee per side, 0.1% slippage and 0.15% half-spread, current risk guards.",
+    "Next-open entries, stop before target on an ambiguous bar, conservative liquidation marks and lagged volume caps.",
+    "Venue minimum sizes, historical spreads and queue positions are not verified; these are simulated taker fills.",
+    "New scalp hypotheses have stop/net-profit/time exits in this screen; the legacy trend-exit helper ignores their new strategy names.",
+    "Research profile is not connected to the active worker and cannot be selected by its current config loader.",
+    "No parameter search, candidate selection by historical winners or automatic promotion."
+  ]
+}

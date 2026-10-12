@@ -1,0 +1,675 @@
+{
+  "kind": "HYPOTHETICAL 0.25% COST SENSITIVITY ON KRAKEN DATA; NOT ALPACA EXECUTION EVIDENCE",
+  "capture_sha256": "ba781974343ef99f526451776b72b5dce890cbdaaa4ffb618d24646bea431fcd",
+  "configuration": {
+    "version": "SV-SCALP-5M-RESEARCH-20261012",
+    "evidence": "Fixed experimental scalping hypotheses; performance unknown",
+    "capital": 500.0,
+    "duration_hours": 168,
+    "cycle_seconds": 30,
+    "risk_per_trade": 0.005,
+    "max_position_fraction": 0.2,
+    "max_exposure_fraction": 0.6,
+    "max_positions": 4,
+    "daily_loss_fraction": 0.02,
+    "drawdown_fraction": 0.1,
+    "max_quote_age_seconds": 90,
+    "max_spread_fraction": 0.003,
+    "minimum_daily_volume_usd": 500000,
+    "minimum_order_usd": 5,
+    "slippage_fraction": 0.001,
+    "crypto_fee_fraction": 0.0025,
+    "stock_fee_fraction": 0.0001,
+    "order_timeout_seconds": 120,
+    "max_hold_hours": 336,
+    "crypto_mode": "simulation",
+    "stocks_mode": "paper",
+    "kalshi_mode": "demo",
+    "crypto_symbols": [
+      "BTC/USD",
+      "ETH/USD",
+      "SOL/USD",
+      "XRP/USD",
+      "DOGE/USD",
+      "ADA/USD",
+      "LTC/USD",
+      "BCH/USD",
+      "LINK/USD",
+      "AVAX/USD",
+      "DOT/USD",
+      "UNI/USD",
+      "SUI/USD",
+      "NEAR/USD",
+      "ATOM/USD",
+      "HBAR/USD",
+      "XLM/USD",
+      "AAVE/USD",
+      "OP/USD",
+      "ARB/USD"
+    ],
+    "stock_symbols": [
+      "SPY",
+      "QQQ",
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "AMZN",
+      "META",
+      "GOOGL",
+      "JPM",
+      "V",
+      "AMD",
+      "TSLA",
+      "SH",
+      "PSQ"
+    ],
+    "strategies": [
+      "scalp_pullback",
+      "scalp_rebound",
+      "scalp_range"
+    ],
+    "kalshi_max_cost": 20,
+    "kalshi_minimum_edge": 0.05,
+    "dex_enabled": true,
+    "dex_paper_entries": false,
+    "dex_order_usd": 10,
+    "dex_sleeve_usd": 25,
+    "dex_network_allowance_usd": 0.1,
+    "dex_scan_limit": 5,
+    "dex_scan_interval_seconds": 60,
+    "dex_min_liquidity_usd": 50000,
+    "dex_max_top10_fraction": 0.5,
+    "dex_max_price_impact_fraction": 0.02,
+    "dex_max_roundtrip_loss_fraction": 0.08,
+    "dex_slippage_bps": 100,
+    "dex_stop_fraction": 0.12,
+    "dex_target_fraction": 0.25,
+    "dex_max_hold_seconds": 3600,
+    "dex_ai_max_calls_per_day": 10,
+    "dex_max_sample_gap_seconds": 600,
+    "strategy_pack": "scalp-v1",
+    "crypto_timeframe": "5m",
+    "bar_seconds": 300,
+    "predictarb_enabled": true,
+    "predictarb_scan_interval_seconds": 120,
+    "predictarb_market_limit": 8,
+    "predictarb_mode": "research",
+    "entry_markets": [
+      "crypto"
+    ],
+    "crypto_exit_policy": "bounded-v1",
+    "crypto_max_hold_hours": 1,
+    "crypto_exit_confirmation_bars": 2,
+    "crypto_reentry_cooldown_bars": 2,
+    "crypto_net_take_profit_fraction": 0.003,
+    "strategy_source_sha256": "58f4ba82108313499e62cca1a3b05f021495549c5b87eda8d0dca994b152a0e2",
+    "strategy_pack_source_sha256": "25d18937040f2edce0bd3625d07413b4a72c18077a11b2fa32e80b062a06c5e3",
+    "exit_source_sha256": "830a14cb328a7ad757a728c634faa0eaf240f4443137dd6c99c92e9807b145d5",
+    "discovery_source_sha256": "4504518b5a911598bd15e21b9ea953dcdfe5c964407f0feb97a59b5e1e11a141"
+  },
+  "configuration_hash": "62fae4fecbf47b3e7e44c0b0e944a03079eb3729926059034bcc0fa31257ba0e",
+  "parameters_fixed_before_results": true,
+  "observed_start": "2026-10-11T02:50:00Z",
+  "observed_end": "2026-10-12T14:50:00Z",
+  "signal_blocks": {
+    "No confirmed 5m pullback, rebound or range recovery": 2810,
+    "Insufficient closed-bar volume confirmation": 5572,
+    "Scalp pattern lacks headroom after fees": 236
+  },
+  "results": {
+    "all": {
+      "start": "2026-10-11T02:50:00Z",
+      "end": "2026-10-12T14:50:00Z",
+      "final_equity": 485.64760702216495,
+      "net_return": -0.028704785955670054,
+      "maximum_drawdown": 0.028704785955670054,
+      "closed_trades": 22,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.03326700010461626,
+      "turnover_usd": 2921.0665220440083,
+      "turnover_multiple": 5.842133044088016,
+      "fees_usd": 7.302666305110018,
+      "profit_factor": 0.03963677642078273,
+      "mean_trade_pnl": -0.652381498992506,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -0.8894704341386849,
+        -0.41913464582022364
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 7,
+          "net_realized": -4.6740266589360555
+        },
+        "scalp_rebound": {
+          "closed_trades": 15,
+          "net_realized": -9.678366318899077
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.01820712103696165,
+        "btc_buy_hold_max_drawdown": 0.0227533594707936
+      },
+      "curve_daily": [
+        {
+          "at": 1791763200,
+          "equity": 493.801354921274,
+          "drawdown": 0.012397290157451946,
+          "exposure_fraction": 0.026119607325707506
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T03:35:00Z",
+          "exit_at": "2026-10-11T03:54:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -0.39790703209324363,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "UNI/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T04:09:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.2379846415976772,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T05:05:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.3579659779855433,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T05:05:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.19503662997201587,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T09:55:00Z",
+          "exit_at": "2026-10-11T10:14:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -1.6978536592647373,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T12:55:00Z",
+          "exit_at": "2026-10-11T12:59:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": 0.2969256371040956,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T14:40:00Z",
+          "exit_at": "2026-10-11T15:19:59Z",
+          "holding_hours": 0.6663888888888889,
+          "net_pnl": -1.679694513121973,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T18:30:00Z",
+          "exit_at": "2026-10-11T18:34:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.1057135406929746,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T21:35:00Z",
+          "exit_at": "2026-10-11T21:59:59Z",
+          "holding_hours": 0.41638888888888886,
+          "net_pnl": 0.29543627097217495,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T23:50:00Z",
+          "exit_at": "2026-10-12T00:19:59Z",
+          "holding_hours": 0.49972222222222223,
+          "net_pnl": -0.1609368530638804,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T01:25:00Z",
+          "exit_at": "2026-10-12T01:34:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.44647428091210983,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T07:50:00Z",
+          "exit_at": "2026-10-12T08:09:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -1.337660677588545,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:30:00Z",
+          "exit_at": "2026-10-12T09:30:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.35555706781995866,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:35:00Z",
+          "exit_at": "2026-10-12T09:35:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.49550112891768094,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T10:25:00Z",
+          "exit_at": "2026-10-12T11:24:59Z",
+          "holding_hours": 0.9997222222222222,
+          "net_pnl": -0.16306541658200935,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOT/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T12:45:00Z",
+          "exit_at": "2026-10-12T12:49:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.8698870451021747,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T12:50:00Z",
+          "exit_at": "2026-10-12T12:59:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -1.140207773409827,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:10:00Z",
+          "exit_at": "2026-10-12T13:34:59Z",
+          "holding_hours": 0.41638888888888886,
+          "net_pnl": -1.2152973722183447,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T13:49:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.27061074723200207,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T14:15:00Z",
+          "exit_at": "2026-10-12T14:19:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.3995148089053764,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BCH/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T14:35:00Z",
+          "exit_at": "2026-10-12T14:39:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.26126943755260257,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T14:40:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.1566162818787262,
+          "reason": "INTRADAY_TIME_EXIT"
+        }
+      ]
+    },
+    "first_half": {
+      "start": "2026-10-11T02:50:00Z",
+      "end": "2026-10-11T20:50:00Z",
+      "final_equity": 493.62476964237595,
+      "net_return": -0.012750460715248102,
+      "maximum_drawdown": 0.012750460715248102,
+      "closed_trades": 8,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.024582699982478827,
+      "turnover_usd": 1265.1061357227202,
+      "turnover_multiple": 2.5302122714454405,
+      "fees_usd": 3.1627653393068003,
+      "profit_factor": 0.044502202487277556,
+      "mean_trade_pnl": -0.7969037947030086,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -1.2549816914447067,
+        -0.31845972945961964
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 3,
+          "net_realized": -3.0806225352826146
+        },
+        "scalp_rebound": {
+          "closed_trades": 5,
+          "net_realized": -3.2946078223414546
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.003008590437685643,
+        "btc_buy_hold_max_drawdown": 0.01335837836009568
+      },
+      "curve_daily": [],
+      "trades": [
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T03:35:00Z",
+          "exit_at": "2026-10-11T03:54:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -0.39790703209324363,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "UNI/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T04:09:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.2379846415976772,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T05:05:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.3579659779855433,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "LTC/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T04:05:00Z",
+          "exit_at": "2026-10-11T05:05:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.19503662997201587,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T09:55:00Z",
+          "exit_at": "2026-10-11T10:14:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -1.6978536592647373,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T12:55:00Z",
+          "exit_at": "2026-10-11T12:59:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": 0.2969256371040956,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T14:40:00Z",
+          "exit_at": "2026-10-11T15:19:59Z",
+          "holding_hours": 0.6663888888888889,
+          "net_pnl": -1.679694513121973,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T18:30:00Z",
+          "exit_at": "2026-10-11T18:34:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -1.1057135406929746,
+          "reason": "STOP"
+        }
+      ]
+    },
+    "later_half": {
+      "start": "2026-10-11T20:50:00Z",
+      "end": "2026-10-12T14:50:00Z",
+      "final_equity": 491.9739164007725,
+      "net_return": -0.016052167198455036,
+      "maximum_drawdown": 0.01664071141090906,
+      "closed_trades": 14,
+      "open_positions": 0,
+      "mean_exposure_fraction": 0.041828970331892444,
+      "turnover_usd": 1668.6376994626175,
+      "turnover_multiple": 3.337275398925235,
+      "fees_usd": 4.171594248656543,
+      "profit_factor": 0.035944722147996634,
+      "mean_trade_pnl": -0.5732916856591178,
+      "descriptive_iid_bootstrap_mean_trade_pnl_95": [
+        -0.8443106576960613,
+        -0.35272029585311937
+      ],
+      "drawdown_halted": false,
+      "strategies": {
+        "scalp_pullback": {
+          "closed_trades": 4,
+          "net_realized": -1.5934041236534409
+        },
+        "scalp_rebound": {
+          "closed_trades": 10,
+          "net_realized": -6.432679475574208
+        },
+        "scalp_range": {
+          "closed_trades": 0,
+          "net_realized": 0
+        }
+      },
+      "blockers": {},
+      "baselines": {
+        "cash_return": 0,
+        "btc_buy_hold_after_cost_return": -0.024995082386914946,
+        "btc_buy_hold_max_drawdown": 0.024995082386915057
+      },
+      "curve_daily": [
+        {
+          "at": 1791763200,
+          "equity": 500.18040087816473,
+          "drawdown": 0.00023755980371709118,
+          "exposure_fraction": 0.025786491163590605
+        }
+      ],
+      "trades": [
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-11T21:35:00Z",
+          "exit_at": "2026-10-11T21:59:59Z",
+          "holding_hours": 0.41638888888888886,
+          "net_pnl": 0.2992518702388338,
+          "reason": "INTRADAY_NET_TARGET"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-11T23:50:00Z",
+          "exit_at": "2026-10-12T00:19:59Z",
+          "holding_hours": 0.49972222222222223,
+          "net_pnl": -0.1609368530638804,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T01:25:00Z",
+          "exit_at": "2026-10-12T01:34:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.44647428091210983,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T07:50:00Z",
+          "exit_at": "2026-10-12T08:09:59Z",
+          "holding_hours": 0.33305555555555555,
+          "net_pnl": -1.3549580170632822,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "NEAR/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:30:00Z",
+          "exit_at": "2026-10-12T09:30:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.36015478940196033,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T08:35:00Z",
+          "exit_at": "2026-10-12T09:35:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -0.49550112891768094,
+          "reason": "INTRADAY_TIME_EXIT"
+        },
+        {
+          "symbol": "ARB/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T10:25:00Z",
+          "exit_at": "2026-10-12T11:24:59Z",
+          "holding_hours": 0.9997222222222222,
+          "net_pnl": -0.16306541658200935,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOT/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T12:45:00Z",
+          "exit_at": "2026-10-12T12:49:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.8698870451021747,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "LINK/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T12:50:00Z",
+          "exit_at": "2026-10-12T12:59:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -1.140207773409827,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "DOGE/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:10:00Z",
+          "exit_at": "2026-10-12T13:34:59Z",
+          "holding_hours": 0.41638888888888886,
+          "net_pnl": -1.2310981991112016,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "OP/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T13:49:59Z",
+          "holding_hours": 0.1663888888888889,
+          "net_pnl": -0.27061074723200207,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "ATOM/USD",
+          "strategy": "scalp_pullback",
+          "entry_at": "2026-10-12T14:15:00Z",
+          "exit_at": "2026-10-12T14:19:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.3995148089053764,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BCH/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T14:35:00Z",
+          "exit_at": "2026-10-12T14:39:59Z",
+          "holding_hours": 0.08305555555555555,
+          "net_pnl": -0.26126943755260257,
+          "reason": "STOP"
+        },
+        {
+          "symbol": "BTC/USD",
+          "strategy": "scalp_rebound",
+          "entry_at": "2026-10-12T13:40:00Z",
+          "exit_at": "2026-10-12T14:40:00Z",
+          "holding_hours": 1.0,
+          "net_pnl": -1.171656972212375,
+          "reason": "INTRADAY_TIME_EXIT"
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Approximately 36 hours after 24h liquidity warmup; insufficient to establish a durable edge.",
+    "Chronological halves are descriptive; recent market data was previously observed in this conversation. Neither is an untouched holdout.",
+    "Same $500 independent portfolio, 0.25% fee per side, 0.1% slippage and 0.15% half-spread, current risk guards.",
+    "Next-open entries, stop before target on an ambiguous bar, conservative liquidation marks and lagged volume caps.",
+    "Venue minimum sizes, historical spreads and queue positions are not verified; these are simulated taker fills.",
+    "New scalp hypotheses have stop/net-profit/time exits in this screen; the legacy trend-exit helper ignores their new strategy names.",
+    "Research profile is not connected to the active worker and cannot be selected by its current config loader.",
+    "No parameter search, candidate selection by historical winners or automatic promotion.",
+    "Lower fee is conditional on a verified account/venue; active campaign fees remain 0.8%.",
+    "Kraken prices and liquidity are reused; no historical Alpaca quotes, routing eligibility or order books are verified."
+  ],
+  "sources": [
+    "https://docs.alpaca.markets/us/docs/crypto-fees"
+  ]
+}
